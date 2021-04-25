@@ -2,7 +2,7 @@
   :version "0.1.0"
   :author "Seito Tanaka"
   :license "MIT"
-  :depends-on ()
+  :depends-on ("jsown")
   :components ((:module "src"
                 :components
                 ((:file "main"))))

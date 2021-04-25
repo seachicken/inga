@@ -1,5 +1,6 @@
 (defpackage inga/tests/main
   (:use :cl
+        :common-lisp
         :inga
         :fiveam))
 (in-package :inga/tests/main)
@@ -11,4 +12,9 @@
 (in-suite main)
 
 (test 解析する
-  (is (= 2 (inga:analyze))))
+  (inga:start)
+  (is (= 2 (inga:analyze)))
+  (inga:stop))
+
+(run! 'main)
+
