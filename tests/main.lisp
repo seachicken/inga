@@ -16,5 +16,10 @@
   (is (equal '(:pos ("line" . 11) ("offset" . 12)) (inga:analyze)))
   (inga:stop))
 
+;;(test contains-line
+;;  (is-true (inga::contains-line '((OBJ (start OBJ (line . 2) (offset . 1))
+;;                                        (end OBJ (line . 3) (offset . 2))))
+;;                                2)))
+
 (run! 'main)
 
