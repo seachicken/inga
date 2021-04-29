@@ -13,7 +13,7 @@
 
 (test 解析する
   (inga:start)
-  (is (= 2 (inga:analyze)))
+  (is (equal '(:pos ("line" . 11) ("offset" . 12)) (inga:analyze)))
   (inga:stop))
 
 (run! 'main)

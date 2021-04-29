@@ -15,21 +15,18 @@
   (uiop:close-streams *tsserver*))
 
 (defun analyze ()
-  ;;(uiop:process-alive-p *tsserver*)
+  ;; TODO: diffから動的に取得する
+  (defparameter diff-line 13)
 
   (print "open")
-  (call "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"/Users/seito/git/GitHub/vscode-pomodoro-edit/src/extension.ts\"}}")
+  (call "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/create-react-app-typescript-todo-example-2020/src/App/NewTodoInput/index.tsx\"}}")
 
   (print "navtree")
   (defvar result)
-  (setq result (exec "{\"seq\": 2, \"command\": \"navtree\", \"arguments\": {\"file\": \"/Users/seito/git/GitHub/vscode-pomodoro-edit/src/extension.ts\"}}"))
+  (setq result (exec "{\"seq\": 2, \"command\": \"navtree\", \"arguments\": {\"file\": \"/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/create-react-app-typescript-todo-example-2020/src/App/NewTodoInput/index.tsx\"}}"))
   (format t "result=~a~%" (jsown:val result "type"))
 
-  (+ 1 1))
-
-(defun call (command)
-  (write-line command (uiop:process-info-input *tsserver*))
-  (force-output (uiop:process-info-input *tsserver*)))
+  '(:pos ("line" . 11) ("offset" . 12)))
 
 (defun exec (command)
   (call command)
@@ -37,8 +34,13 @@
        (loop while stream do
              (defvar result)
              (setq result (jsown:parse (extjson stream)))
+             (format t "r=~a~%" result)
              (when (string= (jsown:val result "type") "response")
                (return result)))))
+
+(defun call (command)
+  (write-line command (uiop:process-info-input *tsserver*))
+  (force-output (uiop:process-info-input *tsserver*)))
 
 (defun extjson (stream)
   ;; Content-Length: 99
