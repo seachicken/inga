@@ -26,39 +26,40 @@
   (setq result (exec "{\"seq\": 2, \"command\": \"navtree\", \"arguments\": {\"file\": \"/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/create-react-app-typescript-todo-example-2020/src/App/NewTodoInput/index.tsx\"}}"))
   (format t "resultk=~a~%" (jsown:keywords result))
   (defparameter body (jsown:val result "body"))
-  (print (find-item body *diff-line*))
-  ;;(format t "body=~a~%" body)
-  ;;(format t "bodyk=~a, spans=~a~%" (jsown:keywords body) (jsown:val body "spans"))
+  (find-item body *diff-line*)
+  (format t "found deepest-item=~a~%" *deepest-item*)
 
   '(:pos ("line" . 11) ("offset" . 12)))
 
-(defun find-item (tree line)
-  (if (null tree)
-      nil
-      (progn
-        (format t "treek=~a~%" (jsown:keywords tree))
-        (when (jsown:keyp tree "text")
-          (format t "text=~a, spans=~a~%" (jsown:val tree "text") (jsown:val tree "spans"))
-          (when (contains-line (jsown:val tree "spans") line)
-            (print "!!!!!!!!!!!!!!")
-            tree))
-        (if (jsown:keyp tree "childItems")
-            (progn
-              (format t "has child~%")
-              (find-item (jsown:val tree "childItems") line))
-            (progn
-              (format t "has not child~%")
-              (when (jsown:keyp tree "OBJ")
-                (loop for obj in tree do
-                      (format t "objk=~a~%" (jsown:keywords obj))
-                      (find-item obj line))))))))
+(defvar *deepest-item*)
 
-(defun contains-line (spans line)
-  (format t "spans=~a~%" spans)
-  (let ((span (car spans)) start end)
-    (setq start (jsown:val (jsown:val span "start") "line"))
-    (setq end (jsown:val (jsown:val span "end") "line"))
-    (and (>= line start) (>= end line))))
+(defun find-item (tree line)
+  (when (contains-line tree line)
+      (format t "found!! tree=~a%" tree)
+      (setq *deepest-item* tree))
+
+  (if (jsown:keyp tree "childItems")
+      (progn
+        (format t "has child~%")
+        (find-item (jsown:val tree "childItems") line))
+      (when (jsown:keyp tree "OBJ")
+        (format t "has OBJ list~%")
+        (loop for obj in tree do
+              (format t "objk=~a, text=~a, kind=~a~%"
+                      (jsown:keywords obj)
+                      (jsown:val obj "text")
+                      (jsown:val obj "kind"))
+              (find-item obj line)))))
+
+(defun contains-line (tree line)
+  ;;(format t "key=~a~%" (jsown:keywords tree))
+  (when (and (jsown:keyp tree "text") (not (string= (jsown:val tree "kind") "module")))
+    ;;(format t "text=~a, spans=~a~%" (jsown:val tree "text") (jsown:val tree "spans"))
+    (let ((span (car (jsown:val tree "spans"))) start end)
+      (setq start (jsown:val (jsown:val span "start") "line"))
+      (setq end (jsown:val (jsown:val span "end") "line"))
+      (and (>= line start) (>= end line))))
+  )
 
 (defun exec (command)
   (call command)
