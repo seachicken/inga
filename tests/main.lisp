@@ -16,28 +16,36 @@
   (is (equal '(:pos ("line" . 11) ("offset" . 12)) (inga:analyze)))
   (inga:stop))
 
+(test 検索結果から位置を抽出する
+  (is (equal '(:pos ("line" . 1) ("offset" . 1))
+             (inga::get-pos '(:obj ("text" . "addTodo")
+                              ("kind" . "function")
+                              ("nameSpan" :obj
+                                ("start" :obj ("line" . 1) ("offset" . 1))
+                                ("end" :obj ("line" . 1) ("offset" . 8))))))))
+
 (test moduleは必ず行に含まれるので無視する
   (is-false (inga::contains-line
-             '(:OBJ ("text" . "\"index\"")
+             '(:obj ("text" . "\"index\"")
                     ("kind" . "module")
                     ("spans"
-                     (:OBJ ("start" :OBJ ("line" . 1) ("offset" . 1))
-                      ("end" :OBJ ("line" . 5) ("offset" . 1))))
+                     (:obj ("start" :obj ("line" . 1) ("offset" . 1))
+                      ("end" :obj ("line" . 5) ("offset" . 1))))
                     ("childItems"
-                     (:OBJ ("text" . "addTodo")
+                     (:obj ("text" . "addTodo")
                       ("kind" . "function")
                       ("spans"
-                       (:OBJ ("start" :OBJ ("line" . 1) ("offset" . 1))
-                        ("end" :OBJ ("line" . 3) ("offset" . 1)))))))
+                       (:obj ("start" :obj ("line" . 1) ("offset" . 1))
+                        ("end" :obj ("line" . 3) ("offset" . 1)))))))
              2)))
 
 (test functionが含まれる行であればtrueを返す
   (is-true (inga::contains-line
-             '(:OBJ ("text" . "addTodo")
+             '(:obj ("text" . "addtodo")
                       ("kind" . "function")
                       ("spans"
-                       (:OBJ ("start" :OBJ ("line" . 1) ("offset" . 1))
-                        ("end" :OBJ ("line" . 3) ("offset" . 1)))))
+                       (:obj ("start" :obj ("line" . 1) ("offset" . 1))
+                        ("end" :obj ("line" . 3) ("offset" . 1)))))
              2)))
 
 (run! 'main)

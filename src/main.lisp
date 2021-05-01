@@ -3,6 +3,7 @@
   (:export #:start #:stop #:analyze))
 (in-package :inga)
 
+(defvar *deepest-item*)
 (defvar *tsserver*)
 
 (defun start ()
@@ -28,38 +29,37 @@
   (defparameter body (jsown:val result "body"))
   (find-item body *diff-line*)
   (format t "found deepest-item=~a~%" *deepest-item*)
+  (get-pos *deepest-item*))
 
-  '(:pos ("line" . 11) ("offset" . 12)))
-
-(defvar *deepest-item*)
+(defun get-pos (item)
+  (let ((name-span (jsown:val item "nameSpan")) start)
+    (setq start (jsown:val name-span "start"))
+    (cons :pos (cdr start))))
 
 (defun find-item (tree line)
   (when (contains-line tree line)
-      (format t "found!! tree=~a%" tree)
+      ;;(format t "found!! tree=~a%" tree)
       (setq *deepest-item* tree))
 
   (if (jsown:keyp tree "childItems")
       (progn
-        (format t "has child~%")
+        ;;(format t "has child~%")
         (find-item (jsown:val tree "childItems") line))
-      (when (jsown:keyp tree "OBJ")
-        (format t "has OBJ list~%")
+      (when (jsown:keyp tree "obj")
+        ;;(format t "has OBJ list~%")
         (loop for obj in tree do
-              (format t "objk=~a, text=~a, kind=~a~%"
-                      (jsown:keywords obj)
-                      (jsown:val obj "text")
-                      (jsown:val obj "kind"))
+              ;;(format t "objk=~a, text=~a, kind=~a~%"
+              ;;        (jsown:keywords obj)
+              ;;        (jsown:val obj "text")
+              ;;        (jsown:val obj "kind"))
               (find-item obj line)))))
 
 (defun contains-line (tree line)
-  ;;(format t "key=~a~%" (jsown:keywords tree))
   (when (and (jsown:keyp tree "text") (not (string= (jsown:val tree "kind") "module")))
-    ;;(format t "text=~a, spans=~a~%" (jsown:val tree "text") (jsown:val tree "spans"))
     (let ((span (car (jsown:val tree "spans"))) start end)
       (setq start (jsown:val (jsown:val span "start") "line"))
       (setq end (jsown:val (jsown:val span "end") "line"))
-      (and (>= line start) (>= end line))))
-  )
+      (and (>= line start) (>= end line)))))
 
 (defun exec (command)
   (call command)
@@ -67,7 +67,6 @@
        (loop while stream do
              (defvar result)
              (setq result (jsown:parse (extjson stream)))
-             ;;(format t "r=~a~%" result)
              (when (string= (jsown:val result "type") "response")
                (return result)))))
 
