@@ -7,9 +7,9 @@
 
 ;; NOTE: To run this test file, execute `(asdf:test-system :inga)' in your Lisp.
 
-(def-suite main)
+(def-suite diff-to-pos)
 
-(in-suite main)
+(in-suite diff-to-pos)
 
 (test 解析する
   (inga:start)
@@ -48,5 +48,16 @@
                         ("end" :obj ("line" . 3) ("offset" . 1)))))
              2)))
 
-(run! 'main)
+(def-suite find-components)
+
+(in-suite find-components)
+
+(test 影響するコンポーネントの位置を返す
+  (inga:start)
+  (is (equal '((:pos ("line" . 35) ("offset" . 10)))
+             (inga:find-components
+               '(:pos ("line" . 11) ("offset" . 12)))))
+  (inga:stop))
+
+(run! 'find-components)
 

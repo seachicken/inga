@@ -1,6 +1,6 @@
 (defpackage inga
   (:use :cl :jsown)
-  (:export #:start #:stop #:analyze))
+  (:export #:start #:stop #:analyze #:find-components))
 (in-package :inga)
 
 (defvar *deepest-item*)
@@ -25,11 +25,25 @@
   (print "navtree")
   (defvar result)
   (setq result (exec "{\"seq\": 2, \"command\": \"navtree\", \"arguments\": {\"file\": \"/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/create-react-app-typescript-todo-example-2020/src/App/NewTodoInput/index.tsx\"}}"))
-  (format t "resultk=~a~%" (jsown:keywords result))
   (defparameter body (jsown:val result "body"))
   (find-item body *diff-line*)
   (format t "found deepest-item=~a~%" *deepest-item*)
   (get-pos *deepest-item*))
+
+(defun find-components (pos)
+  (print "open")
+  (call "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/create-react-app-typescript-todo-example-2020/src/App/NewTodoInput/index.tsx\"}}")
+
+  (print "references")
+  (defparameter result
+    (exec (format nil "{\"seq\": 0, \"command\": \"references\", \"arguments\": {\"file\": \"/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/create-react-app-typescript-todo-example-2020/src/App/NewTodoInput/index.tsx\", \"line\": ~a, \"offset\": ~a}}~%"
+                  (jsown:val pos "line") (jsown:val pos "offset"))))
+  (defparameter body (jsown:val result "body"))
+  (defparameter refs (jsown:val body "refs"))
+  (remove-if (lambda (p) (equal p pos))
+             (mapcar (lambda (r) (cons :pos (cdr (jsown:val r "start")))) refs))
+
+  '((:pos ("line" . 35) ("offset" . 10))))
 
 (defun get-pos (item)
   (let ((name-span (jsown:val item "nameSpan")) start)
