@@ -5,15 +5,25 @@
 
 (defvar *deepest-item*)
 (defvar *tsserver*)
+(defvar *tsparser*)
 
 (defun start ()
   (print "hello")
   ;; TODO: フルパスを止めたい
-  (setq *tsserver* (uiop:launch-program "/Users/seito/.nvm/versions/node/v14.16.0/bin/tsserver" :input :stream :output :stream)))
+  (setq *tsserver* (uiop:launch-program "/Users/seito/.nvm/versions/node/v14.17.0/bin/tsserver" :input :stream :output :stream)))
 
 (defun stop ()
   (print "bye")
   (uiop:close-streams *tsserver*))
+
+(defun start-tsparser ()
+  (print "start tsparser")
+  ;; TODO: フルパスを止めたい
+  (setq *tsparser* (uiop:launch-program "node /Users/seito/git/GitHub/tsparser/bin/tsparser" :input :stream :output :stream)))
+
+(defun stop-tsparser ()
+  (print "stop tsparser")
+  (uiop:close-streams *tsparser*))
 
 (defun analyze ()
   ;; TODO: diffから動的に取得する
@@ -36,14 +46,17 @@
 
   (print "references")
   (defparameter result
-    (exec (format nil "{\"seq\": 0, \"command\": \"references\", \"arguments\": {\"file\": \"/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/create-react-app-typescript-todo-example-2020/src/App/NewTodoInput/index.tsx\", \"line\": ~a, \"offset\": ~a}}~%"
+    (exec (format nil "{\"seq\": 2, \"command\": \"references\", \"arguments\": {\"file\": \"/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/create-react-app-typescript-todo-example-2020/src/App/NewTodoInput/index.tsx\", \"line\": ~a, \"offset\": ~a}}"
                   (jsown:val pos "line") (jsown:val pos "offset"))))
   (defparameter body (jsown:val result "body"))
   (defparameter refs (jsown:val body "refs"))
   (remove-if (lambda (p) (equal p pos))
              (mapcar (lambda (r) (cons :pos (cdr (jsown:val r "start")))) refs))
-
-  '((:pos ("line" . 35) ("offset" . 10))))
+  (format t "alive? ~a~%" (uiop:process-alive-p *tsparser*))
+  (start-tsparser)
+  (format t "alive? ~a~%" (uiop:process-alive-p *tsparser*))
+  (exec-tsparser "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/create-react-app-typescript-todo-example-2020/src/App/NewTodoInput/index.tsx")
+  (stop-tsparser))
 
 (defun get-pos (item)
   (let ((name-span (jsown:val item "nameSpan")) start)
@@ -78,15 +91,36 @@
 (defun exec (command)
   (call command)
   (let ((stream (uiop:process-info-output *tsserver*)))
+     ;; TODO: loop while (listen stream) do の方が安全？
        (loop while stream do
              (defvar result)
              (setq result (jsown:parse (extjson stream)))
              (when (string= (jsown:val result "type") "response")
                (return result)))))
 
+(defun exec-tsparser (command)
+  (call-tsparser command)
+  (let ((stream (uiop:process-info-output *tsparser*)))
+    ;;(loop while (listen stream) do
+    ;;      (print "!!!!!")
+    ;;     ;; Characters are immediately available
+    ;;     (princ (read-line stream))
+    ;;     (terpri)))
+    (defvar result)
+    ;;(setq result (jsown:parse (read-line stream)))
+    (setq result (read-line stream))
+    (format t "r=~a~%" result)
+    (return result)
+    )
+  )
+
 (defun call (command)
   (write-line command (uiop:process-info-input *tsserver*))
   (force-output (uiop:process-info-input *tsserver*)))
+
+(defun call-tsparser (command)
+  (write-line command (uiop:process-info-input *tsparser*))
+  (force-output (uiop:process-info-input *tsparser*)))
 
 (defun extjson (stream)
   ;; Content-Length: 99

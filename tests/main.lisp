@@ -59,5 +59,6 @@
                '(:pos ("line" . 11) ("offset" . 12)))))
   (inga:stop))
 
+;;(run! 'diff-to-pos)
 (run! 'find-components)
 
