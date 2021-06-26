@@ -52,11 +52,28 @@
   (defparameter refs (jsown:val body "refs"))
   (remove-if (lambda (p) (equal p pos))
              (mapcar (lambda (r) (cons :pos (cdr (jsown:val r "start")))) refs))
-  (format t "alive? ~a~%" (uiop:process-alive-p *tsparser*))
+  (format t "refs=~a~%" refs)
   (start-tsparser)
-  (format t "alive? ~a~%" (uiop:process-alive-p *tsparser*))
   (exec-tsparser "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/create-react-app-typescript-todo-example-2020/src/App/NewTodoInput/index.tsx")
   (stop-tsparser))
+
+(defun convert-to-pos (path pos)
+  (defparameter *line-no* 0)
+  (defparameter *result* 0)
+
+  (with-open-file (stream path)
+    (loop for line = (read-line stream nil)
+          while line
+          when (= *line-no* (- (jsown:val pos "line") 1))
+            ;;return (+ *result* (jsown:val pos "offset"))
+            return (- (+ *result* (jsown:val pos "offset")) 1)
+          do
+            (setq *line-no* (+ *line-no* 1))
+            ;; 改行コードも加算
+            (setq *result* (+ *result* (+ (length line) 1)))
+            ;;(setq *result* (+ *result* (length line)))
+            ;;(format t "l=~a~a r=~a~%" *line-no* line *result*))))
+            )))
 
 (defun get-pos (item)
   (let ((name-span (jsown:val item "nameSpan")) start)

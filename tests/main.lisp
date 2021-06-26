@@ -59,6 +59,12 @@
                '(:pos ("line" . 11) ("offset" . 12)))))
   (inga:stop))
 
+(test tsserverの位置情報からtsparserの位置情報に変換
+  (is (equal 1288
+             (inga::convert-to-pos
+               "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/create-react-app-typescript-todo-example-2020/src/App/NewTodoInput/index.tsx"
+               '(:pos ("line" . 40) ("offset" . 69))))))
+
 ;;(run! 'diff-to-pos)
 (run! 'find-components)
 
