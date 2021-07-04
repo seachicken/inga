@@ -41,21 +41,81 @@
   (get-pos *deepest-item*))
 
 (defun find-components (pos)
+  (defparameter src-path "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/create-react-app-typescript-todo-example-2020/src/App/NewTodoInput/index.tsx")
+
   (print "open")
-  (call "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/create-react-app-typescript-todo-example-2020/src/App/NewTodoInput/index.tsx\"}}")
+  (call (format nil "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}" src-path))
 
   (print "references")
   (defparameter result
-    (exec (format nil "{\"seq\": 2, \"command\": \"references\", \"arguments\": {\"file\": \"/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/create-react-app-typescript-todo-example-2020/src/App/NewTodoInput/index.tsx\", \"line\": ~a, \"offset\": ~a}}"
-                  (jsown:val pos "line") (jsown:val pos "offset"))))
+    (exec (format nil "{\"seq\": 2, \"command\": \"references\", \"arguments\": {\"file\": \"~a\", \"line\": ~a, \"offset\": ~a}}"
+                  src-path (jsown:val pos "line") (jsown:val pos "offset"))))
   (defparameter body (jsown:val result "body"))
   (defparameter refs (jsown:val body "refs"))
-  (remove-if (lambda (p) (equal p pos))
-             (mapcar (lambda (r) (cons :pos (cdr (jsown:val r "start")))) refs))
-  (format t "refs=~a~%" refs)
+  (defparameter refposs (remove-if (lambda (p) (equal p pos))
+                                   (mapcar (lambda (r) (cons :pos (cdr (jsown:val r "start")))) refs)))
+  (defparameter poss (mapcar (lambda (p) (convert-to-pos src-path p)) refposs))
+  (format t "poss=~a~%" poss)
+
   (start-tsparser)
-  (exec-tsparser "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/create-react-app-typescript-todo-example-2020/src/App/NewTodoInput/index.tsx")
-  (stop-tsparser))
+  (defparameter ast
+    (exec-tsparser src-path))
+  (stop-tsparser) 
+
+  (let ((json-cons-cells (cdr (jsown:parse ast)))) ;; パース結果のルートにあるcar "OBJ"を除く
+    (mapcar (lambda (p)
+            (find-component json-cons-cells p)) poss))
+)
+
+(defparameter *jsx-opening-element* 276)
+(defparameter *jsx-self-closing-element* 275)
+(defun find-component (ast pos)
+  (when (not (null ast))
+    (if (consp (car ast))
+        (progn
+          (when (and (jsown:keyp ast "start") (equal (jsown:val ast "start") pos))
+            (format t "start=~a, ast=~a~%" (jsown:val ast "start") ast))
+
+        ;; has children
+        ;;(format t "cons t has children=~a, ~a~%" (consp (cdr (car ast))) ast)
+        (if (consp (cdr (car ast)))
+            (progn
+              (find-component (cdr (car ast)) pos)
+              ;;(format t "else1~a~%" (cdr ast))
+              (find-component (cdr ast) pos))
+            (progn
+              ;;(format t "else2~a~%" (cdr ast))
+              (when (cdr ast)
+                (find-component (cdr ast) pos)))))
+      (progn
+        ;;(format t "else3~a~%" (cdr ast))
+        (find-component (cdr ast) pos)))
+  )
+)
+
+  ;;(loop for k in (jsown:keywords ast) do
+  ;;      (defparameter node (jsown:val ast k))
+  ;;      (when (consp node)
+  ;;        (format t "consp=~a~%" node)
+  ;;        (find-component node pos)
+  ;;        )
+  ;;      ))
+
+  ;;(defparameter child-nodes (find-child-nodes ast))
+  ;;(if child-nodes
+  ;;    (find-component child-nodes pos)
+  ;;    (when (jsown:keyp ast "OBJ")
+  ;;      (progn
+  ;;        (format t "found obj~%")
+  ;;        (loop for node in ast do
+  ;;              (format t "start=~a, node=~a~%" (jsown:val node "start") (jsown:keywords node))
+  ;;              (find-component node pos))))))
+
+(defun find-child-nodes (node)
+  (if (jsown:keyp node "statements")
+    (jsown:val node "statements")
+  (when (jsown:keyp node "parameters")
+    (jsown:val node "parameters"))))
 
 (defun convert-to-pos (path pos)
   (defparameter *line-no* 0)
@@ -123,13 +183,13 @@
     ;;     ;; Characters are immediately available
     ;;     (princ (read-line stream))
     ;;     (terpri)))
-    (defvar result)
-    ;;(setq result (jsown:parse (read-line stream)))
-    (setq result (read-line stream))
-    (format t "r=~a~%" result)
-    (return result)
-    )
-  )
+    (read-line stream)
+    ))
+    ;;(defvar result)
+    ;;;;(setq result (jsown:parse (read-line stream)))
+    ;;(setq result (read-line stream))
+    ;;;;(format t "r=~a~%" result)
+    ;;(return result)))
 
 (defun call (command)
   (write-line command (uiop:process-info-input *tsserver*))

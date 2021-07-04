@@ -66,5 +66,6 @@
                '(:pos ("line" . 40) ("offset" . 69))))))
 
 ;;(run! 'diff-to-pos)
-(run! 'find-components)
+;;(run! 'find-components)
+(run! '影響するコンポーネントの位置を返す)
 
