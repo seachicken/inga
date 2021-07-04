@@ -13,7 +13,8 @@
 
 (test 解析する
   (inga:start)
-  (is (equal '(:pos ("line" . 11) ("offset" . 12)) (inga:analyze)))
+  (is (equal '((:pos ("line" . 35) ("offset" . 10)))
+             (inga:analyze)))
   (inga:stop))
 
 (test 検索結果から位置を抽出する
@@ -72,6 +73,7 @@
                1288))))
 
 ;;(run! 'diff-to-pos)
-(run! 'find-components)
+(run! '解析する)
+;;(run! 'find-components)
 ;;(run! 'tsparserの位置情報からtsserverの位置情報に変換)
 

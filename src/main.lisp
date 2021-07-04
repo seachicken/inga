@@ -37,8 +37,7 @@
   (setq result (exec "{\"seq\": 2, \"command\": \"navtree\", \"arguments\": {\"file\": \"/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/create-react-app-typescript-todo-example-2020/src/App/NewTodoInput/index.tsx\"}}"))
   (defparameter body (jsown:val result "body"))
   (find-item body *diff-line*)
-  (format t "found deepest-item=~a~%" *deepest-item*)
-  (get-pos *deepest-item*))
+  (find-components (get-pos *deepest-item*)))
 
 (defun find-components (pos)
   (defparameter src-path "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/create-react-app-typescript-todo-example-2020/src/App/NewTodoInput/index.tsx")
@@ -164,7 +163,7 @@
       (progn
         ;;(format t "has child~%")
         (find-item (jsown:val tree "childItems") line))
-      (when (jsown:keyp tree "obj")
+      (when (jsown:keyp tree "OBJ")
         ;;(format t "has OBJ list~%")
         (loop for obj in tree do
               ;;(format t "objk=~a, text=~a, kind=~a~%"
