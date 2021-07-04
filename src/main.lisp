@@ -69,7 +69,18 @@
 
 (defparameter *jsx-opening-element* 276)
 (defparameter *jsx-self-closing-element* 275)
+
+(defparameter *nearest-comp-pos* nil)
+(defparameter *result-nearest-comp-pos* nil)
+
 (defun find-component (ast pos)
+  (when (and (jsown:keyp ast "kind")
+             (or
+               (equal (jsown:val ast "kind") *jsx-opening-element*) 
+               (equal (jsown:val ast "kind") *jsx-self-closing-element*)))
+    (format t "kind=~a, start=~a~%" (jsown:val ast "kind") (jsown:val ast "start"))
+    (setq *nearest-comp-pos* (jsown:val ast "start")))
+
   (when (not (null ast))
     (if (consp (car ast))
         (progn
