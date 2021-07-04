@@ -54,7 +54,7 @@
   (defparameter refs (jsown:val body "refs"))
   (defparameter refposs (remove-if (lambda (p) (equal p pos))
                                    (mapcar (lambda (r) (cons :pos (cdr (jsown:val r "start")))) refs)))
-  (defparameter poss (mapcar (lambda (p) (convert-to-pos src-path p)) refposs))
+  (defparameter poss (mapcar (lambda (p) (convert-to-ast-pos src-path p)) refposs))
   (format t "poss=~a~%" poss)
 
   (start-tsparser)
@@ -64,7 +64,7 @@
 
   (let ((json-cons-cells (cdr (jsown:parse ast)))) ;; パース結果のルートにあるcar "OBJ"を除く
     (mapcar (lambda (p)
-                     (find-component json-cons-cells p)) poss))
+              (convert-to-pos src-path (find-component json-cons-cells p))) poss))
 )
 
 (defparameter *jsx-opening-element* 276)
@@ -79,7 +79,8 @@
                (equal (jsown:val ast "kind") *jsx-opening-element*) 
                (equal (jsown:val ast "kind") *jsx-self-closing-element*)))
     ;;(format t "kind=~a, start=~a~%" (jsown:val ast "kind") (jsown:val ast "start"))
-    (setq *nearest-comp-pos* (jsown:val ast "start")))
+    ;; <の文字数を加算
+    (setq *nearest-comp-pos* (+ (jsown:val ast "start") 1)))
 
   (when (not (null ast))
     (if (consp (car ast))
@@ -103,27 +104,7 @@
                 (return-from find-component (find-component (cdr ast) pos))))))
       (progn
         ;;(format t "else3~a~%" (cdr ast))
-        (return-from find-component (find-component (cdr ast) pos))))
-  )
-)
-
-  ;;(loop for k in (jsown:keywords ast) do
-  ;;      (defparameter node (jsown:val ast k))
-  ;;      (when (consp node)
-  ;;        (format t "consp=~a~%" node)
-  ;;        (find-component node pos)
-  ;;        )
-  ;;      ))
-
-  ;;(defparameter child-nodes (find-child-nodes ast))
-  ;;(if child-nodes
-  ;;    (find-component child-nodes pos)
-  ;;    (when (jsown:keyp ast "OBJ")
-  ;;      (progn
-  ;;        (format t "found obj~%")
-  ;;        (loop for node in ast do
-  ;;              (format t "start=~a, node=~a~%" (jsown:val node "start") (jsown:keywords node))
-  ;;              (find-component node pos))))))
+        (return-from find-component (find-component (cdr ast) pos))))))
 
 (defun find-child-nodes (node)
   (if (jsown:keyp node "statements")
@@ -131,7 +112,7 @@
   (when (jsown:keyp node "parameters")
     (jsown:val node "parameters"))))
 
-(defun convert-to-pos (path pos)
+(defun convert-to-ast-pos (path pos)
   (defparameter *line-no* 0)
   (defparameter *result* 0)
 
@@ -147,6 +128,26 @@
             (setq *result* (+ *result* (+ (length line) 1)))
             ;;(setq *result* (+ *result* (length line)))
             ;;(format t "l=~a~a r=~a~%" *line-no* line *result*))))
+            )))
+
+(defun convert-to-pos (path pos)
+  (defparameter *line-no* 0)
+  (defparameter cnt 0)
+
+  (with-open-file (stream path)
+    (loop for line = (read-line stream nil)
+          while line
+          when (<= pos (+ cnt (length line) 1))
+          return (cons :pos
+                       (cons
+                         (cons "line" (+ *line-no* 1))
+                         (cons
+                           (cons "offset" (- (+ (length line) 1) (- (+ cnt (length line)) pos)))
+                           nil)))
+          do
+            (setq *line-no* (+ *line-no* 1))
+            ;; 改行コードも加算
+            (setq cnt (+ cnt (length line) 1))
             )))
 
 (defun get-pos (item)
