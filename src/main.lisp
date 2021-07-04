@@ -64,7 +64,7 @@
 
   (let ((json-cons-cells (cdr (jsown:parse ast)))) ;; パース結果のルートにあるcar "OBJ"を除く
     (mapcar (lambda (p)
-            (find-component json-cons-cells p)) poss))
+                     (find-component json-cons-cells p)) poss))
 )
 
 (defparameter *jsx-opening-element* 276)
@@ -78,29 +78,32 @@
              (or
                (equal (jsown:val ast "kind") *jsx-opening-element*) 
                (equal (jsown:val ast "kind") *jsx-self-closing-element*)))
-    (format t "kind=~a, start=~a~%" (jsown:val ast "kind") (jsown:val ast "start"))
+    ;;(format t "kind=~a, start=~a~%" (jsown:val ast "kind") (jsown:val ast "start"))
     (setq *nearest-comp-pos* (jsown:val ast "start")))
 
   (when (not (null ast))
     (if (consp (car ast))
         (progn
           (when (and (jsown:keyp ast "start") (equal (jsown:val ast "start") pos))
-            (format t "start=~a, ast=~a~%" (jsown:val ast "start") ast))
+            ;;(format t "start=~a, ast=~a~%" (jsown:val ast "start") ast)
+            (return-from find-component *nearest-comp-pos*))
 
         ;; has children
         ;;(format t "cons t has children=~a, ~a~%" (consp (cdr (car ast))) ast)
         (if (consp (cdr (car ast)))
             (progn
-              (find-component (cdr (car ast)) pos)
+              (let ((comp-pos (find-component (cdr (car ast)) pos)))
+                (when (not (null comp-pos))
+                  (return-from find-component comp-pos)))
               ;;(format t "else1~a~%" (cdr ast))
-              (find-component (cdr ast) pos))
+              (return-from find-component (find-component (cdr ast) pos)))
             (progn
               ;;(format t "else2~a~%" (cdr ast))
               (when (cdr ast)
-                (find-component (cdr ast) pos)))))
+                (return-from find-component (find-component (cdr ast) pos))))))
       (progn
         ;;(format t "else3~a~%" (cdr ast))
-        (find-component (cdr ast) pos)))
+        (return-from find-component (find-component (cdr ast) pos))))
   )
 )
 
