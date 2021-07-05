@@ -72,8 +72,8 @@
                "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/create-react-app-typescript-todo-example-2020/src/App/NewTodoInput/index.tsx"
                1288))))
 
-;;(run! 'diff-to-pos)
-(run! '解析する)
-;;(run! 'find-components)
+(run! 'diff-to-pos)
+(run! 'find-components)
+;;(run! '解析する)
 ;;(run! 'tsparserの位置情報からtsserverの位置情報に変換)
 

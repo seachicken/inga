@@ -27,16 +27,19 @@
 
 (defun analyze ()
   ;; TODO: diffから動的に取得する
+  (defparameter src-path "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/create-react-app-typescript-todo-example-2020/src/App/NewTodoInput/index.tsx")
   (defparameter *diff-line* 13)
+  ;;(defparameter *diff-line* 33)
 
   (print "open")
-  (call "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/create-react-app-typescript-todo-example-2020/src/App/NewTodoInput/index.tsx\"}}")
+  (call (format nil "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}" src-path))
 
   (print "navtree")
   (defvar result)
-  (setq result (exec "{\"seq\": 2, \"command\": \"navtree\", \"arguments\": {\"file\": \"/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/create-react-app-typescript-todo-example-2020/src/App/NewTodoInput/index.tsx\"}}"))
+  (setq result (exec (format nil "{\"seq\": 2, \"command\": \"navtree\", \"arguments\": {\"file\": \"~a\"}}" src-path)))
   (defparameter body (jsown:val result "body"))
   (find-item body *diff-line*)
+  (format t "~%find-item=~a" *deepest-item*)
   (find-components (get-pos *deepest-item*)))
 
 (defun find-components (pos)
@@ -49,12 +52,13 @@
   (defparameter result
     (exec (format nil "{\"seq\": 2, \"command\": \"references\", \"arguments\": {\"file\": \"~a\", \"line\": ~a, \"offset\": ~a}}"
                   src-path (jsown:val pos "line") (jsown:val pos "offset"))))
+  (format t "~%refs=~a" result)
   (defparameter body (jsown:val result "body"))
   (defparameter refs (jsown:val body "refs"))
   (defparameter refposs (remove-if (lambda (p) (equal p pos))
                                    (mapcar (lambda (r) (cons :pos (cdr (jsown:val r "start")))) refs)))
   (defparameter poss (mapcar (lambda (p) (convert-to-ast-pos src-path p)) refposs))
-  (format t "poss=~a~%" poss)
+  (format t "~%poss=~a" poss)
 
   (start-tsparser)
   (defparameter ast
