@@ -13,7 +13,7 @@
 
 (test 解析する
   (inga:start)
-  (is (equal '((:pos ("line" . 35) ("offset" . 10)))
+  (is (equal '((:pos ("line" . 34) ("offset" . 10)))
              (inga:analyze)))
   (inga:stop))
 
@@ -55,22 +55,22 @@
 
 (test 影響するコンポーネントの位置を返す
   (inga:start)
-  (is (equal '((:pos ("line" . 35) ("offset" . 10)))
+  (is (equal '((:pos ("line" . 34) ("offset" . 10)))
              (inga:find-components
-               '(:pos ("line" . 11) ("offset" . 12)))))
+               '(:pos ("line" . 12) ("offset" . 12)))))
   (inga:stop))
 
 (test tsserverの位置情報からtsparserの位置情報に変換
-  (is (equal 1288
+  (is (equal 1241
              (inga::convert-to-ast-pos
-               "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/create-react-app-typescript-todo-example-2020/src/App/NewTodoInput/index.tsx"
-               '(:pos ("line" . 40) ("offset" . 69))))))
+               "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx"
+               '(:pos ("line" . 39) ("offset" . 69))))))
 
 (test tsparserの位置情報からtsserverの位置情報に変換
-  (is (equal '(:pos ("line" . 40) ("offset" . 69))
+  (is (equal '(:pos ("line" . 39) ("offset" . 69))
              (inga::convert-to-pos
-               "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/create-react-app-typescript-todo-example-2020/src/App/NewTodoInput/index.tsx"
-               1288))))
+               "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx"
+               1241))))
 
 (run! 'diff-to-pos)
 (run! 'find-components)
