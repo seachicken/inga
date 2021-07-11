@@ -2,20 +2,12 @@
   :version "0.1.0"
   :author "Seito Tanaka"
   :license "MIT"
-  :depends-on ("jsown")
-  :components ((:module "src"
-                :components
-                ((:file "main"))))
-  :description ""
+  :class :package-inferred-system
+  :depends-on ("inga/all")
   :in-order-to ((test-op (test-op "inga/tests"))))
 
 (defsystem "inga/tests"
-  :author "Seito Tanaka"
-  :license "MIT"
-  :depends-on ("inga"
-               "fiveam")
-  :components ((:module "tests"
-                :components
-                ((:file "main"))))
-  :description "Test system for inga"
-  :perform (test-op (op c) (symbol-call :fiveam '#:run-all-tests)))
+  :class :package-inferred-system
+  :depends-on ("fiveam"
+               "inga/tests/all")
+  :perform (test-op (o c) (symbol-call :fiveam '#:run-all-tests)))
