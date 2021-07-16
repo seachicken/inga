@@ -1,8 +1,8 @@
-(defpackage :inga/tests/ts-helper
+(defpackage :inga/test/ts-helper
   (:use :cl
         :fiveam
         :inga/ts-helper))
-(in-package :inga/tests/ts-helper)
+(in-package :inga/test/ts-helper)
 
 (def-suite ts-helper)
 
@@ -43,13 +43,13 @@
 (test tsserverの位置情報からtsparserの位置情報に変換
   (is (equal 1241
              (convert-to-ast-pos
-               "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx"
+               "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx"
                '(:pos ("line" . 39) ("offset" . 69))))))
 
 (test tsparserの位置情報からtsserverの位置情報に変換
   (is (equal '(:pos ("line" . 39) ("offset" . 69))
              (convert-to-pos
-               "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/tests/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx"
+               "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx"
                1241))))
 
 (run! 'ts-helper)

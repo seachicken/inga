@@ -1,8 +1,8 @@
-(defpackage :inga/tests/main
+(defpackage :inga/test/main
   (:use :cl
         :fiveam
         :inga/main))
-(in-package :inga/tests/main)
+(in-package :inga/test/main)
 
 ;; NOTE: To run this test file, execute `(asdf:test-system :inga)' in your Lisp.
 
