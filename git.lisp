@@ -1,13 +1,30 @@
 (defpackage :inga/git
   (:use :cl)
-  (:export #:start-git #:stop-git))
+  (:import-from :ppcre)
+  (:export #:get-diff))
 (in-package :inga/git)
 
-(defun start-git ()
-  (print "start git")
+(defun get-diff (sha)
+  (defparameter src-path "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/test/fixtures/react-typescript-todo")
+  (let ((diff (uiop:run-program (format nil "(cd ~a && git diff ~a --unified=0)" src-path sha)
+                                :output :string)))
+    ;;(format t "d=~a~%" diff)
+    (let ((ranges '()))
+      (ppcre:do-matches-as-strings (match "@@.+@@" diff)
+        (progn
+          ;;(format t "match=~a~%" match)
+          (defparameter m (multiple-value-list
+                            (ppcre:scan-to-strings "@@.+\\+([0-9]+),([0-9]+) @@" match)))
+          ;;(format t "m=~a~%" (cdr m))
+          (let ((start (parse-integer (aref (car (cdr m)) 0)))
+                (rows (parse-integer (aref (car (cdr m)) 1))))
+            (let ((end (if (= rows 0) start (- (+ start rows) 1))))
+              ;;(format t "s=~a, rs=~a~%" start rows)
+              (setq ranges (append ranges (list (cons "start" start) (cons "end" end))))))
+          )
+        )
+      ;;(format t "rs=~a~%" ranges)
+      (return-from get-diff ranges))
   )
-
-(defun stop-git ()
-  (print "stop git")
-  )
+)
 

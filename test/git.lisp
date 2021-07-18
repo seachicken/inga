@@ -8,9 +8,9 @@
 
 (in-suite git)
 
-(test start-git
-  (inga:start-git)
-  (is (equal 0 0))
-  )
-
+(test get-diff
+  (is (equal '(("start" . 13) ("end" . 15)
+               ("start" . 23) ("end" . 23))
+             (inga:get-diff "a690a51"))))
+ 
 (run! 'git)
