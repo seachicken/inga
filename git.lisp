@@ -18,11 +18,6 @@
             (let ((start (parse-integer (aref to-range 0)))
                   (rows (if (> (length (aref to-range 1)) 0) (parse-integer (aref to-range 1)) 0)))
               (let ((end (if (= rows 0) start (- (+ start rows) 1))))
-                (setq ranges (append ranges (list (cons "start" start) (cons "end" end))))))
-            )
-          )
-        )
-      (return-from get-diff ranges))
-  )
-)
+                (setq ranges (append ranges (list (cons "start" start) (cons "end" end)))))))))
+      (return-from get-diff ranges))))
 
