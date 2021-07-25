@@ -52,13 +52,11 @@
             (defparameter body (jsown:val result "body"))
             (find-item body *diff-line*)
             ;;(format t "~%find-item=~a" *deepest-item*)
-            (find-components (get-pos *deepest-item*)))
+            (find-components src-path (get-pos *deepest-item*)))
           (get-diff project-path sha-a sha-b))
   )
 
-(defun find-components (pos)
-  (defparameter src-path "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx")
-
+(defun find-components (src-path pos)
   (print "open")
   (call (format nil "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}" src-path))
 

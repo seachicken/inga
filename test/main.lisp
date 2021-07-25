@@ -10,20 +10,23 @@
 
 (in-suite main)
 
-(defparameter *project-path* "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/test/fixtures/react-typescript-todo")
+(defparameter *project-path* "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/test/fixtures/react-typescript-todo/")
 
 (test 解析する
   (inga:start)
   (is (equal '((:pos ("line" . 34) ("offset" . 10)))
-             (inga:analyze *project-path* "a690a51" "dc33553")))
+             (inga:analyze *project-path* "a690a51" "4d33bd8")))
   (inga:stop))
 
 (test 影響するコンポーネントの位置を返す
   (inga:start)
   (is (equal '((:pos ("line" . 34) ("offset" . 10)))
              (inga:find-components
+               (format nil "~a~a" *project-path* "src/App/NewTodoInput/index.tsx")
                '(:pos ("line" . 12) ("offset" . 12)))))
   (inga:stop))
 
-(run! 'main)
+;;(run! 'main)
+(run! '解析する)
+;;(run! '影響するコンポーネントの位置を返す)
 
