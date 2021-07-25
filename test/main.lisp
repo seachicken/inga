@@ -26,7 +26,7 @@
                '(:pos ("line" . 12) ("offset" . 12)))))
   (inga:stop))
 
-;;(run! 'main)
-(run! '解析する)
+(run! 'main)
+;;(run! '解析する)
 ;;(run! '影響するコンポーネントの位置を返す)
 

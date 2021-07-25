@@ -40,8 +40,6 @@
   (mapcan (lambda (range)
             ;;(format t "r=~a~%" range)
             (defparameter src-path (format nil "~a~a" project-path (get-val range "path")))
-            ;; TODO: "end"までの複数行に対応
-            (defparameter *diff-line* (get-val range "start"))
 
             (print "open")
             (call (format nil "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}" src-path))
@@ -50,9 +48,11 @@
             (defvar result)
             (setq result (exec (format nil "{\"seq\": 2, \"command\": \"navtree\", \"arguments\": {\"file\": \"~a\"}}" src-path)))
             (defparameter body (jsown:val result "body"))
-            (find-item body *diff-line*)
-            ;;(format t "~%find-item=~a" *deepest-item*)
-            (find-components src-path (get-pos *deepest-item*)))
+            (mapcan (lambda (line)
+                      (find-item body line)
+                      ;;(format t "~%find-item=~a" *deepest-item*)
+                      (find-components src-path (get-pos *deepest-item*)))
+                    (loop for line from (get-val range "start") to (get-val range "end") collect line)))
           (get-diff project-path sha-a sha-b))
   )
 
