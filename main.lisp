@@ -1,7 +1,7 @@
 (defpackage :inga/main
   (:use :cl
-        :inga/ts-helper
-        :inga/git)
+        :inga/git
+        :inga/ts-helper)
   (:import-from :jsown)
   (:export #:start
            #:stop
@@ -15,14 +15,12 @@
 
 (defun start ()
   (print "hello")
-  (start-git)
   ;; TODO: フルパスを止めたい
   (setq *tsserver* (uiop:launch-program "/Users/seito/.nvm/versions/node/v14.17.0/bin/tsserver" :input :stream :output :stream)))
 
 (defun stop ()
   (print "bye")
-  (uiop:close-streams *tsserver*)
-  (stop-git))
+  (uiop:close-streams *tsserver*))
 
 (defun start-tsparser ()
   (print "start tsparser")
@@ -33,22 +31,30 @@
   (print "stop tsparser")
   (uiop:close-streams *tsparser*))
 
-(defun analyze ()
-  ;; TODO: diffから動的に取得する
-  (defparameter src-path "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx")
-  (defparameter *diff-line* 14)
-  ;;(defparameter *diff-line* 33)
+(defun get-val (list key)
+  (loop for item in list do
+        (when (equal (car item) key)
+          (return-from get-val (cdr item)))))
 
-  (print "open")
-  (call (format nil "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}" src-path))
+(defun analyze (project-path sha-a &optional (sha-b))
+  (mapcan (lambda (range)
+            ;;(format t "r=~a~%" range)
+            (defparameter src-path (format nil "~a~a" project-path (get-val range "path")))
+            ;; TODO: "end"までの複数行に対応
+            (defparameter *diff-line* (get-val range "start"))
 
-  (print "navtree")
-  (defvar result)
-  (setq result (exec (format nil "{\"seq\": 2, \"command\": \"navtree\", \"arguments\": {\"file\": \"~a\"}}" src-path)))
-  (defparameter body (jsown:val result "body"))
-  (find-item body *diff-line*)
-  (format t "~%find-item=~a" *deepest-item*)
-  (find-components (get-pos *deepest-item*)))
+            (print "open")
+            (call (format nil "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}" src-path))
+
+            (print "navtree")
+            (defvar result)
+            (setq result (exec (format nil "{\"seq\": 2, \"command\": \"navtree\", \"arguments\": {\"file\": \"~a\"}}" src-path)))
+            (defparameter body (jsown:val result "body"))
+            (find-item body *diff-line*)
+            ;;(format t "~%find-item=~a" *deepest-item*)
+            (find-components (get-pos *deepest-item*)))
+          (get-diff project-path sha-a sha-b))
+  )
 
 (defun find-components (pos)
   (defparameter src-path "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx")
@@ -60,13 +66,13 @@
   (defparameter result
     (exec (format nil "{\"seq\": 2, \"command\": \"references\", \"arguments\": {\"file\": \"~a\", \"line\": ~a, \"offset\": ~a}}"
                   src-path (jsown:val pos "line") (jsown:val pos "offset"))))
-  (format t "~%refs=~a" result)
+  ;;(format t "~%refs=~a" result)
   (defparameter body (jsown:val result "body"))
   (defparameter refs (jsown:val body "refs"))
   (defparameter refposs (remove-if (lambda (p) (equal p pos))
                                    (mapcar (lambda (r) (cons :pos (cdr (jsown:val r "start")))) refs)))
   (defparameter poss (mapcar (lambda (p) (convert-to-ast-pos src-path p)) refposs))
-  (format t "~%poss=~a" poss)
+  ;;(format t "~%poss=~a" poss)
 
   (start-tsparser)
   (defparameter ast

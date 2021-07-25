@@ -6,19 +6,17 @@
 
 ;; NOTE: To run this test file, execute `(asdf:test-system :inga)' in your Lisp.
 
-(def-suite diff-to-pos)
+(def-suite main)
 
-(in-suite diff-to-pos)
+(in-suite main)
+
+(defparameter *project-path* "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/test/fixtures/react-typescript-todo")
 
 (test 解析する
   (inga:start)
   (is (equal '((:pos ("line" . 34) ("offset" . 10)))
-             (inga:analyze)))
+             (inga:analyze *project-path* "a690a51" "dc33553")))
   (inga:stop))
-
-(def-suite find-components)
-
-(in-suite find-components)
 
 (test 影響するコンポーネントの位置を返す
   (inga:start)
@@ -27,5 +25,5 @@
                '(:pos ("line" . 12) ("offset" . 12)))))
   (inga:stop))
 
-(run! 'diff-to-pos)
-(run! 'find-components)
+(run! 'main)
+

@@ -4,9 +4,8 @@
   (:export #:get-diff))
 (in-package :inga/git)
 
-(defun get-diff (sha-a &optional (sha-b))
-  (defparameter src-path "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/test/fixtures/react-typescript-todo")
-  (let ((diff (uiop:run-program (format nil "(cd ~a && git diff ~a ~a --unified=0)" src-path sha-a sha-b)
+(defun get-diff (project-path sha-a &optional (sha-b))
+  (let ((diff (uiop:run-program (format nil "(cd ~a && git diff ~a ~a --unified=0)" project-path sha-a sha-b)
                                 :output :string)))
     ;;(format t "d=~a~%" diff)
 
@@ -29,5 +28,5 @@
                               (rows (if (> (length (aref to-range 1)) 0) (parse-integer (aref to-range 1)) 0)))
                           (let ((end (if (= rows 0) start (- (+ start rows) 1))))
                             (vector-push-extend (list (cons "path" to-path) (cons "start" start) (cons "end" end)) ranges)))))))
-        (return-from get-diff (map 'list #'identity ranges))))))
+        (return-from get-diff (coerce ranges 'list))))))
 
