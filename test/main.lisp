@@ -10,7 +10,7 @@
 
 (in-suite main)
 
-(defparameter *project-path* "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/test/fixtures/react-typescript-todo/")
+(defparameter *project-path* "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/")
 
 (test 解析する
   (inga:start)
