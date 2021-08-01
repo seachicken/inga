@@ -1,12 +1,15 @@
 # Inga
 
-## Development in Local
+## Installation
 
 ### Prerequisites
 
-- `node --version`
-  - v14.16.0
-- `npm -g install typescript`
+- **Roswell**: Install from [roswell](https://github.com/roswell/roswell#installation-dependency--usage).
+- **Node v14**
 
-### Run
+### Installation
+
+```sh
+npm -g install typescript
+```
 
