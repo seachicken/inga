@@ -4,8 +4,10 @@
   (:export #:get-diff))
 (in-package :inga/git)
 
-(defun get-diff (project-path sha-a &optional (sha-b))
-  (let ((diff (uiop:run-program (format nil "(cd ~a && git diff ~a ~a --unified=0)" project-path sha-a sha-b)
+(defun get-diff (project-path sha-a &optional sha-b)
+  (let ((diff (uiop:run-program (if (null sha-b)
+                                    (format nil "(cd ~a && git diff ~a --unified=0)" project-path sha-a)
+                                    (format nil "(cd ~a && git diff ~a ~a --unified=0)" project-path sha-a sha-b))
                                 :output :string)))
     ;;(format t "d=~a~%" diff)
 
