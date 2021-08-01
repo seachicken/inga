@@ -43,13 +43,15 @@
 (test tsserverの位置情報からtsparserの位置情報に変換
   (is (equal 1241
              (convert-to-ast-pos
-               "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx"
+               "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx"
                '(:pos ("line" . 39) ("offset" . 69))))))
 
 (test tsparserの位置情報からtsserverの位置情報に変換
-  (is (equal '(:pos ("line" . 39) ("offset" . 69))
+  (is (equal '(:pos
+                ("path" . "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx")
+                ("line" . 39) ("offset" . 69))
              (convert-to-pos
-               "/Users/seito/.roswell/lisp/quicklisp/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx"
+               "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx"
                1241))))
 
 (run! 'ts-helper)
