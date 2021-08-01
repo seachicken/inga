@@ -11,5 +11,14 @@
 
 ```sh
 npm -g install typescript
+
+(ql:quickload :fiveam)
+(ql:quickload :cl-ppcre)
+```
+
+## Development
+
+```sh
+git clone <this repository> --recursive
 ```
 
