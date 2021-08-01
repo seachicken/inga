@@ -15,8 +15,7 @@
 
 (defun start ()
   (print "hello")
-  ;; TODO: フルパスを止めたい
-  (setq *tsserver* (uiop:launch-program "/Users/seito/.nvm/versions/node/v14.17.0/bin/tsserver" :input :stream :output :stream)))
+  (setq *tsserver* (uiop:launch-program "tsserver" :input :stream :output :stream)))
 
 (defun stop ()
   (print "bye")
@@ -24,8 +23,7 @@
 
 (defun start-tsparser ()
   (print "start tsparser")
-  ;; TODO: フルパスを止めたい
-  (setq *tsparser* (uiop:launch-program "node /Users/seito/git/GitHub/tsparser/bin/tsparser" :input :stream :output :stream)))
+  (setq *tsparser* (uiop:launch-program "tsparser" :input :stream :output :stream)))
 
 (defun stop-tsparser ()
   (print "stop tsparser")
