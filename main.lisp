@@ -46,15 +46,18 @@
             (defvar result)
             (setq result (exec (format nil "{\"seq\": 2, \"command\": \"navtree\", \"arguments\": {\"file\": \"~a\"}}" src-path)))
             (defparameter body (jsown:val result "body"))
+            ;;(format t "body=~a~%" body)
             (mapcan (lambda (line)
                       (find-item body line)
                       ;;(format t "~%find-item=~a" *deepest-item*)
-                      (find-components src-path (get-pos *deepest-item*)))
+                      (when (get-pos *deepest-item*)
+                        (find-components src-path (get-pos *deepest-item*))))
                     (loop for line from (get-val range "start") to (get-val range "end") collect line)))
           (get-diff project-path sha-a sha-b))
   )
 
 (defun find-components (src-path pos)
+  ;;(format t "p=~a, pos=~a~%" src-path pos)
   (print "open")
   (call (format nil "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}" src-path))
 
@@ -67,8 +70,8 @@
   (defparameter refs (jsown:val body "refs"))
   (defparameter refposs (remove-if (lambda (p) (equal p pos))
                                    (mapcar (lambda (r) (cons :pos (cdr (jsown:val r "start")))) refs)))
+  (format t "refposs=~a~%" refposs)
   (defparameter poss (mapcar (lambda (p) (convert-to-ast-pos src-path p)) refposs))
-  ;;(format t "~%poss=~a" poss)
 
   (start-tsparser)
   (defparameter ast
@@ -127,7 +130,7 @@
 
 (defun find-item (tree line)
   (when (contains-line tree line)
-      ;;(format t "found!! tree=~a%" tree)
+      ;;(format t "found!! line=~a, tree=~a%" line tree)
       (setq *deepest-item* tree))
 
   (if (jsown:keyp tree "childItems")

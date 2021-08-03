@@ -8,9 +8,11 @@
 (in-package :inga/ts-helper)
 
 (defun get-pos (item)
-  (let ((name-span (jsown:val item "nameSpan")) start)
-    (setq start (jsown:val name-span "start"))
-    (cons :pos (cdr start))))
+  ;; 名前付きの関数の位置を取得
+  (when (jsown:keyp item "nameSpan")
+    (let ((name-span (jsown:val item "nameSpan")) start)
+      (setq start (jsown:val name-span "start"))
+      (cons :pos (cdr start)))))
 
 (defun contains-line (tree line)
   (when (and (jsown:keyp tree "text") (not (string= (jsown:val tree "kind") "module")))
