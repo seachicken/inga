@@ -49,7 +49,6 @@
             ;;(format t "body=~a~%" body)
             (mapcan (lambda (line)
                       (find-item body line)
-                      ;;(format t "~%find-item=~a" *deepest-item*)
                       (when (get-pos *deepest-item*)
                         (find-components src-path (get-pos *deepest-item*))))
                     (loop for line from (get-val range "start") to (get-val range "end") collect line)))
@@ -57,7 +56,7 @@
   )
 
 (defun find-components (src-path pos)
-  ;;(format t "p=~a, pos=~a~%" src-path pos)
+  ;;(format t "find-components p=~a, pos=~a~%" src-path pos)
   (print "open")
   (call (format nil "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}" src-path))
 
@@ -68,10 +67,25 @@
   ;;(format t "~%refs=~a" result)
   (defparameter body (jsown:val result "body"))
   (defparameter refs (jsown:val body "refs"))
+  ;;(format t "refs=~a~%" refs)
   (defparameter refposs (remove-if (lambda (p) (equal p pos))
-                                   (mapcar (lambda (r) (cons :pos (cdr (jsown:val r "start")))) refs)))
+                                   ;;(mapcar (lambda (r) (cons :pos (cdr (jsown:val r "start")))) refs)))
+                                   (mapcar (lambda (r)
+                                             (cons :pos
+                                                   ;; TODO: mapの方が後で参照できそう
+                                                   (list
+                                                     (cons "path" (jsown:val r "file"))
+                                                     (nth 0 (cdr (jsown:val r "start")))
+                                                     (nth 1 (cdr (jsown:val r "start"))))))
+                                           refs)))
   (format t "refposs=~a~%" refposs)
-  (defparameter poss (mapcar (lambda (p) (convert-to-ast-pos src-path p)) refposs))
+  (defparameter poss (mapcar (lambda (p)
+                               (let ((path (cdr (nth 0 (cdr p)))))
+                                 (list
+                                   path
+                                   (convert-to-ast-pos path p))))
+                             refposs))
+  ;;(format t "poss=~a~%" poss)
 
   (start-tsparser)
   (defparameter ast
@@ -80,7 +94,12 @@
 
   (let ((json-cons-cells (cdr (jsown:parse ast)))) ;; パース結果のルートにあるcar "OBJ"を除く
     (mapcar (lambda (p)
-              (convert-to-pos src-path (find-component json-cons-cells p))) poss))
+              (let ((path (nth 0 p)) (pos (nth 1 p)))
+                ;;(format t "path=~a, pos=~a~%" path pos)
+                (defparameter comp-pos (find-component json-cons-cells pos))
+                (when (not (null comp-pos))
+                  (convert-to-pos path comp-pos))))
+            poss))
 )
 
 (defparameter *jsx-opening-element* 276)
