@@ -68,39 +68,38 @@
   (defparameter body (jsown:val result "body"))
   (defparameter refs (jsown:val body "refs"))
   ;;(format t "refs=~a~%" refs)
-  (defparameter refposs (remove-if (lambda (p) (equal p pos))
-                                   ;;(mapcar (lambda (r) (cons :pos (cdr (jsown:val r "start")))) refs)))
-                                   (mapcar (lambda (r)
-                                             (cons :pos
-                                                   ;; TODO: mapの方が後で参照できそう
-                                                   (list
-                                                     (cons "path" (jsown:val r "file"))
-                                                     (nth 0 (cdr (jsown:val r "start")))
-                                                     (nth 1 (cdr (jsown:val r "start"))))))
-                                           refs)))
-  (format t "refposs=~a~%" refposs)
+  (defparameter refposs
+    (remove-if (lambda (p) (equal p pos))
+               (mapcar (lambda (r)
+                         (list
+                           (cons :path (jsown:val r "file"))
+                           (cons :line (jsown:val (jsown:val r "start") "line"))
+                           (cons :offset (jsown:val (jsown:val r "start") "offset"))))
+                       refs)))
   (defparameter poss (mapcar (lambda (p)
-                               (let ((path (cdr (nth 0 (cdr p)))))
-                                 (list
-                                   path
-                                   (convert-to-ast-pos path p))))
+                               (convert-to-ast-pos p))
                              refposs))
   ;;(format t "poss=~a~%" poss)
 
   (start-tsparser)
-  (defparameter ast
-    (exec-tsparser src-path))
+  (setq poss
+        (mapcar (lambda (p)
+                  ;; TODO: 重複するファイルはASTを取得する必要がない
+                  ;; パース結果のルートにあるcar "OBJ"を除く
+                  (acons :ast (cdr (jsown:parse
+                                     (exec-tsparser (alexandria:assoc-value p :path)))) p))
+                poss))
   (stop-tsparser) 
 
-  (let ((json-cons-cells (cdr (jsown:parse ast)))) ;; パース結果のルートにあるcar "OBJ"を除く
-    (mapcar (lambda (p)
-              (let ((path (nth 0 p)) (pos (nth 1 p)))
-                ;;(format t "path=~a, pos=~a~%" path pos)
-                (defparameter comp-pos (find-component json-cons-cells pos))
-                (when (not (null comp-pos))
-                  (convert-to-pos path comp-pos))))
-            poss))
-)
+  (mapcar (lambda (p)
+            (let ((path (alexandria:assoc-value p :path))
+                  (pos (alexandria:assoc-value p :pos))
+                  (ast (alexandria:assoc-value p :ast)))
+              ;;(format t "path=~a, pos=~a~%" path pos)
+              (defparameter comp-pos (find-component ast pos))
+              (when (not (null comp-pos))
+                (convert-to-pos path comp-pos))))
+          poss))
 
 (defparameter *jsx-opening-element* 276)
 (defparameter *jsx-self-closing-element* 275)

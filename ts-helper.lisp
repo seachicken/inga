@@ -1,6 +1,7 @@
 (defpackage :inga/ts-helper
   (:use :cl)
   (:import-from :jsown)
+  (:import-from :alexandria)
   (:export #:get-pos
            #:contains-line
            #:convert-to-ast-pos
@@ -21,23 +22,22 @@
       (setq end (jsown:val (jsown:val span "end") "line"))
       (and (>= line start) (>= end line)))))
 
-(defun convert-to-ast-pos (path pos)
+(defun convert-to-ast-pos (pos)
   (defparameter *line-no* 0)
   (defparameter *result* 0)
 
-  (with-open-file (stream path)
-    (loop for line = (read-line stream nil)
-          while line
-          when (= *line-no* (- (jsown:val pos "line") 1))
-            ;;return (+ *result* (jsown:val pos "offset"))
-            return (- (+ *result* (jsown:val pos "offset")) 1)
-          do
+  (let ((path (alexandria:assoc-value pos :path)))
+    (with-open-file (stream path)
+      (loop for line = (read-line stream nil)
+            while line
+            when (= *line-no* (- (alexandria:assoc-value pos :line) 1))
+            return (list
+                     (cons :path path)
+                     (cons :pos (- (+ *result* (alexandria:assoc-value pos :offset)) 1)))
+            do
             (setq *line-no* (+ *line-no* 1))
             ;; 改行コードも加算
-            (setq *result* (+ *result* (+ (length line) 1)))
-            ;;(setq *result* (+ *result* (length line)))
-            ;;(format t "l=~a~a r=~a~%" *line-no* line *result*))))
-            )))
+            (setq *result* (+ *result* (+ (length line) 1)))))))
 
 (defun convert-to-pos (path pos)
   (defparameter *line-no* 0)

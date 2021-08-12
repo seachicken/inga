@@ -12,6 +12,7 @@
 
 (defparameter *project-path* "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/")
 
+(debug! '解析する)
 (test 解析する
   (inga:start)
   (is (equal '((:pos
@@ -32,15 +33,13 @@
   (inga:stop))
 
 ;; TODO: 結果のNILを除けていない
-;;(run! 'reference-to-another-file)
+;;(debug! 'reference-to-another-file)
 ;;(test reference-to-another-file
 ;;  (inga:start)
-;;  (is (equal '((:pos
-;;                 ("path" . "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx")
-;;                 ("line" . 34) ("offset" . 10))
-;;               (:pos
-;;                 ("path" . "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/src/App/TodoList/Item/index.test.tsx")
-;;                 ("line" . 39) ("offset" . 44)))
+;;  (is (equal '(((:path . "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx")
+;;                (:line . 34) (:offset . 10))
+;;               ((:path . "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/src/App/TodoList/Item/index.test.tsx")
+;;                (:line . 39) (:offset . 44)))
 ;;             (inga:analyze *project-path* "a690a51" "291ab2d")))
 ;;  (inga:stop))
 
@@ -54,7 +53,5 @@
                '(:pos ("line" . 12) ("offset" . 12)))))
   (inga:stop))
 
-;;(run! 'main)
-;;(run! '解析する)
-;;(run! '影響するコンポーネントの位置を返す)
+(run! 'main)
 
