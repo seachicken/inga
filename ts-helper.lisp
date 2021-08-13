@@ -1,7 +1,6 @@
 (defpackage :inga/ts-helper
   (:use :cl)
   (:import-from :jsown)
-  (:import-from :alexandria)
   (:export #:get-pos
            #:contains-line
            #:convert-to-ast-pos
@@ -26,14 +25,14 @@
   (defparameter *line-no* 0)
   (defparameter *result* 0)
 
-  (let ((path (alexandria:assoc-value pos :path)))
+  (let ((path (cdr (assoc :path pos))))
     (with-open-file (stream path)
       (loop for line = (read-line stream nil)
             while line
-            when (= *line-no* (- (alexandria:assoc-value pos :line) 1))
+            when (= *line-no* (- (cdr (assoc :line pos)) 1))
             return (list
                      (cons :path path)
-                     (cons :pos (- (+ *result* (alexandria:assoc-value pos :offset)) 1)))
+                     (cons :pos (- (+ *result* (cdr (assoc :offset pos))) 1)))
             do
             (setq *line-no* (+ *line-no* 1))
             ;; 改行コードも加算

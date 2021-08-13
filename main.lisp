@@ -87,14 +87,14 @@
                   ;; TODO: 重複するファイルはASTを取得する必要がない
                   ;; パース結果のルートにあるcar "OBJ"を除く
                   (acons :ast (cdr (jsown:parse
-                                     (exec-tsparser (alexandria:assoc-value p :path)))) p))
+                                     (exec-tsparser (cdr (assoc :path p))))) p))
                 poss))
   (stop-tsparser) 
 
   (mapcar (lambda (p)
-            (let ((path (alexandria:assoc-value p :path))
-                  (pos (alexandria:assoc-value p :pos))
-                  (ast (alexandria:assoc-value p :ast)))
+            (let ((path (cdr (assoc :path p)))
+                  (pos (cdr (assoc :pos p)))
+                  (ast (cdr (assoc :ast p))))
               ;;(format t "path=~a, pos=~a~%" path pos)
               (defparameter comp-pos (find-component ast pos))
               (when (not (null comp-pos))
