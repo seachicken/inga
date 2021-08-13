@@ -48,10 +48,10 @@
                '((:path . "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx")
                  (:line . 39) (:offset . 69))))))
 
+(run! 'tsparserの位置情報からtsserverの位置情報に変換)
 (test tsparserの位置情報からtsserverの位置情報に変換
-  (is (equal '(:pos
-                ("path" . "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx")
-                ("line" . 39) ("offset" . 69))
+  (is (equal '((:path . "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx")
+               (:line . 39) (:offset . 69))
              (convert-to-pos
                "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx"
                1241))))

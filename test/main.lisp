@@ -12,12 +12,11 @@
 
 (defparameter *project-path* "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/")
 
-(debug! '解析する)
+;;(run! '解析する)
 (test 解析する
   (inga:start)
-  (is (equal '((:pos
-                 ("path" . "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx")
-                 ("line" . 34) ("offset" . 10)))
+  (is (equal '(((:path . "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx")
+                (:line . 34) (:offset . 10)))
              (inga:analyze *project-path* "a690a51" "4d33bd8")))
   (inga:stop))
 
@@ -45,9 +44,8 @@
 
 (test 影響するコンポーネントの位置を返す
   (inga:start)
-  (is (equal '((:pos
-                 ("path" . "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx")
-                 ("line" . 34) ("offset" . 10)))
+  (is (equal '(((:path . "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx")
+                (:line . 34) (:offset . 10)))
              (inga:find-components
                (format nil "~a~a" *project-path* "src/App/NewTodoInput/index.tsx")
                '(:pos ("line" . 12) ("offset" . 12)))))

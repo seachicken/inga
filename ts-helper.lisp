@@ -46,14 +46,10 @@
     (loop for line = (read-line stream nil)
           while line
           when (<= pos (+ cnt (length line) 1))
-          return (cons :pos
-                       (cons
-                         (cons "path" path)
-                         (cons
-                           (cons "line" (+ *line-no* 1))
-                           (cons
-                             (cons "offset" (- (+ (length line) 1) (- (+ cnt (length line)) pos)))
-                             nil))))
+          return (list
+                   (cons :path path)
+                   (cons :line (+ *line-no* 1))
+                   (cons :offset (- (+ (length line) 1) (- (+ cnt (length line)) pos))))
           do
             (setq *line-no* (+ *line-no* 1))
             ;; 改行コードも加算
