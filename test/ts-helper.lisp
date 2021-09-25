@@ -8,6 +8,8 @@
 
 (in-suite ts-helper)
 
+(defparameter *project-path* (uiop:merge-pathnames* "test/fixtures/react-typescript-todo/"))
+
 (test 検索結果から位置を抽出する
   (is (equal '(:pos ("line" . 1) ("offset" . 1))
              (get-pos '(:obj ("text" . "addTodo")
@@ -42,18 +44,23 @@
 
 ;;(run! 'tsserverの位置情報からtsparserの位置情報に変換)
 (test tsserverの位置情報からtsparserの位置情報に変換
-  (is (equal '((:path . "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx")
-               (:pos . 1241))
-             (convert-to-ast-pos
-               '((:path . "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx")
-                 (:line . 39) (:offset . 69))))))
+  (is (equal
+        (list (cons :path (uiop:merge-pathnames*
+                            "src/App/NewTodoInput/index.tsx" *project-path*))
+              '(:pos . 1241))
+        (convert-to-ast-pos
+          (list (cons :path (uiop:merge-pathnames*
+                              "src/App/NewTodoInput/index.tsx" *project-path*))
+                '(:line . 39) '(:offset . 69))))))
 
-(run! 'tsparserの位置情報からtsserverの位置情報に変換)
+;;(run! 'tsparserの位置情報からtsserverの位置情報に変換)
 (test tsparserの位置情報からtsserverの位置情報に変換
-  (is (equal '((:path . "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx")
-               (:line . 39) (:offset . 69))
-             (convert-to-pos
-               "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx"
-               1241))))
+  (is (equal
+        (list (cons :path (uiop:merge-pathnames*
+                           "src/App/NewTodoInput/index.tsx" *project-path*))
+              '(:line . 39) '(:offset . 69))
+        (convert-to-pos
+          (uiop:merge-pathnames* "src/App/NewTodoInput/index.tsx" *project-path*)
+          1241))))
 
 (run! 'ts-helper)

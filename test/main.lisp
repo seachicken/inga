@@ -10,14 +10,17 @@
 
 (in-suite main)
 
-(defparameter *project-path* "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/")
+(defparameter *project-path* (uiop:merge-pathnames* "test/fixtures/react-typescript-todo/"))
 
 ;;(run! '解析する)
 (test 解析する
   (inga:start)
-  (is (equal '(((:path . "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx")
-                (:line . 34) (:offset . 10)))
-             (inga:analyze *project-path* "a690a51" "4d33bd8")))
+  (is (equal
+        (list
+          (list (cons :path (uiop:merge-pathnames*
+                              "src/App/NewTodoInput/index.tsx" *project-path*))
+                '(:line . 34) '(:offset . 10)))
+        (inga:analyze (truename *project-path*) "a690a51" "4d33bd8")))
   (inga:stop))
 
 ;;(run! 'inside-tsx)
@@ -42,13 +45,17 @@
 ;;             (inga:analyze *project-path* "a690a51" "291ab2d")))
 ;;  (inga:stop))
 
+(run! '影響するコンポーネントの位置を返す)
 (test 影響するコンポーネントの位置を返す
   (inga:start)
-  (is (equal '(((:path . "/Users/seito/.roswell/local-projects/inga/test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx")
-                (:line . 34) (:offset . 10)))
-             (inga:find-components
-               (format nil "~a~a" *project-path* "src/App/NewTodoInput/index.tsx")
-               '(:pos ("line" . 12) ("offset" . 12)))))
+  (is (equal
+        (list
+          (list (cons :path (uiop:merge-pathnames*
+                              "src/App/NewTodoInput/index.tsx" *project-path*))
+                '(:line . 34) '(:offset . 10)))
+        (inga:find-components
+          (truename (uiop:merge-pathnames* "src/App/NewTodoInput/index.tsx" *project-path*))
+          '(:pos ("line" . 12) ("offset" . 12)))))
   (inga:stop))
 
 (run! 'main)

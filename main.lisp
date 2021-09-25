@@ -87,7 +87,7 @@
                   ;; TODO: 重複するファイルはASTを取得する必要がない
                   ;; パース結果のルートにあるcar "OBJ"を除く
                   (acons :ast (cdr (jsown:parse
-                                     (exec-tsparser (cdr (assoc :path p))))) p))
+                                     (exec-tsparser (namestring (cdr (assoc :path p)))))) p))
                 poss))
   (stop-tsparser) 
 
@@ -100,7 +100,8 @@
                 (defparameter comp-pos (find-component ast pos))
                 (when (not (null comp-pos))
                   (convert-to-pos path comp-pos))))
-            poss) :test #'equal))
+            poss)
+    :test #'equal))
 
 (defparameter *jsx-opening-element* 276)
 (defparameter *jsx-self-closing-element* 275)

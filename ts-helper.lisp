@@ -31,7 +31,7 @@
             while line
             when (= *line-no* (- (cdr (assoc :line pos)) 1))
             return (list
-                     (cons :path path)
+                     (cons :path (pathname path))
                      (cons :pos (- (+ *result* (cdr (assoc :offset pos))) 1)))
             do
             (setq *line-no* (+ *line-no* 1))
@@ -47,7 +47,7 @@
           while line
           when (<= pos (+ cnt (length line) 1))
           return (list
-                   (cons :path path)
+                   (cons :path (pathname path))
                    (cons :line (+ *line-no* 1))
                    (cons :offset (- (+ (length line) 1) (- (+ cnt (length line)) pos))))
           do
