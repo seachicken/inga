@@ -1,0 +1,3 @@
+[submodule "test/fixtures/react-typescript-todo"]
+	path = test/fixtures/react-typescript-todo
+	url = git@github.com:seachicken/react-typescript-todo.git
