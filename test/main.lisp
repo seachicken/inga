@@ -19,7 +19,7 @@
           (list (cons :path (uiop:merge-pathnames*
                               "src/App/NewTodoInput/index.tsx" *project-path*))
                 '(:line . 34) '(:offset . 10)))
-        (inga:analyze (truename *project-path*) "a690a51" "4d33bd8")))
+        (inga:analyze (truename *project-path*) "a690a51" "69bf5cb")))
   (inga:stop))
 
 (test find-components

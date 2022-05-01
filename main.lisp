@@ -37,14 +37,33 @@
 
             (defvar result)
             (setq result (exec (format nil "{\"seq\": 2, \"command\": \"navtree\", \"arguments\": {\"file\": \"~a\"}}" src-path)))
-            (defparameter body (jsown:val result "body"))
-            (mapcan (lambda (line)
-                      (find-item body line)
-                      (when (get-pos *deepest-item*)
-                        (find-components src-path (get-pos *deepest-item*))))
-                    (loop for line from (get-val range "start") to (get-val range "end") collect line)))
-          (get-diff project-path sha-a sha-b))
-  )
+            (defparameter affected-item-poss
+              (remove-duplicates
+                (mapcar (lambda (line)
+                          (find-affected-item-pos result line))
+                        (loop for line from (get-val range "start") to (get-val range "end") collect line))
+                :test #'equal))
+            (mapcan (lambda (pos)
+                      (find-components src-path pos))
+                    affected-item-poss))
+          (get-diff project-path sha-a sha-b)))
+
+(defun find-affected-item-pos (tree-result line)
+  (setq *deepest-item* nil)
+  (defparameter body (jsown:val result "body"))
+  (find-item body line)
+  (get-pos *deepest-item*))
+
+(defun find-item (tree line)
+  (when (contains-line tree line)
+    (setq *deepest-item* tree))
+
+  (if (jsown:keyp tree "childItems")
+      (progn
+        (find-item (jsown:val tree "childItems") line))
+      (when (jsown:keyp tree "OBJ")
+        (loop for obj in tree do
+              (find-item obj line)))))
 
 (defun find-components (src-path pos)
   (call (format nil "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}" src-path))
@@ -122,17 +141,6 @@
     (jsown:val node "statements")
   (when (jsown:keyp node "parameters")
     (jsown:val node "parameters"))))
-
-(defun find-item (tree line)
-  (when (contains-line tree line)
-      (setq *deepest-item* tree))
-
-  (if (jsown:keyp tree "childItems")
-      (progn
-        (find-item (jsown:val tree "childItems") line))
-      (when (jsown:keyp tree "OBJ")
-        (loop for obj in tree do
-              (find-item obj line)))))
 
 (defun exec (command)
   (call command)
