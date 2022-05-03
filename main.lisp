@@ -1,12 +1,14 @@
 (defpackage :inga/main
   (:use :cl
         :inga/git
-        :inga/ts-helper)
+        :inga/ts-helper
+        :inga/jsx)
   (:import-from :jsown)
   (:export #:start
            #:stop
            #:analyze
-           #:find-components))
+           #:find-components
+           #:inject-mark))
 (in-package :inga/main)
 
 (defvar *deepest-item*)
@@ -31,22 +33,24 @@
           (return-from get-val (cdr item)))))
 
 (defun analyze (project-path sha-a &optional (sha-b))
-  (mapcan (lambda (range)
-            (defparameter src-path (format nil "~a~a" project-path (get-val range "path")))
-            (call (format nil "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}" src-path))
+  (remove-duplicates
+    (mapcan (lambda (range)
+              (defparameter src-path (format nil "~a~a" project-path (get-val range "path")))
+              (call (format nil "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}" src-path))
 
-            (defvar result)
-            (setq result (exec (format nil "{\"seq\": 2, \"command\": \"navtree\", \"arguments\": {\"file\": \"~a\"}}" src-path)))
-            (defparameter affected-item-poss
-              (remove-duplicates
-                (mapcar (lambda (line)
-                          (find-affected-item-pos result line))
-                        (loop for line from (get-val range "start") to (get-val range "end") collect line))
-                :test #'equal))
-            (mapcan (lambda (pos)
-                      (find-components src-path pos))
-                    affected-item-poss))
-          (get-diff project-path sha-a sha-b)))
+              (defvar result)
+              (setq result (exec (format nil "{\"seq\": 2, \"command\": \"navtree\", \"arguments\": {\"file\": \"~a\"}}" src-path)))
+              (defparameter affected-item-poss
+                (remove-duplicates
+                  (mapcar (lambda (line)
+                            (find-affected-item-pos result line))
+                          (loop for line from (get-val range "start") to (get-val range "end") collect line))
+                  :test #'equal))
+              (mapcan (lambda (pos)
+                        (find-components project-path src-path pos))
+                      affected-item-poss))
+            (get-diff project-path sha-a sha-b))
+    :test #'equal))
 
 (defun find-affected-item-pos (tree-result line)
   (setq *deepest-item* nil)
@@ -65,7 +69,7 @@
         (loop for obj in tree do
               (find-item obj line)))))
 
-(defun find-components (src-path pos)
+(defun find-components (root-path src-path pos)
   (call (format nil "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}" src-path))
 
   (defparameter result
@@ -101,7 +105,7 @@
                           (ast (cdr (assoc :ast p))))
                       (defparameter comp-pos (find-component ast pos))
                       (when (not (null comp-pos))
-                        (convert-to-pos path comp-pos))))
+                        (convert-to-pos root-path path comp-pos))))
                   poss))
     :test #'equal))
 
@@ -141,6 +145,22 @@
     (jsown:val node "statements")
   (when (jsown:keyp node "parameters")
     (jsown:val node "parameters"))))
+
+(defun inject-mark (project-path component-poss)
+  (loop for pos in component-poss collect
+        (progn
+          (defparameter line-no 0)
+          (with-open-file (instream (uiop:merge-pathnames* (cdr (assoc :path pos)) project-path))
+            (with-open-file (outstream (uiop:merge-pathnames* (cdr (assoc :path pos)) project-path)
+                                       :direction :output
+                                       :if-exists :overwrite)
+              (loop for line = (read-line instream nil) while line collect 
+                    (progn
+                      (setq line-no (+ line-no 1))
+                      (if (= line-no (cdr (assoc :line pos)))
+                          (format outstream "~a~%"
+                                  (inject-mark-on-line line (cdr (assoc :offset pos)) 1))
+                          (write-line line outstream)))))))))
 
 (defun exec (command)
   (call command)

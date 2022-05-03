@@ -54,9 +54,9 @@
 
 (test convert-tsparser-pos-to-tsserver-pos
   (is (equal
-        (list (cons :path (uiop:merge-pathnames*
-                           "src/App/NewTodoInput/index.tsx" *project-path*))
+        (list '(:path . "src/App/NewTodoInput/index.tsx")
               '(:line . 39) '(:offset . 69))
         (convert-to-pos
+          *project-path*
           (uiop:merge-pathnames* "src/App/NewTodoInput/index.tsx" *project-path*)
           1241))))

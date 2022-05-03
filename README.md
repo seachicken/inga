@@ -5,17 +5,13 @@
 ### Prerequisites
 
 - **Roswell**: Install from [roswell](https://github.com/roswell/roswell#installation-dependency--usage).
-- **Node v14**
+- **Node v16**
 
 ### Installation
 
 ```sh
 npm install -g typescript
 npm install -g </youer/local/path/tsparser>
-
-(ql:quickload :fiveam)
-(ql:quickload :cl-ppcre)
-(ql:quickload :jsown)
 ```
 
 ## Development

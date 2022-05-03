@@ -37,7 +37,7 @@
             ;; add newline code
             (setq *result* (+ *result* (+ (length line) 1)))))))
 
-(defun convert-to-pos (path pos)
+(defun convert-to-pos (root-path path pos)
   (defparameter *line-no* 0)
   (defparameter cnt 0)
 
@@ -46,7 +46,7 @@
           while line
           when (<= pos (+ cnt (length line) 1))
           return (list
-                   (cons :path (pathname path))
+                   (cons :path (enough-namestring (namestring path) root-path))
                    (cons :line (+ *line-no* 1))
                    (cons :offset (- (+ (length line) 1) (- (+ cnt (length line)) pos))))
           do
