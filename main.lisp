@@ -42,9 +42,10 @@
               (setq result (exec (format nil "{\"seq\": 2, \"command\": \"navtree\", \"arguments\": {\"file\": \"~a\"}}" src-path)))
               (defparameter affected-item-poss
                 (remove-duplicates
-                  (mapcar (lambda (line)
-                            (find-affected-item-pos result line))
-                          (loop for line from (get-val range "start") to (get-val range "end") collect line))
+                  (remove nil
+                          (mapcar (lambda (line)
+                                    (find-affected-item-pos result line))
+                                  (loop for line from (get-val range "start") to (get-val range "end") collect line)))
                   :test #'equal))
               (mapcan (lambda (pos)
                         (find-components project-path src-path pos))
@@ -91,10 +92,13 @@
 
   (start-tsparser)
   (setq poss
-        (mapcar (lambda (p)
-                  (acons :ast (cdr (jsown:parse
-                                     (exec-tsparser (namestring (cdr (assoc :path p)))))) p))
-                poss))
+        (remove nil
+                (mapcar
+                  (lambda (p)
+                    (let ((result (exec-tsparser (namestring (cdr (assoc :path p))))))
+                      (when (> (length result) 0)
+                        (acons :ast (cdr (jsown:parse result)) p))))
+                  poss)))
   (stop-tsparser) 
 
   (remove-duplicates

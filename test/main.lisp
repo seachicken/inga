@@ -18,7 +18,7 @@
         (list
           (list '(:path . "src/App/NewTodoInput/index.tsx")
                 '(:line . 34) '(:offset . 10)))
-        (inga:analyze (truename *project-path*) "a690a51" "69bf5cb")))
+        (inga:analyze (truename *project-path*) "a690a51" "4d33bd8")))
   (inga:stop))
 
 (test find-components

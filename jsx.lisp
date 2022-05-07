@@ -5,7 +5,8 @@
 (in-package :inga/jsx)
 
 (defun inject-mark-on-line (line-string offset score)
-  (if (equal (subseq line-string (- offset 2) (- offset 1)) "<")
+  (if (and (and (> offset 1) (< offset (length line-string)))
+           (equal (subseq line-string (- offset 2) (- offset 1)) "<"))
       (progn
         (defparameter tag-end-offset
           (+ 
@@ -17,5 +18,7 @@
                 (subseq line-string 0 tag-end-offset)
                 score
                 (subseq line-string tag-end-offset)))
-      line-string))
+      (progn
+        (format t "Can't inject mark. line-string: \"~a\", offset: ~a~%" line-string offset)
+        line-string)))
 
