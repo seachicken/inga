@@ -1,6 +1,6 @@
 # Inga
 
-A static analysis tool of Components affected by changed code.
+A static analysis tool of UI components affected by changed code.
 
 ## Why?
 
