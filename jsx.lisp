@@ -19,6 +19,6 @@
                 score
                 (subseq line-string tag-end-offset)))
       (progn
-        (format t "Can't inject mark. line-string: \"~a\", offset: ~a~%" line-string offset)
+        (format *error-output* "Can't inject mark. line-string: \"~a\", offset: ~a~%" line-string offset)
         line-string)))
 

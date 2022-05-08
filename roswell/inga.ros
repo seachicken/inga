@@ -15,13 +15,11 @@ exec ros -Q -- $0 "$@"
 (defun main (&rest argv)
   (declare (ignorable argv))
   (if (>= (length argv) 2)
-      (progn
-        (defparameter project-path (first argv))
-
+      (let ((project-path (first argv)) results)
         (inga:start)
-        (defparameter results (inga:analyze project-path (second argv) (third argv)))
+        (setq results (inga:analyze project-path (second argv) (third argv)))
         (format t "~a~%" results)
         (inga:inject-mark project-path results)
         (inga:stop))
-      (format t "Invalid number of arguments")))
+      (format *error-output* "Invalid number of arguments")))
 ;;; vim: set ft=lisp lisp:
