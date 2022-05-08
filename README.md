@@ -1,5 +1,7 @@
 # Inga
 
+[![CI](https://github.com/seachicken/inga/actions/workflows/ci.yml/badge.svg)](https://github.com/seachicken/inga/actions/workflows/ci.yml)
+
 A static analysis tool of UI components affected by changed code.
 
 ## Why?
