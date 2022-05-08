@@ -10,4 +10,6 @@
   :class :package-inferred-system
   :depends-on ("fiveam"
                "inga/test/all")
-  :perform (test-op (o c) (symbol-call :fiveam '#:run-all-tests)))
+  :perform (test-op (o c)
+    (unless (symbol-call :fiveam '#:run-all-tests)
+      (error "Tests failed"))))
