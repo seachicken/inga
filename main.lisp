@@ -107,9 +107,10 @@
                     (let ((path (cdr (assoc :path p)))
                           (pos (cdr (assoc :pos p)))
                           (ast (cdr (assoc :ast p))))
-                      (defparameter comp-pos (find-component ast pos))
-                      (when (not (null comp-pos))
-                        (convert-to-pos root-path path comp-pos))))
+                      (setq *nearest-comp-pos* nil)
+                      (let ((comp-pos (find-component ast pos)))
+                        (when (not (null comp-pos))
+                          (convert-to-pos root-path path comp-pos)))))
                   poss))
     :test #'equal))
 
@@ -117,7 +118,6 @@
 (defparameter *jsx-self-closing-element* 275)
 
 (defparameter *nearest-comp-pos* nil)
-(defparameter *result-nearest-comp-pos* nil)
 
 (defun find-component (ast pos)
   (when (and (jsown:keyp ast "kind")
