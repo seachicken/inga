@@ -7,13 +7,7 @@
 (defun inject-mark-on-line (line-string offset score)
   (if (and (and (> offset 1) (< offset (length line-string)))
            (equal (subseq line-string (- offset 2) (- offset 1)) "<"))
-      (progn
-        (defparameter tag-end-offset
-          (+ 
-            offset
-            (length (first (ppcre:split
-                             " "
-                             (subseq line-string offset))))))
+      (let ((tag-end-offset (get-tag-end-offset line-string offset)))
         (format nil "~a data-inga=\"~a\"~a"
                 (subseq line-string 0 tag-end-offset)
                 score
@@ -22,3 +16,8 @@
         (format *error-output* "Can't inject mark. line-string: \"~a\", offset: ~a~%" line-string offset)
         line-string)))
 
+(defun get-tag-end-offset (line-string offset)
+  (+ offset
+     (length (first (ppcre:split
+                      " "
+                      (subseq line-string offset))))))

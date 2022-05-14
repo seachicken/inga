@@ -35,28 +35,32 @@
 (defun analyze (project-path sha-a &optional (sha-b))
   (remove-duplicates
     (mapcan (lambda (range)
-              (defparameter src-path (format nil "~a~a" project-path (get-val range "path")))
-              (call (format nil "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}" src-path))
+              (let ((src-path (format nil "~a~a" project-path (get-val range "path"))))
+                (call (format nil "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}" src-path))
 
-              (defvar result)
-              (setq result (exec (format nil "{\"seq\": 2, \"command\": \"navtree\", \"arguments\": {\"file\": \"~a\"}}" src-path)))
-              (defparameter affected-item-poss
-                (remove-duplicates
-                  (remove nil
-                          (mapcar (lambda (line)
-                                    (find-affected-item-pos result line))
-                                  (loop for line from (get-val range "start") to (get-val range "end") collect line)))
-                  :test #'equal))
-              (mapcan (lambda (pos)
-                        (find-components project-path src-path pos))
-                      affected-item-poss))
+                (defvar result)
+                (setq result (exec (format nil "{\"seq\": 2, \"command\": \"navtree\", \"arguments\": {\"file\": \"~a\"}}" src-path)))
+                (mapcan (lambda (pos)
+                          (find-components project-path src-path pos))
+                        (get-affected-item-poss range))
+                  ))
             (get-diff project-path sha-a sha-b))
     :test #'equal))
 
-(defun find-affected-item-pos (tree-result line)
+(defun get-affected-item-poss (range)
+  (remove-duplicates
+    (remove nil
+            (mapcar (lambda (line)
+                      (find-affected-item-pos line))
+                    (loop for line
+                          from (get-val range "start")
+                          to (get-val range "end")
+                          collect line)))
+    :test #'equal))
+
+(defun find-affected-item-pos (line)
   (setq *deepest-item* nil)
-  (defparameter body (jsown:val result "body"))
-  (find-item body line)
+  (find-item (jsown:val result "body") line)
   (get-pos *deepest-item*))
 
 (defun find-item (tree line)
@@ -72,47 +76,44 @@
 
 (defun find-components (root-path src-path pos)
   (call (format nil "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}" src-path))
+  (let ((result (exec (format nil "{\"seq\": 2, \"command\": \"references\", \"arguments\": {\"file\": \"~a\", \"line\": ~a, \"offset\": ~a}}"
+                              src-path (jsown:val pos "line") (jsown:val pos "offset"))))
+        poss)
+    (let ((refposs
+          (remove-if (lambda (p) (equal p pos))
+                     (mapcar (lambda (r)
+                               (list
+                                 (cons :path (jsown:val r "file"))
+                                 (cons :line (jsown:val (jsown:val r "start") "line"))
+                                 (cons :offset (jsown:val (jsown:val r "start") "offset"))))
+                             (jsown:val (jsown:val result "body") "refs")))))
+      (setq poss (mapcar (lambda (p)
+                           (convert-to-ast-pos p))
+                         refposs)))
 
-  (defparameter result
-    (exec (format nil "{\"seq\": 2, \"command\": \"references\", \"arguments\": {\"file\": \"~a\", \"line\": ~a, \"offset\": ~a}}"
-                  src-path (jsown:val pos "line") (jsown:val pos "offset"))))
-  (defparameter body (jsown:val result "body"))
-  (defparameter refs (jsown:val body "refs"))
-  (defparameter refposs
-    (remove-if (lambda (p) (equal p pos))
-               (mapcar (lambda (r)
-                         (list
-                           (cons :path (jsown:val r "file"))
-                           (cons :line (jsown:val (jsown:val r "start") "line"))
-                           (cons :offset (jsown:val (jsown:val r "start") "offset"))))
-                       refs)))
-  (defparameter poss (mapcar (lambda (p)
-                               (convert-to-ast-pos p))
-                             refposs))
+    (start-tsparser)
+    (setq poss
+          (remove nil
+                  (mapcar
+                    (lambda (p)
+                      (let ((result (exec-tsparser (namestring (cdr (assoc :path p))))))
+                        (when (> (length result) 0)
+                          (acons :ast (cdr (jsown:parse result)) p))))
+                    poss)))
+    (stop-tsparser)
 
-  (start-tsparser)
-  (setq poss
-        (remove nil
-                (mapcar
-                  (lambda (p)
-                    (let ((result (exec-tsparser (namestring (cdr (assoc :path p))))))
-                      (when (> (length result) 0)
-                        (acons :ast (cdr (jsown:parse result)) p))))
-                  poss)))
-  (stop-tsparser) 
-
-  (remove-duplicates
-    (remove nil
-          (mapcar (lambda (p)
-                    (let ((path (cdr (assoc :path p)))
-                          (pos (cdr (assoc :pos p)))
-                          (ast (cdr (assoc :ast p))))
-                      (setq *nearest-comp-pos* nil)
-                      (let ((comp-pos (find-component ast pos)))
-                        (when (not (null comp-pos))
-                          (convert-to-pos root-path path comp-pos)))))
-                  poss))
-    :test #'equal))
+    (remove-duplicates
+      (remove nil
+              (mapcar (lambda (p)
+                        (let ((path (cdr (assoc :path p)))
+                              (pos (cdr (assoc :pos p)))
+                              (ast (cdr (assoc :ast p))))
+                          (setq *nearest-comp-pos* nil)
+                          (let ((comp-pos (find-component ast pos)))
+                            (when (not (null comp-pos))
+                              (convert-to-pos root-path path comp-pos)))))
+                      poss))
+      :test #'equal)))
 
 (defparameter *jsx-opening-element* 276)
 (defparameter *jsx-self-closing-element* 275)
@@ -152,19 +153,18 @@
 
 (defun inject-mark (project-path component-poss)
   (loop for pos in component-poss collect
-        (progn
-          (defparameter line-no 0)
-          (with-open-file (instream (uiop:merge-pathnames* (cdr (assoc :path pos)) project-path))
-            (with-open-file (outstream (uiop:merge-pathnames* (cdr (assoc :path pos)) project-path)
-                                       :direction :output
-                                       :if-exists :overwrite)
-              (loop for line = (read-line instream nil) while line collect 
-                    (progn
-                      (setq line-no (+ line-no 1))
-                      (if (= line-no (cdr (assoc :line pos)))
-                          (format outstream "~a~%"
-                                  (inject-mark-on-line line (cdr (assoc :offset pos)) 1))
-                          (write-line line outstream)))))))))
+        (let ((line-no 0))
+              (with-open-file (instream (uiop:merge-pathnames* (cdr (assoc :path pos)) project-path))
+                (with-open-file (outstream (uiop:merge-pathnames* (cdr (assoc :path pos)) project-path)
+                                           :direction :output
+                                           :if-exists :overwrite)
+                  (loop for line = (read-line instream nil) while line collect
+                        (progn
+                          (setq line-no (+ line-no 1))
+                          (if (= line-no (cdr (assoc :line pos)))
+                              (format outstream "~a~%"
+                                      (inject-mark-on-line line (cdr (assoc :offset pos)) 1))
+                              (write-line line outstream)))))))))
 
 (defun exec (command)
   (call command)

@@ -3,6 +3,7 @@
   :author "Seito Tanaka"
   :license "MIT"
   :class :package-inferred-system
+  :pathname "src"
   :depends-on ("inga/all")
   :in-order-to ((test-op (test-op "inga/test"))))
 

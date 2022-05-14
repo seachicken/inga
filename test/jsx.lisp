@@ -4,6 +4,10 @@
         :inga/jsx))
 (in-package :inga/test/jsx)
 
+(def-suite jsx)
+
+(in-suite jsx)
+
 (test can-inject-mark-when-the-opening-tag-is-single-line
   (is (equal
         "<button data-inga=\"1\" onClick={() => {}}>"

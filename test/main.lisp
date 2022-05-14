@@ -11,6 +11,7 @@
 (in-suite main)
 
 (defparameter *project-path* (uiop:merge-pathnames* "test/fixtures/react-typescript-todo/"))
+(defparameter *build-path* (uiop:merge-pathnames* "test/fixtures/build/"))
 
 (test analyze
   (inga:start)
@@ -34,17 +35,16 @@
   (inga:stop))
 
 (test inject-mark
-  (defparameter build-path (uiop:merge-pathnames* "test/fixtures/build/"))
-  (uiop:run-program (format nil "cp -r ~a ~a" *project-path* build-path))
+  (uiop:run-program (format nil "cp -r ~a ~a" *project-path* *build-path*))
 
   (inga:inject-mark
-    build-path
+    *build-path*
     (list
       (list '(:path . "src/App/NewTodoInput/index.tsx")
             '(:line . 34) '(:offset . 10))))
   (is (equal
         (uiop:read-file-string (uiop:merge-pathnames* "test/fixtures/index.tsx"))
-        (uiop:read-file-string (uiop:merge-pathnames* "src/App/NewTodoInput/index.tsx" build-path))))
+        (uiop:read-file-string (uiop:merge-pathnames* "src/App/NewTodoInput/index.tsx" *build-path*))))
   
-  (uiop:run-program (format nil "rm -r ~a" build-path)))
+  (uiop:run-program (format nil "rm -r ~a" *build-path*)))
 
