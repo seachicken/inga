@@ -14,9 +14,9 @@
              (inga:get-diff *project-path* "a690a51" "dc33553"))))
 
 (test get-diff-of-multiple-lines
-  (is (equal '((("path" . "src/App/NewTodoInput/index.tsx") ("start" . 13) ("end" . 15))
+  (is (equal '((("path" . "src/App/NewTodoInput/index.tsx") ("start" . 15) ("end" . 16))
                (("path" . "src/App/NewTodoInput/index.tsx") ("start" . 23) ("end" . 23)))
-             (inga:get-diff *project-path* "a690a51" "69bf5cb"))))
+             (inga:get-diff *project-path* "a690a51" "4b0399f"))))
 
 (test get-diff-of-multiple-files
   (is (equal '((("path" . "src/App/NewTodoInput/index.tsx") ("start" . 14) ("end" . 14))
