@@ -1,11 +1,10 @@
-(defpackage :inga/test/ts-helper
-  (:use :cl
-        :fiveam
-        :inga/ts-helper))
-(in-package :inga/test/ts-helper)
+(defpackage #:inga/test/ts-helper
+  (:use #:cl
+        #:fiveam
+        #:inga/ts-helper))
+(in-package #:inga/test/ts-helper)
 
 (def-suite ts-helper)
-
 (in-suite ts-helper)
 
 (defparameter *project-path* (uiop:merge-pathnames* "test/fixtures/react-typescript-todo/"))

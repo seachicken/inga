@@ -3,14 +3,15 @@
   :author "Seito Tanaka"
   :license "MIT"
   :class :package-inferred-system
-  :pathname "src"
   :depends-on ("inga/all")
   :in-order-to ((test-op (test-op "inga/test"))))
 
 (defsystem "inga/test"
   :class :package-inferred-system
   :depends-on ("fiveam"
-               "inga/test/all")
+               "inga/test/git"
+               "inga/test/jsx"
+               "inga/test/ts-helper")
   :perform (test-op (o c)
     (unless (symbol-call :fiveam '#:run-all-tests)
       (error "Tests failed"))))

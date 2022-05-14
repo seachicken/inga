@@ -1,8 +1,8 @@
-(defpackage :inga/git
-  (:use :cl)
-  (:import-from :cl-ppcre)
+(defpackage #:inga/git
+  (:use #:cl)
+  (:import-from #:cl-ppcre)
   (:export #:get-diff))
-(in-package :inga/git)
+(in-package #:inga/git)
 
 (defun get-diff (project-path sha-a &optional sha-b)
   (let ((diff (uiop:run-program (if (null sha-b)

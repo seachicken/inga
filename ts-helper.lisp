@@ -1,11 +1,11 @@
-(defpackage :inga/ts-helper
-  (:use :cl)
-  (:import-from :jsown)
+(defpackage #:inga/ts-helper
+  (:use #:cl)
+  (:import-from #:jsown)
   (:export #:get-pos
            #:contains-line
            #:convert-to-ast-pos
            #:convert-to-pos))
-(in-package :inga/ts-helper)
+(in-package #:inga/ts-helper)
 
 (defun get-pos (item)
   (when (jsown:keyp item "nameSpan")

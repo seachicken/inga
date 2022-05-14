@@ -1,11 +1,10 @@
-(defpackage :inga/test/git
-  (:use :cl
-        :fiveam
-        :inga/git))
-(in-package :inga/test/git)
+(defpackage #:inga/test/git
+  (:use #:cl
+        #:fiveam
+        #:inga/git))
+(in-package #:inga/test/git)
 
 (def-suite git)
-
 (in-suite git)
 
 (defparameter *project-path* (uiop:merge-pathnames* "test/fixtures/react-typescript-todo/"))

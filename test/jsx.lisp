@@ -1,11 +1,10 @@
-(defpackage :inga/test/jsx
-  (:use :cl
-        :fiveam
-        :inga/jsx))
-(in-package :inga/test/jsx)
+(defpackage #:inga/test/jsx
+  (:use #:cl
+        #:fiveam
+        #:inga/jsx))
+(in-package #:inga/test/jsx)
 
 (def-suite jsx)
-
 (in-suite jsx)
 
 (test can-inject-mark-when-the-opening-tag-is-single-line

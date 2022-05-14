@@ -1,15 +1,15 @@
-(defpackage :inga/main
-  (:use :cl
-        :inga/git
-        :inga/ts-helper
-        :inga/jsx)
-  (:import-from :jsown)
+(defpackage #:inga/main
+  (:use #:cl
+        #:inga/git
+        #:inga/ts-helper
+        #:inga/jsx)
+  (:import-from #:jsown)
   (:export #:start
            #:stop
            #:analyze
            #:find-components
            #:inject-mark))
-(in-package :inga/main)
+(in-package #:inga/main)
 
 (defvar *deepest-item*)
 (defvar *tsserver*)

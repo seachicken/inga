@@ -1,8 +1,8 @@
-(defpackage :inga/jsx
-  (:use :cl)
-  (:import-from :cl-ppcre)
+(defpackage #:inga/jsx
+  (:use #:cl)
+  (:import-from #:cl-ppcre)
   (:export #:inject-mark-on-line))
-(in-package :inga/jsx)
+(in-package #:inga/jsx)
 
 (defun inject-mark-on-line (line-string offset score)
   (if (and (and (> offset 1) (< offset (length line-string)))

@@ -1,13 +1,12 @@
-(defpackage :inga/test/main
-  (:use :cl
-        :fiveam
-        :inga/main))
-(in-package :inga/test/main)
+(defpackage #:inga/test/main
+  (:use #:cl
+        #:fiveam
+        #:inga/main))
+(in-package #:inga/test/main)
 
 ;; NOTE: To run this test file, execute `(asdf:test-system :inga)' in your Lisp.
 
 (def-suite main)
-
 (in-suite main)
 
 (defparameter *project-path* (uiop:merge-pathnames* "test/fixtures/react-typescript-todo/"))
