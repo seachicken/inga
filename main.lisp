@@ -2,9 +2,12 @@
   (:use #:cl
         #:inga/git
         #:inga/ts-helper
-        #:inga/jsx)
+        #:inga/jsx
+        #:inga/file)
   (:import-from #:jsown)
-  (:export #:start
+  (:import-from #:alexandria)
+  (:export #:command
+           #:start
            #:stop
            #:analyze
            #:find-components
@@ -14,6 +17,55 @@
 (defvar *deepest-item*)
 (defvar *tsserver*)
 (defvar *tsparser*)
+
+(defun command (&rest argv)
+  (destructuring-bind (&key project-path sha-a sha-b exclude inject-mark) (parse-argv argv)
+    (start)
+    (let ((results (analyze project-path sha-a sha-b exclude)))
+      (format t "~A~%" results)
+      (when inject-mark
+        (inject-mark project-path results)))
+    (stop)))
+
+(defun parse-argv (argv)
+  (loop with project-path = nil
+        with sha-a = nil
+        with sha-b = nil
+        with exclude = '()
+        with inject-mark = nil
+        for option = (pop argv)
+        while option
+        do (alexandria:switch (option :test #'equal)
+             ("--project-path"
+              (setf project-path (pop argv)))
+             ("--sha-a"
+              (setf sha-a (pop argv)))
+             ("--sha-b"
+              (setf sha-b (pop argv)))
+             ("--exclude"
+              (setf exclude
+                    (append exclude
+                            (mapcar (lambda (exc)
+                                      (string-trim '(#\Space) exc))
+                                    (split #\,
+                                           (pop argv))))))
+             ("--inject-mark"
+              (setf inject-mark t)))
+        finally
+          (return
+            (append (list :project-path project-path)
+                    (list :sha-a sha-a)
+                    (when sha-b
+                      (list :sha-b sha-b))
+                    (list :exclude exclude)
+                    (list :inject-mark inject-mark)))))
+
+(defun split (div sequence)
+  (let ((pos (position div sequence)))
+    (if pos
+        (list* (subseq sequence 0 pos)
+               (split div (subseq sequence (1+ pos))))
+        (list sequence))))
 
 (defun start ()
   (setq *tsserver* (uiop:launch-program "tsserver" :input :stream :output :stream)))
@@ -32,7 +84,7 @@
         (when (equal (car item) key)
           (return-from get-val (cdr item)))))
 
-(defun analyze (project-path sha-a &optional (sha-b))
+(defun analyze (project-path sha-a sha-b &optional (exclude '()))
   (remove-duplicates
     (mapcan (lambda (range)
               (let ((src-path (format nil "~a~a" project-path (get-val range "path"))))
@@ -41,10 +93,10 @@
                 (defvar result)
                 (setq result (exec (format nil "{\"seq\": 2, \"command\": \"navtree\", \"arguments\": {\"file\": \"~a\"}}" src-path)))
                 (mapcan (lambda (pos)
-                          (find-components project-path src-path pos))
+                          (find-components project-path src-path pos exclude))
                         (get-affected-item-poss range))
                   ))
-            (get-diff project-path sha-a sha-b))
+            (get-diff project-path sha-a sha-b exclude))
     :test #'equal))
 
 (defun get-affected-item-poss (range)
@@ -74,13 +126,14 @@
         (loop for obj in tree do
               (find-item obj line)))))
 
-(defun find-components (root-path src-path pos)
+(defun find-components (root-path src-path pos &optional (exclude '()))
   (call (format nil "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}" src-path))
   (let ((result (exec (format nil "{\"seq\": 2, \"command\": \"references\", \"arguments\": {\"file\": \"~a\", \"line\": ~a, \"offset\": ~a}}"
                               src-path (jsown:val pos "line") (jsown:val pos "offset"))))
         poss)
     (let ((refposs
-          (remove-if (lambda (p) (equal p pos))
+            (remove-if (lambda (p) (or (equal p pos)
+                                       (not (is-analysis-target (namestring (cdr (assoc :path p))) exclude))))
                      (mapcar (lambda (r)
                                (list
                                  (cons :path (jsown:val r "file"))

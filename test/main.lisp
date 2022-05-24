@@ -21,6 +21,13 @@
         (inga:analyze (truename *project-path*) "a690a51" "4d33bd8")))
   (inga:stop))
 
+(test analyze-with-exclude
+  (inga:start)
+  (is (equal
+        nil
+        (inga:analyze (truename *project-path*) "a690a51" "b4ac09c" '("*.test.tsx"))))
+  (inga:stop))
+
 (test find-components
   (inga:start)
   (is (equal
@@ -31,6 +38,21 @@
           *project-path*
           (truename (uiop:merge-pathnames* "src/App/NewTodoInput/index.tsx" *project-path*))
           '(:pos ("line" . 12) ("offset" . 12)))))
+  (inga:stop))
+
+(test find-components-with-exclude
+  (inga:start)
+  (is (equal
+        (list
+          (list '(:path . "src/App/NewTodoInput/index.tsx")
+                '(:line . 34) '(:offset . 10))
+          (list '(:path . "src/App/index.tsx")
+                '(:line . 34) '(:offset . 10))) 
+        (inga:find-components
+          *project-path*
+          (truename (uiop:merge-pathnames* "src/App/NewTodoInput/index.tsx" *project-path*))
+          '(:pos ("line" . 7) ("offset" . 7))
+          '("*.test.tsx"))))
   (inga:stop))
 
 (test inject-mark

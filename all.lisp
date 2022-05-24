@@ -4,4 +4,6 @@
     #:inga/main
     #:inga/ts-helper
     #:inga/jsx
-    #:inga/git))
+    #:inga/git
+    #:inga/file))
+

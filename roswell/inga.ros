@@ -9,17 +9,9 @@ exec ros -Q -- $0 "$@"
   )
 
 (defpackage :ros.script.inga.3836648158
-  (:use :cl))
+  (:use #:cl))
 (in-package :ros.script.inga.3836648158)
 
 (defun main (&rest argv)
-  (declare (ignorable argv))
-  (if (>= (length argv) 2)
-      (let ((project-path (first argv)) results)
-        (inga:start)
-        (setq results (inga:analyze project-path (second argv) (third argv)))
-        (format t "~a~%" results)
-        (inga:inject-mark project-path results)
-        (inga:stop))
-      (format *error-output* "Invalid number of arguments")))
+  (apply #'inga:command argv))
 ;;; vim: set ft=lisp lisp:
