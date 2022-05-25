@@ -9,9 +9,10 @@
 (defsystem "inga/test"
   :class :package-inferred-system
   :depends-on ("fiveam"
-               "inga/test/git"
+               "inga/test/ts-helper"
                "inga/test/jsx"
-               "inga/test/ts-helper")
+               "inga/test/git"
+               "inga/test/file")
   :perform (test-op (o c)
     (unless (symbol-call :fiveam '#:run-all-tests)
       (error "Tests failed"))))
