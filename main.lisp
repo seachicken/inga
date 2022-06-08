@@ -87,49 +87,108 @@
 (defun analyze (project-path sha-a sha-b &optional (exclude '()))
   (remove-duplicates
     (mapcan (lambda (range)
-              (let ((src-path (format nil "~a~a" project-path (get-val range "path"))))
-                (call (format nil "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}" src-path))
-
-                (defvar result)
-                (setq result (exec (format nil "{\"seq\": 2, \"command\": \"navtree\", \"arguments\": {\"file\": \"~a\"}}" src-path)))
-                (mapcan (lambda (pos)
-                          (find-components project-path src-path pos exclude))
-                        (get-affected-item-poss range))
-                  ))
+              (analyze-by-range project-path range exclude))
             (get-diff project-path sha-a sha-b exclude))
     :test #'equal))
 
-(defun get-affected-item-poss (range)
+(defun analyze-by-range (project-path range &optional (exclude '()))
+  (let ((src-path (format nil "~a~a" project-path (get-val range "path")))
+        ast)
+    (start-tsparser)
+    (let ((result (exec-tsparser src-path)))
+      (when (> (length result) 0)
+        (setf ast (cdr (jsown:parse result)))))
+    (stop-tsparser)
+
+    (unless ast)
+      (mapcan (lambda (pos)
+                (find-components project-path src-path pos exclude))
+              (get-affected-item-poss ast project-path src-path range))))
+
+(defun get-affected-item-poss (ast project-path src-path range)
   (remove-duplicates
     (remove nil
-            (mapcar (lambda (line)
-                      (find-affected-item-pos line))
-                    (loop for line
+            (mapcar (lambda (line-no)
+                      (let ((item-pos
+                              (find-affected-item-pos
+                                ast
+                                (cdr (assoc :pos (convert-to-ast-pos
+                                                   (list
+                                                     (cons :path src-path)
+                                                     (cons :line line-no)
+                                                     (cons :offset 0))))))))
+                        (when item-pos
+                          (convert-to-pos project-path src-path item-pos))))
+                    (loop for line-no
                           from (get-val range "start")
                           to (get-val range "end")
-                          collect line)))
+                          collect line-no)))
     :test #'equal))
 
-(defun find-affected-item-pos (line)
-  (setq *deepest-item* nil)
-  (find-item (jsown:val result "body") line)
-  (get-pos *deepest-item*))
+(defun find-affected-item-pos (ast pos)
+  (let ((q (make-queue)))
+    (enqueue q ast)
+    (loop
+      (let ((ast (dequeue q)))
+        (if (null ast) (return))
 
-(defun find-item (tree line)
-  (when (contains-line tree line)
-    (setq *deepest-item* tree))
+        (when (and
+                (jsown:keyp ast "kind") (= (jsown:val ast "kind") *variable-declaration*)
+                (jsown:keyp ast "start") (<= (jsown:val ast "start") pos)
+                (jsown:keyp ast "end") (> (jsown:val ast "end") pos))
+          (let ((init (jsown:val ast "initializer")))
+            (when (= (jsown:val init "kind") *arrow-function*)
+              (if (equal (find-return-type init) *jsx-element*)
+                  (enqueue q (jsown:val init "body"))
+                  (return (jsown:val ast "start"))))))
 
-  (if (jsown:keyp tree "childItems")
-      (progn
-        (find-item (jsown:val tree "childItems") line))
-      (when (jsown:keyp tree "OBJ")
-        (loop for obj in tree do
-              (find-item obj line)))))
+        (when (and
+                (jsown:keyp ast "kind") (= (jsown:val ast "kind") *function-declaration*)
+                (jsown:keyp ast "start") (<= (jsown:val ast "start") pos)
+                (jsown:keyp ast "end") (> (jsown:val ast "end") pos))
+                  (return (jsown:val ast "start")))
+
+        (when (and
+                (jsown:keyp ast "kind")
+                (= (jsown:val ast "kind") *variable-statement*))
+          (let ((dec-list (jsown:val (jsown:val ast "declarationList") "declarations")))
+            (loop for d in dec-list do
+                  (enqueue q (cdr d)))))
+
+        (when (jsown:keyp ast "statements")
+          (loop for s in (jsown:val ast "statements") do
+                (enqueue q (cdr s))))))))
+
+(defun find-return-type (ast)
+  (when (and
+          (jsown:keyp ast "type")
+          (= (jsown:val (jsown:val ast "type") "kind") *void-keyword*))
+    (return-from find-return-type))
+
+  (let ((q (make-queue)))
+    (enqueue q ast)
+    (loop
+      (let ((ast (dequeue q)))
+        (if (null ast) (return))
+
+        (when (and (jsown:keyp ast "kind") (= (jsown:val ast "kind") *return-statement*))
+          (when (= (jsown:val (jsown:val ast "expression") "kind") *parenthesized-expression*)
+            (when 
+              (= (jsown:val (jsown:val
+                              (jsown:val ast "expression") "expression") "kind") *jsx-element*)
+              (return *jsx-element*))))
+
+        (when (jsown:keyp ast "statements")
+          (loop for s in (jsown:val ast "statements") do
+                (enqueue q (cdr s))))
+        
+        (when (jsown:keyp ast "body")
+          (enqueue q (jsown:val ast "body")))))))
 
 (defun find-components (root-path src-path pos &optional (exclude '()))
   (call (format nil "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}" src-path))
   (let ((result (exec (format nil "{\"seq\": 2, \"command\": \"references\", \"arguments\": {\"file\": \"~a\", \"line\": ~a, \"offset\": ~a}}"
-                              src-path (jsown:val pos "line") (jsown:val pos "offset"))))
+                              src-path (cdr (assoc :line pos)) (cdr (assoc :offset pos)))))
         poss)
     (let ((refposs
             (remove-if (lambda (p) (or (equal p pos)
@@ -168,8 +227,27 @@
                       poss))
       :test #'equal)))
 
-(defparameter *jsx-opening-element* 276)
+(defstruct queue (values nil))
+
+(defun enqueue (q v)
+  (if (null (queue-values q))
+      (setf (queue-values q) (list v))
+      (nconc (queue-values q) (list v))))
+
+(defun dequeue (q)
+  (unless (null (queue-values q))
+    (pop (queue-values q))))
+
+(defparameter *void-keyword* 113)
+(defparameter *parenthesized-expression* 208)
+(defparameter *arrow-function* 210)
+(defparameter *variable-statement* 233)
+(defparameter *return-statement* 243)
+(defparameter *variable-declaration* 250)
+(defparameter *function-declaration* 252)
+(defparameter *jsx-element* 274)
 (defparameter *jsx-self-closing-element* 275)
+(defparameter *jsx-opening-element* 276)
 
 (defparameter *nearest-comp-pos* nil)
 
@@ -224,9 +302,9 @@
   (let ((stream (uiop:process-info-output *tsserver*)))
     (loop while stream do
           (defvar result)
-          (setq result (jsown:parse (extjson stream)))
-          (when (string= (jsown:val result "type") "response")
-            (return result)))))
+          (let ((result (jsown:parse (extjson stream))))
+            (when (string= (jsown:val result "type") "response")
+              (return result))))))
 
 (defun exec-tsparser (command)
   (call-tsparser command)
@@ -248,3 +326,14 @@
   (read-line stream)
   ;; JSON 
   (read-line stream))
+
+;; for debug
+(defun top (sequence limit)
+  (let ((line-no 0) (result ""))
+    (with-input-from-string (in sequence)
+      (loop :for line := (read-line in nil nil) :while line
+            :do (progn
+                  (setf line-no (+ line-no 1))
+                  (setf result (format nil "~A~A~%" result line))
+                  (when (= line-no limit)
+                    (return-from top result)))))))
