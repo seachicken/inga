@@ -92,18 +92,28 @@
     :test #'equal))
 
 (defun analyze-by-range (project-path range &optional (exclude '()))
-  (let ((src-path (format nil "~a~a" project-path (get-val range "path")))
-        ast)
-    (start-tsparser)
-    (let ((result (exec-tsparser src-path)))
-      (when (> (length result) 0)
-        (setf ast (cdr (jsown:parse result)))))
-    (stop-tsparser)
+  (let ((q (make-queue))
+        (results '()))
+    (enqueue q range)
+    (loop
+      (let ((range (dequeue q)))
+        (if (null range) (return results))
 
-    (unless ast)
-      (mapcan (lambda (pos)
-                (find-components project-path src-path pos exclude))
-              (get-affected-item-poss ast project-path src-path range))))
+        (let ((src-path (format nil "~A~A" project-path (get-val range "path")))
+              ast)
+
+          (start-tsparser)
+          (let ((result (exec-tsparser src-path)))
+            (when (> (length result) 0)
+              (setf ast (cdr (jsown:parse result)))))
+          (stop-tsparser)
+
+          (setf results
+                (append results
+                        (mapcan (lambda (pos)
+                                  (let ((comps (find-components project-path src-path pos q exclude)))
+                                    comps))
+                                (get-affected-item-poss ast project-path src-path range)))))))))
 
 (defun get-affected-item-poss (ast project-path src-path range)
   (remove-duplicates
@@ -146,7 +156,7 @@
                 (jsown:keyp ast "kind") (= (jsown:val ast "kind") *function-declaration*)
                 (jsown:keyp ast "start") (<= (jsown:val ast "start") pos)
                 (jsown:keyp ast "end") (> (jsown:val ast "end") pos))
-                  (return (jsown:val ast "start")))
+          (return (jsown:val ast "start")))
 
         (when (and
                 (jsown:keyp ast "kind")
@@ -185,7 +195,7 @@
         (when (jsown:keyp ast "body")
           (enqueue q (jsown:val ast "body")))))))
 
-(defun find-components (root-path src-path pos &optional (exclude '()))
+(defun find-components (root-path src-path pos q &optional (exclude '()))
   (call (format nil "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}" src-path))
   (let ((result (exec (format nil "{\"seq\": 2, \"command\": \"references\", \"arguments\": {\"file\": \"~a\", \"line\": ~a, \"offset\": ~a}}"
                               src-path (cdr (assoc :line pos)) (cdr (assoc :offset pos)))))
@@ -222,8 +232,14 @@
                               (ast (cdr (assoc :ast p))))
                           (setq *nearest-comp-pos* nil)
                           (let ((comp-pos (find-component ast pos)))
-                            (when (not (null comp-pos))
-                              (convert-to-pos root-path path comp-pos)))))
+                            (if (null comp-pos)
+                                (let ((range-pos (convert-to-pos root-path path pos)))
+                                  (enqueue q (list
+                                               (cons "path" (enough-namestring path root-path))
+                                               (cons "start" (cdr (assoc :line range-pos)))
+                                               (cons "end" (cdr (assoc :line range-pos)))))
+                                  nil)
+                                (convert-to-pos root-path path comp-pos)))))
                       poss))
       :test #'equal)))
 

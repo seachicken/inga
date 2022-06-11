@@ -44,6 +44,16 @@
           '(("path" . "src/App/NewTodoInput/index.tsx") ("start" . 14) ("end" . 14)))))
   (inga:stop))
 
+(test analyze-by-range-in-external-function
+  (inga:start)
+  (is (equal
+        '(((:path . "src/App/NewTodoInput/index.tsx") (:line . 34) (:offset . 10)))
+        (inga/main::analyze-by-range
+          (truename *project-path*)
+          '(("path" . "src/functions.ts") ("start" . 2) ("end" . 2))   
+          '("*.test.ts"))))
+  (inga:stop))
+
 (test find-components
   (inga:start)
   (is (equal
@@ -51,7 +61,8 @@
         (inga:find-components
           *project-path*
           (truename (uiop:merge-pathnames* "src/App/NewTodoInput/index.tsx" *project-path*))
-          '((:path . "src/App/NewTodoInput/index.tsx") (:line . 12) (:offset . 12)))))
+          '((:path . "src/App/NewTodoInput/index.tsx") (:line . 12) (:offset . 12))
+          (inga/main::make-queue))))
   (inga:stop))
 
 (test find-components-with-exclude
@@ -63,6 +74,7 @@
           *project-path*
           (truename (uiop:merge-pathnames* "src/App/NewTodoInput/index.tsx" *project-path*))
           '((:path . "src/App/NewTodoInput/index.tsx") (:line . 7) (:offset . 7))
+          (inga/main::make-queue)
           '("*.test.tsx"))))
   (inga:stop))
 
