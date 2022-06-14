@@ -31,7 +31,7 @@ const NewTodoTextInput: React.FC = () => {
     <Layout>
       <header className="header">
         <h1>todos</h1>
-        <input style={{outline: '2px dashed red', outlineOffset: '2px'}}
+        <input data-inga="1"
           type="text"
           className="new-todo"
           placeholder="What needs to be done?"

@@ -9,14 +9,14 @@
 
 (test can-inject-mark-when-the-opening-tag-is-single-line
   (is (equal
-        "<button style={{outline: '2px dashed red', outlineOffset: '2px'}} onClick={() => {}}>"
+        "<button data-inga=\"1\" onClick={() => {}}>"
         (inga/jsx:inject-mark-on-line
           "<button onClick={() => {}}>"
           2 1))))
 
 (test can-inject-mark-when-the-opening-tag-is-line-breaking
   (is (equal
-        "<button style={{outline: '2px dashed red', outlineOffset: '2px'}}"
+        "<button data-inga=\"1\""
         (inga/jsx:inject-mark-on-line
           "<button"
           2 1))))

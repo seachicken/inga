@@ -8,8 +8,9 @@
   (if (and (and (> offset 1) (< offset (length line-string)))
            (equal (subseq line-string (- offset 2) (- offset 1)) "<"))
       (let ((tag-end-offset (get-tag-end-offset line-string offset)))
-        (format nil "~A style={{outline: '2px dashed red', outlineOffset: '2px'}}~A"
+        (format nil "~a data-inga=\"~a\"~a"
                 (subseq line-string 0 tag-end-offset)
+                score
                 (subseq line-string tag-end-offset)))
       (progn
         (format *error-output* "Can't inject mark. line-string: \"~a\", offset: ~a~%" line-string offset)
