@@ -2,7 +2,9 @@
   (:use #:cl
         #:inga/file)
   (:import-from #:cl-ppcre)
-  (:export #:get-diff))
+  (:export #:get-diff
+           #:get-hostname
+           #:track-branch))
 (in-package #:inga/git)
 
 (defun get-diff (project-path sha-a &optional sha-b exclude)
@@ -28,3 +30,22 @@
                             (let ((end (if (= rows 0) start (- (+ start rows) 1))))
                               (vector-push-extend (list (cons "path" to-path) (cons "start" start) (cons "end" end)) ranges))))))))
         (return-from get-diff (coerce ranges 'list))))))
+
+(defun get-hostname (project-path)
+  (let ((result (uiop:run-program (format nil "(cd ~a && git remote -v)" project-path)
+                                  :output :string
+                                  :ignore-error-status t)))
+    (aref
+      (nth 1
+           (multiple-value-list
+             (ppcre:scan-to-strings
+               "^(.+?)\\s+.+(?:@|//)(.+?)(?::|/)(.+?/.+?)(?:\.git|)\\s+.+$"
+               result))) 1)))
+
+(defun track-branch (ref-name project-path)
+  (uiop:run-program (format nil
+                            "(cd ~a && git branch --track ~a origin/~a)"
+                            project-path
+                            ref-name ref-name)
+                    :ignore-error-status t))
+

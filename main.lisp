@@ -1,6 +1,7 @@
 (defpackage #:inga/main
   (:use #:cl
         #:inga/git
+        #:inga/github
         #:inga/ts-helper
         #:inga/jsx
         #:inga/file)
@@ -19,12 +20,27 @@
 (defvar *tsparser*)
 
 (defun command (&rest argv)
-  (destructuring-bind (&key project-path sha-a sha-b exclude inject-mark) (parse-argv argv)
+  (destructuring-bind (&key project-path sha-a sha-b exclude github-token inject-mark) (parse-argv argv)
     (start)
-    (let ((results (analyze project-path sha-a sha-b exclude)))
-      (format t "~A~%" results)
-      (when inject-mark
-        (inject-mark project-path results)))
+
+    (let (pr hostname)
+      (when github-token
+        (setf hostname (inga/git:get-hostname project-path))
+        (inga/github:login hostname github-token)
+        (setf pr (inga/github:get-pr project-path))
+        (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha last-report) pr
+          (unless sha-a
+            (inga/git:track-branch base-ref-name project-path)
+            (setf sha-a base-ref-name))))
+
+      (let ((results (analyze project-path sha-a sha-b exclude github-token)))
+        (format t "~A~%" results)
+        (when pr
+          (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha last-report) pr
+            (inga/github:send-pr-comment hostname base-url owner-repo number results project-path head-sha last-report)))
+        (when inject-mark
+          (inject-mark project-path results))))
+
     (stop)))
 
 (defun parse-argv (argv)
@@ -32,6 +48,7 @@
         with sha-a = nil
         with sha-b = nil
         with exclude = '()
+        with github-token = nil
         with inject-mark = nil
         for option = (pop argv)
         while option
@@ -49,6 +66,8 @@
                                       (string-trim '(#\Space) exc))
                                     (split #\,
                                            (pop argv))))))
+             ("--github-token"
+              (setf github-token (pop argv)))
              ("--inject-mark"
               (setf inject-mark t)))
         finally
@@ -58,6 +77,8 @@
                     (when sha-b
                       (list :sha-b sha-b))
                     (list :exclude exclude)
+                    (when github-token
+                      (list :github-token github-token))
                     (list :inject-mark inject-mark)))))
 
 (defun split (div sequence)
@@ -84,7 +105,7 @@
         (when (equal (car item) key)
           (return-from get-val (cdr item)))))
 
-(defun analyze (project-path sha-a sha-b &optional (exclude '()))
+(defun analyze (project-path sha-a sha-b &optional (exclude '()) github-token)
   (remove-duplicates
     (mapcan (lambda (range)
               (analyze-by-range project-path range exclude))
