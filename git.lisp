@@ -28,8 +28,12 @@
                           (let ((start (parse-integer (aref to-range 0)))
                                 (rows (if (> (length (aref to-range 1)) 0) (parse-integer (aref to-range 1)) 0)))
                             (let ((end (if (= rows 0) start (- (+ start rows) 1))))
-                              (vector-push-extend (list (cons "path" to-path) (cons "start" start) (cons "end" end)) ranges))))))))
-        (return-from get-diff (coerce ranges 'list))))))
+                              ;; extract undeleted files
+                              (when (or (> start 0) (> end 0))
+                                (vector-push-extend (list (cons "path" to-path)
+                                                          (cons "start" start)
+                                                          (cons "end" end)) ranges))))))))))
+      (return-from get-diff (coerce ranges 'list)))))
 
 (defun get-hostname (project-path)
   (let ((result (uiop:run-program (format nil "(cd ~a && git remote -v)" project-path)

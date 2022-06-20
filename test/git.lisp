@@ -26,4 +26,8 @@
 (test not-get-diff-with-exclude
   (is (equal '()
              (inga:get-diff *project-path* "a690a51" "b4ac09c" '("*.test.tsx")))))
+
+(test not-get-diff-with-delete-file
+  (is (equal '()
+             (inga:get-diff *project-path* "a690a51" "9f17b4c" '("*index.tsx")))))
  
