@@ -44,7 +44,7 @@
     (stop)))
 
 (defun parse-argv (argv)
-  (loop with project-path = nil
+  (loop with project-path = (uiop:getcwd)
         with sha-a = nil
         with sha-b = nil
         with exclude = '()
