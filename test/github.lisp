@@ -11,17 +11,36 @@
   (is (equal (format nil "~a~%~a~%~a~%~a~%~a~%~a~%~a~%~a~%"
                      "- 📂 b"
                      "  - 📂 a"
-                     "    - 📄 [1.text#L1](https://github.com/owner/repo/blob/sha/b/a/1.text#L1)"
-                     "    - 📄 [1.text#L2](https://github.com/owner/repo/blob/sha/b/a/1.text#L2)"
-                     "  - 📄 [1.text#L1](https://github.com/owner/repo/blob/sha/b/1.text#L1)"
+                     "    - 📄 [1.tsx#L1](https://github.com/owner/repo/blob/sha/b/a/1.tsx#L1)"
+                     "    - 📄 [1.tsx#L2](https://github.com/owner/repo/blob/sha/b/a/1.tsx#L2)"
+                     "  - 📄 [1.tsx#L1](https://github.com/owner/repo/blob/sha/b/1.tsx#L1)"
                      "- 📂 c/a"
-                     "  - 📄 [1.text#L3](https://github.com/owner/repo/blob/sha/c/a/1.text#L3)"
-                     "- 📄 [a.text#L4](https://github.com/owner/repo/blob/sha/a.text#L4)")
+                     "  - 📄 [1.tsx#L3](https://github.com/owner/repo/blob/sha/c/a/1.tsx#L3)"
+                     "- 📄 [a.tsx#L4](https://github.com/owner/repo/blob/sha/a.tsx#L4)")
              (inga/github::get-code-hierarchy
                "https://github.com/owner/repo/" "sha"
-               '(((:path . "b/a/1.text") (:line . 1))
-                 ((:path . "b/a/1.text") (:line . 2))
-                 ((:path . "b/1.text") (:line . 1))
-                 ((:path . "c/a/1.text") (:line . 3))
-                 ((:path . "a.text") (:line . 4)))))))
+               '(((:path . "b/a/1.tsx") (:line . 1))
+                 ((:path . "b/a/1.tsx") (:line . 2))
+                 ((:path . "b/1.tsx") (:line . 1))
+                 ((:path . "c/a/1.tsx") (:line . 3))
+                 ((:path . "a.tsx") (:line . 4)))))))
+
+(test output-dirs-with-nest-nested-dirs
+  (is (equal
+        (format nil "~a~%~a~%"
+                "- 📂 a/b"
+                "  - 📂 c")
+        (inga/github::output-dirs
+          nil
+          '("a" "b" "c")
+          '("a" "b" "d" "e")))))
+
+(test output-dirs-with-prev-nested-dirs
+  (is (equal
+        (format nil "~a~%"
+                "  - 📂 d/e")
+        (inga/github::output-dirs
+          '("a" "b" "c")
+          '("a" "b" "d" "e")
+          nil))))
 

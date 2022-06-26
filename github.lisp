@@ -21,7 +21,7 @@
                                           project-path)
                                   :output :string
                                   :ignore-error-status t))))
-    (if (and (jsown:keyp json "url"))
+    (if (jsown:keyp json "url")
       (append
         (list :base-url
               (get-base-url (jsown:val json "url")))
@@ -108,8 +108,7 @@
                                     result
                                     (output-file file
                                                  num-of-nested
-                                                 base-url sha path line)))
-                      ))))
+                                                 base-url sha path line)))))))
            (setf i (+ i 1))))
     result))
 
@@ -120,23 +119,30 @@
   (let ((prev-diff-i (get-diff-index current prev))
         (next-diff-i (get-diff-index current next))
         (result "")
-        (i 0))
-    (when (> prev-diff-i 0)
-      (return-from output-dirs (values "" 1)))
-
+        (nested-i 0))
     (loop
+      with i = 0
       for path in current
       do (progn
-           (if (or (= next-diff-i 0) (< i next-diff-i))
-               (if (= (length result) 0)
+           (if (< i prev-diff-i)
+               (when (= (+ i 1) prev-diff-i)
+                 (setf nested-i (+ nested-i 1)))
+               (if (or (= next-diff-i 0) (< i next-diff-i))
+                   (if (= (length result) 0)
+                       (progn
+                         (if (= nested-i 0)
+                             (setf result (format nil "- 📂 ~a" path))
+                             (setf result (format nil "~vt- 📂 ~a" (* nested-i 2) path)))
+                         (setf nested-i (+ nested-i 1)))
+                       (setf result (format nil "~a/~a" result path)))
                    (progn
-                     (setf result (format nil "- 📂 ~a" path))
-                     (setf i (+ i 1)))
-                   (setf result (format nil "~a/~a" result path)))
-               (progn
-                 (setf result (format nil "~a~%~vt- 📂 ~a" result (* i 2) path))
-                 (setf i (+ i 1))))))
-    (values (format nil "~a~%" result) i)))
+                     (setf result (format nil "~a~%~vt- 📂 ~a" result (* nested-i 2) path))
+                     (setf nested-i (+ nested-i 1)))))
+           (setf i (+ i 1))))
+    (values (if (= (length result) 0)
+                result
+                (format nil "~a~%" result))
+            nested-i)))
 
 (defun output-file (file i base-url sha path line)
   (if (= i 0)
@@ -211,10 +217,10 @@
             (return-from get-diff-index 0))
   (loop
     for i from 0 below (max (length a) (length b))
-    collect (when (and
-                    (> (length a) i) (> (length b) i)
-                    (equal (subseq a 0 (+ i 1)) (subseq b 0 (+ i 1))))
-              (return-from get-diff-index (+ i 1))))
+    collect (if (and (< i (length a)) (< i (length b)))
+                (when (not (equal (subseq a 0 (+ i 1)) (subseq b 0 (+ i 1))))
+                  (return-from get-diff-index i))
+                (return-from get-diff-index i)))
   0)
 
 (defun get-dirs (paths)
