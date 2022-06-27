@@ -56,7 +56,7 @@
 
 (defun send-pr-comment (hostname base-url owner-repo number affected-poss project-path sha last-report)
   (let ((comment (format nil
-                         "~a~%~a~a~a~a~%~%<details><summary>Details</summary>~%~%~a~%</details>"
+                         "~a~%~a~a~a~a~%~%<details><summary>Affected files</summary>~%~%~a~%</details>"
                          "# Inga Report"
                          "**🔮 "
                          (get-number-of-components affected-poss)
