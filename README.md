@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/seachicken/inga/actions/workflows/ci.yml/badge.svg)](https://github.com/seachicken/inga/actions/workflows/ci.yml)
 
-A static analysis tool of UI components affected by changed code.
+A static analysis tool that analyzes code diffs to find code that has a large impact on users.
 
 ## Why?
 
