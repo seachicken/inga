@@ -136,7 +136,9 @@
                          (setf nested-i (+ nested-i 1)))
                        (setf result (format nil "~a/~a" result path)))
                    (progn
-                     (setf result (format nil "~a~%~vt- 📂 ~a" result (* nested-i 2) path))
+                     (if (= (length result) 0)
+                         (setf result (format nil "~vt- 📂 ~a" (* nested-i 2) path))
+                         (setf result (format nil "~a~%~vt- 📂 ~a" result (* nested-i 2) path)))
                      (setf nested-i (+ nested-i 1)))))
            (setf i (+ i 1))))
     (values (if (= (length result) 0)
