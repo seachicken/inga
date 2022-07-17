@@ -103,6 +103,7 @@
 
 (defun start (&key front-path back-path)
   (when front-path
+    (setf *tsserver-id* 0)
     (setq *tsserver*
           (uiop:launch-program
             "tsserver"
@@ -321,9 +322,13 @@
           (enqueue q (jsown:val ast "body")))))))
 
 (defun find-components (root-path src-path pos q &optional (exclude '()))
-  (call (format nil "{\"seq\": 1, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}" src-path))
-  (let ((result (exec (format nil "{\"seq\": 2, \"command\": \"references\", \"arguments\": {\"file\": \"~a\", \"line\": ~a, \"offset\": ~a}}"
-                              src-path (cdr (assoc :line pos)) (cdr (assoc :offset pos)))))
+  (setf *tsserver-id* (+ *tsserver-id* 1))
+  (call (format nil "{\"seq\": ~a, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}"
+                *tsserver-id* src-path))
+  (setf *tsserver-id* (+ *tsserver-id* 1))
+  (let ((result (exec (format nil "{\"seq\": ~a, \"command\": \"references\", \"arguments\": {\"file\": \"~a\", \"line\": ~a, \"offset\": ~a}}"
+                              *tsserver-id* src-path
+                              (cdr (assoc :line pos)) (cdr (assoc :offset pos)))))
         poss)
     (let ((refposs
             (remove-if (lambda (p) (or (equal p pos)
@@ -515,12 +520,15 @@
                                       (inject-mark-on-line line (cdr (assoc :offset pos)) 1))
                               (write-line line outstream)))))))))
 
+(defvar *tsserver-id*)
 (defun exec (command)
   (call command)
   (let ((stream (uiop:process-info-output *tsserver*)))
     (loop while stream do
-          (let ((result (jsown:parse (extjson stream))))
-            (when (string= (jsown:val result "type") "response")
+          (let ((result (jsown:parse (extract-json stream))))
+            (when (and
+                    (jsown:keyp result "request_seq")
+                    (= (jsown:val result "request_seq") *tsserver-id*))
               (return result))))))
 
 (defun exec-tsparser (command)
@@ -580,14 +588,6 @@
       repeat len
       do (setf result (format nil "~a~a" result (read-char stream)))
       finally (return result))))
-
-(defun extjson (stream)
-  ;; Content-Length: 99
-  (read-line stream)
-  ;; newline
-  (read-line stream)
-  ;; JSON 
-  (read-line stream))
 
 ;; for debug
 (defun top (sequence limit)
