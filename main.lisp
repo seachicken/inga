@@ -21,13 +21,14 @@
 (defvar *javaparser*)
 
 (defun command (&rest argv)
-  (destructuring-bind (&key project-path back-path sha-a sha-b exclude github-token inject-mark) (parse-argv argv)
-    (start)
+  (destructuring-bind (&key front-path back-path sha-a sha-b exclude github-token inject-mark) (parse-argv argv)
+    (start :front-path front-path :back-path back-path)
 
-    (when back-path
-      (setf project-path back-path))
+    (let (project-path pr hostname)
+      (if back-path
+        (setf project-path back-path)
+        (setf project-path front-path))
 
-    (let (pr hostname)
       (when github-token
         (setf hostname (inga/git:get-hostname project-path))
         (inga/github:login hostname github-token)
@@ -38,8 +39,8 @@
             (setf sha-a base-ref-name))))
 
       (let ((results (if back-path
-                         (analyze-for-back project-path sha-a sha-b exclude)
-                         (analyze-for-front project-path sha-a sha-b exclude))))
+                         (analyze-for-back back-path sha-a sha-b exclude)
+                         (analyze-for-front front-path sha-a sha-b exclude))))
         (format t "~A~%" results)
         (when pr
           (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha last-report) pr
@@ -47,10 +48,10 @@
         (when inject-mark
           (inject-mark project-path results))))
 
-    (stop)))
+    (stop :front-path front-path :back-path back-path)))
 
 (defun parse-argv (argv)
-  (loop with project-path = (uiop:getcwd)
+  (loop with front-path = nil
         with back-path = nil
         with sha-a = nil
         with sha-b = nil
@@ -60,8 +61,8 @@
         for option = (pop argv)
         while option
         do (alexandria:switch (option :test #'equal)
-             ("--project-path"
-              (setf project-path (pop argv)))
+             ("--front-path"
+              (setf front-path (pop argv)))
              ("--back-path"
               (setf back-path (pop argv)))
              ("--sha-a"
@@ -80,8 +81,9 @@
              ("--inject-mark"
               (setf inject-mark t)))
         finally
-          (return
-            (append (list :project-path project-path)
+          (return (append 
+                    (when front-path
+                      (list :front-path front-path))
                     (when back-path
                       (list :back-path back-path))
                     (list :sha-a sha-a)
@@ -99,14 +101,25 @@
                (split div (subseq sequence (1+ pos))))
         (list sequence))))
 
-(defun start ()
-  (setq *tsserver* (uiop:launch-program "tsserver" :input :stream :output :stream))
-  (setf *jdtls-id* 0)
-  (setq *jdtls* (uiop:launch-program "./libs/jdtls/bin/jdtls -data ./libs/jdtls/workspace" :input :stream :output :stream)))
+(defun start (&key front-path back-path)
+  (when front-path
+    (setq *tsserver*
+          (uiop:launch-program
+            "tsserver"
+            :input :stream :output :stream)))
+  (when back-path
+    (setf *jdtls-id* 0)
+    (setq *jdtls* 
+          (uiop:launch-program
+            "./libs/jdtls/bin/jdtls -data ./libs/jdtls/workspace"
+            :input :stream :output :stream))
+    (exec-jdtls-initialize back-path)))
 
-(defun stop ()
-  (uiop:close-streams *tsserver*)
-  (uiop:close-streams *jdtls*))
+(defun stop (&key front-path back-path)
+  (when front-path
+    (uiop:close-streams *tsserver*))
+  (when back-path
+    (uiop:close-streams *jdtls*)))
 
 (defun start-tsparser ()
   (setq *tsparser* (uiop:launch-program "tsparser" :input :stream :output :stream)))
@@ -354,9 +367,6 @@
       :test #'equal)))
 
 (defun find-endpoints (root-path src-path pos q &optional (exclude '()))
-  ;; TODO: move to starting
-  (exec-jdtls-initialize root-path)
-
   (setf *jdtls-id* (+ *jdtls-id* 1))
   (let ((refs (exec-jdtls (format nil "{\"jsonrpc\":\"2.0\",\"id\":~a,\"method\":\"textDocument/references\",\"params\":{\"textDocument\":{\"uri\":\"file://~a\"},\"position\":{\"line\":~a,\"character\":~a},\"context\":{\"includeDeclaration\":false}}}"
                                   *jdtls-id* src-path
@@ -495,7 +505,7 @@
 
 (defun exec-jdtls-initialize (root-path)
   (setf *jdtls-id* (+ *jdtls-id* 1))
-  (call-jdtls (format nil "{\"jsonrpc\":\"2.0\",\"id\":~a,\"method\":\"initialize\",\"params\":{\"processId\":null,\"rootPath\":\"~a\",\"rootUri\":\"file://~a\",\"capabilities\":{\"textDocument\":{\"definition\":{\"dynamicRegistration\":true}}}}}"
+  (exec-jdtls (format nil "{\"jsonrpc\":\"2.0\",\"id\":~a,\"method\":\"initialize\",\"params\":{\"processId\":null,\"rootPath\":\"~a\",\"rootUri\":\"file://~a\",\"capabilities\":{\"textDocument\":{\"definition\":{\"dynamicRegistration\":true}}}}}"
                       *jdtls-id* root-path root-path)))
 
 (defvar *jdtls-id*)
