@@ -11,8 +11,15 @@ A static analysis tool that analyzes code diffs to find code that has a large im
 
 ## Supported languages and frameworks
 
+### front-end
+
 - TypeScript
 - React
+
+### back-end
+
+- Java
+- Spring Boot
 
 ## Usage
 
@@ -22,9 +29,13 @@ inga [options]
 
 ### Options
 
-`--project-path <string>`
+`--front-path <string>`
 
-The root path of the project to be analyzed. If this option is omitted, the current directory is set.
+Relative path of the front-end project to be analyzed.
+
+`--back-path <string>`
+
+Relative path of the back-end project to be analyzed.
 
 `--exclude <string>`
 
