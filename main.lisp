@@ -277,7 +277,9 @@
         (if (null ast) (return))
 
         (when (and
-                (string= (cdr (car ast)) "com.github.javaparser.ast.body.MethodDeclaration")
+                (or
+                  (string= (cdr (car ast)) "com.github.javaparser.ast.body.ConstructorDeclaration")
+                  (string= (cdr (car ast)) "com.github.javaparser.ast.body.MethodDeclaration"))
                 (<= (jsown:val (jsown:val ast "range") "beginLine") pos)
                 (> (jsown:val (jsown:val ast "range") "endLine") pos))
           (return
@@ -370,7 +372,8 @@
   (setf *jdtls-id* (+ *jdtls-id* 1))
   (let ((refs (exec-jdtls (format nil "{\"jsonrpc\":\"2.0\",\"id\":~a,\"method\":\"textDocument/references\",\"params\":{\"textDocument\":{\"uri\":\"file://~a\"},\"position\":{\"line\":~a,\"character\":~a},\"context\":{\"includeDeclaration\":false}}}"
                                   *jdtls-id* src-path
-                                  (cdr (assoc :line pos)) (cdr (assoc :offset pos))))))
+                                  ;; the zero-based line and offset
+                                  (- (cdr (assoc :line pos)) 1) (- (cdr (assoc :offset pos)) 1)))))
     (setf refs (mapcar (lambda (ref)
                          (list
                            (cons :path (subseq (jsown:val ref "uri") 7))
@@ -390,9 +393,20 @@
                        refs))
     (stop-javaparser)
 
-    (mapcar (lambda (ref)
-              (find-endpoint ref root-path))
-            refs)))
+    (remove-duplicates
+      (remove nil
+              (mapcar (lambda (ref)
+                        (let ((endpoint-pos (find-endpoint ref root-path)))
+                             (if endpoint-pos
+                                 endpoint-pos
+                                 (progn
+                                   (enqueue q (list
+                                                (cons "path" (enough-namestring (cdr (assoc :path ref)) root-path))
+                                                (cons "start" (cdr (assoc :line ref)))
+                                                (cons "end" (cdr (assoc :line ref)))))
+                                   nil))))
+                      refs))
+      :test #'equal)))
 
 (defstruct queue (values nil))
 
@@ -444,7 +458,7 @@
         (return-from find-component (find-component (cdr ast) pos))))))
 
 (defun find-endpoint (ref root-path)
-  (let ((q (make-queue)))
+  (let ((q (make-queue)) is-rest-controller)
     (enqueue q (cdr (assoc :ast ref)))
     (loop
       (let ((ast (dequeue q))
@@ -452,10 +466,17 @@
             (line (cdr (assoc :line ref))))
         (if (null ast) (return))
 
+        (when 
+          (and
+            (string= (cdr (car ast)) "com.github.javaparser.ast.expr.MarkerAnnotationExpr")
+            (string= (jsown:val (jsown:val ast "name") "identifier") "RestController"))
+          (setf is-rest-controller t))
+
         (when (and
                 (string= (cdr (car ast)) "com.github.javaparser.ast.body.MethodDeclaration")
                 (<= (jsown:val (jsown:val ast "range") "beginLine") line)
-                (> (jsown:val (jsown:val ast "range") "endLine") line))
+                (> (jsown:val (jsown:val ast "range") "endLine") line)
+                is-rest-controller)
           (return
             (list (cons :path (enough-namestring path root-path))
                   (cons :line (jsown:val (jsown:val ast "range") "beginLine"))
@@ -464,6 +485,10 @@
         (when (jsown:keyp ast "types")
           (loop for type in (jsown:val ast "types") do
                 (enqueue q (cdr type))))
+
+        (when (jsown:keyp ast "annotations")
+          (loop for annotation in (jsown:val ast "annotations") do
+                (enqueue q (cdr annotation))))    
 
         (when (jsown:keyp ast "members")
           (loop for member in (jsown:val ast "members") do
