@@ -46,7 +46,7 @@
           (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha last-report) pr
             (inga/github:send-pr-comment hostname base-url owner-repo number results project-path head-sha last-report)))
         (when inject-mark
-          (inject-mark project-path results))))
+          (inject-mark front-path results))))
 
     (stop :front-path front-path :back-path back-path)))
 
