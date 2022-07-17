@@ -83,9 +83,9 @@
         finally
           (return (append 
                     (when front-path
-                      (list :front-path front-path))
+                      (list :front-path (truename (uiop:merge-pathnames* front-path))))
                     (when back-path
-                      (list :back-path back-path))
+                      (list :back-path (truename (uiop:merge-pathnames* back-path))))
                     (list :sha-a sha-a)
                     (when sha-b
                       (list :sha-b sha-b))
