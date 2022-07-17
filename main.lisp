@@ -10,7 +10,6 @@
   (:export #:command
            #:start
            #:stop
-           #:analyze
            #:find-components
            #:inject-mark))
 (in-package #:inga/main)
@@ -18,10 +17,15 @@
 (defvar *deepest-item*)
 (defvar *tsserver*)
 (defvar *tsparser*)
+(defvar *jdtls*)
+(defvar *javaparser*)
 
 (defun command (&rest argv)
-  (destructuring-bind (&key project-path sha-a sha-b exclude github-token inject-mark) (parse-argv argv)
+  (destructuring-bind (&key project-path back-path sha-a sha-b exclude github-token inject-mark) (parse-argv argv)
     (start)
+
+    (when back-path
+      (setf project-path back-path))
 
     (let (pr hostname)
       (when github-token
@@ -33,7 +37,9 @@
             (inga/git:track-branch base-ref-name project-path)
             (setf sha-a base-ref-name))))
 
-      (let ((results (analyze project-path sha-a sha-b exclude github-token)))
+      (let ((results (if back-path
+                         (analyze-for-back project-path sha-a sha-b exclude)
+                         (analyze-for-front project-path sha-a sha-b exclude))))
         (format t "~A~%" results)
         (when pr
           (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha last-report) pr
@@ -45,6 +51,7 @@
 
 (defun parse-argv (argv)
   (loop with project-path = (uiop:getcwd)
+        with back-path = nil
         with sha-a = nil
         with sha-b = nil
         with exclude = '()
@@ -55,6 +62,8 @@
         do (alexandria:switch (option :test #'equal)
              ("--project-path"
               (setf project-path (pop argv)))
+             ("--back-path"
+              (setf back-path (pop argv)))
              ("--sha-a"
               (setf sha-a (pop argv)))
              ("--sha-b"
@@ -73,6 +82,8 @@
         finally
           (return
             (append (list :project-path project-path)
+                    (when back-path
+                      (list :back-path back-path))
                     (list :sha-a sha-a)
                     (when sha-b
                       (list :sha-b sha-b))
@@ -89,10 +100,13 @@
         (list sequence))))
 
 (defun start ()
-  (setq *tsserver* (uiop:launch-program "tsserver" :input :stream :output :stream)))
+  (setq *tsserver* (uiop:launch-program "tsserver" :input :stream :output :stream))
+  (setf *jdtls-id* 0)
+  (setq *jdtls* (uiop:launch-program "./libs/jdtls/bin/jdtls -data ./libs/jdtls/workspace" :input :stream :output :stream)))
 
 (defun stop ()
-  (uiop:close-streams *tsserver*))
+  (uiop:close-streams *tsserver*)
+  (uiop:close-streams *jdtls*))
 
 (defun start-tsparser ()
   (setq *tsparser* (uiop:launch-program "tsparser" :input :stream :output :stream)))
@@ -100,15 +114,29 @@
 (defun stop-tsparser ()
   (uiop:close-streams *tsparser*))
 
+(defun start-javaparser ()
+  (setq *javaparser* (uiop:launch-program "java -jar ./libs/javaparser.jar"
+                                          :input :stream :output :stream)))
+
+(defun stop-javaparser ()
+  (uiop:close-streams *javaparser*))
+
 (defun get-val (list key)
   (loop for item in list do
         (when (equal (car item) key)
           (return-from get-val (cdr item)))))
 
-(defun analyze (project-path sha-a sha-b &optional (exclude '()) github-token)
+(defun analyze-for-front (project-path sha-a sha-b &optional (exclude '()))
   (remove-duplicates
     (mapcan (lambda (range)
               (analyze-by-range project-path range exclude))
+            (get-diff project-path sha-a sha-b exclude))
+    :test #'equal))
+
+(defun analyze-for-back (project-path sha-a sha-b &optional (exclude '()))
+  (remove-duplicates
+    (mapcan (lambda (range)
+              (analyze-by-range-for-back project-path range exclude))
             (get-diff project-path sha-a sha-b exclude))
     :test #'equal))
 
@@ -136,6 +164,30 @@
                                     comps))
                                 (get-affected-item-poss ast project-path src-path range)))))))))
 
+(defun analyze-by-range-for-back (project-path range &optional (exclude '()))
+  (let ((q (make-queue))
+        (results '()))
+    (enqueue q range)
+    (loop
+      (let ((range (dequeue q)))
+        (if (null range) (return results))
+
+        (let ((src-path (format nil "~a~a" project-path (get-val range "path")))
+              ast)
+
+          (start-javaparser)
+          (let ((result (exec-javaparser src-path)))
+            (when (> (length result) 0)
+              (setf ast (cdr (jsown:parse result)))))
+          (stop-javaparser)
+
+          (setf results
+                (append results
+                        (mapcan (lambda (pos)
+                                  (let ((endpoints (find-endpoints project-path src-path pos q exclude)))
+                                    endpoints))
+                                (get-affected-item-poss-for-back ast project-path src-path range)))))))))
+
 (defun get-affected-item-poss (ast project-path src-path range)
   (remove-duplicates
     (remove nil
@@ -150,6 +202,20 @@
                                                      (cons :offset 0))))))))
                         (when item-pos
                           (convert-to-pos project-path src-path item-pos))))
+                    (loop for line-no
+                          from (get-val range "start")
+                          to (get-val range "end")
+                          collect line-no)))
+    :test #'equal))
+
+(defun get-affected-item-poss-for-back (ast project-path src-path range)
+  (remove-duplicates
+    (remove nil
+            (mapcar (lambda (line-no)
+                      (let ((item-pos
+                              (find-affected-item-pos-for-back ast line-no)))
+                        (when item-pos
+                          (acons :path src-path item-pos))))
                     (loop for line-no
                           from (get-val range "start")
                           to (get-val range "end")
@@ -189,6 +255,29 @@
         (when (jsown:keyp ast "statements")
           (loop for s in (jsown:val ast "statements") do
                 (enqueue q (cdr s))))))))
+
+(defun find-affected-item-pos-for-back (ast pos)
+  (let ((q (make-queue)))
+    (enqueue q ast)
+    (loop
+      (let ((ast (dequeue q)))
+        (if (null ast) (return))
+
+        (when (and
+                (string= (cdr (car ast)) "com.github.javaparser.ast.body.MethodDeclaration")
+                (<= (jsown:val (jsown:val ast "range") "beginLine") pos)
+                (> (jsown:val (jsown:val ast "range") "endLine") pos))
+          (return
+            (list (cons :line (jsown:val (jsown:val ast "range") "beginLine"))
+                  (cons :offset (jsown:val (jsown:val ast "range") "beginColumn")))))
+
+        (when (jsown:keyp ast "types")
+          (loop for type in (jsown:val ast "types") do
+                (enqueue q (cdr type))))
+
+        (when (jsown:keyp ast "members")
+          (loop for member in (jsown:val ast "members") do
+                (enqueue q (cdr member))))))))
 
 (defun find-return-type (ast)
   (when (and
@@ -264,6 +353,37 @@
                       poss))
       :test #'equal)))
 
+(defun find-endpoints (root-path src-path pos q &optional (exclude '()))
+  ;; TODO: move to starting
+  (exec-jdtls-initialize root-path)
+
+  (setf *jdtls-id* (+ *jdtls-id* 1))
+  (let ((refs (exec-jdtls (format nil "{\"jsonrpc\":\"2.0\",\"id\":~a,\"method\":\"textDocument/references\",\"params\":{\"textDocument\":{\"uri\":\"file://~a\"},\"position\":{\"line\":~a,\"character\":~a},\"context\":{\"includeDeclaration\":false}}}"
+                                  *jdtls-id* src-path
+                                  (cdr (assoc :line pos)) (cdr (assoc :offset pos))))))
+    (setf refs (mapcar (lambda (ref)
+                         (list
+                           (cons :path (subseq (jsown:val ref "uri") 7))
+                           (cons :line (jsown:val (jsown:val (jsown:val ref "range") "start") "line"))
+                           (cons :offset (jsown:val (jsown:val (jsown:val ref "range") "start") "character"))))
+                       (jsown:val refs "result")))
+    (setf refs (remove nil (mapcar (lambda (ref)
+                                     (when (is-analysis-target (cdr (assoc :path ref)) exclude)
+                                       ref))
+                                   refs)))
+
+    (start-javaparser)
+    (setf refs (mapcar (lambda (ref)
+                         (let ((result (exec-javaparser (cdr (assoc :path ref)))))
+                           (when (> (length result) 0)
+                             (acons :ast (cdr (jsown:parse result)) ref))))
+                       refs))
+    (stop-javaparser)
+
+    (mapcar (lambda (ref)
+              (find-endpoint ref root-path))
+            refs)))
+
 (defstruct queue (values nil))
 
 (defun enqueue (q v)
@@ -313,6 +433,32 @@
       (progn
         (return-from find-component (find-component (cdr ast) pos))))))
 
+(defun find-endpoint (ref root-path)
+  (let ((q (make-queue)))
+    (enqueue q (cdr (assoc :ast ref)))
+    (loop
+      (let ((ast (dequeue q))
+            (path (cdr (assoc :path ref)))
+            (line (cdr (assoc :line ref))))
+        (if (null ast) (return))
+
+        (when (and
+                (string= (cdr (car ast)) "com.github.javaparser.ast.body.MethodDeclaration")
+                (<= (jsown:val (jsown:val ast "range") "beginLine") line)
+                (> (jsown:val (jsown:val ast "range") "endLine") line))
+          (return
+            (list (cons :path (enough-namestring path root-path))
+                  (cons :line (jsown:val (jsown:val ast "range") "beginLine"))
+                  (cons :offset (jsown:val (jsown:val ast "range") "beginColumn")))))
+
+        (when (jsown:keyp ast "types")
+          (loop for type in (jsown:val ast "types") do
+                (enqueue q (cdr type))))
+
+        (when (jsown:keyp ast "members")
+          (loop for member in (jsown:val ast "members") do
+                (enqueue q (cdr member))))))))
+
 (defun find-child-nodes (node)
   (if (jsown:keyp node "statements")
     (jsown:val node "statements")
@@ -338,7 +484,6 @@
   (call command)
   (let ((stream (uiop:process-info-output *tsserver*)))
     (loop while stream do
-          (defvar result)
           (let ((result (jsown:parse (extjson stream))))
             (when (string= (jsown:val result "type") "response")
               (return result))))))
@@ -348,6 +493,27 @@
   (let ((stream (uiop:process-info-output *tsparser*)))
     (read-line stream)))
 
+(defun exec-jdtls-initialize (root-path)
+  (setf *jdtls-id* (+ *jdtls-id* 1))
+  (call-jdtls (format nil "{\"jsonrpc\":\"2.0\",\"id\":~a,\"method\":\"initialize\",\"params\":{\"processId\":null,\"rootPath\":\"~a\",\"rootUri\":\"file://~a\",\"capabilities\":{\"textDocument\":{\"definition\":{\"dynamicRegistration\":true}}}}}"
+                      *jdtls-id* root-path root-path)))
+
+(defvar *jdtls-id*)
+(defun exec-jdtls (command)
+  (call-jdtls command)
+  (let ((stream (uiop:process-info-output *jdtls*)))
+    (loop while stream do
+          (let ((result (jsown:parse (extract-json stream))))
+            (when (and
+                    (jsown:keyp result "id")
+                    (= (jsown:val result "id") *jdtls-id*))
+              (return result))))))
+
+(defun exec-javaparser (command)
+  (call-javaparser command)
+  (let ((stream (uiop:process-info-output *javaparser*)))
+    (read-line stream)))
+
 (defun call (command)
   (write-line command (uiop:process-info-input *tsserver*))
   (force-output (uiop:process-info-input *tsserver*)))
@@ -355,6 +521,30 @@
 (defun call-tsparser (command)
   (write-line command (uiop:process-info-input *tsparser*))
   (force-output (uiop:process-info-input *tsparser*)))
+
+(defun call-jdtls (command)
+  (write-line (format nil "Content-Length: ~a~c~c~c~c~a"
+                      (length command) #\return #\linefeed
+                      #\return #\linefeed
+                      command)
+              (uiop:process-info-input *jdtls*))
+  (force-output (uiop:process-info-input *jdtls*)))
+
+(defun call-javaparser (command)
+  (write-line command (uiop:process-info-input *javaparser*))
+  (force-output (uiop:process-info-input *javaparser*)))
+
+(defun extract-json (stream)
+  ;; Content-Length: 99
+  (let ((len (parse-integer (subseq (read-line stream) 16))))
+    ;; newline
+    (read-line stream)
+    ;; JSON
+    (loop
+      with result = ""
+      repeat len
+      do (setf result (format nil "~a~a" result (read-char stream)))
+      finally (return result))))
 
 (defun extjson (stream)
   ;; Content-Length: 99

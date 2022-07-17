@@ -10,20 +10,14 @@
 (in-suite main)
 
 (defparameter *project-path* (uiop:merge-pathnames* "test/fixtures/react-typescript-todo/"))
+(defparameter *back-path* (uiop:merge-pathnames* "test/fixtures/spring-boot-realworld-example-app/"))
 (defparameter *build-path* (uiop:merge-pathnames* "test/fixtures/build/"))
 
 (test analyze
   (inga:start)
   (is (equal
         '(((:path . "src/App/NewTodoInput/index.tsx") (:line . 34) (:offset . 10)))
-        (inga:analyze (truename *project-path*) "a690a51" "4d33bd8")))
-  (inga:stop))
-
-(test analyze-with-exclude
-  (inga:start)
-  (is (equal
-        nil
-        (inga:analyze (truename *project-path*) "a690a51" "b4ac09c" '("*.test.tsx"))))
+        (inga/main::analyze-for-front (truename *project-path*) "a690a51" "4d33bd8")))
   (inga:stop))
 
 (test analyze-by-range-in-arrow-function
@@ -52,6 +46,18 @@
           (truename *project-path*)
           '(("path" . "src/functions.ts") ("start" . 2) ("end" . 2))   
           '("*.test.ts"))))
+  (inga:stop))
+
+(test analyze-by-range-in-external-function-for-back
+  (inga:start)
+  (is (equal
+        '(((:path . "src/main/java/io/spring/api/ArticlesApi.java")
+           (:line . 48) (:offset . 3)))
+        (inga/main::analyze-by-range-for-back
+          (truename *back-path*)
+          '(("path" . "src/main/java/io/spring/application/ArticleQueryService.java")
+            ("start" . 105) ("end" . 105))
+          '("*Test.java"))))
   (inga:stop))
 
 (test find-components

@@ -1,3 +1,6 @@
 [submodule "test/fixtures/react-typescript-todo"]
 	path = test/fixtures/react-typescript-todo
 	url = git@github.com:seachicken/react-typescript-todo.git
+[submodule "test/fixtures/spring-boot-realworld-example-app"]
+	path = test/fixtures/spring-boot-realworld-example-app
+	url = git@github.com:seachicken/spring-boot-realworld-example-app.git
