@@ -112,7 +112,7 @@
     (setf *jdtls-id* 0)
     (setq *jdtls* 
           (uiop:launch-program
-            "./libs/jdtls/bin/jdtls -data ./libs/jdtls/workspace"
+            "jdtls -data ./libs/jdtls/workspace"
             :input :stream :output :stream))
     (exec-jdtls-initialize back-path)))
 
@@ -129,7 +129,7 @@
   (uiop:close-streams *tsparser*))
 
 (defun start-javaparser ()
-  (setq *javaparser* (uiop:launch-program "java -jar ./libs/javaparser.jar"
+  (setq *javaparser* (uiop:launch-program "java inga.Main"
                                           :input :stream :output :stream)))
 
 (defun stop-javaparser ()

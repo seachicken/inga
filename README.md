@@ -69,6 +69,8 @@ Analyze with specific sha-a and sha-b diffs. Not to be used with `--github-token
 npm install -g typescript
 git clone git@github.com:seachicken/tsparser.git
 npm install -g </youer/local/path/tsparser>
+brew install jdtls
+export CLASSPATH=</your/local/path>/libs/javaparser.jar:$CLASSPATH
 
 git clone <this repository> --recursive
 ```
