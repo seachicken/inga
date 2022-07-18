@@ -112,9 +112,12 @@
     (setf *jdtls-id* 0)
     (setq *jdtls* 
           (uiop:launch-program
-            "jdtls -data ./libs/jdtls/workspace"
+            (format nil "~a/libs/jdtls/bin/jdtls -data ~a/libs/jdtls/workspace"
+                    (uiop:getenv "INGA_HOME") (uiop:getenv "INGA_HOME"))
             :input :stream :output :stream))
-    (exec-jdtls-initialize back-path)))
+    (exec-jdtls-initialize back-path)
+    ;; wait for jdtls to ready
+    (sleep 5)))
 
 (defun stop (&key front-path back-path)
   (when front-path
@@ -129,8 +132,10 @@
   (uiop:close-streams *tsparser*))
 
 (defun start-javaparser ()
-  (setq *javaparser* (uiop:launch-program "java inga.Main"
-                                          :input :stream :output :stream)))
+  (setq *javaparser* (uiop:launch-program
+                       (format nil "java -cp ~a/libs/javaparser.jar inga.Main"
+                               (uiop:getenv "INGA_HOME"))
+                       :input :stream :output :stream)))
 
 (defun stop-javaparser ()
   (uiop:close-streams *javaparser*))
