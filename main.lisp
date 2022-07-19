@@ -115,9 +115,7 @@
             (format nil "~a/libs/jdtls/bin/jdtls -data ~a/libs/jdtls/workspace"
                     (uiop:getenv "INGA_HOME") (uiop:getenv "INGA_HOME"))
             :input :stream :output :stream))
-    (exec-jdtls-initialize back-path)
-    ;; wait for jdtls to ready
-    (sleep 5)))
+    (exec-jdtls-initialize back-path)))
 
 (defun stop (&key front-path back-path)
   (when front-path
@@ -543,8 +541,16 @@
 
 (defun exec-jdtls-initialize (root-path)
   (setf *jdtls-id* (+ *jdtls-id* 1))
-  (exec-jdtls (format nil "{\"jsonrpc\":\"2.0\",\"id\":~a,\"method\":\"initialize\",\"params\":{\"processId\":null,\"rootPath\":\"~a\",\"rootUri\":\"file://~a\",\"capabilities\":{\"textDocument\":{\"definition\":{\"dynamicRegistration\":true}}}}}"
-                      *jdtls-id* root-path root-path)))
+  (exec-jdtls (format nil "{\"jsonrpc\":\"2.0\",\"id\":~a,\"method\":\"initialize\",\"params\":{\"processId\":null,\"rootPath\":\"~a\",\"rootUri\":\"file://~a\",\"capabilities\":{}}}"
+                      *jdtls-id* root-path root-path))
+  (let ((stream (uiop:process-info-output *jdtls*)))
+    (loop while stream do
+          (let ((result (jsown:parse (extract-json stream))))
+            (when (and
+                    (jsown:keyp result "params")
+                    (jsown:keyp (jsown:val result "params") "type")
+                    (string= (jsown:val (jsown:val result "params") "type") "Started"))
+              (return))))))
 
 (defvar *jdtls-id*)
 (defun exec-jdtls (command)
