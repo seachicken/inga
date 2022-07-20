@@ -54,12 +54,12 @@
                         (mapcar (lambda (c) (jsown:val c "body"))
                                 comments)))))
 
-(defun send-pr-comment (hostname base-url owner-repo number affected-poss project-path sha last-report)
+(defun send-pr-comment (hostname base-url owner-repo number affected-poss project-path is-back sha last-report)
   (let ((comment (format nil
                          "~a~%~a~a~a~a~%~%<details><summary>Affected files</summary>~%~%~a~%</details>"
                          "# Inga Report"
                          "**🔮 "
-                         (get-number-of-components affected-poss)
+                         (get-affected-display-name affected-poss is-back)
                          " affected by the change**"
                          " (powered by [Inga](https://github.com/seachicken/inga))"
                          (get-code-hierarchy base-url sha affected-poss))))
@@ -72,10 +72,12 @@
                                 comment)
                         :output :string))))
 
-(defun get-number-of-components (affected-poss)
+(defun get-affected-display-name (affected-poss is-back)
   (if (equal (length affected-poss) 1)
-      "A component"
-      (format nil "~a components" (length affected-poss))))
+      (if is-back "A entrypoint" "A component")
+      (format nil
+              (if is-back "~a entrypoints" "~a components")
+              (length affected-poss))))
 
 (defun get-code-hierarchy (base-url sha poss)
   (setf poss (mapcar (lambda (p)
