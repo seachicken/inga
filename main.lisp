@@ -549,7 +549,7 @@
             (when (and
                     (jsown:keyp result "params")
                     (jsown:keyp (jsown:val result "params") "type")
-                    (string= (jsown:val (jsown:val result "params") "type") "Started"))
+                    (equal (jsown:val (jsown:val result "params") "type") "Started"))
               (return))))))
 
 (defvar *jdtls-id*)
