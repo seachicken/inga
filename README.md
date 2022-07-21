@@ -55,7 +55,10 @@ Analyze with specific sha-a and sha-b diffs. Not to be used with `--github-token
 
 <img width="897" alt="screenshot" src="https://user-images.githubusercontent.com/5178598/175807955-9cda92ae-de65-4ae5-8ac8-98080f4e1c26.png">
 
-[Example projects](https://github.com/seachicken/create-react-app-typescript-todo-example-2022/blob/master/.github/workflows/inga.yml)
+#### Example projects
+
+- [create-react-app-typescript-todo-example-2022](https://github.com/seachicken/create-react-app-typescript-todo-example-2022/blob/master/.github/workflows/inga.yml)
+- [spring-boot-realworld-example-app](https://github.com/seachicken/spring-boot-realworld-example-app/blob/master/.github/workflows/inga.yml)
 
 ## Development
 
