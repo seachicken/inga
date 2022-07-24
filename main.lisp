@@ -114,8 +114,8 @@
     (setf *jdtls-id* 0)
     (setq *jdtls* 
           (uiop:launch-program
-            (format nil "~a/libs/jdtls/bin/jdtls --jvm-arg=-javaagent:~a/libs/lombok.jar --jvm-arg=-Xbootclasspath/a:~a/libs/lombok.jar -data ~a/libs/jdtls/workspace"
-                    (uiop:getenv "INGA_HOME") (uiop:getenv "INGA_HOME") (uiop:getenv "INGA_HOME") (uiop:getenv "INGA_HOME"))
+            (format nil "~a/libs/jdtls/bin/jdtls --jvm-arg=-javaagent:~a/libs/lombok.jar -data ~a/libs/jdtls/workspace"
+                    (uiop:getenv "INGA_HOME") (uiop:getenv "INGA_HOME") (uiop:getenv "INGA_HOME"))
             :input :stream :output :stream))
     (exec-jdtls-initialize back-path)))
 
@@ -394,29 +394,17 @@
                                      (when (is-analysis-target (cdr (assoc :path ref)) exclude)
                                        ref))
                                    refs)))
-
-    (start-javaparser)
-    (setf refs (mapcar (lambda (ref)
-                         (let ((result (exec-javaparser (cdr (assoc :path ref)))))
-                           (when (> (length result) 0)
-                             (acons :ast (cdr (jsown:parse result)) ref))))
-                       refs))
-    (stop-javaparser)
-
-    (remove-duplicates
-      (remove nil
-              (mapcar (lambda (ref)
-                        (let ((endpoint-pos (find-endpoint ref root-path)))
-                             (if endpoint-pos
-                                 endpoint-pos
-                                 (progn
-                                   (enqueue q (list
-                                                (cons "path" (enough-namestring (cdr (assoc :path ref)) root-path))
-                                                (cons "start" (+ (cdr (assoc :line ref)) 1))
-                                                (cons "end" (+ (cdr (assoc :line ref)) 1))))
-                                   nil))))
-                      refs))
-      :test #'equal)))
+    (if refs
+        (loop for ref in refs
+              do (enqueue q (list
+                              (cons "path" (enough-namestring (cdr (assoc :path ref)) root-path))
+                              (cons "start" (+ (cdr (assoc :line ref)) 1))
+                              (cons "end" (+ (cdr (assoc :line ref)) 1))))
+              return nil)
+        (list
+          (list (cons :path (enough-namestring (cdr (assoc :path pos)) root-path))
+                (cons :line (cdr (assoc :line pos)))
+                (cons :offset (cdr (assoc :offset pos))))))))
 
 (defstruct queue (values nil))
 
@@ -466,43 +454,6 @@
                 (return-from find-component (find-component (cdr ast) pos))))))
       (progn
         (return-from find-component (find-component (cdr ast) pos))))))
-
-(defun find-endpoint (ref root-path)
-  (let ((q (make-queue)) is-rest-controller)
-    (enqueue q (cdr (assoc :ast ref)))
-    (loop
-      (let ((ast (dequeue q))
-            (path (cdr (assoc :path ref)))
-            (line (cdr (assoc :line ref))))
-        (if (null ast) (return))
-
-        (when 
-          (and
-            (string= (cdr (car ast)) "com.github.javaparser.ast.expr.MarkerAnnotationExpr")
-            (string= (jsown:val (jsown:val ast "name") "identifier") "RestController"))
-          (setf is-rest-controller t))
-
-        (when (and
-                (string= (cdr (car ast)) "com.github.javaparser.ast.body.MethodDeclaration")
-                (<= (jsown:val (jsown:val ast "range") "beginLine") line)
-                (> (jsown:val (jsown:val ast "range") "endLine") line)
-                is-rest-controller)
-          (return
-            (list (cons :path (enough-namestring path root-path))
-                  (cons :line (jsown:val (jsown:val ast "range") "beginLine"))
-                  (cons :offset (jsown:val (jsown:val ast "range") "beginColumn")))))
-
-        (when (jsown:keyp ast "types")
-          (loop for type in (jsown:val ast "types") do
-                (enqueue q (cdr type))))
-
-        (when (jsown:keyp ast "annotations")
-          (loop for annotation in (jsown:val ast "annotations") do
-                (enqueue q (cdr annotation))))    
-
-        (when (jsown:keyp ast "members")
-          (loop for member in (jsown:val ast "members") do
-                (enqueue q (cdr member))))))))
 
 (defun find-child-nodes (node)
   (if (jsown:keyp node "statements")
