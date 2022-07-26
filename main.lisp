@@ -494,8 +494,8 @@
 
 (defun exec-jdtls-initialize (root-path)
   (setf *jdtls-id* (+ *jdtls-id* 1))
-  (exec-jdtls (format nil "{\"jsonrpc\":\"2.0\",\"id\":~a,\"method\":\"initialize\",\"params\":{\"processId\":null,\"rootUri\":\"file://~a\",\"capabilities\":{}}}"
-                      *jdtls-id* root-path))
+  (exec-jdtls (format nil "{\"jsonrpc\":\"2.0\",\"id\":~a,\"method\":\"initialize\",\"params\":{\"processId\":~a,\"rootUri\":\"file://~a\",\"capabilities\":{}}}"
+                      *jdtls-id* (sb-posix:getpid) root-path))
   (let ((stream (uiop:process-info-output *jdtls*)))
     (loop while stream do
           (let ((result (jsown:parse (extract-json stream))))
