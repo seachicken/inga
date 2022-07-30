@@ -48,19 +48,19 @@
     (subseq result 0 (- (length result) 1))))
 
 (defun get-last-report (comments)
-  (car (last
-         (remove-if-not (lambda (body)
-                          (string= (first (split #\Newline body)) "# Inga Report"))
-                        (mapcar (lambda (c) (jsown:val c "body"))
-                                comments)))))
+  (loop
+    with last-report
+    for comment in comments
+    do (let ((body (jsown:val comment "body")))
+         (when (and (>= (length body) 13) (string= (subseq body 0 13) "# Inga Report"))
+             (setf last-report body)))
+    finally (return last-report)))
 
 (defun send-pr-comment (hostname base-url owner-repo number affected-poss project-path is-back sha last-report)
   (let ((comment (format nil
-                         "~a~%~a~a~a~a~%~%<details><summary>Affected files</summary>~%~%~a~%</details>"
+                         "~a~%**~a affected by the change**~a~%~%<details><summary>Affected files</summary>~%~%~a~%</details>"
                          "# Inga Report"
-                         "**🔮 "
                          (get-affected-display-name affected-poss is-back)
-                         " affected by the change**"
                          " (powered by [Inga](https://github.com/seachicken/inga))"
                          (get-code-hierarchy base-url sha affected-poss))))
     (when (not (string= comment last-report))
