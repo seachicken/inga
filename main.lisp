@@ -114,8 +114,8 @@
     (setf *jdtls-id* 0)
     (setq *jdtls* 
           (uiop:launch-program
-            (format nil "~a/libs/jdtls/bin/jdtls --jvm-arg=-javaagent:~a/libs/lombok.jar -data ~a/libs/jdtls/workspace"
-                    (uiop:getenv "INGA_HOME") (uiop:getenv "INGA_HOME") (uiop:getenv "INGA_HOME"))
+            (format nil "~a/libs/jdtls/bin/jdtls -data ~a/libs/jdtls/workspace"
+                    (uiop:getenv "INGA_HOME") (uiop:getenv "INGA_HOME"))
             :input :stream :output :stream))
     (exec-jdtls-initialize back-path)))
 
