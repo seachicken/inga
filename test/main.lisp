@@ -74,6 +74,18 @@
           '("*Test.java"))))
   (inga:stop :back-path *back-path*))
 
+(test analyze-by-range-in-interface-for-back
+  (inga:start :back-path *back-path*)
+  (is (equal
+        '(((:path . "src/main/java/io/spring/api/ArticlesApi.java")
+           (:line . 28) (:offset . 3)))
+        (inga/main::analyze-by-range-for-back
+          *back-path*
+          '(("path" . "src/main/java/io/spring/core/article/ArticleRepository.java")
+            ("start" . 7) ("end" . 7))
+          '("*Test.java"))))
+  (inga:stop :back-path *back-path*))
+
 (test find-components
   (inga:start :front-path *front-path*)
   (is (equal

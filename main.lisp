@@ -287,7 +287,7 @@
                   (string= (cdr (car ast)) "com.github.javaparser.ast.body.ConstructorDeclaration")
                   (string= (cdr (car ast)) "com.github.javaparser.ast.body.MethodDeclaration"))
                 (<= (jsown:val (jsown:val ast "range") "beginLine") pos)
-                (> (jsown:val (jsown:val ast "range") "endLine") pos))
+                (>= (jsown:val (jsown:val ast "range") "endLine") pos))
           (return
             (list (cons :line (jsown:val (jsown:val ast "range") "beginLine"))
                   (cons :offset (jsown:val (jsown:val ast "range") "beginColumn")))))
