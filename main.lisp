@@ -14,6 +14,10 @@
            #:inject-mark))
 (in-package #:inga/main)
 
+(defparameter *include-back* '("*.java"))
+(defparameter *include-front* '("*.js" "*.jsx"
+                                "*.ts" "*.tsx"))
+
 (defvar *deepest-item*)
 (defvar *tsserver*)
 (defvar *tsparser*)
@@ -149,14 +153,14 @@
   (remove-duplicates
     (mapcan (lambda (range)
               (analyze-by-range project-path range exclude))
-            (get-diff project-path sha-a sha-b exclude))
+            (get-diff project-path sha-a *include-front* sha-b exclude))
     :test #'equal))
 
 (defun analyze-for-back (project-path sha-a sha-b &optional (exclude '()))
   (remove-duplicates
     (mapcan (lambda (range)
               (analyze-by-range-for-back project-path range exclude))
-            (get-diff project-path sha-a sha-b exclude))
+            (get-diff project-path sha-a *include-back* sha-b exclude))
     :test #'equal))
 
 (defun analyze-by-range (project-path range &optional (exclude '()))
@@ -337,7 +341,8 @@
         poss)
     (let ((refposs
             (remove-if (lambda (p) (or (equal p pos)
-                                       (not (is-analysis-target (namestring (cdr (assoc :path p))) exclude))))
+                                       (not (is-analysis-target (namestring (cdr (assoc :path p)))
+                                                                *include-front* exclude))))
                      (mapcar (lambda (r)
                                (list
                                  (cons :path (jsown:val r "file"))
@@ -391,7 +396,8 @@
                            (cons :offset (jsown:val (jsown:val (jsown:val ref "range") "start") "character"))))
                        (jsown:val refs "result")))
     (setf refs (remove nil (mapcar (lambda (ref)
-                                     (when (is-analysis-target (cdr (assoc :path ref)) exclude)
+                                     (when (is-analysis-target (cdr (assoc :path ref))
+                                                               *include-back* exclude)
                                        ref))
                                    refs)))
     (if refs

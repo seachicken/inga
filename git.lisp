@@ -7,7 +7,7 @@
            #:track-branch))
 (in-package #:inga/git)
 
-(defun get-diff (project-path sha-a &optional sha-b exclude)
+(defun get-diff (project-path sha-a include &optional sha-b exclude)
   (let ((diff (uiop:run-program (if (null sha-b)
                                     (format nil "(cd ~a && git diff ~a --unified=0)" project-path sha-a)
                                     (format nil "(cd ~a && git diff ~a ~a --unified=0)" project-path sha-a sha-b))
@@ -21,7 +21,7 @@
                                                      (ppcre:scan-to-strings "^diff --git a/.+ b/(.+)$" line))))))
                       (when found-to-path
                         (setq to-path (aref found-to-path 0))))
-                    (when (is-analysis-target to-path exclude)
+                    (when (is-analysis-target to-path include exclude)
                       (let ((to-range (car (cdr (multiple-value-list
                                                   (ppcre:scan-to-strings "@@.+\\+([0-9]+),?([0-9]*) @@" line))))))
                         (when to-range
