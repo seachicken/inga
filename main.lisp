@@ -243,14 +243,3 @@
   lc
   parser)
 
-;; for debug
-(defun top (sequence limit)
-  (let ((line-no 0) (result ""))
-    (with-input-from-string (in sequence)
-      (loop :for line := (read-line in nil nil) :while line
-            :do (progn
-                  (setf line-no (+ line-no 1))
-                  (setf result (format nil "~A~A~%" result line))
-                  (when (= line-no limit)
-                    (return-from top result)))))))
-
