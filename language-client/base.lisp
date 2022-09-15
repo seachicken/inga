@@ -37,7 +37,7 @@
 
 (defgeneric initialzie-client (client))
 
-(defgeneric references-client (client file-path pos))
+(defgeneric references-client (client pos))
 
 (defgeneric get-command (client command))
 

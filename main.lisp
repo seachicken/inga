@@ -171,8 +171,7 @@
           (setf results
                 (append results
                         (mapcan (lambda (pos)
-                                  (let ((comps (find-entrypoints ctx src-path pos q)))
-                                    comps))
+                                  (find-entrypoints ctx pos q))
                                 (get-affected-poss ctx ast src-path range)))))))))
 
 (defun get-affected-poss (ctx ast src-path range)
@@ -191,8 +190,8 @@
                           collect line-no)))
     :test #'equal))
 
-(defun find-entrypoints (ctx src-path pos q)
-  (let ((refs (references-client (context-lc ctx) src-path pos))
+(defun find-entrypoints (ctx pos q)
+  (let ((refs (references-client (context-lc ctx) pos))
         (results '()))
     (setf refs (remove nil (mapcar (lambda (ref)
                                      (when (is-analysis-target (cdr (assoc :path ref))

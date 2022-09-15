@@ -33,10 +33,10 @@
                     (equal (jsown:val (jsown:val result "params") "type") "Started"))
               (return))))))
 
-(defmethod references-client ((client language-client-java) file-path pos)
+(defmethod references-client ((client language-client-java) pos)
   (increment-req-id client)
   (let ((refs (exec-command client (format nil "{\"jsonrpc\":\"2.0\",\"id\":~a,\"method\":\"textDocument/references\",\"params\":{\"textDocument\":{\"uri\":\"file://~a\"},\"position\":{\"line\":~a,\"character\":~a},\"context\":{\"includeDeclaration\":false}}}"
-                            (client-req-id client) file-path
+                            (client-req-id client) (cdr (assoc :path pos))
                             ;; the zero-based line and offset
                             (- (cdr (assoc :line pos)) 1) (- (cdr (assoc :offset pos)) 1)))))
     (mapcar (lambda (ref)

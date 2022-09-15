@@ -20,14 +20,14 @@
 (defmethod stop-client ((client language-client-ts))
   (uiop:close-streams (client-process client)))
 
-(defmethod references-client ((client language-client-ts) file-path pos)
+(defmethod references-client ((client language-client-ts) pos)
   (increment-req-id client)
   (exec client (format nil "{\"seq\": ~a, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}"
-                       (client-req-id client) file-path))
+                       (client-req-id client) (cdr (assoc :path pos))))
 
   (increment-req-id client)
   (let ((refs (exec-command client (format nil "{\"seq\": ~a, \"command\": \"references\", \"arguments\": {\"file\": \"~a\", \"line\": ~a, \"offset\": ~a}}"
-                              (client-req-id client) file-path
+                              (client-req-id client) (cdr (assoc :path pos))
                               (cdr (assoc :line pos)) (cdr (assoc :offset pos))))))
     (mapcar (lambda (ref)
               (list
