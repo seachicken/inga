@@ -19,7 +19,7 @@
   (multiple-value-bind (front back) (inga/main::start :front-path *front-path*)
     (is (equal
           '(((:path . "src/App/NewTodoInput/index.tsx") (:line . 34) (:offset . 10)))
-          (inga/main::analyze front "a690a51" "4d33bd8")))
+          (inga/main::analyze front "4d33bd8")))
     (inga/main::stop front back)))
 
 (test analyze-by-range-in-arrow-function

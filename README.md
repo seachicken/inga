@@ -45,11 +45,9 @@ Filenames to exclude from the analysis.
 
 If GitHub token is set, send the analysis report to comments in pull requests. Analyze with diffs of base and head branch of pull requests.
 
-`--sha-a <string>`
+`--base-sha <string>`
 
-`--sha-b <string>`
-
-Analyze with specific sha-a and sha-b diffs. Not to be used with `--github-token` option.
+Analyze by the difference between the `base-sha` and the checked out sha. Not to be used with `--github-token` option.
 
 ### Run on GitHub Actions
 

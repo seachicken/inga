@@ -24,7 +24,7 @@
 (in-package #:inga/main)
 
 (defun command (&rest argv)
-  (destructuring-bind (&key front-path back-path sha-a sha-b exclude github-token inject-mark) (parse-argv argv)
+  (destructuring-bind (&key front-path back-path exclude github-token base-sha inject-mark) (parse-argv argv)
     (multiple-value-bind (front back)
       (start :front-path front-path :back-path back-path :exclude exclude)
 
@@ -38,13 +38,13 @@
           (inga/github:login hostname github-token)
           (setf pr (inga/github:get-pr project-path))
           (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha last-report) pr
-            (unless sha-a
+            (unless base-sha
               (inga/git:track-branch base-ref-name project-path)
-              (setf sha-a base-ref-name))))
+              (setf base-sha base-ref-name))))
 
         (let ((results (if back-path
-                           (analyze back sha-a sha-b)
-                           (analyze front sha-a sha-b))))
+                           (analyze back base-sha)
+                           (analyze front base-sha))))
           (format t "~a~%" results)
           (when pr
             (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha last-report) pr
@@ -58,10 +58,9 @@
 (defun parse-argv (argv)
   (loop with front-path = nil
         with back-path = nil
-        with sha-a = nil
-        with sha-b = nil
         with exclude = '()
         with github-token = nil
+        with base-sha = nil
         with inject-mark = nil
         for option = (pop argv)
         while option
@@ -70,10 +69,6 @@
               (setf front-path (pop argv)))
              ("--back-path"
               (setf back-path (pop argv)))
-             ("--sha-a"
-              (setf sha-a (pop argv)))
-             ("--sha-b"
-              (setf sha-b (pop argv)))
              ("--exclude"
               (setf exclude
                     (append exclude
@@ -83,6 +78,8 @@
                                            (pop argv))))))
              ("--github-token"
               (setf github-token (pop argv)))
+             ("--base-sha"
+              (setf base-sha (pop argv)))
              ("--inject-mark"
               (setf inject-mark t)))
         finally
@@ -91,12 +88,11 @@
                       (list :front-path (truename (uiop:merge-pathnames* front-path))))
                     (when back-path
                       (list :back-path (truename (uiop:merge-pathnames* back-path))))
-                    (list :sha-a sha-a)
-                    (when sha-b
-                      (list :sha-b sha-b))
                     (list :exclude exclude)
                     (when github-token
                       (list :github-token github-token))
+                    (when base-sha
+                      (list :base-sha base-sha))
                     (list :inject-mark inject-mark)))))
 
 (defun split (div sequence)
@@ -145,12 +141,11 @@
         (when (equal (car item) key)
           (return-from get-val (cdr item)))))
 
-(defun analyze (ctx sha-a sha-b)
+(defun analyze (ctx base-sha)
   (remove-duplicates
     (mapcan (lambda (range)
               (analyze-by-range ctx range))
-            (get-diff (context-project-path ctx) sha-a (context-include ctx)
-                      sha-b (context-exclude ctx)))
+            (get-diff (context-project-path ctx) base-sha (context-include ctx)))
     :test #'equal))
 
 (defun analyze-by-range (ctx range)

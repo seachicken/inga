@@ -7,11 +7,10 @@
            #:track-branch))
 (in-package #:inga/git)
 
-(defun get-diff (project-path sha-a include &optional sha-b exclude)
-  (let ((diff (uiop:run-program (if (null sha-b)
-                                    (format nil "(cd ~a && git diff ~a --unified=0)" project-path sha-a)
-                                    (format nil "(cd ~a && git diff ~a ~a --unified=0)" project-path sha-a sha-b))
-                                :output :string)))
+(defun get-diff (project-path base-sha include &optional exclude)
+  (let ((diff (uiop:run-program
+                (format nil "(cd ~a && git diff ~a --unified=0)" project-path base-sha)
+                :output :string)))
 
     (let ((ranges (make-array 10 :fill-pointer 0 :adjustable t)) to-path)
       (with-input-from-string (in diff)
