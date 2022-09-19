@@ -1,10 +1,10 @@
-(defpackage #:inga/parser/ts
+(defpackage #:inga/parser/typescript
   (:use #:cl
         #:inga/parser/base
         #:inga/ts-helper
         #:inga/utils)
-  (:export #:parser-ts))
-(in-package #:inga/parser/ts)
+  (:export #:parser-typescript))
+(in-package #:inga/parser/typescript)
 
 (defparameter *void-keyword* 113)
 (defparameter *parenthesized-expression* 208)
@@ -17,27 +17,27 @@
 (defparameter *jsx-self-closing-element* 275)
 (defparameter *jsx-opening-element* 276)
 
-(defclass parser-ts (parser)
+(defclass parser-typescript (parser)
   ((nearest-ast-pos :initform nil
                     :accessor parser-nearest-ast-pos)))
 
-(defmethod make-parser ((kind (eql :ts)))
-  (make-instance 'parser-ts))
+(defmethod make-parser ((kind (eql :typescript)))
+  (make-instance 'parser-typescript))
 
-(defmethod start-parser ((parser parser-ts))
+(defmethod start-parser ((parser parser-typescript))
   (setf (parser-process parser)
         (uiop:launch-program "tsparser"
                              :input :stream :output :stream)))
 
-(defmethod stop-parser ((parser parser-ts))
+(defmethod stop-parser ((parser parser-typescript))
   (uiop:close-streams (parser-process parser)))
 
-(defmethod exec-parser ((parser parser-ts) file-path)
+(defmethod exec-parser ((parser parser-typescript) file-path)
   (let ((ast (exec-command parser file-path)))
     (when (> (length ast) 0)
       (cdr (jsown:parse ast)))))
 
-(defmethod find-affected-pos ((parser parser-ts) project-path file-path ast line-no)
+(defmethod find-affected-pos ((parser parser-typescript) project-path file-path ast line-no)
   (let ((q (make-queue))
         (ast-pos (cdr (assoc :pos (convert-to-ast-pos
                                 (list
@@ -76,7 +76,7 @@
           (loop for s in (jsown:val ast "statements") do
                 (enqueue q (cdr s))))))))
 
-(defmethod find-entrypoint ((parser parser-ts) project-path pos)
+(defmethod find-entrypoint ((parser parser-typescript) project-path pos)
   (let ((ast-pos (convert-to-ast-pos pos)))
     (let ((path (cdr (assoc :path ast-pos)))
           (pos (cdr (assoc :pos ast-pos)))

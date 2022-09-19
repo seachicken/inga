@@ -1,26 +1,26 @@
-(defpackage #:inga/language-client/ts
+(defpackage #:inga/language-client/typescript
   (:use #:cl
         #:inga/language-client/base)
-  (:export #:language-client-ts))
-(in-package #:inga/language-client/ts)
+  (:export #:language-client-typescript))
+(in-package #:inga/language-client/typescript)
 
-(defclass language-client-ts (language-client)
+(defclass language-client-typescript (language-client)
   ())
 
-(defmethod make-client ((kind (eql :ts)) path)
-  (make-instance 'language-client-ts
+(defmethod make-client ((kind (eql :typescript)) path)
+  (make-instance 'language-client-typescript
                  :path path :id-key "request_seq"))
 
-(defmethod start-client ((client language-client-ts))
+(defmethod start-client ((client language-client-typescript))
   (setf (client-process client)
         (uiop:launch-program
           "tsserver"
           :input :stream :output :stream)))
 
-(defmethod stop-client ((client language-client-ts))
+(defmethod stop-client ((client language-client-typescript))
   (uiop:close-streams (client-process client)))
 
-(defmethod references-client ((client language-client-ts) pos)
+(defmethod references-client ((client language-client-typescript) pos)
   (increment-req-id client)
   (exec client (format nil "{\"seq\": ~a, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}"
                        (client-req-id client) (cdr (assoc :path pos))))
@@ -36,7 +36,7 @@
                 (cons :offset (jsown:val (jsown:val ref "start") "offset"))))
             (jsown:val (jsown:val refs "body") "refs"))))
 
-(defmethod get-command ((client language-client-ts) command)
+(defmethod get-command ((client language-client-typescript) command)
   command)
 
 (defun exec (client command)

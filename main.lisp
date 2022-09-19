@@ -119,8 +119,8 @@
                     :include '("*.js" "*.jsx"
                                "*.ts" "*.tsx")
                     :exclude exclude
-                    :lc (make-client :ts front-path)
-                    :parser (make-parser :ts)))
+                    :lc (make-client :typescript front-path)
+                    :parser (make-parser :typescript)))
       (start-client (context-lc front))
       (start-parser (context-parser front)))
     (when back-path
