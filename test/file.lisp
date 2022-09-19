@@ -22,6 +22,11 @@
         nil
         (is-analysis-target "src/App.test.js" '("*.js") '("*.test.js")))))
 
+(test not-analyze-when-the-parent-directory-matches-exclude
+  (is (equal
+        nil
+        (is-analysis-target "App/test/App.test.js" '("*.js") '("**/test/*")))))
+
 (test analyze-when-not-excluded
   (is (equal
         t
