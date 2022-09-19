@@ -2,7 +2,6 @@
   (:use #:cl
         #:inga/git
         #:inga/github
-        #:inga/ts-helper
         #:inga/jsx
         #:inga/file
         #:inga/utils)
@@ -21,10 +20,7 @@
                 #:exec-parser
                 #:find-affected-pos
                 #:find-entrypoint)
-  (:export #:command
-           #:start
-           #:stop
-           #:inject-mark))
+  (:export #:command))
 (in-package #:inga/main)
 
 (defun command (&rest argv)
