@@ -9,7 +9,6 @@
 (defsystem "inga/test"
   :class :package-inferred-system
   :depends-on ("fiveam"
-               "inga/test/main"
                "inga/test/parser/typescript"
                "inga/test/jsx"
                "inga/test/git"
