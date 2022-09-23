@@ -9,7 +9,7 @@ A static analysis tool that traces references to changed code to detect entry po
 ## Why?
 
 Code changes daily, and it is always important to check the impact of changes.  
-In many cases, the process of checking the impact of a change depends on how experienced the author is as a programmer, making it difficult to detect unintended effects during the code review and QA phases.
+In many cases, the process of checking the impact of a change depends on how vigilant the author is in writing the code, making it difficult to detect unintended effects during the code review and QA phases.  
 This tool improves software quality by detecting unintended changes at an early phase.
 
 ## Supported languages and frameworks
