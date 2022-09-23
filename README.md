@@ -2,12 +2,15 @@
 
 [![CI](https://github.com/seachicken/inga/actions/workflows/ci.yml/badge.svg)](https://github.com/seachicken/inga/actions/workflows/ci.yml)
 
-A static analysis tool that analyzes code diffs to find code that has a large impact on users.
+A static analysis tool that traces references to changed code to detect entry points that have a strong impact on the user.
+
+<img width="897" alt="screenshot" src="https://user-images.githubusercontent.com/5178598/175807955-9cda92ae-de65-4ae5-8ac8-98080f4e1c26.png">
 
 ## Why?
 
-- When one function is changed, the impact of the change is more than expected
-- Find UI components affected by code changes so you can notice early on if there are any unexpected effects
+Code changes daily, and it is always important to check the impact of changes.  
+In many cases, the process of checking the impact of a change depends on how experienced the author is as a programmer, making it difficult to detect unintended effects during the code review and QA phases.
+This tool improves software quality by detecting unintended changes at an early phase.
 
 ## Supported languages and frameworks
 
@@ -51,27 +54,7 @@ Analyze by the difference between the `base-sha` and the checked out sha. Not to
 
 ### Run on GitHub Actions
 
-<img width="897" alt="screenshot" src="https://user-images.githubusercontent.com/5178598/175807955-9cda92ae-de65-4ae5-8ac8-98080f4e1c26.png">
-
 #### Example projects
 
 - [create-react-app-typescript-todo-example-2022](https://github.com/seachicken/create-react-app-typescript-todo-example-2022/blob/master/.github/workflows/inga.yml)
 - [spring-boot-realworld-example-app](https://github.com/seachicken/spring-boot-realworld-example-app/blob/master/.github/workflows/inga.yml)
-
-## Development
-
-### Prerequisites
-
-- **Roswell**: Install from [roswell](https://github.com/roswell/roswell#installation-dependency--usage).
-- **Node v16**
-
-```shell
-# Install dependencies
-npm install -g typescript
-git clone git@github.com:seachicken/tsparser.git
-npm install -g </youer/local/path/tsparser>
-
-export INGA_HOME=</your/local/path>/inga
-
-git clone <this repository> --recursive
-```
