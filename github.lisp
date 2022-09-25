@@ -103,12 +103,13 @@
                for pos in poss
                do (progn
                     (let ((file (get-file (cdr (assoc :paths pos))))
+                          (name (cdr (assoc :name pos)))
                           (path (cdr (assoc :path pos)))
                           (line (cdr (assoc :line pos))))
                       (setf result
                             (format nil "~a~a~%"
                                     result
-                                    (output-file file
+                                    (output-file file name
                                                  num-of-nested
                                                  base-url sha path line)))))))
            (setf i (+ i 1))))
@@ -148,14 +149,14 @@
                 (format nil "~a~%" result))
             nested-i)))
 
-(defun output-file (file i base-url sha path line)
+(defun output-file (file name i base-url sha path line)
   (if (= i 0)
-      (format nil "- 📄 [~a#L~a](~ablob/~a/~a#L~a)"
-              file line
+      (format nil "- 📄 [~a - ~a](~ablob/~a/~a#L~a)"
+              file name
               base-url sha path line)
-      (format nil "~vt- 📄 [~a#L~a](~ablob/~a/~a#L~a)"
+      (format nil "~vt- 📄 [~a - ~a](~ablob/~a/~a#L~a)"
               (* i 2)
-              file line
+              file name
               base-url sha path line)))
 
 (defun group-by-dir (sorted-poss)

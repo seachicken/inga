@@ -192,11 +192,11 @@
                                    refs)))
     (if refs
         (loop for ref in refs
-              do (let ((pos (find-entrypoint (context-parser ctx)
+              do (let ((entrypoint (find-entrypoint (context-parser ctx)
                                              (context-project-path ctx)
                                              ref)))
-                   (if pos
-                       (setf results (append results (list pos)))
+                   (if entrypoint
+                       (setf results (append results (list entrypoint)))
                        (enqueue q (list
                                     (cons "path" (enough-namestring (cdr (assoc :path ref))
                                                                     (context-project-path ctx)))
@@ -206,6 +206,7 @@
               (list
                 (list (cons :path (enough-namestring (cdr (assoc :path pos))
                                                      (context-project-path ctx)))
+                      (cons :name (cdr (assoc :name pos)))
                       (cons :line (cdr (assoc :line pos)))
                       (cons :offset (cdr (assoc :offset pos)))))))
     results))

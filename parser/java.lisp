@@ -40,7 +40,8 @@
                 (<= (jsown:val (jsown:val ast "range") "beginLine") line-no)
                 (>= (jsown:val (jsown:val ast "range") "endLine") line-no))
           (return
-            (list (cons :line (jsown:val (jsown:val ast "range") "beginLine"))
+            (list (cons :name (jsown:val (cdr (jsown:val ast "name")) "identifier"))
+                  (cons :line (jsown:val (jsown:val ast "range") "beginLine"))
                   (cons :offset (jsown:val (jsown:val ast "range") "beginColumn")))))
 
         (when (jsown:keyp ast "types")

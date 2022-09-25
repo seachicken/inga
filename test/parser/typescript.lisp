@@ -22,9 +22,9 @@
 (test convert-tsparser-pos-to-tsserver-pos
   (is (equal
         (list '(:path . "src/App/NewTodoInput/index.tsx")
-              '(:line . 39) '(:offset . 69))
+              '(:name . "a") '(:line . 39) '(:offset . 69))
         (inga/parser/typescript::convert-to-pos
           *project-path*
           (uiop:merge-pathnames* "src/App/NewTodoInput/index.tsx" *project-path*)
-          1241))))
+          "a" 1241))))
 

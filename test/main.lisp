@@ -18,26 +18,31 @@
 (test analyze
   (multiple-value-bind (front back) (inga/main::start :front-path *front-path*)
     (is (equal
-          '(((:path . "src/App/NewTodoInput/index.tsx") (:line . 34) (:offset . 10)))
+          '(((:path . "src/App/NewTodoInput/index.tsx")
+             (:name . "input") (:line . 34) (:offset . 10)))
           (inga/main::analyze front "4d33bd8")))
     (inga/main::stop front back)))
 
 (test analyze-by-range-in-arrow-function
   (multiple-value-bind (front back) (inga/main::start :front-path *front-path*)
     (is (equal
-          '(((:path . "src/App/TodoList/Item/index.tsx") (:line . 107) (:offset . 12)))
+          '(((:path . "src/App/TodoList/Item/index.tsx")
+             (:name . "input") (:line . 107) (:offset . 12)))
           (inga/main::analyze-by-range
             front
-            '(("path" . "src/App/TodoList/Item/index.tsx") ("start" . 65) ("end" . 65)))))
+            '(("path" . "src/App/TodoList/Item/index.tsx")
+              ("start" . 65) ("end" . 65)))))
     (inga/main::stop front back)))
 
 (test analyze-by-range-in-function-declaration
   (multiple-value-bind (front back) (inga/main::start :front-path *front-path*)
     (is (equal
-          '(((:path . "src/App/NewTodoInput/index.tsx") (:line . 34) (:offset . 10)))
+          '(((:path . "src/App/NewTodoInput/index.tsx")
+             (:name . "input") (:line . 34) (:offset . 10)))
           (inga/main::analyze-by-range
             front
-            '(("path" . "src/App/NewTodoInput/index.tsx") ("start" . 14) ("end" . 14)))))
+            '(("path" . "src/App/NewTodoInput/index.tsx")
+              ("start" . 14) ("end" . 14)))))
     (inga/main::stop front back)))
 
 (test analyze-by-range-in-external-function
@@ -45,10 +50,12 @@
                                       :front-path *front-path*
                                       :exclude '("*.test.ts"))
     (is (equal
-          '(((:path . "src/App/NewTodoInput/index.tsx") (:line . 34) (:offset . 10)))
+          '(((:path . "src/App/NewTodoInput/index.tsx")
+             (:name . "input") (:line . 34) (:offset . 10)))
           (inga/main::analyze-by-range
             front
-            '(("path" . "src/functions.ts") ("start" . 2) ("end" . 2)))))
+            '(("path" . "src/functions.ts")
+              ("start" . 2) ("end" . 2)))))
     (inga/main::stop front back)))
 
 (test analyze-by-range-in-external-function-for-back
@@ -57,7 +64,7 @@
                                       :exclude '("*Test.java"))
     (is (equal
           '(((:path . "src/main/java/io/spring/api/ArticlesApi.java")
-             (:line . 48) (:offset . 3)))
+             (:name . "getArticles") (:line . 48) (:offset . 3)))
           (inga/main::analyze-by-range
             back
             '(("path" . "src/main/java/io/spring/application/ArticleQueryService.java")
@@ -70,9 +77,9 @@
                                       :exclude '("*Test.java"))
     (is (equal
           '(((:path . "src/main/java/io/spring/api/ArticlesApi.java")
-             (:line . 28) (:offset . 3))
+             (:name . "createArticle") (:line . 28) (:offset . 3))
             ((:path . "src/main/java/io/spring/graphql/ArticleMutation.java")
-             (:line . 35) (:offset . 3)))
+             (:name . "createArticle") (:line . 35) (:offset . 3)))
           (inga/main::analyze-by-range
             back
             '(("path" . "src/main/java/io/spring/core/article/Article.java")
@@ -85,13 +92,13 @@
                                       :exclude '("*Test.java"))
     (is (equal
           '(((:path . "src/main/java/io/spring/api/ArticlesApi.java")
-             (:line . 28) (:offset . 3))
+             (:name . "createArticle") (:line . 28) (:offset . 3))
             ((:path . "src/main/java/io/spring/graphql/ArticleMutation.java")
-             (:line . 35) (:offset . 3))
+             (:name . "createArticle") (:line . 35) (:offset . 3))
             ((:path . "src/main/java/io/spring/api/ArticleApi.java")
-             (:line . 44) (:offset . 3))
+             (:name . "updateArticle") (:line . 44) (:offset . 3))
             ((:path . "src/main/java/io/spring/graphql/ArticleMutation.java")
-             (:line . 53) (:offset . 3)))
+             (:name . "updateArticle") (:line . 53) (:offset . 3)))
           (inga/main::analyze-by-range
             back
             '(("path" . "src/main/java/io/spring/core/article/ArticleRepository.java")
@@ -103,7 +110,8 @@
 
   (inga/main::inject-mark
     *build-path*
-    '(((:path . "src/App/NewTodoInput/index.tsx") (:line . 34) (:offset . 10))))
+    '(((:path . "src/App/NewTodoInput/index.tsx")
+       (:line . 34) (:offset . 10))))
   (is (equal
         (uiop:read-file-string (uiop:merge-pathnames* "test/fixtures/index.tsx"))
         (uiop:read-file-string (uiop:merge-pathnames* "src/App/NewTodoInput/index.tsx" *build-path*))))

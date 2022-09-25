@@ -56,13 +56,17 @@
             (when (= (jsown:val init "kind") *arrow-function*)
               (if (equal (find-return-type init) *jsx-element*)
                   (enqueue q (jsown:val init "body"))
-                  (return (convert-to-pos project-path file-path (jsown:val ast "start")))))))
+                  (return (convert-to-pos project-path file-path
+                                          (jsown:val (cdr (jsown:val ast "name")) "escapedText")
+                                          (jsown:val ast "start")))))))
 
         (when (and
                 (jsown:keyp ast "kind") (= (jsown:val ast "kind") *function-declaration*)
                 (jsown:keyp ast "start") (<= (jsown:val ast "start") ast-pos)
                 (jsown:keyp ast "end") (> (jsown:val ast "end") ast-pos))
-          (return (convert-to-pos project-path file-path (jsown:val ast "start"))))
+          (return (convert-to-pos project-path file-path
+                                  (jsown:val (cdr (jsown:val ast "name")) "escapedText")
+                                  (jsown:val ast "start"))))
 
         (when (and
                 (jsown:keyp ast "kind")
@@ -81,16 +85,21 @@
           (pos (cdr (assoc :pos ast-pos)))
           (ast (exec-parser parser (namestring (cdr (assoc :path ast-pos))))))
       (setf (parser-nearest-ast-pos parser) nil)
-      (let ((pos (find-component parser ast pos)))
-        (when pos
-          (convert-to-pos project-path path pos))))))
+      (let ((component-pos (find-component parser ast pos)))
+        (when component-pos
+          (convert-to-pos project-path path
+                          (cdr (assoc :name component-pos))
+                          (cdr (assoc :pos component-pos))))))))
 
 (defun find-component (parser ast pos)
   (when (and (jsown:keyp ast "kind")
              (or
                (equal (jsown:val ast "kind") *jsx-opening-element*) 
                (equal (jsown:val ast "kind") *jsx-self-closing-element*)))
-    (setf (parser-nearest-ast-pos parser) (+ (jsown:val ast "start") 1)))
+    (setf (parser-nearest-ast-pos parser)
+          (list
+            (cons :name (jsown:val (cdr (jsown:val ast "tagName")) "escapedText"))
+            (cons :pos (+ (jsown:val ast "start") 1)))))
 
   (when (not (null ast))
     (if (consp (car ast))
@@ -152,7 +161,7 @@
             ;; add newline code
             (setq result (+ result (+ (length line) 1)))))))
 
-(defun convert-to-pos (root-path path pos)
+(defun convert-to-pos (root-path path name pos)
   (let ((line-no 0)
         (cnt 0))
     (with-open-file (stream path)
@@ -161,6 +170,7 @@
             when (<= pos (+ cnt (length line) 1))
             return (list
                      (cons :path (enough-namestring (namestring path) root-path))
+                     (cons :name name)
                      (cons :line (+ line-no 1))
                      (cons :offset (- (+ (length line) 1) (- (+ cnt (length line)) pos))))
             do
