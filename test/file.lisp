@@ -25,7 +25,7 @@
 (test not-analyze-when-the-parent-directory-matches-exclude
   (is (equal
         nil
-        (is-analysis-target "App/test/App.test.js" '("*.js") '("**/test/*")))))
+        (is-analysis-target "App/test/App.test.js" '("*.js") '("App/test/*")))))
 
 (test analyze-when-not-excluded
   (is (equal
