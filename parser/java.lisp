@@ -8,8 +8,9 @@
 (defclass parser-java (parser)
   ())
 
-(defmethod make-parser ((kind (eql :java)))
-  (make-instance 'parser-java))
+(defmethod make-parser ((kind (eql :java)) path)
+  (make-instance 'parser-java
+                 :path path))
 
 (defmethod start-parser ((parser parser-java))
   (setf (parser-process parser)
@@ -22,11 +23,12 @@
   (uiop:close-streams (parser-process parser)))
 
 (defmethod exec-parser ((parser parser-java) file-path)
-  (let ((ast (exec-command parser file-path)))
+  (let ((ast (exec-command parser (namestring
+                                    (uiop:merge-pathnames* file-path (parser-path parser))))))
     (when (> (length ast) 0)
       (cdr (jsown:parse ast)))))
 
-(defmethod find-affected-pos ((parser parser-java) project-path src-path ast line-no)
+(defmethod find-affected-pos ((parser parser-java) src-path ast line-no)
   (let ((q (make-queue)))
     (enqueue q ast)
     (loop
@@ -52,5 +54,5 @@
           (loop for member in (jsown:val ast "members") do
                 (enqueue q (cdr member))))))))
 
-(defmethod find-entrypoint ((parser parser-java) project-path pos))
+(defmethod find-entrypoint ((parser parser-java) pos))
 

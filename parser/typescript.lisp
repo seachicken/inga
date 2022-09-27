@@ -20,8 +20,9 @@
   ((nearest-ast-pos :initform nil
                     :accessor parser-nearest-ast-pos)))
 
-(defmethod make-parser ((kind (eql :typescript)))
-  (make-instance 'parser-typescript))
+(defmethod make-parser ((kind (eql :typescript)) path)
+  (make-instance 'parser-typescript
+                 :path path))
 
 (defmethod start-parser ((parser parser-typescript))
   (setf (parser-process parser)
@@ -32,17 +33,19 @@
   (uiop:close-streams (parser-process parser)))
 
 (defmethod exec-parser ((parser parser-typescript) file-path)
-  (let ((ast (exec-command parser file-path)))
+  (let ((ast (exec-command parser (namestring
+                                    (uiop:merge-pathnames* file-path (parser-path parser))))))
     (when (> (length ast) 0)
       (cdr (jsown:parse ast)))))
 
-(defmethod find-affected-pos ((parser parser-typescript) project-path file-path ast line-no)
+(defmethod find-affected-pos ((parser parser-typescript) file-path ast line-no)
   (let ((q (make-queue))
         (ast-pos (cdr (assoc :pos (convert-to-ast-pos
-                                (list
-                                  (cons :path file-path)
-                                  (cons :line line-no)
-                                  (cons :offset 0)))))))
+                                    (parser-path parser)
+                                    (list
+                                      (cons :path file-path)
+                                      (cons :line line-no)
+                                      (cons :offset 0)))))))
     (enqueue q ast)
     (loop
       (let ((ast (dequeue q)))
@@ -56,7 +59,7 @@
             (when (= (jsown:val init "kind") *arrow-function*)
               (if (equal (find-return-type init) *jsx-element*)
                   (enqueue q (jsown:val init "body"))
-                  (return (convert-to-pos project-path file-path
+                  (return (convert-to-pos (parser-path parser) file-path
                                           (jsown:val (cdr (jsown:val ast "name")) "escapedText")
                                           (jsown:val ast "start")))))))
 
@@ -64,7 +67,7 @@
                 (jsown:keyp ast "kind") (= (jsown:val ast "kind") *function-declaration*)
                 (jsown:keyp ast "start") (<= (jsown:val ast "start") ast-pos)
                 (jsown:keyp ast "end") (> (jsown:val ast "end") ast-pos))
-          (return (convert-to-pos project-path file-path
+          (return (convert-to-pos (parser-path parser) file-path
                                   (jsown:val (cdr (jsown:val ast "name")) "escapedText")
                                   (jsown:val ast "start"))))
 
@@ -79,15 +82,15 @@
           (loop for s in (jsown:val ast "statements") do
                 (enqueue q (cdr s))))))))
 
-(defmethod find-entrypoint ((parser parser-typescript) project-path pos)
-  (let ((ast-pos (convert-to-ast-pos pos)))
+(defmethod find-entrypoint ((parser parser-typescript) pos)
+  (let ((ast-pos (convert-to-ast-pos (parser-path parser) pos)))
     (let ((path (cdr (assoc :path ast-pos)))
           (pos (cdr (assoc :pos ast-pos)))
           (ast (exec-parser parser (namestring (cdr (assoc :path ast-pos))))))
       (setf (parser-nearest-ast-pos parser) nil)
       (let ((component-pos (find-component parser ast pos)))
         (when component-pos
-          (convert-to-pos project-path path
+          (convert-to-pos (parser-path parser) path
                           (cdr (assoc :name component-pos))
                           (cdr (assoc :pos component-pos))))))))
 
@@ -145,8 +148,8 @@
         (when (jsown:keyp ast "body")
           (enqueue q (jsown:val ast "body")))))))
 
-(defun convert-to-ast-pos (pos)
-  (let ((path (cdr (assoc :path pos)))
+(defun convert-to-ast-pos (project-path pos)
+  (let ((path (uiop:merge-pathnames* (cdr (assoc :path pos)) project-path))
         (line-no 0)
         (result 0))
     (with-open-file (stream path)
@@ -161,15 +164,15 @@
             ;; add newline code
             (setq result (+ result (+ (length line) 1)))))))
 
-(defun convert-to-pos (root-path path name pos)
+(defun convert-to-pos (project-path path name pos)
   (let ((line-no 0)
         (cnt 0))
-    (with-open-file (stream path)
+    (with-open-file (stream (uiop:merge-pathnames* path project-path))
       (loop for line = (read-line stream nil)
             while line
             when (<= pos (+ cnt (length line) 1))
             return (list
-                     (cons :path (enough-namestring (namestring path) root-path))
+                     (cons :path (enough-namestring path project-path))
                      (cons :name name)
                      (cons :line (+ line-no 1))
                      (cons :offset (- (+ (length line) 1) (- (+ cnt (length line)) pos))))

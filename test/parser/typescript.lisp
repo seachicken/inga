@@ -15,8 +15,8 @@
                             "src/App/NewTodoInput/index.tsx" *project-path*))
               '(:pos . 1241))
         (inga/parser/typescript::convert-to-ast-pos
-          (list (cons :path (uiop:merge-pathnames*
-                              "src/App/NewTodoInput/index.tsx" *project-path*))
+          *project-path*
+          (list '(:path . "src/App/NewTodoInput/index.tsx")
                 '(:line . 39) '(:offset . 69))))))
 
 (test convert-tsparser-pos-to-tsserver-pos
@@ -25,6 +25,6 @@
               '(:name . "a") '(:line . 39) '(:offset . 69))
         (inga/parser/typescript::convert-to-pos
           *project-path*
-          (uiop:merge-pathnames* "src/App/NewTodoInput/index.tsx" *project-path*)
+          "src/App/NewTodoInput/index.tsx"
           "a" 1241))))
 

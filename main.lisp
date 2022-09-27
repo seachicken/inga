@@ -112,7 +112,7 @@
                                "*.ts" "*.tsx")
                     :exclude exclude
                     :lc (make-client :typescript front-path)
-                    :parser (make-parser :typescript)))
+                    :parser (make-parser :typescript front-path)))
       (start-client (context-lc front))
       (start-parser (context-parser front)))
     (when back-path
@@ -122,7 +122,7 @@
                    :include '("*.java")
                    :exclude exclude
                    :lc (make-client :java back-path)
-                   :parser (make-parser :java)))
+                   :parser (make-parser :java back-path)))
       (start-client (context-lc back))
       (initialize-client (context-lc back))
       (start-parser (context-parser back)))
@@ -156,7 +156,7 @@
       (let ((range (dequeue q)))
         (if (null range) (return results))
 
-        (let ((src-path (format nil "~a~a" (context-project-path ctx) (get-val range "path")))
+        (let ((src-path (get-val range "path"))
               ast)
           (setf ast (exec-parser (context-parser ctx) src-path))
           (setf results
@@ -171,7 +171,6 @@
             (mapcar (lambda (line-no)
                       (let ((item-pos
                               (find-affected-pos (context-parser ctx)
-                                                 (context-project-path ctx)
                                                  src-path ast line-no)))
                         (when item-pos
                           (acons :path src-path item-pos))))
@@ -193,13 +192,11 @@
     (if refs
         (loop for ref in refs
               do (let ((entrypoint (find-entrypoint (context-parser ctx)
-                                             (context-project-path ctx)
-                                             ref)))
+                                                    ref)))
                    (if entrypoint
                        (setf results (append results (list entrypoint)))
                        (enqueue q (list
-                                    (cons "path" (enough-namestring (cdr (assoc :path ref))
-                                                                    (context-project-path ctx)))
+                                    (cons "path" (cdr (assoc :path ref)))
                                     (cons "start" (cdr (assoc :line ref)))
                                     (cons "end" (cdr (assoc :line ref))))))))
         (setf results

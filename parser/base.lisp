@@ -3,6 +3,7 @@
   (:export #:parser
            #:make-parser
            #:parser-process
+           #:parser-path
            #:start-parser
            #:stop-parser
            #:exec-parser
@@ -13,10 +14,12 @@
 
 (defclass parser ()
   ((process :initform nil
-            :accessor parser-process)))
+            :accessor parser-process)
+   (path :initarg :path
+         :accessor parser-path)))
 
-(defgeneric make-parser (kind)
-  (:method (kind)
+(defgeneric make-parser (kind path)
+  (:method (kind path)
     (error 'unknown-parser :name kind)))
 
 (defgeneric start-parser (parser))
@@ -25,9 +28,9 @@
 
 (defgeneric exec-parser (parser file-path))
 
-(defgeneric find-affected-pos (parser project-path file-path ast line-no))
+(defgeneric find-affected-pos (parser file-path ast line-no))
 
-(defgeneric find-entrypoint (parser project-path pos))
+(defgeneric find-entrypoint (parser pos))
 
 (defun exec-command (parser command)
   (write-line command (uiop:process-info-input (parser-process parser)))

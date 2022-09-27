@@ -61,7 +61,7 @@
 (test analyze-by-range-in-external-function-for-back
   (multiple-value-bind (front back) (inga/main::start
                                       :back-path *back-path*
-                                      :exclude '("*Test.java"))
+                                      :exclude '("src/test/**"))
     (is (equal
           '(((:path . "src/main/java/io/spring/api/ArticlesApi.java")
              (:name . "getArticles") (:line . 48) (:offset . 3)))
@@ -74,7 +74,7 @@
 (test analyze-by-range-in-nested-external-function-for-back
   (multiple-value-bind (front back) (inga/main::start
                                       :back-path *back-path*
-                                      :exclude '("*Test.java"))
+                                      :exclude '("src/test/**"))
     (is (equal
           '(((:path . "src/main/java/io/spring/api/ArticlesApi.java")
              (:name . "createArticle") (:line . 28) (:offset . 3))
@@ -89,7 +89,7 @@
 (test analyze-by-range-in-interface-for-back
   (multiple-value-bind (front back) (inga/main::start
                                       :back-path *back-path*
-                                      :exclude '("*Test.java"))
+                                      :exclude '("src/test/**"))
     (is (equal
           '(((:path . "src/main/java/io/spring/api/ArticlesApi.java")
              (:name . "createArticle") (:line . 28) (:offset . 3))
