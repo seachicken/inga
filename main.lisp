@@ -46,7 +46,7 @@
                            (analyze back base-sha)
                            (analyze front base-sha))))
           (format t "~a~%" results)
-          (when pr
+          (when (and pr results)
             (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha last-report) pr
               (inga/github:send-pr-comment hostname base-url owner-repo number results project-path
                                            (if back-path t nil)
