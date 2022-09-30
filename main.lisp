@@ -145,7 +145,8 @@
   (remove-duplicates
     (mapcan (lambda (range)
               (analyze-by-range ctx range))
-            (get-diff (context-project-path ctx) base-sha (context-include ctx)))
+            (get-diff (context-project-path ctx) base-sha
+                      (context-include ctx) (context-exclude ctx)))
     :test #'equal))
 
 (defun analyze-by-range (ctx range)
