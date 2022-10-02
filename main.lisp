@@ -37,7 +37,7 @@
           (setf hostname (inga/git:get-hostname project-path))
           (inga/github:login hostname github-token)
           (setf pr (inga/github:get-pr project-path))
-          (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha last-report) pr
+          (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha) pr
             (unless base-sha
               (inga/git:track-branch base-ref-name project-path)
               (setf base-sha base-ref-name))))
@@ -47,10 +47,9 @@
                            (analyze front base-sha))))
           (format t "~a~%" results)
           (when (and pr results)
-            (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha last-report) pr
+            (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha) pr
               (inga/github:send-pr-comment hostname base-url owner-repo number results project-path
-                                           (if back-path t nil)
-                                           head-sha last-report)))
+                                           (if back-path t nil) head-sha)))
           (when inject-mark
             (inject-mark front-path results))))
       (stop front back))))
