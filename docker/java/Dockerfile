@@ -41,9 +41,9 @@ RUN set -eux && \
 
 # https://github.com/cli/cli/pull/6384
 RUN set -eux && \
-  curl -o cli.zip -L https://github.com/seachicken/cli/archive/refs/heads/issue3613.zip && \
+  curl -o cli.zip -L https://github.com/seachicken/cli/archive/refs/heads/issue3613-debug.zip && \
   unzip cli.zip && \
-  cd cli-issue3613 && \
+  cd cli-issue3613-debug && \
   make
 
 
@@ -52,7 +52,7 @@ FROM ubuntu:22.04
 COPY --from=build /usr/share/keyrings/githubcli-archive-keyring.gpg /usr/share/keyrings/githubcli-archive-keyring.gpg
 COPY --from=build /libs /libs
 COPY --from=build /inga/roswell/inga /usr/local/bin/
-COPY --from=go-build /build/cli-issue3613/bin/gh /usr/local/bin/
+COPY --from=go-build /build/cli-issue3613-debug/bin/gh /usr/local/bin/
 
 RUN set -eux && \
   apt-get update && \
