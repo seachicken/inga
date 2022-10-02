@@ -17,7 +17,7 @@
 (defun get-pr (project-path)
   (let ((json (jsown:parse
                 (uiop:run-program (format nil
-                                          "(cd ~a && gh pr view --json url --json number --json baseRefName --json commits --json comments)"
+                                          "(cd ~a && gh pr view --json url --json number --json baseRefName --json commits)"
                                           project-path)
                                   :output :string
                                   :ignore-error-status t))))
@@ -32,9 +32,7 @@
         (list :base-ref-name
               (jsown:val json "baseRefName"))
         (list :head-sha
-              (jsown:val (car (last (jsown:val json "commits"))) "oid"))
-        (list :last-report
-              (get-last-report (jsown:val json "comments"))))
+              (jsown:val (car (last (jsown:val json "commits"))) "oid")))
       '())))
 
 ;; url format: https://HOST/OWNER/REPO/pull/NUMBER
@@ -47,30 +45,20 @@
     (setf result (format nil "~{~a/~}" (subseq paths 3 5)))
     (subseq result 0 (- (length result) 1))))
 
-(defun get-last-report (comments)
-  (loop
-    with last-report
-    for comment in comments
-    do (let ((body (jsown:val comment "body")))
-         (when (and (>= (length body) 13) (string= (subseq body 0 13) "# Inga Report"))
-             (setf last-report body)))
-    finally (return last-report)))
-
-(defun send-pr-comment (hostname base-url owner-repo number affected-poss project-path is-back sha last-report)
+(defun send-pr-comment (hostname base-url owner-repo number affected-poss project-path is-back sha)
   (let ((comment (format nil
                          "~a~%**~a affected by the change**~a~%~%<details><summary>Affected files</summary>~%~%~a~%</details>"
                          "# Inga Report"
                          (get-affected-display-name affected-poss is-back)
                          " (powered by [Inga](https://github.com/seachicken/inga))"
                          (get-code-hierarchy base-url sha affected-poss))))
-    (when (not (string= comment last-report))
-      (uiop:run-program (format nil
-                                "(cd ~a && gh pr comment ~a -R ~a/~a --body '~a')"
-                                project-path
-                                number
-                                hostname owner-repo
-                                comment)
-                        :output :string))))
+    (uiop:run-program (format nil
+                              "(cd ~a && gh pr comment ~a -R ~a/~a --body '~a' --edit-last)"
+                              project-path
+                              number
+                              hostname owner-repo
+                              comment)
+                      :output :string)))
 
 (defun get-affected-display-name (affected-poss is-back)
   (if (equal (length affected-poss) 1)
