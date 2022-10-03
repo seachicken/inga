@@ -163,7 +163,7 @@
           (setf results
                 (append results
                         (mapcan (lambda (pos)
-                                  (format t "affected-pos: ~a~%" pos)
+                                  (format t " affected-pos: ~a~%" pos)
                                   (find-entrypoints ctx pos q))
                                 (get-affected-poss ctx ast src-path range)))))))))
 
@@ -191,16 +191,21 @@
                                                                (context-exclude ctx))
                                        ref))
                                    refs)))
+    (format t " refs: ~a~%" refs)
     (if refs
         (loop for ref in refs
-              do (let ((entrypoint (find-entrypoint (context-parser ctx)
-                                                    ref)))
-                   (if entrypoint
-                       (setf results (append results (list entrypoint)))
-                       (enqueue q (list
-                                    (cons "path" (cdr (assoc :path ref)))
-                                    (cons "start" (cdr (assoc :line ref)))
-                                    (cons "end" (cdr (assoc :line ref))))))))
+              do (progn
+                   (format t " before find-entrypoint~%")
+                   (let ((entrypoint (find-entrypoint (context-parser ctx)
+                                                           ref)))
+                   
+                     (format t " after find-entrypoint. result: ~a~%" entrypoint)
+                          (if entrypoint
+                              (setf results (append results (list entrypoint)))
+                              (enqueue q (list
+                                           (cons "path" (cdr (assoc :path ref)))
+                                           (cons "start" (cdr (assoc :line ref)))
+                                           (cons "end" (cdr (assoc :line ref)))))))))
         (setf results
               (list
                 (list (cons :path (enough-namestring (cdr (assoc :path pos))
