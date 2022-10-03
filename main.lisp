@@ -26,7 +26,7 @@
 (defun command (&rest argv)
   (destructuring-bind (&key front-path back-path exclude github-token base-sha inject-mark) (parse-argv argv)
     (multiple-value-bind (front back)
-      (start :front-path front-path :back-path back-path :exclude exclude)
+      (time (start :front-path front-path :back-path back-path :exclude exclude))
 
       (let (project-path pr hostname)
         (if back-path
@@ -44,8 +44,8 @@
               (setf base-sha base-ref-name))))
 
         (let ((results (if back-path
-                           (analyze back base-sha)
-                           (analyze front base-sha))))
+                           (time (analyze back base-sha))
+                           (time (analyze front base-sha)))))
           (format t "~a~%" results)
           (when (and pr results)
             (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha) pr
@@ -163,6 +163,7 @@
           (setf results
                 (append results
                         (mapcan (lambda (pos)
+                                  (format t "affected-pos: ~a~%" pos)
                                   (find-entrypoints ctx pos q))
                                 (get-affected-poss ctx ast src-path range)))))))))
 
