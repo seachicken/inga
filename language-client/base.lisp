@@ -65,10 +65,13 @@
     (format t " len: ~a~%" len)
     ;; newline
     (read-line stream)
+    (format t " end read-line~%")
     ;; JSON
     (loop
       with result = ""
       repeat len
-      do (setf result (format nil "~a~a" result (read-char stream)))
+      do (let ((rchar (read-char stream)))
+           (format t " char: ~a~%" rchar)
+           (setf result (format nil "~a~a" result rchar)))
       finally (return result))))
 
