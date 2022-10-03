@@ -150,6 +150,7 @@
     :test #'equal))
 
 (defun analyze-by-range (ctx range)
+  (format t "analyze range: ~a~%" range)
   (let ((q (make-queue))
         (results '()))
     (enqueue q range)
@@ -163,7 +164,7 @@
           (setf results
                 (append results
                         (mapcan (lambda (pos)
-                                  (format t " affected-pos: ~a~%" pos)
+                                  (format t " affected-pos: ~a, src-path: ~a~%" pos src-path)
                                   (find-entrypoints ctx pos q))
                                 (get-affected-poss ctx ast src-path range)))))))))
 
