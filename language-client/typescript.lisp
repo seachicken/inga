@@ -24,14 +24,17 @@
   (let ((full-path (namestring
                      (uiop:merge-pathnames* (cdr (assoc :path pos))
                                             (client-path client)))))
+    (format t " full-path: ~a~%" full-path)
     (increment-req-id client)
     (exec client (format nil "{\"seq\": ~a, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}"
                          (client-req-id client) full-path))
+    (format t " end open~%")
 
     (increment-req-id client)
     (let ((refs (exec-command client (format nil "{\"seq\": ~a, \"command\": \"references\", \"arguments\": {\"file\": \"~a\", \"line\": ~a, \"offset\": ~a}}"
                                 (client-req-id client) full-path
                                 (cdr (assoc :line pos)) (cdr (assoc :offset pos))))))
+      (format t " refs: ~a~%" (inga/utils::top (format nil "~a" refs) 5))
       (mapcar (lambda (ref)
                 (list
                   (cons :path (enough-namestring (jsown:val ref "file")
