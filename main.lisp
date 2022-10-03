@@ -33,6 +33,7 @@
           (setf project-path back-path)
           (setf project-path front-path))
 
+        (format t "token len: ~a~%" (length github-token))
         (when github-token
           (setf hostname (inga/git:get-hostname project-path))
           (inga/github:login hostname github-token)
