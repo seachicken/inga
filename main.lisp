@@ -114,6 +114,7 @@
                     :lc (make-client :typescript front-path)
                     :parser (make-parser :typescript front-path)))
       (start-client (context-lc front))
+      ;;(initialize-client (context-lc front))
       (start-parser (context-parser front)))
     (when back-path
       (setf back (make-context

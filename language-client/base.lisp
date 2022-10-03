@@ -66,11 +66,11 @@
     (format t " len: ~a~%" len)
     ;; newline
     (read-line stream)
-    (format t " end read-line~%")
     ;; JSON
     (loop
       with result = ""
       repeat len
       do (setf result (format nil "~a~a" result (read-char stream)))
-      finally (progn (format t " result: ~a~%" result) (return result)))))
+      finally (progn (format t " extract-json result: ~a~%" result)
+                     (return result)))))
 

@@ -20,6 +20,22 @@
 (defmethod stop-client ((client language-client-typescript))
   (uiop:close-streams (client-process client)))
 
+(defmethod initialize-client ((client language-client-typescript))
+  (increment-req-id client)
+  (exec client (format nil "{\"seq\": ~a, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}"
+                               (client-req-id client) (client-path client)))
+  (let ((stream (uiop:process-info-output (client-process client))))
+    (loop while stream do
+          (defvar json (extract-json stream))
+          (format t " json: ~a~%" json)
+          (let ((result (jsown:parse json)))
+            (format t " initialize result: ~a~%" result)
+            (when (and
+                    (jsown:keyp result "params")
+                    (jsown:keyp (jsown:val result "params") "type")
+                    (equal (jsown:val (jsown:val result "params") "type") "Started"))
+              (return))))))
+
 (defmethod references-client ((client language-client-typescript) pos)
   (let ((full-path (namestring
                      (uiop:merge-pathnames* (cdr (assoc :path pos))
@@ -28,6 +44,11 @@
     (increment-req-id client)
     (exec client (format nil "{\"seq\": ~a, \"command\": \"open\", \"arguments\": {\"file\": \"~a\"}}"
                          (client-req-id client) full-path))
+    (let ((stream (uiop:process-info-output (client-process client))))
+      (loop while (listen stream) do
+            (defvar json (extract-json stream))
+            (let ((result (jsown:parse json)))
+              (format t " open result: ~a~%" result))))
     (format t " end open~%")
 
     (increment-req-id client)
