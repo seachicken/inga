@@ -70,8 +70,6 @@
     (loop
       with result = ""
       repeat len
-      do (let ((rchar (read-char stream)))
-           (format t " char: ~a~%" rchar)
-           (setf result (format nil "~a~a" result rchar)))
+      do (setf result (format nil "~a~a" result (read-char stream)))
       finally (progn (format t " result: ~a~%" result) (return result)))))
 
