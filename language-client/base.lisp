@@ -73,5 +73,5 @@
       do (let ((rchar (read-char stream)))
            (format t " char: ~a~%" rchar)
            (setf result (format nil "~a~a" result rchar)))
-      finally (return result))))
+      finally (progn (format t " result: ~a~%" result) (return result)))))
 
