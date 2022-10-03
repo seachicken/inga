@@ -59,7 +59,10 @@
 
 (defun extract-json (stream)
   ;; Content-Length: 99
-  (let ((len (parse-integer (subseq (read-line stream) 16))))
+  (defparameter line (read-line stream))
+  (format t " line: ~a~%" line)
+  (let ((len (parse-integer (subseq line 16))))
+    (format t " len: ~a~%" len)
     ;; newline
     (read-line stream)
     ;; JSON
