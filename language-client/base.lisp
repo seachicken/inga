@@ -45,6 +45,7 @@
   (setf (client-req-id client) (+ (client-req-id client) 1)))
 
 (defun exec-command (client command)
+  (format t " command: ~a~%" command)
   (write-line (get-command client command)
               (uiop:process-info-input (client-process client)))
   (force-output (uiop:process-info-input (client-process client)))
