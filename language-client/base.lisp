@@ -1,6 +1,7 @@
 (defpackage #:inga/language-client/base
   (:use #:cl)
   (:import-from #:jsown)
+  (:import-from #:flexi-streams)
   (:export #:language-client
            #:make-client
            #:client-process
@@ -64,8 +65,8 @@
     (read-line stream)
     ;; JSON
     (loop
-      with result = ""
+      with buff = (make-array len :fill-pointer 0)
       repeat len
-      do (setf result (format nil "~a~a" result (read-char stream)))
-      finally (return result))))
+      do (vector-push (read-byte stream) buff)
+      finally (return (flexi-streams:octets-to-string buff :external-format :utf-8)))))
 
