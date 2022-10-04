@@ -69,16 +69,17 @@
     ;; newline
     (read-line stream)
     ;; JSON
-    ;;(read-line stream)
-    (format t " before make-array~%")
-    (let ((buff (make-array len)))
-      (format t " after make-array~%")
-      (read-sequence buff stream)
-      (format t " read-sequence~%")
-      ;;(format t " buff: ~a~%" buff)
-      buff
-      )
+    (read-line stream)
     ))
+    ;;(format t " before make-array~%")
+    ;;(let ((buff (make-array len)))
+    ;;  (format t " after make-array~%")
+    ;;  (read-sequence buff stream)
+    ;;  (format t " read-sequence~%")
+    ;;  ;;(format t " buff: ~a~%" buff)
+    ;;  buff
+    ;;  )
+    ;;))
     ;;(loop
     ;;  with result = ""
     ;;  repeat len
