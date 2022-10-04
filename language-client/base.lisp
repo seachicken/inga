@@ -67,7 +67,12 @@
     ;; newline
     (read-line stream)
     ;; JSON
-    (read-line stream)
+    ;;(read-line stream)
+    (let ((buff (make-array len)))
+      (read-sequence buff stream)
+      (format t " buff: ~a~%" buff)
+      buff
+      )
     ))
     ;;(loop
     ;;  with result = ""
