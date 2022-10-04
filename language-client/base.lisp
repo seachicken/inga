@@ -56,7 +56,9 @@
             (when (and
                     (jsown:keyp result (client-id-key client))
                     (= (jsown:val result (client-id-key client)) (client-req-id client)))
-              (return result))))))
+              (force-output (uiop:process-info-output (client-process client)))
+              (return result)))))
+  )
 
 (defun extract-json (stream)
   ;; Content-Length: 99
