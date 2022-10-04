@@ -63,54 +63,13 @@
 (defun extract-json (stream)
   ;; Content-Length: 99
   (defparameter line (read-line stream))
-  (format t " line: ~a~%" line)
   (let ((len (parse-integer (subseq line 16))))
-    (format t " len: ~a~%" len)
     ;; newline
     (read-line stream)
     ;; JSON
-    ;;(let ((json (read-line stream)))
-    ;;  (format t " json: ~a, len: ~a~%" json (length json))
-    ;;  json
-    ;;  )
-    ;;))
-    ;;(format t " before make-array~%")
-    ;;(let ((buff (make-array len :initial-element nil)))
-    ;;  (format t " after make-array~%")
-    ;;  (read-sequence buff stream)
-    ;;  (format t " read-sequence~%")
-    ;;  ;;(format t " buff: ~a~%" buff)
-    ;;  buff
-    ;;  )
-    ;;))
     (loop
-      with result = (make-array len :element-type '(unsigned-byte 8) :fill-pointer 0)
+      with buff = (make-array len :fill-pointer 0)
       repeat len
-      do (let ((rchar (read-byte stream)))
-           ;;(format t " rchar: ~a~%" rchar)
-           ;;(setf result (format nil "~8,'0b~8,'0b" result rchar)))
-           (vector-push rchar result))
-      finally (progn
-                (format t " before!!!~%")
-                (format t " extract-json result: ~a~%"
-                        (flexi-streams:octets-to-string result :external-format :utf-8))
-                (return (flexi-streams:octets-to-string result :external-format :utf-8))))))
-    ;;(flexi-streams:with-output-to-sequence 
-    ;;  (out)
-    ;;  (loop
-    ;;    repeat len
-    ;;    do (write-byte (read-byte stream) out)
-    ;;    finally (return (progn 
-    ;;                      (format t " out: ~a~%" out)
-    ;;                      out))))))
-    ;;(loop
-    ;;  with result = (flexi-streams:make-in-memory-output-stream)
-    ;;  repeat len
-    ;;  do (let ((rbyte (read-byte stream)))
-    ;;       (write-byte rbyte result))
-    ;;       ;;(setf result (format nil "~a~a" result (code-char rbyte))))
-    ;;  finally (progn
-    ;;            (format t "len: ~a~%" result)
-    ;;            (return (flexi-streams:octets-to-string result :external-format :utf-8))
-    ;;            ))))
+      do (vector-push (read-byte stream) buff)
+      finally (return (flexi-streams:octets-to-string buff :external-format :utf-8)))))
 
