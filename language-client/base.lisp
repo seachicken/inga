@@ -56,7 +56,6 @@
             (when (and
                     (jsown:keyp result (client-id-key client))
                     (= (jsown:val result (client-id-key client)) (client-req-id client)))
-              (force-output (uiop:process-info-output (client-process client)))
               (return result)))))
   )
 
@@ -70,19 +69,22 @@
     (read-line stream)
     ;; JSON
     ;;(read-line stream)
-    (format t " before make-array~%")
-    (let ((buff (make-array len :initial-element nil)))
-      (format t " after make-array~%")
-      (read-sequence buff stream)
-      (format t " read-sequence~%")
-      ;;(format t " buff: ~a~%" buff)
-      buff
-      )
-    ))
-    ;;(loop
-    ;;  with result = ""
-    ;;  repeat len
-    ;;  do (setf result (format nil "~a~a" result (read-char stream)))
-    ;;  finally (progn (format t " extract-json result: ~a~%" result)
-    ;;                 (return result)))))
+    ;;(format t " before make-array~%")
+    ;;(let ((buff (make-array len :initial-element nil)))
+    ;;  (format t " after make-array~%")
+    ;;  (read-sequence buff stream)
+    ;;  (format t " read-sequence~%")
+    ;;  ;;(format t " buff: ~a~%" buff)
+    ;;  buff
+    ;;  )
+    ;;))
+    (loop
+      with result = ""
+      repeat len
+      do (let ((rchar (read-char stream)))
+           (format t " rchar: ~a~%" rchar)
+           (setf result (format nil "~a~a" result rchar)))
+      finally (progn
+                (format t " extract-json result: ~a~%" result)
+                (return result)))))
 
