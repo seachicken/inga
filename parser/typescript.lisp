@@ -102,7 +102,6 @@
     (setf (parser-nearest-ast-pos parser)
           (list
             (cons :name (let ((tag-name (cdr (jsown:val ast "tagName"))))
-                          (format t " tag-name: ~a~%" tag-name)
                           (if (and tag-name (jsown:keyp tag-name "escapedText"))
                               (jsown:val tag-name "escapedText") 
                               "")))
