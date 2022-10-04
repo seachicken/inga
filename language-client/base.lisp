@@ -1,6 +1,7 @@
 (defpackage #:inga/language-client/base
   (:use #:cl)
   (:import-from #:jsown)
+  (:import-from #:flexi-streams)
   (:export #:language-client
            #:make-client
            #:client-process
@@ -82,21 +83,34 @@
     ;;  buff
     ;;  )
     ;;))
-    ;;(loop
-    ;;  with result = ""
-    ;;  repeat len
-    ;;  do (let ((rchar (read-char stream)))
-    ;;       (format t " rchar: ~a~%" rchar)
-    ;;       (setf result (format nil "~a~a" result rchar)))
-    ;;  finally (progn
-    ;;            (format t " extract-json result: ~a~%" result)
-    ;;            (return result)))))
     (loop
-      with result = ""
+      with result = (make-array len :element-type '(unsigned-byte 8) :fill-pointer 0)
       repeat len
-      do (let ((rbyte (read-byte stream)))
-           (setf result (format nil "~a~a" result (code-char rbyte))))
+      do (let ((rchar (read-byte stream)))
+           ;;(format t " rchar: ~a~%" rchar)
+           ;;(setf result (format nil "~8,'0b~8,'0b" result rchar)))
+           (vector-push rchar result))
       finally (progn
-                (format t " extract-json result: ~a~%" result)
-                (return result)))))
+                (format t " before!!!~%")
+                (format t " extract-json result: ~a~%"
+                        (flexi-streams:octets-to-string result :external-format :utf-8))
+                (return (flexi-streams:octets-to-string result :external-format :utf-8))))))
+    ;;(flexi-streams:with-output-to-sequence 
+    ;;  (out)
+    ;;  (loop
+    ;;    repeat len
+    ;;    do (write-byte (read-byte stream) out)
+    ;;    finally (return (progn 
+    ;;                      (format t " out: ~a~%" out)
+    ;;                      out))))))
+    ;;(loop
+    ;;  with result = (flexi-streams:make-in-memory-output-stream)
+    ;;  repeat len
+    ;;  do (let ((rbyte (read-byte stream)))
+    ;;       (write-byte rbyte result))
+    ;;       ;;(setf result (format nil "~a~a" result (code-char rbyte))))
+    ;;  finally (progn
+    ;;            (format t "len: ~a~%" result)
+    ;;            (return (flexi-streams:octets-to-string result :external-format :utf-8))
+    ;;            ))))
 
