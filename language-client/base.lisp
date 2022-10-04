@@ -73,7 +73,7 @@
     (format t " before make-array~%")
     (let ((buff (make-array len :initial-element nil)))
       (format t " after make-array~%")
-      (read-sequence buff stream buff)
+      (read-sequence buff stream)
       (format t " read-sequence~%")
       ;;(format t " buff: ~a~%" buff)
       buff
