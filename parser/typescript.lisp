@@ -101,7 +101,10 @@
                (equal (jsown:val ast "kind") *jsx-self-closing-element*)))
     (setf (parser-nearest-ast-pos parser)
           (list
-            (cons :name (jsown:val (cdr (jsown:val ast "tagName")) "escapedText"))
+            (cons :name (let ((tag-name (cdr (jsown:val ast "tagName"))))
+                          (if (jsown:keyp tag-name "escapedText")
+                              (jsown:val tag-name "escapedText")
+                              "")))
             (cons :pos (+ (jsown:val ast "start") 1)))))
 
   (when (not (null ast))
