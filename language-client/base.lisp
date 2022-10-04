@@ -68,11 +68,11 @@
     ;; newline
     (read-line stream)
     ;; JSON
-    (let ((json (read-line stream)))
-      (format t " json: ~a, len: ~a~%" json (length json))
-      json
-      )
-    ))
+    ;;(let ((json (read-line stream)))
+    ;;  (format t " json: ~a, len: ~a~%" json (length json))
+    ;;  json
+    ;;  )
+    ;;))
     ;;(format t " before make-array~%")
     ;;(let ((buff (make-array len :initial-element nil)))
     ;;  (format t " after make-array~%")
@@ -91,4 +91,12 @@
     ;;  finally (progn
     ;;            (format t " extract-json result: ~a~%" result)
     ;;            (return result)))))
+    (loop
+      with result = ""
+      repeat len
+      do (let ((rbyte (read-byte stream)))
+           (setf result (format nil "~a~a" result (code-char rbyte))))
+      finally (progn
+                (format t " extract-json result: ~a~%" result)
+                (return result)))))
 
