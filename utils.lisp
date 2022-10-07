@@ -20,7 +20,7 @@
 ;; for debug
 (defun top (sequence limit)
   (let ((line-no 0) (result ""))
-    (with-input-from-string (in sequence)
+    (with-input-from-string (in (format nil "~a" sequence))
       (loop :for line := (read-line in nil nil) :while line
             :do (progn
                   (setf line-no (+ line-no 1))
