@@ -105,6 +105,21 @@
               ("start" . 7) ("end" . 7)))))
     (inga/main::stop front back)))
 
+(test analyze-by-range-in-field-annotation
+  (multiple-value-bind (front back) (inga/main::start
+                                      :back-path *back-path*
+                                      :exclude '("src/test/**"))
+    (is (equal
+          '(((:path . "src/main/java/io/spring/api/ArticlesApi.java")
+             (:name . "createArticle") (:line . 28) (:offset . 3))
+            ((:path . "src/main/java/io/spring/graphql/ArticleMutation.java")
+             (:name . "createArticle") (:line . 35) (:offset . 3)))
+          (inga/main::analyze-by-range
+            back
+            '(("path" . "src/main/java/io/spring/application/article/NewArticleParam.java")
+              ("start" . 18) ("end" . 18)))))
+    (inga/main::stop front back)))
+
 (test inject-mark
   (uiop:run-program (format nil "cp -r ~a ~a" *front-path* *build-path*))
 

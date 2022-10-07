@@ -37,12 +37,19 @@
 
         (when (and
                 (or
+                  (string= (cdr (car ast)) "com.github.javaparser.ast.body.FieldDeclaration")
                   (string= (cdr (car ast)) "com.github.javaparser.ast.body.ConstructorDeclaration")
                   (string= (cdr (car ast)) "com.github.javaparser.ast.body.MethodDeclaration"))
                 (<= (jsown:val (jsown:val ast "range") "beginLine") line-no)
                 (>= (jsown:val (jsown:val ast "range") "endLine") line-no))
           (return
-            (list (cons :name (jsown:val (cdr (jsown:val ast "name")) "identifier"))
+            (list (cons :name (if (jsown:keyp ast "name")
+                                  (jsown:val (cdr (jsown:val ast "name")) "identifier")
+                                  (if (jsown:keyp ast "variables")
+                                      (jsown:val 
+                                        (jsown:val (cdr (first (jsown:val ast "variables"))) "name")
+                                        "identifier")
+                                      "")))
                   (cons :line (jsown:val (jsown:val ast "range") "beginLine"))
                   (cons :offset (jsown:val (jsown:val ast "range") "beginColumn")))))
 
