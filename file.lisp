@@ -1,8 +1,14 @@
 (defpackage #:inga/file
   (:use #:cl)
   (:import-from #:cl-ppcre)
-  (:export #:is-analysis-target))
+  (:export #:is-match
+           #:is-analysis-target))
 (in-package #:inga/file)
+
+(defun is-match (path candidates)
+  (loop for candidate in candidates do
+        (when (ppcre:scan (to-scan-str candidate) path)
+          (return t))))
 
 (defun is-analysis-target (path include &optional exclude)
   (unless (loop for inc in include do
