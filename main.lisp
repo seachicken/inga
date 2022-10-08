@@ -48,8 +48,7 @@
           (format t "~a~%" results)
           (when (and pr results)
             (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha) pr
-              (inga/github:send-pr-comment hostname base-url owner-repo number results project-path
-                                           (if back-path t nil) head-sha)))
+              (inga/github:send-pr-comment hostname base-url owner-repo number results project-path head-sha)))
           (when inject-mark
             (inject-mark front-path results))))
       (stop front back))))

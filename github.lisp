@@ -45,11 +45,11 @@
     (setf result (format nil "~{~a/~}" (subseq paths 3 5)))
     (subseq result 0 (- (length result) 1))))
 
-(defun send-pr-comment (hostname base-url owner-repo number affected-poss project-path is-back sha)
+(defun send-pr-comment (hostname base-url owner-repo number affected-poss project-path sha)
   (let ((comment (format nil
                          "~a~%**~a affected by the change**~a~%~%<details><summary>Affected files</summary>~%~%~a~%</details>"
                          "# Inga Report"
-                         (get-affected-display-name affected-poss is-back)
+                         (get-affected-display-name affected-poss)
                          " (powered by [Inga](https://github.com/seachicken/inga))"
                          (get-code-hierarchy base-url sha affected-poss))))
     (uiop:run-program (format nil
@@ -60,12 +60,10 @@
                               comment)
                       :output :string)))
 
-(defun get-affected-display-name (affected-poss is-back)
+(defun get-affected-display-name (affected-poss)
   (if (equal (length affected-poss) 1)
-      (if is-back "A entrypoint" "A component")
-      (format nil
-              (if is-back "~a entrypoints" "~a components")
-              (length affected-poss))))
+      "A entrypoint"
+      (format nil "~a entrypoints" (length affected-poss))))
 
 (defun get-code-hierarchy (base-url sha poss)
   (setf poss (mapcar (lambda (p)
