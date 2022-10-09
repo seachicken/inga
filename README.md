@@ -48,3 +48,4 @@ Analyze by the difference between the `base-sha` and the checked out sha. Not to
 
 - [create-react-app-typescript-todo-example-2022](https://github.com/seachicken/create-react-app-typescript-todo-example-2022/blob/master/.github/workflows/inga.yml)
 - [spring-boot-realworld-example-app](https://github.com/seachicken/spring-boot-realworld-example-app/blob/master/.github/workflows/inga.yml)
+- [nestjs-realworld-example-app](https://github.com/seachicken/nestjs-realworld-example-app/blob/prisma/.github/workflows/inga.yml)
