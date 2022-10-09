@@ -30,6 +30,10 @@
 (defparameter *include-java*
   '("*.java"))
 
+(define-condition inga-error (error) ())
+
+(define-condition inga-error-context-not-found (inga-error) ())
+
 (defun command (&rest argv)
   (destructuring-bind (&key root-path exclude github-token base-sha) (parse-argv argv)
     (let (diffs pr hostname)
@@ -43,13 +47,15 @@
             (setf base-sha base-ref-name))))
       (setf diffs (get-diff root-path base-sha))
 
-      (let ((ctx (start root-path (get-analysis-kinds diffs) exclude)))
-        (let ((results (analyze ctx diffs)))
-          (format t "~a~%" results)
-          (when (and pr results)
-            (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha) pr
-              (inga/github:send-pr-comment hostname base-url owner-repo number results root-path head-sha))))
-        (stop ctx)))))
+      (handler-case
+        (let ((ctx (start root-path (get-analysis-kinds diffs) exclude)))
+          (let ((results (analyze ctx diffs)))
+            (format t "~a~%" results)
+            (when (and pr results)
+              (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha) pr
+                (inga/github:send-pr-comment hostname base-url owner-repo number results root-path head-sha))))
+          (stop ctx))
+        (error (e) (format t "~a~%" e))))))
 
 (defun parse-argv (argv)
   (loop with root-path = "."
@@ -115,7 +121,7 @@
         (initialize-client (context-lc ctx))
         (start-parser (context-parser ctx)) 
         ctx))
-    (t (error 'context-not-found))))
+    (t (error 'inga-error-context-not-found))))
 
 (defun stop (ctx)
   (stop-parser (context-parser ctx)) 
