@@ -55,7 +55,7 @@
               (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha) pr
                 (inga/github:send-pr-comment hostname base-url owner-repo number results root-path head-sha))))
           (stop ctx))
-        (error (e) (format t "~a~%" e))))))
+        (inga-error (e) (format t "~a~%" e))))))
 
 (defun parse-argv (argv)
   (loop with root-path = "."
