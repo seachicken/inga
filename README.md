@@ -13,17 +13,10 @@ Code changes daily, and it is always important to check the impact of changes.
 In many cases, the process of checking the impact of a change depends on how vigilant the author is in writing the code, making it difficult to detect unintended effects during the code review and QA phases.  
 This tool improves software quality by detecting unintended changes at an early phase.
 
-## Supported languages and frameworks
-
-### front-end
-
-- TypeScript
-- React
-
-### back-end
+## Supported languages
 
 - Java
-- Spring Boot
+- TypeScript
 
 ## Usage
 
@@ -33,13 +26,9 @@ inga [options]
 
 ### Options
 
-`--front-path <string>`
+`--root-path <string>`
 
-Relative path of the front-end project to be analyzed.
-
-`--back-path <string>`
-
-Relative path of the back-end project to be analyzed.
+Relative path of the project to be analyzed, so if you do not give this option, it defaults to the command execute path.
 
 `--exclude <string>`
 

@@ -7,6 +7,16 @@
 (def-suite file)
 (in-suite file)
 
+(test filename-matches
+  (is (equal
+        t
+        (is-match "src/index.js" '("*.js")))))
+
+(test filename-do-not-match
+  (is (equal
+        nil
+        (is-match "src/index.ts" '("*.js")))))
+
 (test analyze-when-the-file-name-does-not-match-exclude
   (is (equal
         t
