@@ -96,7 +96,6 @@
   (alexandria:switch ((when (> (length kinds) 0) (first kinds)))
     (:typescript
       (let ((ctx (make-context
-                   :kind :front
                    :project-path root-path
                    :include *include-typescript*
                    :exclude exclude
@@ -107,7 +106,6 @@
         ctx))
     (:java
       (let ((ctx (make-context
-                   :kind :back
                    :project-path root-path
                    :include *include-java*
                    :exclude exclude
@@ -222,7 +220,6 @@
                               (write-line line outstream)))))))))
 
 (defstruct context
-  kind
   project-path
   include
   exclude
