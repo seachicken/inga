@@ -1,13 +1,12 @@
 (defpackage #:inga/git
-  (:use #:cl
-        #:inga/file)
+  (:use #:cl)
   (:import-from #:cl-ppcre)
   (:export #:get-diff
            #:get-hostname
            #:track-branch))
 (in-package #:inga/git)
 
-(defun get-diff (project-path base-sha include &optional exclude)
+(defun get-diff (project-path base-sha)
   (let ((diff (uiop:run-program
                 (format nil "(cd ~a && git diff ~a --unified=0)" project-path base-sha)
                 :output :string)))
@@ -20,18 +19,17 @@
                                                      (ppcre:scan-to-strings "^diff --git a/.+ b/(.+)$" line))))))
                       (when found-to-path
                         (setq to-path (aref found-to-path 0))))
-                    (when (is-analysis-target to-path include exclude)
-                      (let ((to-range (car (cdr (multiple-value-list
-                                                  (ppcre:scan-to-strings "@@.+\\+([0-9]+),?([0-9]*) @@" line))))))
-                        (when to-range
-                          (let ((start (parse-integer (aref to-range 0)))
-                                (rows (if (> (length (aref to-range 1)) 0) (parse-integer (aref to-range 1)) 0)))
-                            (let ((end (if (= rows 0) start (- (+ start rows) 1))))
-                              ;; extract undeleted files
-                              (when (or (> start 0) (> end 0))
-                                (vector-push-extend (list (cons "path" to-path)
-                                                          (cons "start" start)
-                                                          (cons "end" end)) ranges))))))))))
+                    (let ((to-range (car (cdr (multiple-value-list
+                                                (ppcre:scan-to-strings "@@.+\\+([0-9]+),?([0-9]*) @@" line))))))
+                      (when to-range
+                        (let ((start (parse-integer (aref to-range 0)))
+                              (rows (if (> (length (aref to-range 1)) 0) (parse-integer (aref to-range 1)) 0)))
+                          (let ((end (if (= rows 0) start (- (+ start rows) 1))))
+                            ;; extract undeleted files
+                            (when (or (> start 0) (> end 0))
+                              (vector-push-extend (list (cons "path" to-path)
+                                                        (cons "start" start)
+                                                        (cons "end" end)) ranges)))))))))
       (return-from get-diff (coerce ranges 'list)))))
 
 (defun get-hostname (project-path)

@@ -23,50 +23,48 @@
   (:export #:command))
 (in-package #:inga/main)
 
+(defparameter *include-typescript*
+  '("*.js" "*.jsx"
+    "*.ts" "*.tsx"))
+
+(defparameter *include-java*
+  '("*.java"))
+
 (defun command (&rest argv)
-  (destructuring-bind (&key front-path back-path exclude github-token base-sha inject-mark) (parse-argv argv)
-    (multiple-value-bind (front back)
-      (start :front-path front-path :back-path back-path :exclude exclude)
+  (destructuring-bind (&key root-path exclude github-token base-sha) (parse-argv argv)
+    (let (diffs pr hostname)
+      (when github-token
+        (setf hostname (inga/git:get-hostname root-path))
+        (inga/github:login hostname github-token)
+        (setf pr (inga/github:get-pr root-path))
+        (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha) pr
+          (unless base-sha
+            (inga/git:track-branch base-ref-name root-path)
+            (setf base-sha base-ref-name))))
+      (setf diffs (get-diff root-path base-sha))
 
-      (let (project-path pr hostname)
-        (if back-path
-          (setf project-path back-path)
-          (setf project-path front-path))
-
-        (when github-token
-          (setf hostname (inga/git:get-hostname project-path))
-          (inga/github:login hostname github-token)
-          (setf pr (inga/github:get-pr project-path))
-          (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha) pr
-            (unless base-sha
-              (inga/git:track-branch base-ref-name project-path)
-              (setf base-sha base-ref-name))))
-
-        (let ((results (if back-path
-                           (analyze back base-sha)
-                           (analyze front base-sha))))
+      (let ((ctx (start root-path (get-analysis-kinds diffs) exclude)))
+        (let ((results (analyze ctx diffs)))
           (format t "~a~%" results)
           (when (and pr results)
             (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha) pr
-              (inga/github:send-pr-comment hostname base-url owner-repo number results project-path head-sha)))
-          (when inject-mark
-            (inject-mark front-path results))))
-      (stop front back))))
+              (inga/github:send-pr-comment hostname base-url owner-repo number results root-path head-sha))))
+        (stop ctx)))))
 
 (defun parse-argv (argv)
-  (loop with front-path = nil
-        with back-path = nil
+  (loop with root-path = "."
         with exclude = '()
         with github-token = nil
         with base-sha = nil
-        with inject-mark = nil
         for option = (pop argv)
         while option
         do (alexandria:switch (option :test #'equal)
+             ("--root-path"
+              (setf root-path (pop argv)))
              ("--front-path"
-              (setf front-path (pop argv)))
+              (setf root-path (pop argv)))
              ("--back-path"
-              (setf back-path (pop argv)))
+              (setf root-path (pop argv)))
              ("--exclude"
               (setf exclude
                     (append exclude
@@ -77,21 +75,15 @@
              ("--github-token"
               (setf github-token (pop argv)))
              ("--base-sha"
-              (setf base-sha (pop argv)))
-             ("--inject-mark"
-              (setf inject-mark t)))
+              (setf base-sha (pop argv))))
         finally
           (return (append 
-                    (when front-path
-                      (list :front-path (truename (uiop:merge-pathnames* front-path))))
-                    (when back-path
-                      (list :back-path (truename (uiop:merge-pathnames* back-path))))
+                    (list :root-path (truename (uiop:merge-pathnames* root-path)))
                     (list :exclude exclude)
                     (when github-token
                       (list :github-token github-token))
                     (when base-sha
-                      (list :base-sha base-sha))
-                    (list :inject-mark inject-mark)))))
+                      (list :base-sha base-sha))))))
 
 (defun split (div sequence)
   (let ((pos (position div sequence)))
@@ -100,51 +92,56 @@
                (split div (subseq sequence (1+ pos))))
         (list sequence))))
 
-(defun start (&key front-path back-path (exclude '()))
-  (let (front back)
-    (when front-path
-      (setf front (make-context
-                    :kind :front
-                    :project-path front-path
-                    :include '("*.js" "*.jsx"
-                               "*.ts" "*.tsx")
-                    :exclude exclude
-                    :lc (make-client :typescript front-path)
-                    :parser (make-parser :typescript front-path)))
-      (start-client (context-lc front))
-      (start-parser (context-parser front)))
-    (when back-path
-      (setf back (make-context
-                   :kind :back
-                   :project-path back-path
-                   :include '("*.java")
+(defun start (root-path kinds &optional (exclude '()))
+  (alexandria:switch ((when (> (length kinds) 0) (first kinds)))
+    (:typescript
+      (let ((ctx (make-context
+                   :project-path root-path
+                   :include *include-typescript*
                    :exclude exclude
-                   :lc (make-client :java back-path)
-                   :parser (make-parser :java back-path)))
-      (start-client (context-lc back))
-      (initialize-client (context-lc back))
-      (start-parser (context-parser back)))
-    (values front back)))
+                   :lc (make-client :typescript root-path)
+                   :parser (make-parser :typescript root-path))))
+        (start-client (context-lc ctx))
+        (start-parser (context-parser ctx)) 
+        ctx))
+    (:java
+      (let ((ctx (make-context
+                   :project-path root-path
+                   :include *include-java*
+                   :exclude exclude
+                   :lc (make-client :java root-path)
+                   :parser (make-parser :java root-path))))
+        (start-client (context-lc ctx))
+        (initialize-client (context-lc ctx))
+        (start-parser (context-parser ctx)) 
+        ctx))
+    (t (error 'context-not-found))))
 
-(defun stop (front-ctx back-ctx)
-  (when front-ctx
-    (stop-parser (context-parser front-ctx)) 
-    (stop-client (context-lc front-ctx)))
-  (when back-ctx
-    (stop-parser (context-parser back-ctx))
-    (stop-client (context-lc back-ctx))))
+(defun stop (ctx)
+  (stop-parser (context-parser ctx)) 
+  (stop-client (context-lc ctx)))
+
+(defun get-analysis-kinds (diffs)
+  (remove nil
+          (mapcar (lambda (diff)
+                    (if (is-match (get-val diff "path") *include-typescript*)
+                        :typescript
+                        (if (is-match (get-val diff "path") *include-java*)
+                            :java
+                            nil)))
+                  diffs)))
 
 (defun get-val (list key)
   (loop for item in list do
         (when (equal (car item) key)
           (return-from get-val (cdr item)))))
 
-(defun analyze (ctx base-sha)
+(defun analyze (ctx diffs)
   (remove-duplicates
     (mapcan (lambda (range)
-              (analyze-by-range ctx range))
-            (get-diff (context-project-path ctx) base-sha
-                      (context-include ctx) (context-exclude ctx)))
+              (when (is-analysis-target (get-val range "path") (context-include ctx) (context-exclude ctx))
+                (analyze-by-range ctx range)))
+            diffs)
     :test #'equal))
 
 (defun analyze-by-range (ctx range)
@@ -223,7 +220,6 @@
                               (write-line line outstream)))))))))
 
 (defstruct context
-  kind
   project-path
   include
   exclude

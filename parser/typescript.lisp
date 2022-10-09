@@ -5,13 +5,16 @@
   (:export #:parser-typescript))
 (in-package #:inga/parser/typescript)
 
+;; typescript v4.3.5
 (defparameter *void-keyword* 113)
+(defparameter *method-declaration* 166)
 (defparameter *parenthesized-expression* 208)
 (defparameter *arrow-function* 210)
 (defparameter *variable-statement* 233)
 (defparameter *return-statement* 243)
 (defparameter *variable-declaration* 250)
 (defparameter *function-declaration* 252)
+(defparameter *class-declaration* 253)
 (defparameter *jsx-element* 274)
 (defparameter *jsx-self-closing-element* 275)
 (defparameter *jsx-opening-element* 276)
@@ -72,11 +75,25 @@
                                   (jsown:val ast "start"))))
 
         (when (and
+                (jsown:keyp ast "kind") (= (jsown:val ast "kind") *method-declaration*)
+                (jsown:keyp ast "start") (<= (jsown:val ast "start") ast-pos)
+                (jsown:keyp ast "end") (> (jsown:val ast "end") ast-pos))
+          (return (convert-to-pos (parser-path parser) file-path
+                                  (jsown:val (cdr (jsown:val ast "name")) "escapedText")
+                                  (jsown:val ast "start"))))
+
+        (when (and
                 (jsown:keyp ast "kind")
                 (= (jsown:val ast "kind") *variable-statement*))
           (let ((dec-list (jsown:val (jsown:val ast "declarationList") "declarations")))
             (loop for d in dec-list do
                   (enqueue q (cdr d)))))
+
+        (when (and
+                (jsown:keyp ast "kind")
+                (= (jsown:val ast "kind") *class-declaration*))
+          (loop for m in (jsown:val ast "members") do
+                (enqueue q (cdr m))))
 
         (when (jsown:keyp ast "statements")
           (loop for s in (jsown:val ast "statements") do

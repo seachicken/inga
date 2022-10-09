@@ -33,13 +33,9 @@ inga [options]
 
 ### Options
 
-`--front-path <string>`
+`--root-path <string>`
 
-Relative path of the front-end project to be analyzed.
-
-`--back-path <string>`
-
-Relative path of the back-end project to be analyzed.
+Relative path of the project to be analyzed, so if you do not give this option, it defaults to the command execute path.
 
 `--exclude <string>`
 

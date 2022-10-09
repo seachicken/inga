@@ -4,3 +4,6 @@
 [submodule "test/fixtures/spring-boot-realworld-example-app"]
 	path = test/fixtures/spring-boot-realworld-example-app
 	url = git@github.com:seachicken/spring-boot-realworld-example-app.git
+[submodule "test/fixtures/nestjs-realworld-example-app-prisma"]
+	path = test/fixtures/nestjs-realworld-example-app-prisma
+	url = git@github.com:seachicken/nestjs-realworld-example-app.git
