@@ -48,7 +48,7 @@
           (format t "~a~%" results)
           (when (and pr results)
             (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha) pr
-              (inga/github:send-pr-comment hostname base-url owner-repo number results project-path head-sha))))
+              (inga/github:send-pr-comment hostname base-url owner-repo number results root-path head-sha))))
         (stop ctx)))))
 
 (defun parse-argv (argv)
