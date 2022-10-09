@@ -27,9 +27,10 @@
                           (let ((end (if (= rows 0) start (- (+ start rows) 1))))
                             ;; extract undeleted files
                             (when (or (> start 0) (> end 0))
-                              (vector-push-extend (list (cons "path" to-path)
-                                                        (cons "start" start)
-                                                        (cons "end" end)) ranges)))))))))
+                              (vector-push-extend (list (cons :path to-path)
+                                                        (cons :start start)
+                                                        (cons :end end))
+                                                  ranges)))))))))
       (return-from get-diff (coerce ranges 'list)))))
 
 (defun get-hostname (project-path)

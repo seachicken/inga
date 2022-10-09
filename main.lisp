@@ -124,22 +124,17 @@
 (defun get-analysis-kinds (diffs)
   (remove nil
           (mapcar (lambda (diff)
-                    (if (is-match (get-val diff "path") *include-typescript*)
+                    (if (is-match (cdr (assoc :path diff)) *include-typescript*)
                         :typescript
-                        (if (is-match (get-val diff "path") *include-java*)
+                        (if (is-match (cdr (assoc :path diff)) *include-java*)
                             :java
                             nil)))
                   diffs)))
 
-(defun get-val (list key)
-  (loop for item in list do
-        (when (equal (car item) key)
-          (return-from get-val (cdr item)))))
-
 (defun analyze (ctx diffs)
   (remove-duplicates
     (mapcan (lambda (range)
-              (when (is-analysis-target (get-val range "path") (context-include ctx) (context-exclude ctx))
+              (when (is-analysis-target (cdr (assoc :path range)) (context-include ctx) (context-exclude ctx))
                 (analyze-by-range ctx range)))
             diffs)
     :test #'equal))
@@ -152,7 +147,7 @@
       (let ((range (dequeue q)))
         (if (null range) (return results))
 
-        (let ((src-path (get-val range "path"))
+        (let ((src-path (cdr (assoc :path range)))
               ast)
           (setf ast (exec-parser (context-parser ctx) src-path))
           (setf results
@@ -171,8 +166,8 @@
                         (when item-pos
                           (acons :path src-path item-pos))))
                     (loop for line-no
-                          from (get-val range "start")
-                          to (get-val range "end")
+                          from (cdr (assoc :start range))
+                          to (cdr (assoc :end range))
                           collect line-no)))
     :test #'equal))
 
@@ -192,9 +187,9 @@
                    (if entrypoint
                        (setf results (append results (list entrypoint)))
                        (enqueue q (list
-                                    (cons "path" (cdr (assoc :path ref)))
-                                    (cons "start" (cdr (assoc :line ref)))
-                                    (cons "end" (cdr (assoc :line ref))))))))
+                                    (cons :path (cdr (assoc :path ref)))
+                                    (cons :start (cdr (assoc :line ref)))
+                                    (cons :end (cdr (assoc :line ref))))))))
         (setf results
               (list
                 (list (cons :path (enough-namestring (cdr (assoc :path pos))

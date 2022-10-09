@@ -24,8 +24,8 @@
              (:name . "input") (:line . 107) (:offset . 12)))
           (inga/main::analyze-by-range
             ctx
-            '(("path" . "src/App/TodoList/Item/index.tsx")
-              ("start" . 65) ("end" . 65)))))
+            '((:path . "src/App/TodoList/Item/index.tsx")
+              (:start . 65) (:end . 65)))))
     (inga/main::stop ctx)))
 
 (test analyze-by-range-in-function-declaration
@@ -35,8 +35,8 @@
              (:name . "input") (:line . 34) (:offset . 10)))
           (inga/main::analyze-by-range
             ctx
-            '(("path" . "src/App/NewTodoInput/index.tsx")
-              ("start" . 14) ("end" . 14)))))
+            '((:path . "src/App/NewTodoInput/index.tsx")
+              (:start . 14) (:end . 14)))))
     (inga/main::stop ctx)))
 
 (test analyze-by-range-in-external-function
@@ -46,8 +46,8 @@
              (:name . "input") (:line . 34) (:offset . 10)))
           (inga/main::analyze-by-range
             ctx
-            '(("path" . "src/functions.ts")
-              ("start" . 2) ("end" . 2)))))
+            '((:path . "src/functions.ts")
+              (:start . 2) (:end . 2)))))
     (inga/main::stop ctx)))
 
 (test analyze-by-range-in-external-function-for-back
@@ -57,8 +57,8 @@
              (:name . "getArticles") (:line . 48) (:offset . 3)))
           (inga/main::analyze-by-range
             ctx
-            '(("path" . "src/main/java/io/spring/application/ArticleQueryService.java")
-              ("start" . 105) ("end" . 105)))))
+            '((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
+              (:start . 105) (:end . 105)))))
     (inga/main::stop ctx)))
 
 (test analyze-by-range-in-nested-external-function-for-back
@@ -70,8 +70,8 @@
              (:name . "createArticle") (:line . 35) (:offset . 3)))
           (inga/main::analyze-by-range
             ctx
-            '(("path" . "src/main/java/io/spring/core/article/Article.java")
-              ("start" . 30) ("end" . 30)))))
+            '((:path . "src/main/java/io/spring/core/article/Article.java")
+              (:start . 30) (:end . 30)))))
     (inga/main::stop ctx)))
 
 (test analyze-by-range-in-interface-for-back
@@ -87,8 +87,8 @@
              (:name . "updateArticle") (:line . 53) (:offset . 3)))
           (inga/main::analyze-by-range
             ctx
-            '(("path" . "src/main/java/io/spring/core/article/ArticleRepository.java")
-              ("start" . 7) ("end" . 7)))))
+            '((:path . "src/main/java/io/spring/core/article/ArticleRepository.java")
+              (:start . 7) (:end . 7)))))
     (inga/main::stop ctx)))
 
 (test analyze-by-range-in-field-annotation
@@ -100,8 +100,8 @@
              (:name . "createArticle") (:line . 35) (:offset . 3)))
           (inga/main::analyze-by-range
             ctx
-            '(("path" . "src/main/java/io/spring/application/article/NewArticleParam.java")
-              ("start" . 18) ("end" . 18)))))
+            '((:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
+              (:start . 18) (:end . 18)))))
     (inga/main::stop ctx)))
 
 (test analyze-by-range-in-method
@@ -111,16 +111,16 @@
              (:name . "findAll") (:line . 21) (:offset . 3)))
           (inga/main::analyze-by-range
             ctx
-            '(("path" . "src/article/article.service.ts")
-              ("start" . 47) ("end" . 47)))))
+            '((:path . "src/article/article.service.ts")
+              (:start . 47) (:end . 47)))))
     (inga/main::stop ctx)))
 
 (test get-analysis-kinds
   (is (equal
         '(:java)
         (inga/main::get-analysis-kinds
-          '((("path" . "src/main/java/io/spring/application/article/NewArticleParam.java")
-             ("start" . 18) ("end" . 18)))))))
+          '(((:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
+             (:start . 18) (:end . 18)))))))
 
 (test inject-mark
   (uiop:run-program (format nil "cp -r ~a ~a" *front-path* *build-path*))
