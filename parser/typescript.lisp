@@ -8,6 +8,7 @@
 ;; typescript v4.3.5
 (defparameter *void-keyword* 113)
 (defparameter *method-declaration* 166)
+(defparameter *object-literal-expression* 201)
 (defparameter *parenthesized-expression* 208)
 (defparameter *arrow-function* 210)
 (defparameter *variable-statement* 233)
@@ -59,12 +60,17 @@
                 (jsown:keyp ast "start") (<= (jsown:val ast "start") ast-pos)
                 (jsown:keyp ast "end") (> (jsown:val ast "end") ast-pos))
           (let ((init (jsown:val ast "initializer")))
-            (when (= (jsown:val init "kind") *arrow-function*)
-              (if (equal (find-return-type init) *jsx-element*)
-                  (enqueue q (jsown:val init "body"))
-                  (return (convert-to-pos (parser-path parser) file-path
-                                          (jsown:val (cdr (jsown:val ast "name")) "escapedText")
-                                          (jsown:val ast "start")))))))
+            (alexandria:switch ((jsown:val init "kind"))
+              (*object-literal-expression*
+               (return (convert-to-pos (parser-path parser) file-path
+                                       (jsown:val (cdr (jsown:val ast "name")) "escapedText")
+                                       (jsown:val ast "start"))))
+              (*arrow-function*
+                (if (equal (find-return-type init) *jsx-element*)
+                    (enqueue q (jsown:val init "body"))
+                    (return (convert-to-pos (parser-path parser) file-path
+                                            (jsown:val (cdr (jsown:val ast "name")) "escapedText")
+                                            (jsown:val ast "start"))))))))
 
         (when (and
                 (jsown:keyp ast "kind") (= (jsown:val ast "kind") *function-declaration*)
