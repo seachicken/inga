@@ -122,6 +122,10 @@
           '(((:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
              (:start . 18) (:end . 18)))))))
 
+(test throw-error-when-option-does-not-exist
+  (signals inga/main::inga-error-option-not-found
+    (inga/main::parse-argv '("--not-exist"))))
+
 (test inject-mark
   (uiop:run-program (format nil "cp -r ~a ~a" *front-path* *build-path*))
 
