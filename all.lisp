@@ -4,5 +4,6 @@
     #:inga/main
     #:inga/jsx
     #:inga/git
-    #:inga/file))
+    #:inga/file
+    #:inga/errors))
 
