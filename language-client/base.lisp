@@ -9,7 +9,6 @@
            #:client-path
            #:start-client
            #:stop-client
-           #:initialize-client
            #:references-client
            #:get-command
            #:increment-req-id
@@ -35,8 +34,6 @@
 (defgeneric start-client (client))
 
 (defgeneric stop-client (client))
-
-(defgeneric initialzie-client (client))
 
 (defgeneric references-client (client pos))
 

@@ -11,7 +11,6 @@
                 #:make-client
                 #:start-client
                 #:stop-client
-                #:initialize-client
                 #:references-client)
   (:import-from #:inga/parser
                 #:make-parser
@@ -102,29 +101,25 @@
         (list sequence))))
 
 (defun start (root-path kinds &optional (exclude '()))
-  (alexandria:switch ((when (> (length kinds) 0) (first kinds)))
-    (:typescript
-      (let ((ctx (make-context
+  (let ((ctx (alexandria:switch ((when (> (length kinds) 0) (first kinds)))
+               (:typescript
+                 (make-context
                    :project-path root-path
                    :include *include-typescript*
                    :exclude exclude
                    :lc (make-client :typescript root-path)
-                   :parser (make-parser :typescript root-path))))
-        (start-client (context-lc ctx))
-        (start-parser (context-parser ctx)) 
-        ctx))
-    (:java
-      (let ((ctx (make-context
+                   :parser (make-parser :typescript root-path)))
+               (:java
+                 (make-context
                    :project-path root-path
                    :include *include-java*
                    :exclude exclude
                    :lc (make-client :java root-path)
-                   :parser (make-parser :java root-path))))
-        (start-client (context-lc ctx))
-        (initialize-client (context-lc ctx))
-        (start-parser (context-parser ctx)) 
-        ctx))
-    (t (error 'inga-error-context-not-found))))
+                   :parser (make-parser :java root-path)))
+               (t (error 'inga-error-context-not-found)))))
+    (start-client (context-lc ctx))
+    (start-parser (context-parser ctx))
+    ctx))
 
 (defun stop (ctx)
   (stop-parser (context-parser ctx)) 

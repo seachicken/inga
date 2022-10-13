@@ -15,23 +15,11 @@
     (setf (client-process client)
           (uiop:launch-program
             (format nil "~a/libs/jdtls/bin/jdtls -data ~a/libs/jdtls/workspace --jvm-arg=-javaagent:~a/libs/lombok.jar" home home home)
-            :input :stream :output :stream))))
+            :input :stream :output :stream)))
+  (initialize-client client))
 
 (defmethod stop-client ((client language-client-java))
   (uiop:close-streams (client-process client)))
-
-(defmethod initialize-client ((client language-client-java))
-  (increment-req-id client)
-  (exec-command client (format nil "{\"jsonrpc\":\"2.0\",\"id\":~a,\"method\":\"initialize\",\"params\":{\"processId\":~a,\"rootUri\":\"file://~a\",\"capabilities\":{}}}"
-                (client-req-id client) (sb-posix:getpid) (client-path client)))
-  (let ((stream (uiop:process-info-output (client-process client))))
-    (loop while stream do
-          (let ((result (jsown:parse (extract-json stream))))
-            (when (and
-                    (jsown:keyp result "params")
-                    (jsown:keyp (jsown:val result "params") "type")
-                    (equal (jsown:val (jsown:val result "params") "type") "Started"))
-              (return))))))
 
 (defmethod references-client ((client language-client-java) pos)
   (let ((full-path (namestring
@@ -55,4 +43,17 @@
           (length command) #\return #\linefeed
           #\return #\linefeed
           command))
+
+(defun initialize-client (client)
+  (increment-req-id client)
+  (exec-command client (format nil "{\"jsonrpc\":\"2.0\",\"id\":~a,\"method\":\"initialize\",\"params\":{\"processId\":~a,\"rootUri\":\"file://~a\",\"capabilities\":{}}}"
+                (client-req-id client) (sb-posix:getpid) (client-path client)))
+  (let ((stream (uiop:process-info-output (client-process client))))
+    (loop while stream do
+          (let ((result (jsown:parse (extract-json stream))))
+            (when (and
+                    (jsown:keyp result "params")
+                    (jsown:keyp (jsown:val result "params") "type")
+                    (equal (jsown:val (jsown:val result "params") "type") "Started"))
+              (return))))))
 
