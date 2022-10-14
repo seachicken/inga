@@ -103,6 +103,7 @@
         (list sequence))))
 
 (defun start (root-path kinds &optional (exclude '()))
+  (log-debug (format nil "found context: ~a" kinds))
   (let ((ctx (alexandria:switch ((when (> (length kinds) 0) (first kinds)))
                (:typescript
                  (make-context
