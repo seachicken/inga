@@ -5,5 +5,6 @@
     #:inga/jsx
     #:inga/git
     #:inga/file
-    #:inga/errors))
+    #:inga/errors
+    #:inga/logger))
 
