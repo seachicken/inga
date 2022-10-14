@@ -1,5 +1,4 @@
 (defsystem "inga"
-  :version "0.1.0"
   :author "Seito Tanaka"
   :license "MIT"
   :class :package-inferred-system
