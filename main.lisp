@@ -130,13 +130,14 @@
 
 (defun get-analysis-kinds (diffs)
   (remove nil
-          (mapcar (lambda (diff)
-                    (if (is-match (cdr (assoc :path diff)) *include-typescript*)
-                        :typescript
-                        (if (is-match (cdr (assoc :path diff)) *include-java*)
-                            :java
-                            nil)))
-                  diffs)))
+          (remove-duplicates
+            (mapcar (lambda (diff)
+                      (if (is-match (cdr (assoc :path diff)) *include-typescript*)
+                          :typescript
+                          (if (is-match (cdr (assoc :path diff)) *include-java*)
+                              :java
+                              nil)))
+                    diffs))))
 
 (defun analyze (ctx diffs)
   (remove-duplicates
