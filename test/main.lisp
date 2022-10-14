@@ -120,7 +120,9 @@
         '(:java)
         (inga/main::get-analysis-kinds
           '(((:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
-             (:start . 18) (:end . 18)))))))
+             (:start . 18) (:end . 18))
+            ((:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
+             (:start . 20) (:end . 20)))))))
 
 (test throw-error-when-option-does-not-exist
   (signals inga/main::inga-error-option-not-found
