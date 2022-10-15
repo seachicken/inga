@@ -37,7 +37,6 @@ jobs:
     container: ghcr.io/seachicken/inga:latest-typescript
     env:
       LISP: ${{ matrix.lisp }}
-      INGA_CONTEXT: typescript
 
     steps:
     - uses: actions/checkout@v3
