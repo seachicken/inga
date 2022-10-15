@@ -9,7 +9,6 @@ jobs:
 
   test:
     strategy:
-      fail-fast: false
       matrix:
         lisp: [sbcl-bin]
         os: [ubuntu-latest]
@@ -29,3 +28,27 @@ jobs:
       with:
         asdf-system: inga
 
+  test-typescript:
+    strategy:
+      matrix:
+        lisp: [sbcl-bin]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    container: ghcr.io/seachicken/inga:latest-typescript
+    env:
+      LISP: ${{ matrix.lisp }}
+      INGA_CONTEXT: typescript
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        submodules: recursive
+    - uses: 40ants/setup-lisp@v2
+      with:
+        asdf-system: inga
+    - uses: 40ants/run-tests@v2
+      with:
+        run-tests: |
+          (ql:quickload :inga/test-typescript)
+          (asdf:test-system :inga/test-typescript)
