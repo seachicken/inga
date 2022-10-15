@@ -36,7 +36,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     container:
       image: ghcr.io/seachicken/inga:latest-typescript
-      options: --workdir ${{ github.workspace }}
+      env:
+        HOME: ${{ github.workspace }}
     env:
       LISP: ${{ matrix.lisp }}
 
