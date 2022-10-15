@@ -38,6 +38,9 @@ jobs:
       image: ghcr.io/seachicken/inga:latest-typescript
       env:
         HOME: ${{ github.workspace }}
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
     env:
       LISP: ${{ matrix.lisp }}
 
