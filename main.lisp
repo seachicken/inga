@@ -137,7 +137,7 @@
     (remove nil
             (remove-duplicates
               (mapcar (lambda (kind)
-                        (alexandria:switch (kind)
+                        (alexandria:switch (kind :test #'equal)
                           ("typescript" :typescript)
                           ("java" :java)))
                       kinds)))))
