@@ -51,5 +51,7 @@ jobs:
         asdf-system: inga
     - uses: 40ants/run-tests@v2
       with:
+        asdf-system: inga
         run-tests: |
+          (ql:quickload :inga/test-typescript)
           (asdf:test-system :inga/test-typescript)
