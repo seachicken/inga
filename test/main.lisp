@@ -124,6 +124,18 @@
             ((:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
              (:start . 20) (:end . 20)))))))
 
+(test filter-active-context-with-no-env
+  (is (equal
+        '(:java)
+        (inga/main::filter-active-context
+          '(:java) nil))))
+
+(test filter-active-context-with-java-env
+  (is (equal
+        '(:java)
+        (inga/main::filter-active-context
+          '(:typescript :java) '(:java)))))
+
 (test throw-error-when-option-does-not-exist
   (signals inga/main::inga-error-option-not-found
     (inga/main::parse-argv '("--not-exist"))))

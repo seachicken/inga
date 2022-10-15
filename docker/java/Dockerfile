@@ -65,6 +65,7 @@ RUN set -eux && \
   apt install -y openjdk-17-jdk
 
 ENV INGA_HOME /
+ENV INGA_CONTEXT java
 ENV INGA_DEBUG 1
 
 ENTRYPOINT ["inga"]

@@ -19,6 +19,8 @@
                 #:exec-parser
                 #:find-affected-pos
                 #:find-entrypoint)
+  (:import-from #:inga/utils
+                #:split-trim-comma)
   (:import-from #:inga/errors
                 #:inga-error)
   (:import-from #:inga/logger
@@ -51,7 +53,9 @@
               (setf base-sha base-ref-name))))
         (setf diffs (get-diff root-path base-sha))
 
-        (let ((ctx (start root-path (get-analysis-kinds diffs) exclude)))
+        (let ((ctx (start root-path
+                          (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
+                          exclude)))
           (let ((results (analyze ctx diffs)))
             (log-debug (format nil "results: ~a" results))
             (when (and pr results)
@@ -75,12 +79,7 @@
              ("--back-path"
               (setf root-path (pop argv)))
              ("--exclude"
-              (setf exclude
-                    (append exclude
-                            (mapcar (lambda (exc)
-                                      (string-trim '(#\Space) exc))
-                                    (split #\,
-                                           (pop argv))))))
+              (setf exclude (split-trim-comma (pop argv))))
              ("--github-token"
               (setf github-token (pop argv)))
              ("--base-sha"
@@ -95,16 +94,8 @@
                     (when base-sha
                       (list :base-sha base-sha))))))
 
-(defun split (div sequence)
-  (let ((pos (position div sequence)))
-    (if pos
-        (list* (subseq sequence 0 pos)
-               (split div (subseq sequence (1+ pos))))
-        (list sequence))))
-
-(defun start (root-path kinds &optional (exclude '()))
-  (log-debug (format nil "found context: ~a" kinds))
-  (let ((ctx (alexandria:switch ((when (> (length kinds) 0) (first kinds)))
+(defun start (root-path context-kinds &optional (exclude '()))
+  (let ((ctx (alexandria:switch ((when (> (length context-kinds) 0) (first context-kinds)))
                (:typescript
                  (make-context
                    :project-path root-path
@@ -138,6 +129,24 @@
                               :java
                               nil)))
                     diffs))))
+
+(defun get-env-kinds ()
+  (let ((kinds (split-trim-comma (uiop:getenv "INGA_CONTEXT"))))
+    (remove nil
+            (remove-duplicates
+              (mapcar (lambda (kind)
+                        (alexandria:switch (kind)
+                          ("typescript" :typescript)
+                          ("java" :java)))
+                      kinds)))))
+
+(defun filter-active-context (found-context env-context)
+  (log-debug (format nil "found context: ~a, env context: ~a" found-context env-context))
+  (if env-context
+      (mapcar (lambda (kind)
+                (when (find kind found-context) kind))
+              env-context)
+      found-context))
 
 (defun analyze (ctx diffs)
   (remove-duplicates

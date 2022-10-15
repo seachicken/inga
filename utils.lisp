@@ -2,7 +2,9 @@
   (:use #:cl)
   (:export #:make-queue
            #:enqueue
-           #:dequeue))
+           #:dequeue
+           #:split
+           #:split-trim-comma))
 (in-package #:inga/utils)
 
 (defstruct queue
@@ -16,6 +18,18 @@
 (defun dequeue (q)
   (unless (null (queue-values q))
     (pop (queue-values q))))
+
+(defun split (div sequence)
+  (let ((pos (position div sequence)))
+    (if pos
+        (list* (subseq sequence 0 pos)
+               (split div (subseq sequence (1+ pos))))
+        (list sequence))))
+
+(defun split-trim-comma (sequence)
+  (mapcar (lambda (str)
+            (string-trim '(#\Space) str))
+          (split #\, sequence)))
 
 ;; for debug
 (defun top (sequence limit)
