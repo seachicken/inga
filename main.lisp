@@ -131,9 +131,7 @@
                     diffs))))
 
 (defun get-env-kinds ()
-  (log-debug (format nil "env: ~a" (uiop:getenv "INGA_CONTEXT")))
   (let ((kinds (split-trim-comma (uiop:getenv "INGA_CONTEXT"))))
-    (log-debug (format nil "trimmed env: ~a" kinds))
     (remove nil
             (remove-duplicates
               (mapcar (lambda (kind)
