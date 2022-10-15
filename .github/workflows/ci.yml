@@ -53,7 +53,7 @@ jobs:
     - name: debug
       run: |
         echo $PATH
-        qlot exec ros install svetlyak40wt/cl-coveralls/github-actions
+        /root/.roswell/bin/qlot exec ros install svetlyak40wt/cl-coveralls/github-actions
         #- name: log
         #  run: |
         #    echo $GITHUB_PATH
