@@ -38,9 +38,6 @@ jobs:
       image: ghcr.io/seachicken/inga:latest-typescript
       env:
         HOME: ${{ github.workspace }}
-    defaults:
-      run:
-        working-directory: ${{ github.workspace }}
     env:
       LISP: ${{ matrix.lisp }}
 
@@ -54,6 +51,7 @@ jobs:
       with:
         submodules: recursive
     - uses: 40ants/setup-lisp@v2
+      working-directory: ${{ github.workspace }}
       with:
         asdf-system: inga
     #- name: log
@@ -61,6 +59,7 @@ jobs:
     #    echo $GITHUB_PATH
     #    ls -lsa /root/.roswell/bin
     - uses: 40ants/run-tests@v2
+      working-directory: ${{ github.workspace }}
       with:
         asdf-system: inga
         run-tests: |
