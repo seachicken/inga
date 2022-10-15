@@ -36,14 +36,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     container:
       image: ghcr.io/seachicken/inga:latest-typescript
-      options: --workdir ${{ GITHUB_WORKSPACE }}
+      options: --workdir ${{ github.workspace }}
     env:
       LISP: ${{ matrix.lisp }}
 
     steps:
     - name: Install dependencies
       run: |
-        echo ${{ GITHUB_WORKSPACE }}
+        echo ${{ github.workspace }}
         #export PATH=/root/.roswell/bin:$PATH
         apt install sudo
     - uses: actions/checkout@v3
