@@ -38,6 +38,7 @@ jobs:
       image: ghcr.io/seachicken/inga:latest-typescript
       env:
         HOME: ${{ github.workspace }}
+      options: --workdir ${{ github.workspace }}
     env:
       LISP: ${{ matrix.lisp }}
 
@@ -45,13 +46,13 @@ jobs:
     - name: Install dependencies
       run: |
         echo ${{ github.workspace }}
+        echo pwd
         #export PATH=/root/.roswell/bin:$PATH
         apt install sudo
     - uses: actions/checkout@v3
       with:
         submodules: recursive
     - uses: 40ants/setup-lisp@v2
-      working-directory: ${{ github.workspace }}
       with:
         asdf-system: inga
     #- name: log
@@ -59,7 +60,6 @@ jobs:
     #    echo $GITHUB_PATH
     #    ls -lsa /root/.roswell/bin
     - uses: 40ants/run-tests@v2
-      working-directory: ${{ github.workspace }}
       with:
         asdf-system: inga
         run-tests: |
