@@ -53,7 +53,7 @@ jobs:
     - name: log
       run: |
         echo $GITHUB_PATH
-        ll /root/.roswell/bin
+        ls -lsa /root/.roswell/bin
     - uses: 40ants/run-tests@v2
       with:
         asdf-system: inga
