@@ -34,7 +34,8 @@ jobs:
         lisp: [sbcl-bin]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
-    container: ghcr.io/seachicken/inga:latest-typescript
+    container:
+      image: ghcr.io/seachicken/inga:latest-typescript
       options: --workdir ${{ GITHUB_WORKSPACE }}
     env:
       LISP: ${{ matrix.lisp }}
