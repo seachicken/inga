@@ -45,9 +45,8 @@ jobs:
     steps:
     - name: Install dependencies
       run: |
-        mkdir -p /github
-        ln -s ${{ github.workspace }} $HOME
         echo ${{ github.workspace }}
+        cd ${{ github.workspace }}
         pwd
         #export PATH=/root/.roswell/bin:$PATH
         apt install sudo
