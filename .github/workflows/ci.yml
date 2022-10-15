@@ -42,6 +42,7 @@ jobs:
     - name: Install dependencies
       run: |
         echo "export PATH=~/.roswell/bin:$PATH" >> ~/.bashrc
+        soure ~/.bashrc
         apt install sudo
     - uses: actions/checkout@v3
       with:
@@ -50,6 +51,10 @@ jobs:
     - uses: 40ants/setup-lisp@v2
       with:
         asdf-system: inga
+    - name: debug
+      run: |
+        echo $PATH
+        qlot exec ros install svetlyak40wt/cl-coveralls/github-actions
         #- name: log
         #  run: |
         #    echo $GITHUB_PATH
