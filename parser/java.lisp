@@ -41,7 +41,7 @@
                   (string= (cdr (car ast)) "com.github.javaparser.ast.body.ConstructorDeclaration")
                   (string= (cdr (car ast)) "com.github.javaparser.ast.body.MethodDeclaration"))
                 (<= (jsown:val (jsown:val ast "range") "beginLine") line-no)
-                (>= (jsown:val (jsown:val ast "range") "endLine") line-no))
+                (> (jsown:val (jsown:val ast "range") "endLine") line-no))
           (return
             (list (cons :name (if (jsown:keyp ast "name")
                                   (jsown:val (cdr (jsown:val ast "name")) "identifier")

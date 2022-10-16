@@ -52,6 +52,19 @@
               47))))
     (stop-parser parser)))
 
+(test ignore-affected-pos-when-end-block
+  (let ((parser (make-parser :typescript *nestjs-path*)))
+    (start-parser parser)
+    (is (equal
+          nil
+          (let ((src-path "src/article/article.service.ts"))
+            (inga/parser/typescript::find-affected-pos
+              parser
+              src-path
+              (exec-parser parser src-path)
+              150))))
+    (stop-parser parser)))
+
 (test convert-tsserver-pos-to-tsparser-pos
   (is (equal
         (list (cons :path (uiop:merge-pathnames*
