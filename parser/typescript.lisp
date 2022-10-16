@@ -187,7 +187,7 @@
                      (cons :path (pathname path))
                      (cons :pos (+ result (if (< offset 0)
                                               (length line)
-                                              offset))))
+                                              (- offset 1)))))
             do
             (setq line-no (+ line-no 1))
             ;; add newline code

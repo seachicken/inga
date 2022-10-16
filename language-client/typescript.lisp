@@ -32,13 +32,16 @@
     (let ((refs (exec-command client (format nil "{\"seq\": ~a, \"command\": \"references\", \"arguments\": {\"file\": \"~a\", \"line\": ~a, \"offset\": ~a}}"
                                 (client-req-id client) full-path
                                 (cdr (assoc :line pos)) (cdr (assoc :offset pos))))))
-      (mapcar (lambda (ref)
-                (list
-                  (cons :path (enough-namestring (jsown:val ref "file")
-                                                 (client-path client)))
-                  (cons :line (jsown:val (jsown:val ref "start") "line"))
-                  (cons :offset (jsown:val (jsown:val ref "start") "offset"))))
-              (jsown:val (jsown:val refs "body") "refs")))))
+      (remove nil
+              (mapcar (lambda (ref)
+                        (let ((ref-pos (list
+                                         (cons :path (enough-namestring (jsown:val ref "file")
+                                                                        (client-path client)))
+                                         (cons :line (jsown:val (jsown:val ref "start") "line"))
+                                         (cons :offset (jsown:val (jsown:val ref "start") "offset")))))
+                          (unless (= (cdr (assoc :line ref-pos)) (cdr (assoc :line pos)))
+                            ref-pos)))
+                      (jsown:val (jsown:val refs "body") "refs"))))))
 
 (defmethod get-command ((client language-client-typescript) command)
   command)

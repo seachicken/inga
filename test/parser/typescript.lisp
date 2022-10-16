@@ -69,7 +69,7 @@
   (is (equal
         (list (cons :path (uiop:merge-pathnames*
                             "src/App/NewTodoInput/index.tsx" *react-path*))
-              '(:pos . 1242))
+              '(:pos . 1241))
         (inga/parser/typescript::convert-to-ast-pos
           *react-path*
           (list '(:path . "src/App/NewTodoInput/index.tsx")
