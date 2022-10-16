@@ -49,7 +49,7 @@
                                     (list
                                       (cons :path file-path)
                                       (cons :line line-no)
-                                      (cons :offset 0)))))))
+                                      (cons :offset -1)))))))
     (enqueue q ast)
     (loop
       (let ((ast (dequeue q)))
@@ -176,6 +176,7 @@
 
 (defun convert-to-ast-pos (project-path pos)
   (let ((path (uiop:merge-pathnames* (cdr (assoc :path pos)) project-path))
+        (offset (cdr (assoc :offset pos)))
         (line-no 0)
         (result 0))
     (with-open-file (stream path)
@@ -184,7 +185,9 @@
             when (= line-no (- (cdr (assoc :line pos)) 1))
             return (list
                      (cons :path (pathname path))
-                     (cons :pos (- (+ result (cdr (assoc :offset pos))) 1)))
+                     (cons :pos (+ result (if (< offset 0)
+                                              (length line)
+                                              offset))))
             do
             (setq line-no (+ line-no 1))
             ;; add newline code
