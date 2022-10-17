@@ -39,7 +39,9 @@
                                                                         (client-path client)))
                                          (cons :line (jsown:val (jsown:val ref "start") "line"))
                                          (cons :offset (jsown:val (jsown:val ref "start") "offset")))))
+                          (format t " ref-pos: ~a, pos: ~a~%" (cdr (assoc :line ref-pos)) (cdr (assoc :line pos)))
                           (unless (= (cdr (assoc :line ref-pos)) (cdr (assoc :line pos)))
+                            (format t " not equal~%")
                             ref-pos)))
                       (jsown:val (jsown:val refs "body") "refs"))))))
 
