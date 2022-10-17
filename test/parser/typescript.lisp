@@ -84,3 +84,22 @@
           "src/App/NewTodoInput/index.tsx"
           "a" 1241))))
 
+(test convert-tsserver-pos-to-tsparser-pos-with-offset1
+  (is (equal
+        (list (cons :path (uiop:merge-pathnames*
+                            "src/dataStructure.ts" *react-path*))
+              '(:pos . 328))
+        (inga/parser/typescript::convert-to-ast-pos
+          *react-path*
+          (list '(:path . "src/dataStructure.ts")
+                '(:line . 21) '(:offset . 1))))))
+
+(test convert-tsparser-pos-to-tsserver-pos-with-offset1
+  (is (equal
+        (list '(:path . "src/dataStructure.ts")
+              '(:name . "a") '(:line . 21) '(:offset . 1))
+        (inga/parser/typescript::convert-to-pos
+          *react-path*
+          "src/dataStructure.ts"
+          "a" 328))))
+
