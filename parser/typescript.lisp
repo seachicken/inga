@@ -199,7 +199,7 @@
     (with-open-file (stream (uiop:merge-pathnames* path project-path))
       (loop for line = (read-line stream nil)
             while line
-            when (<= pos (+ cnt (length line) 1))
+            when (<= pos (+ cnt (length line)))
             return (list
                      (cons :path (enough-namestring path project-path))
                      (cons :name name)
