@@ -52,13 +52,23 @@
                          (get-affected-display-name affected-poss)
                          " (powered by [Inga](https://github.com/seachicken/inga))"
                          (get-code-hierarchy base-url sha affected-poss))))
-    (uiop:run-program (format nil
-                              "(cd ~a && gh pr comment ~a -R ~a/~a --body '~a' --edit-last)"
-                              project-path
-                              number
-                              hostname owner-repo
-                              comment)
-                      :output :string)))
+    (handler-case
+      (uiop:run-program (format nil
+                                "(cd ~a && gh pr comment ~a -R ~a/~a --body '~a' --edit-last)"
+                                project-path
+                                number
+                                hostname owner-repo
+                                comment)
+                        :output :string)
+      (uiop:subprocess-error ()
+                             (uiop:run-program
+                               (format nil
+                                       "(cd ~a && gh pr comment ~a -R ~a/~a --body '~a')"
+                                       project-path
+                                       number
+                                       hostname owner-repo
+                                       comment)
+                               :output :string)))))
 
 (defun get-affected-display-name (affected-poss)
   (if (equal (length affected-poss) 1)

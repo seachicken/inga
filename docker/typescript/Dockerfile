@@ -31,27 +31,11 @@ RUN set -eux && \
   ros build /inga/roswell/inga.ros
 
 
-FROM golang:1.18.6 AS go-build
-WORKDIR /build
-
-RUN set -eux && \
-  apt-get update && \
-  apt-get install -y unzip
-
-# https://github.com/cli/cli/pull/6384
-RUN set -eux && \
-  curl -o cli.zip -L https://github.com/seachicken/cli/archive/refs/heads/issue3613.zip && \
-  unzip cli.zip && \
-  cd cli-issue3613 && \
-  make
-
-
 FROM ubuntu:22.04
 
 COPY --from=build /usr/share/keyrings/githubcli-archive-keyring.gpg /usr/share/keyrings/githubcli-archive-keyring.gpg
 COPY --from=build /tmp/inga /tmp/inga
 COPY --from=build /inga/roswell/inga /usr/local/bin/
-COPY --from=go-build /build/cli-issue3613/bin/gh /usr/local/bin/
 
 RUN set -eux && \
   apt-get update && \
@@ -59,9 +43,9 @@ RUN set -eux && \
   bash /tmp/inga/setup_node && apt-get install -y nodejs
 
 RUN set -eux && \
-  echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-  #apt update && \
-  #apt install -y gh
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
+  apt update && \
+  apt install -y gh
 
 RUN npm install -g typescript
 
