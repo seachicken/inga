@@ -60,15 +60,15 @@
                                 hostname owner-repo
                                 comment)
                         :output :string)
-      (uiop/run-program:subprocess-error
-        (lambda (e)
-          (uiop:run-program (format nil
-                                    "(cd ~a && gh pr comment ~a -R ~a/~a --body '~a')"
-                                    project-path
-                                    number
-                                    hostname owner-repo
-                                    comment)
-                            :output :string))))))
+      (uiop:subprocess-error ()
+                             (uiop:run-program
+                               (format nil
+                                       "(cd ~a && gh pr comment ~a -R ~a/~a --body '~a')"
+                                       project-path
+                                       number
+                                       hostname owner-repo
+                                       comment)
+                               :output :string)))))
 
 (defun get-affected-display-name (affected-poss)
   (if (equal (length affected-poss) 1)
