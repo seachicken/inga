@@ -53,6 +53,8 @@ COPY --from=build /tmp/inga /tmp/inga
 COPY --from=build /inga/roswell/inga /usr/local/bin/
 COPY --from=go-build /build/cli-issue3613/bin/gh /usr/local/bin/
 
+WORKDIR $HOME
+
 RUN set -eux && \
   apt-get update && \
   apt-get install -y git && \
@@ -69,7 +71,9 @@ RUN set -eux && \
   cd /tmp/inga/tsparser && npm ci && npm run build && \
   npm install -g .
 
-ENV INGA_HOME /
+RUN echo $HOME
+
+ENV INGA_HOME $HOME
 ENV INGA_CONTEXT typescript
 ENV INGA_DEBUG 1
 

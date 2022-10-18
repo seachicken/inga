@@ -38,14 +38,14 @@ jobs:
       image: ghcr.io/seachicken/inga:latest-typescript
       #env:
       #  HOME: ${{ github.workspace }}
-      options: --workdir ${{ github.workspace }} --env HOME=${{ github.workspace }}
+      #options: --workdir ${{ github.workspace }} --env HOME=${{ github.workspace }}
     env:
       LISP: ${{ matrix.lisp }}
 
     steps:
     - name: Install dependencies
       run: |
-        echo "HOME=${{ github.workspace }}" >> $GITHUB_ENV
+        #echo "HOME=${{ github.workspace }}" >> $GITHUB_ENV
         #export PATH=/root/.roswell/bin:$PATH
         apt install sudo
     - uses: actions/checkout@v3
