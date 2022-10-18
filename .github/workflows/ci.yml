@@ -35,7 +35,7 @@ jobs:
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     container:
-      image: ghcr.io/seachicken/inga:latest-typescript
+      image: ghcr.io/seachicken/inga:0.1.27-pre0-typescript
       #env:
       #  HOME: ${{ github.workspace }}
       #options: --workdir ${{ github.workspace }} --env HOME=${{ github.workspace }}
