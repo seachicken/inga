@@ -5,6 +5,8 @@
   (:export #:parser-java))
 (in-package #:inga/parser/java)
 
+(defparameter *java-rbrace** 100) ;; }
+
 (defclass parser-java (parser)
   ())
 
@@ -41,17 +43,21 @@
                   (string= (cdr (car ast)) "com.github.javaparser.ast.body.ConstructorDeclaration")
                   (string= (cdr (car ast)) "com.github.javaparser.ast.body.MethodDeclaration"))
                 (<= (jsown:val (jsown:val ast "range") "beginLine") line-no)
-                (> (jsown:val (jsown:val ast "range") "endLine") line-no))
-          (return
-            (list (cons :name (if (jsown:keyp ast "name")
-                                  (jsown:val (cdr (jsown:val ast "name")) "identifier")
-                                  (if (jsown:keyp ast "variables")
-                                      (jsown:val 
-                                        (jsown:val (cdr (first (jsown:val ast "variables"))) "name")
-                                        "identifier")
-                                      "")))
-                  (cons :line (jsown:val (jsown:val ast "range") "beginLine"))
-                  (cons :offset (jsown:val (jsown:val ast "range") "beginColumn")))))
+                (>= (jsown:val (jsown:val ast "range") "endLine") line-no))
+          (unless (and
+                    (= (jsown:val (jsown:val ast "range") "endLine") line-no)
+                    (jsown:keyp ast "tokenRange")
+                    (= (jsown:val (jsown:val (jsown:val ast "tokenRange") "endToken") "kind") *java-rbrace**))
+            (return
+              (list (cons :name (if (jsown:keyp ast "name")
+                                    (jsown:val (cdr (jsown:val ast "name")) "identifier")
+                                    (if (jsown:keyp ast "variables")
+                                        (jsown:val 
+                                          (jsown:val (cdr (first (jsown:val ast "variables"))) "name")
+                                          "identifier")
+                                        "")))
+                    (cons :line (jsown:val (jsown:val ast "range") "beginLine"))
+                    (cons :offset (jsown:val (jsown:val ast "range") "beginColumn"))))))
 
         (when (jsown:keyp ast "types")
           (loop for type in (jsown:val ast "types") do

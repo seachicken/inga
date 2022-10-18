@@ -88,7 +88,7 @@
           (inga/main::analyze-by-range
             ctx
             '((:path . "src/main/java/io/spring/core/article/ArticleRepository.java")
-              (:start . 7) (:end . 7)))))
+              (:start . 7) (:end . 8)))))
     (inga/main::stop ctx)))
 
 (test analyze-by-range-in-field-annotation
