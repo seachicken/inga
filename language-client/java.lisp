@@ -16,7 +16,9 @@
           (uiop:launch-program
             (format nil "~a/libs/jdtls/bin/jdtls -data ~a/libs/jdtls/workspace --jvm-arg=-javaagent:~a/libs/lombok.jar" home home home)
             :input :stream :output :stream)))
-  (initialize-client client))
+  (initialize-client client)
+  ;; TODO: wait until "textDocument/references" is fully working
+  (sleep (* 60 5)))
 
 (defmethod stop-client ((client language-client-java))
   (uiop:close-streams (client-process client)))
