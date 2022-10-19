@@ -16,7 +16,9 @@
           (uiop:launch-program
             (format nil "~a/libs/jdtls/bin/jdtls -data ~a/libs/jdtls/workspace --jvm-arg=-javaagent:~a/libs/lombok.jar" home home home)
             :input :stream :output :stream)))
-  (initialize-client client))
+  (initialize-client client)
+  (sleep 60)
+  )
 
 (defmethod stop-client ((client language-client-java))
   (uiop:close-streams (client-process client)))
@@ -51,7 +53,7 @@
   (let ((stream (uiop:process-info-output (client-process client))))
     (loop while stream do
           (let ((result (jsown:parse (extract-json stream))))
-            (format t "initialize: ~a~%" result)
+            ;;(format t "initialize: ~a~%" result)
             (when (and
                     (jsown:keyp result "params")
                     (jsown:keyp (jsown:val result "params") "type")
