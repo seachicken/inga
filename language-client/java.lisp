@@ -51,9 +51,11 @@
   (let ((stream (uiop:process-info-output (client-process client))))
     (loop while stream do
           (let ((result (jsown:parse (extract-json stream))))
-            (when (and
-                    (jsown:keyp result "params")
-                    (jsown:keyp (jsown:val result "params") "type")
-                    (equal (jsown:val (jsown:val result "params") "type") "Started"))
-              (return))))))
+            (format t "initialize: ~a~%" result)
+            ;;(when (and
+            ;;        (jsown:keyp result "params")
+            ;;        (jsown:keyp (jsown:val result "params") "type")
+            ;;        (equal (jsown:val (jsown:val result "params") "type") "Started"))
+            ;;  (return))))))
+            ))))
 
