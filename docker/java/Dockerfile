@@ -15,7 +15,7 @@ RUN set -eux && \
 RUN mkdir libs
 
 RUN set -eux && \
-  curl -o ./jdtls.tar.gz -L https://download.eclipse.org/jdtls/snapshots/jdt-language-server-1.17.0-202210181831.tar.gz && \
+  curl -o ./jdtls.tar.gz -L https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz && \
   mkdir libs/jdtls && \
   tar xvf ./jdtls.tar.gz -C ./libs/jdtls
 
