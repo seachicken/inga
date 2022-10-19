@@ -17,7 +17,7 @@
             (format nil "~a/libs/jdtls/bin/jdtls -data ~a/libs/jdtls/workspace --jvm-arg=-javaagent:~a/libs/lombok.jar" home home home)
             :input :stream :output :stream)))
   (initialize-client client)
-  (sleep 60)
+  (sleep 300)
   )
 
 (defmethod stop-client ((client language-client-java))
