@@ -46,14 +46,16 @@
 
 (defun initialize-client (client)
   (increment-req-id client)
-  (exec-command client (format nil "{\"jsonrpc\":\"2.0\",\"id\":~a,\"method\":\"initialize\",\"params\":{\"processId\":~a,\"rootUri\":\"file://~a\",\"capabilities\":{},\"initializationOptions\":{\"settings\":{\"java.configuration.updateBuildConfiguration\":\"automatic\"}}}}"
+  (exec-command client (format nil "{\"jsonrpc\":\"2.0\",\"id\":~a,\"method\":\"initialize\",\"params\":{\"processId\":~a,\"rootUri\":\"file://~a\",\"capabilities\":{},\"initializationOptions\":{\"extendedClientCapabilities\":{\"classFileContentsSupport\":true},\"settings\":{\"java.configuration.updateBuildConfiguration\":\"automatic\",\"java.autobuild.enabled\":true}}}}"
                 (client-req-id client) (sb-posix:getpid) (client-path client)))
   (let ((stream (uiop:process-info-output (client-process client))))
     (loop while stream do
           (let ((result (jsown:parse (extract-json stream))))
+            (format t "result: ~a~%" result)
             (when (and
                     (jsown:keyp result "params")
                     (jsown:keyp (jsown:val result "params") "type")
                     (equal (jsown:val (jsown:val result "params") "type") "Started"))
               (return))))))
+
 
