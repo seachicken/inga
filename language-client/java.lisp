@@ -14,11 +14,9 @@
   (let ((home (uiop:getenv "INGA_HOME")))
     (setf (client-process client)
           (uiop:launch-program
-            (format nil "~a/libs/jdtls/bin/jdtls -data ~a/libs/jdtls/workspace --jvm-arg=-javaagent:~a/libs/lombok.jar" home home home)
+            (format nil "~a/libs/jdtls/bin/jdtls --jvm-arg=-javaagent:~a/libs/lombok.jar" home home)
             :input :stream :output :stream)))
-  (initialize-client client)
-  ;; TODO: wait until "textDocument/references" is fully working
-  (sleep (* 60 5)))
+  (initialize-client client))
 
 (defmethod stop-client ((client language-client-java))
   (uiop:close-streams (client-process client)))
@@ -48,7 +46,7 @@
 
 (defun initialize-client (client)
   (increment-req-id client)
-  (exec-command client (format nil "{\"jsonrpc\":\"2.0\",\"id\":~a,\"method\":\"initialize\",\"params\":{\"processId\":~a,\"rootUri\":\"file://~a\",\"capabilities\":{}}}"
+  (exec-command client (format nil "{\"jsonrpc\":\"2.0\",\"id\":~a,\"method\":\"initialize\",\"params\":{\"processId\":~a,\"rootUri\":\"file://~a\",\"capabilities\":{},\"initializationOptions\":{\"settings\":{\"java.configuration.updateBuildConfiguration\":\"automatic\"}}}}"
                 (client-req-id client) (sb-posix:getpid) (client-path client)))
   (let ((stream (uiop:process-info-output (client-process client))))
     (loop while stream do
