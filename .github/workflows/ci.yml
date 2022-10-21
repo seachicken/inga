@@ -42,8 +42,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-      with:
-        submodules: recursive
+    - name: Checkout submodules
+      run: |
+        git submodule update --init
     - uses: 40ants/run-tests@v2
       with:
         asdf-system: inga
