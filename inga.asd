@@ -11,7 +11,8 @@
                "inga/test/jsx"
                "inga/test/git"
                "inga/test/github"
-               "inga/test/file")
+               "inga/test/file"
+               "inga/test/parser/typescript")
   :perform (test-op (o c)
     (unless (symbol-call :fiveam '#:run-all-tests)
       (error "Tests failed"))))

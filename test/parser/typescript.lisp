@@ -4,8 +4,8 @@
         #:inga/parser))
 (in-package #:inga/test/parser/typescript)
 
-(def-suite parser/typescript)
-(in-suite parser/typescript)
+(def-suite typescript)
+(in-suite typescript)
 
 (defparameter *react-path* (uiop:merge-pathnames* "test/fixtures/react-typescript-todo/"))
 (defparameter *nestjs-path* (uiop:merge-pathnames* "test/fixtures/nestjs-realworld-example-app-prisma/"))
