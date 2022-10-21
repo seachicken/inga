@@ -16,6 +16,11 @@
     (unless (symbol-call :fiveam '#:run-all-tests)
       (error "Tests failed"))))
 
+(defsystem "inga-typescript"
+  :class :package-inferred-system
+  :depends-on ("inga/all")
+  :in-order-to ((test-op (test-op "inga/test-typescript"))))
+
 (defsystem "inga/test-typescript"
   :class :package-inferred-system
   :depends-on ("fiveam"
