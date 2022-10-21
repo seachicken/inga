@@ -47,5 +47,5 @@ jobs:
       #    git submodule update --init
     - name: Run tests
       run:
-        ros -s fiveam -e '(ql:quickload :inga) (or (asdf:test-system :inga/test-typescript) (uiop:quit -1))'
+        ros -s fiveam -e '(ql:quickload :inga) (ql:quickload :inga/test-typescript) (or (asdf:test-system :inga/test-typescript) (uiop:quit -1))'
 
