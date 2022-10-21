@@ -22,7 +22,7 @@
                "inga/test/parser/typescript")
   :perform (test-op (o c)
     (unless (symbol-call :fiveam '#:run!
-                         (find-symbol* '#:parser/typescript
+                         (find-symbol* '#:typescript
                                          :inga/test/parser/typescript))
       (error "Tests failed"))))
 
