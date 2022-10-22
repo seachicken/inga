@@ -31,9 +31,10 @@ jobs:
       run: ros install fiveam
     - name: Run tests
       run: |
-        ros -s fiveam -e "(asdf:test-system :inga)
+        ros -s fiveam -e "(unless (asdf:test-system :inga)
+                            (uiop:quit 1))
                           (asdf:load-system :inga/test-typescript)
-                          (or (fiveam:run! (uiop:find-symbol* '#:typescript
-                                                              :inga/test/parser/typescript))
-                              (uiop:quit 1))"
+                          (unless (fiveam:run! (uiop:find-symbol* '#:typescript
+                                                                  :inga/test/parser/typescript))
+                            (uiop:quit 1))"
 
