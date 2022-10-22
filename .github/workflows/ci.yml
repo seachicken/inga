@@ -39,3 +39,31 @@ jobs:
                                                                   :inga/test/parser/typescript))
                             (uiop:quit 1))"
 
+  test-java:
+    strategy:
+      matrix:
+        lisp: [sbcl-bin]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    container:
+      image: ghcr.io/seachicken/inga:latest-java
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        submodules: recursive
+    - name: Install Roswell
+      env:
+        LISP: ${{ matrix.lisp }}
+      run: |
+        apt install -y sudo bzip2
+        curl -L https://raw.githubusercontent.com/roswell/roswell/master/scripts/install-for-ci.sh | sh
+    - name: Install fiveam
+      run: ros install fiveam
+    - name: Run tests
+      run: |
+        ros -s fiveam -e "(ql:quickload :inga)
+                          (unless (asdf:test-system :inga)
+                            (uiop:quit 1))"
+
