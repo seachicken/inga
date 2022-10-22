@@ -7,27 +7,6 @@ on:
 
 jobs:
 
-  test:
-    strategy:
-      matrix:
-        lisp: [sbcl-bin]
-        os: [ubuntu-latest]
-    runs-on: ${{ matrix.os }}
-    env:
-      LISP: ${{ matrix.lisp }}
-
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-        submodules: recursive
-    - uses: 40ants/setup-lisp@v2
-      with:
-        asdf-system: inga
-    - uses: 40ants/run-tests@v2
-      with:
-        asdf-system: inga
-
   test-typescript:
     strategy:
       matrix:
@@ -35,7 +14,7 @@ jobs:
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     container:
-      image: ghcr.io/seachicken/inga:0.1.30-pre0-typescript
+      image: ghcr.io/seachicken/inga:latest-typescript
 
     steps:
     - uses: actions/checkout@v3
@@ -52,6 +31,7 @@ jobs:
     - name: Run tests
       run: |
         ros -s fiveam -e "(ql:quickload :inga)
+                          (asdf:test-system :inga
                           (ql:quickload :inga/test-typescript)
                           (or (fiveam:run! (uiop:find-symbol* '#:typescript
                                                               :inga/test/parser/typescript))
