@@ -47,7 +47,7 @@ jobs:
       #    git submodule update --init
     - name: Run tests
       run:
-        ros -s fiveam -e '(handler-bind ((error (lambda (c) (print c) (uiop:quit 1))))
-                            (asdf:load-system :inga)
-                            (asdf:test-system :inga/test-typescript))'
+        ros -e '(handler-bind ((error (lambda (c) (print c) (uiop:quit 1))))
+                  (asdf:load-system :inga)
+                  (asdf:test-system :inga/test-typescript))'
 
