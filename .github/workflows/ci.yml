@@ -36,9 +36,6 @@ jobs:
     runs-on: ${{ matrix.os }}
     container:
       image: ghcr.io/seachicken/inga:0.1.30-pre0-typescript-build
-      #env:
-      #  HOME: ${{ github.workspace }}
-      #options: --workdir ${{ github.workspace }} --env HOME=${{ github.workspace }}
 
     steps:
     - name: Install git
@@ -47,13 +44,8 @@ jobs:
     - uses: actions/checkout@v3
       with:
         submodules: recursive
-    - name: Checkout submodules
-      run: |
-        ls -lsa .
-        git submodule update --init
     - name: Run tests
       run: |
-        ls -lsa test/fixtures/react-typescript-todo
         ros -e '(handler-bind ((error (lambda (c) (print c) (uiop:quit 1))))
                   (asdf:load-system :inga)
                   (asdf:test-system :inga/test-typescript))'
