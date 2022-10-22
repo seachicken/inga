@@ -25,7 +25,7 @@ jobs:
       env:
         LISP: ${{ matrix.lisp }}
       run: |
-        apt install -y sudo bzip2
+        apt install -y curl sudo bzip2
         curl -L https://raw.githubusercontent.com/roswell/roswell/master/scripts/install-for-ci.sh | sh
     - name: Install fiveam
       run: ros install fiveam
@@ -57,7 +57,7 @@ jobs:
       env:
         LISP: ${{ matrix.lisp }}
       run: |
-        apt install -y sudo bzip2
+        apt install -y curl sudo bzip2
         curl -L https://raw.githubusercontent.com/roswell/roswell/master/scripts/install-for-ci.sh | sh
     - name: Install fiveam
       run: ros install fiveam
