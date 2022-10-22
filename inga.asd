@@ -15,3 +15,9 @@
   :perform (test-op (o c)
     (unless (symbol-call :fiveam '#:run-all-tests)
       (error "Tests failed"))))
+
+(defsystem "inga/test-typescript"
+  :class :package-inferred-system
+  :depends-on ("fiveam"
+               "inga/test/parser/typescript"))
+

@@ -7,25 +7,63 @@ on:
 
 jobs:
 
-  test:
+  test-typescript:
     strategy:
-      fail-fast: false
       matrix:
         lisp: [sbcl-bin]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
-    env:
-      LISP: ${{ matrix.lisp }}
+    container:
+      image: ghcr.io/seachicken/inga:latest-typescript
 
     steps:
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
         submodules: recursive
-    - uses: 40ants/setup-lisp@v2
+    - name: Install Roswell
+      env:
+        LISP: ${{ matrix.lisp }}
+      run: |
+        apt install -y sudo bzip2
+        curl -L https://raw.githubusercontent.com/roswell/roswell/master/scripts/install-for-ci.sh | sh
+    - name: Install fiveam
+      run: ros install fiveam
+    - name: Run tests
+      run: |
+        ros -s fiveam -e "(ql:quickload :inga)
+                          (unless (asdf:test-system :inga)
+                            (uiop:quit 1))
+                          (ql:quickload :inga/test-typescript)
+                          (unless (fiveam:run! (uiop:find-symbol* '#:typescript
+                                                                  :inga/test/parser/typescript))
+                            (uiop:quit 1))"
+
+  test-java:
+    strategy:
+      matrix:
+        lisp: [sbcl-bin]
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    container:
+      image: ghcr.io/seachicken/inga:latest-java
+
+    steps:
+    - uses: actions/checkout@v3
       with:
-        asdf-system: inga
-    - uses: 40ants/run-tests@v2
-      with:
-        asdf-system: inga
+        fetch-depth: 0
+        submodules: recursive
+    - name: Install Roswell
+      env:
+        LISP: ${{ matrix.lisp }}
+      run: |
+        apt install -y curl sudo bzip2
+        curl -L https://raw.githubusercontent.com/roswell/roswell/master/scripts/install-for-ci.sh | sh
+    - name: Install fiveam
+      run: ros install fiveam
+    - name: Run tests
+      run: |
+        ros -s fiveam -e "(ql:quickload :inga)
+                          (unless (asdf:test-system :inga)
+                            (uiop:quit 1))"
 
