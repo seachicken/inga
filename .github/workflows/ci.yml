@@ -55,5 +55,5 @@ jobs:
                           (ql:quickload :inga/test-typescript)
                           (or (fiveam:run! (uiop:find-symbol* '#:typescript
                                                               :inga/test/parser/typescript))
-                              (error 'Tests failed'))"
+                              (uiop:quit 1))"
 
