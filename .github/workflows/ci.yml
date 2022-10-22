@@ -47,9 +47,11 @@ jobs:
       run: |
         apt install -y sudo bzip2
         curl -L https://raw.githubusercontent.com/roswell/roswell/master/scripts/install-for-ci.sh | sh
+    - name: Install fiveam
+      run: ros install fiveam
     - name: Run tests
       run: |
-        ros -e '(handler-bind ((error (lambda (c) (print c) (uiop:quit 1))))
-                  (asdf:test-system :inga)
-                  (asdf:test-system :inga/test-typescript))'
+        ros -s fiveam -e '(handler-bind ((error (lambda (c) (print c) (uiop:quit 1))))
+                            (ql:quickload :inga)
+                            (fiveam:run! :typescript))'
 
