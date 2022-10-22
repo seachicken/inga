@@ -31,7 +31,7 @@ jobs:
     - name: Run tests
       run: |
         ros -s fiveam -e "(ql:quickload :inga)
-                          (asdf:test-system :inga
+                          (asdf:test-system :inga)
                           (ql:quickload :inga/test-typescript)
                           (or (fiveam:run! (uiop:find-symbol* '#:typescript
                                                               :inga/test/parser/typescript))
