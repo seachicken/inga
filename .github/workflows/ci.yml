@@ -41,7 +41,12 @@ jobs:
       #options: --workdir ${{ github.workspace }} --env HOME=${{ github.workspace }}
 
     steps:
+    - name: Install git
+      run: |
+        apt install -y git
     - uses: actions/checkout@v3
+      with:
+        submodules: recursive
     - name: Checkout submodules
       run: |
         ls -lsa .
