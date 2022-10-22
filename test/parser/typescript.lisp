@@ -21,7 +21,7 @@
               parser
               src-path
               (exec-parser parser src-path)
-              18))))
+              8))))
     (stop-parser parser)))
 
 (test find-affected-pos-for-variable-arrow-function
