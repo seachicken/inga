@@ -45,7 +45,7 @@ jobs:
       env:
         LISP: ${{ matrix.lisp }}
       run: |
-        apt install -y sudo
+        apt install -y sudo bzip2
         curl -L https://raw.githubusercontent.com/roswell/roswell/master/scripts/install-for-ci.sh | sh
     - name: Run tests
       run: |
