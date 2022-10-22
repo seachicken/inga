@@ -51,6 +51,5 @@ jobs:
       run: |
         ros -e '(handler-bind ((error (lambda (c) (print c) (uiop:quit 1))))
                   (asdf:load-system :inga)
-                  (asdf:load-system :inga/test-typescript)
                   (asdf:test-system :inga/test-typescript))'
 
