@@ -42,9 +42,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-      #- name: Checkout submodules
-      #  run: |
-      #    git submodule update --init
+    - name: Checkout submodules
+      run: |
+        ls -lsa .
+        git submodule update --init
     - name: Run tests
       run: |
         ls -lsa test/fixtures/react-typescript-todo
