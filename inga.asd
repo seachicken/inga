@@ -19,10 +19,5 @@
 (defsystem "inga/test-typescript"
   :class :package-inferred-system
   :depends-on ("fiveam"
-               "inga/test/parser/typescript")
-  :perform (test-op (o c)
-    (unless (symbol-call :fiveam '#:run!
-                         (find-symbol* '#:typescript
-                                       :inga/test/parser/typescript))
-      (error "Tests failed"))))
+               "inga/test/parser/typescript"))
 
