@@ -19,6 +19,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       with:
+        fetch-depth: 0
         submodules: recursive
     - name: Install Roswell
       env:
@@ -30,9 +31,8 @@ jobs:
       run: ros install fiveam
     - name: Run tests
       run: |
-        ros -s fiveam -e "(ql:quickload :inga)
-                          (asdf:test-system :inga)
-                          (ql:quickload :inga/test-typescript)
+        ros -s fiveam -e "(asdf:test-system :inga)
+                          (asdf:load-system :inga/test-typescript)
                           (or (fiveam:run! (uiop:find-symbol* '#:typescript
                                                               :inga/test/parser/typescript))
                               (uiop:quit 1))"
