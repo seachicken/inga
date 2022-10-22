@@ -53,6 +53,7 @@ jobs:
       run: |
         ros -s fiveam -e "(handler-bind ((error (lambda (c) (print c) (uiop:quit 1))))
                             (ql:quickload :inga)
+                            (ql:quickload :inga/test-typescript)
                             (fiveam:run! (uiop:find-symbol* '#:typescript
                                                             :inga/test/parser/typescript)))"
 
