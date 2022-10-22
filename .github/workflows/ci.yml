@@ -47,6 +47,7 @@ jobs:
       #    git submodule update --init
     - name: Run tests
       run:
+        ls -lsa test/fixtures/react-typescript-todo
         ros -e '(handler-bind ((error (lambda (c) (print c) (uiop:quit 1))))
                   (asdf:load-system :inga)
                   (asdf:test-system :inga/test-typescript))'
