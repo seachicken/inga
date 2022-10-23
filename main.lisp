@@ -174,20 +174,40 @@
                                 (get-affected-poss ctx ast src-path range)))))))))
 
 (defun get-affected-poss (ctx ast src-path range)
-  (remove-duplicates
-    (remove nil
-            (mapcar (lambda (line-no)
-                      (let ((item-pos
-                              (find-affected-pos (context-parser ctx)
-                                                 src-path ast line-no)))
-                        (when item-pos
-                          (log-debug (format nil "affected-pos: ~a, src-path: ~a, line-no: ~a" item-pos src-path line-no))
-                          (acons :path src-path item-pos))))
-                    (loop for line-no
-                          from (cdr (assoc :start range))
-                          to (cdr (assoc :end range))
-                          collect line-no)))
-    :test #'equal))
+  (let ((affected-poss
+          (remove nil
+                  (mapcar (lambda (line-no)
+                            (let ((item-pos
+                                    (find-affected-pos (context-parser ctx)
+                                                       src-path ast line-no)))
+                              (when item-pos
+                                (log-debug (format nil "affected-pos: ~a, src-path: ~a, line-no: ~a" item-pos src-path line-no))
+                                (setf item-pos (acons :line-no line-no item-pos))
+                                (setf item-pos (acons :path src-path item-pos))
+                                item-pos)))
+                          (loop for line-no
+                                from (cdr (assoc :start range))
+                                to (cdr (assoc :end range))
+                                collect line-no)))))
+    (setf affected-poss 
+          (loop
+            with prev
+            with line-nos = '()
+            with results = '()
+            for current in affected-poss do
+            (progn
+              (if (or (null prev) (equal (cdr (assoc :name current)) (cdr (assoc :name prev))))
+                  (push (cdr (assoc :line-no current)) line-nos)
+                  (progn
+                    (setf current (acons :line-nos line-nos current))
+                    (push current results)))
+              (setf prev current))
+            finally (progn 
+                      (setf prev (acons :line-nos line-nos prev))
+                      (push prev results)
+                      (return results))))
+    (format t "aposs: ~a~%" affected-poss)
+    affected-poss))
 
 (defun find-entrypoints (ctx pos q)
   (let ((refs (references-client (context-lc ctx) pos))
