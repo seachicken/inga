@@ -21,3 +21,8 @@
   :depends-on ("fiveam"
                "inga/test/parser/typescript"))
 
+(defsystem "inga/test-java"
+  :class :package-inferred-system
+  :depends-on ("fiveam"
+               "inga/test/parser/java"))
+

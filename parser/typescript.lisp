@@ -122,7 +122,6 @@
       (loop
         (let ((ast (dequeue q)))
           (if (null ast) (return))
-          ;;(format t "ast: ~a~%" (inga/utils::top ast 30))
 
           (when (and
                   (jsown:keyp ast "kind") (= (jsown:val ast "kind") *if-statement*)
