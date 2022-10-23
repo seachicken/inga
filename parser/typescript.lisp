@@ -109,7 +109,7 @@
 (defmethod count-combinations ((parser parser-typescript) file-path ast line-nos)
   (loop
     with found-items = '()
-    with result = 0
+    with result = 1
     for line-no in line-nos do
     (let ((q (make-queue))
           (ast-pos (cdr (assoc :pos (convert-to-ast-pos
@@ -130,7 +130,7 @@
                   (jsown:keyp ast "end") (> (jsown:val ast "end") ast-pos)
                   (null (assoc (jsown:val ast "start") found-items)))
             (push (cons (jsown:val ast "start") t) found-items)
-            (setf result (+ result 1)))
+            (setf result (* result 2)))
 
           (when (and
                   (jsown:keyp ast "kind") (= (jsown:val ast "kind") *method-declaration*)

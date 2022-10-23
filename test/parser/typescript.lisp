@@ -69,7 +69,7 @@
   (let ((parser (make-parser :typescript *nestjs-path*)))
     (start-parser parser)
     (is (equal
-          1
+          2
           (let ((src-path "src/article/article.service.ts"))
             (inga/parser/typescript::count-combinations
               parser
