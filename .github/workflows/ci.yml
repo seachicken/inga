@@ -65,5 +65,9 @@ jobs:
       run: |
         ros -s fiveam -e "(ql:quickload :inga)
                           (unless (asdf:test-system :inga)
+                            (uiop:quit 1))
+                          (ql:quickload :inga/test-java)
+                          (unless (fiveam:run! (uiop:find-symbol* '#:java
+                                                                  :inga/test/parser/java))
                             (uiop:quit 1))"
 

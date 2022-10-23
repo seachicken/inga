@@ -67,5 +67,45 @@
           (loop for member in (jsown:val ast "members") do
                 (enqueue q (cdr member))))))))
 
+(defmethod count-combinations ((parser parser-java) file-path ast line-nos)
+  (loop
+    with found-items = '()
+    with result = 1
+    for line-no in line-nos do
+    (let ((q (make-queue)))
+      (enqueue q ast)
+      (loop
+        (let ((ast (dequeue q)))
+          (if (null ast) (return))
+
+          (when (and
+                  (string= (cdr (car ast)) "com.github.javaparser.ast.stmt.IfStmt")
+                  (<= (jsown:val (jsown:val ast "range") "beginLine") line-no)
+                  (>= (jsown:val (jsown:val ast "range") "endLine") line-no)
+                  (null (assoc (jsown:val (jsown:val ast "range") "beginLine") found-items)))
+            (push (cons (jsown:val (jsown:val ast "range") "beginLine") t) found-items)
+            (setf result (* result 2)))
+
+          (when (and
+                  (or
+                    (string= (cdr (car ast)) "com.github.javaparser.ast.body.ConstructorDeclaration")
+                    (string= (cdr (car ast)) "com.github.javaparser.ast.body.MethodDeclaration"))
+                  (<= (jsown:val (jsown:val ast "range") "beginLine") line-no)
+                  (>= (jsown:val (jsown:val ast "range") "endLine") line-no))
+            (enqueue q (cdr (jsown:val ast "body"))))
+
+          (when (jsown:keyp ast "types")
+            (loop for type in (jsown:val ast "types") do
+                  (enqueue q (cdr type))))
+
+          (when (jsown:keyp ast "members")
+            (loop for member in (jsown:val ast "members") do
+                  (enqueue q (cdr member))))
+
+          (when (jsown:keyp ast "statements")
+            (loop for s in (jsown:val ast "statements") do
+                  (enqueue q (cdr s)))))))
+    finally (return result)))
+
 (defmethod find-entrypoint ((parser parser-java) pos))
 
