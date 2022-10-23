@@ -118,6 +118,28 @@
                        (acons :paths (split #\/ (cdr (assoc :path p))) p))
                      poss))
   (let ((sorted-poss (group-by-dir (sort-flat base-url sha poss '() 0))) (result ""))
+    (setf sorted-poss 
+          (loop
+            with results = '()
+            for poss in sorted-poss do
+            (setf results
+                  (append results
+                          (loop
+                            with prev
+                            with results = '()
+                            for pos in poss do
+                            (progn
+                              (when (and
+                                      (not (null prev))
+                                      (equal (cdr (assoc :path pos)) (cdr (assoc :path prev)))
+                                      (equal (cdr (assoc :name pos)) (cdr (assoc :name prev)))
+                                      (equal (cdr (assoc :line pos)) (cdr (assoc :line prev)))
+                                      (equal (cdr (assoc :offset pos)) (cdr (assoc :offset prev))))
+                                (setf results (remove prev results)))
+                              (setf results (append results (list pos)))
+                              (setf prev pos))
+                            finally (return (list results)))))
+            finally (return results)))
     (loop
       with i = 0
       with prev-dirs
@@ -231,9 +253,10 @@
                (push pos remaining-poss))))
 
     (setf files (sort files #'string< :key
-                      #'(lambda (f) (format nil "~a~a"
+                      #'(lambda (f) (format nil "~a~a~a"
                                             (nth ri (cdr (assoc :paths f)))
-                                            (cdr (assoc :line f))))))
+                                            (cdr (assoc :line f))
+                                            (cdr (assoc :combination (cdr (assoc :origin f))))))))
     (setf results (append files results))
 
     (when (= (length remaining-poss) 0)

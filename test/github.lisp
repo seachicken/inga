@@ -40,15 +40,16 @@
                '(((:path . "b/a/1.tsx") (:name . "a") (:line . 1)
                   (:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2)))
                  ((:path . "b/a/1.tsx") (:name . "b") (:line . 2)
-                  (:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 2)))
+                  (:origin (:path . "a/1.ts") (:name . "c") (:line . 1) (:combination . 2)))
+                 ((:path . "b/a/1.tsx") (:name . "b") (:line . 2)
+                  (:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3)))
                  ((:path . "b/1.tsx") (:name . "a") (:line . 1)
                   (:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2)))
                  ((:path . "c/a/1.tsx") (:name . "a") (:line . 3)
                   (:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2)))
                  ((:path . "a.tsx") (:name . "a") (:line . 4)
                   (:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))))
-               '(((:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))))
-               ))))
+               '(((:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))))))))
 
 (test output-dirs-with-nest-nested-dirs
   (is (equal
