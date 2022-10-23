@@ -46,12 +46,15 @@
     (subseq result 0 (- (length result) 1))))
 
 (defun send-pr-comment (hostname base-url owner-repo number affected-poss project-path sha)
-  (let ((comment (format nil
-                         "~a~%**~a affected by the change**~a~%~%<details><summary>Affected files</summary>~%~%~a~%</details>"
-                         "# Inga Report"
-                         (get-affected-display-name affected-poss)
-                         " (powered by [Inga](https://github.com/seachicken/inga))"
-                         (get-code-hierarchy base-url sha affected-poss))))
+  (let ((combination-items (sort-combination affected-poss))
+        comment)
+    (setf comment (format nil
+                          "~a~%**~a affected by the change**~a~%~%<details><summary>Affected files</summary>~%~%Change with the highest number of combinations:~%~%~a~%~a~%</details>"
+                          "# Inga Report"
+                          (get-affected-display-name affected-poss)
+                          " (powered by [Inga](https://github.com/seachicken/inga))"
+                          (get-combination-table combination-items)
+                          (get-code-hierarchy base-url sha affected-poss combination-items)))
     (handler-case
       (uiop:run-program (format nil
                                 "(cd ~a && gh pr comment ~a -R ~a/~a --body '~a' --edit-last)"
@@ -75,11 +78,68 @@
       "A entrypoint"
       (format nil "~a entrypoints" (length affected-poss))))
 
-(defun get-code-hierarchy (base-url sha poss)
+(defun sort-combination (poss)
+  (sort (copy-list poss)
+        #'(lambda (a b) (> (cdr (assoc :combination (cdr (assoc :origin a))))
+                           (cdr (assoc :combination (cdr (assoc :origin b))))))))
+
+(defun get-combination-table (poss)
+  (let ((result ""))
+    (setf poss
+          (loop
+            with idx = 0
+            with results = '()
+            for pos in poss do
+            (progn
+              (when (and (< idx 3) (> (length poss) idx))
+                  (setf results (append results (list pos))))
+              (setf idx (+ idx 1)))
+            finally (return results)))
+    (format nil "~a~%~a~%~a"
+            "| Rank | Origin | Combination |"
+            "| - | - | - |"
+            (loop
+              with idx = 1
+              with result = ""
+              for pos in poss do
+              (let ((origin (cdr (assoc :origin pos))))
+                (setf result (format nil "~a| ~a | ~a - ~a | ~a~a |~%"
+                                     result
+                                     idx
+                                     (get-file (split #\/ (cdr (assoc :path origin))))
+                                     (cdr (assoc :name origin))
+                                     (cdr (assoc :combination origin))
+                                     (if (= idx 1) " 💥" "")))
+                (setf idx (+ idx 1)))
+              finally (return result)))))
+
+(defun get-code-hierarchy (base-url sha poss combination-items)
   (setf poss (mapcar (lambda (p)
                        (acons :paths (split #\/ (cdr (assoc :path p))) p))
                      poss))
   (let ((sorted-poss (group-by-dir (sort-flat base-url sha poss '() 0))) (result ""))
+    (setf sorted-poss 
+          (loop
+            with results = '()
+            for poss in sorted-poss do
+            (setf results
+                  (append results
+                          (loop
+                            with prev
+                            with results = '()
+                            for pos in poss do
+                            (progn
+                              (when (and
+                                      (not (null prev))
+                                      (equal (cdr (assoc :path pos)) (cdr (assoc :path prev)))
+                                      (equal (cdr (assoc :name pos)) (cdr (assoc :name prev)))
+                                      (equal (cdr (assoc :line pos)) (cdr (assoc :line prev)))
+                                      (equal (cdr (assoc :offset pos)) (cdr (assoc :offset prev))))
+                                (setf results (remove prev results)))
+                              (setf results (append results (list pos)))
+                              (setf prev pos))
+                            finally (return (list results)))))
+            finally (return results)))
     (loop
       with i = 0
       with prev-dirs
@@ -97,17 +157,11 @@
 
              (loop
                for pos in poss
-               do (progn
-                    (let ((file (get-file (cdr (assoc :paths pos))))
-                          (name (cdr (assoc :name pos)))
-                          (path (cdr (assoc :path pos)))
-                          (line (cdr (assoc :line pos))))
-                      (setf result
-                            (format nil "~a~a~%"
-                                    result
-                                    (output-file file name
-                                                 num-of-nested
-                                                 base-url sha path line)))))))
+               do (setf result
+                        (format nil "~a~a~%"
+                                result
+                                (output-file num-of-nested base-url sha pos
+                                             (list (first combination-items)))))))
            (setf i (+ i 1))))
     result))
 
@@ -145,15 +199,31 @@
                 (format nil "~a~%" result))
             nested-i)))
 
-(defun output-file (file name i base-url sha path line)
-  (if (= i 0)
-      (format nil "- 📄 [~a - ~a](~ablob/~a/~a#L~a)"
-              file name
-              base-url sha path line)
-      (format nil "~vt- 📄 [~a - ~a](~ablob/~a/~a#L~a)"
-              (* i 2)
-              file name
-              base-url sha path line)))
+(defun output-file (num-of-nested base-url sha pos combination-items)
+  (let ((file (get-file (cdr (assoc :paths pos))))
+        (name (cdr (assoc :name pos)))
+        (path (cdr (assoc :path pos)))
+        (line (cdr (assoc :line pos)))
+        (origin (cdr (assoc :origin pos)))
+        (explosion ""))
+    (loop for item in combination-items do
+          (let (target-file
+                (combination-origin (cdr (assoc :origin item)))
+                combination-file)
+            (setf target-file (get-file (split #\/ (cdr (assoc :path origin)))))
+            (setf combination-file (get-file (split #\/ (cdr (assoc :path combination-origin)))))
+            (when (and
+                    (equal combination-file target-file)
+                    (equal (cdr (assoc :name combination-origin)) (cdr (assoc :name origin))))
+              (setf explosion " 💥"))))
+    (if (= num-of-nested 0)
+        (format nil "- 📄 [~a - ~a~a](~ablob/~a/~a#L~a)"
+                file name explosion
+                base-url sha path line)
+        (format nil "~vt- 📄 [~a - ~a~a](~ablob/~a/~a#L~a)"
+                (* num-of-nested 2)
+                file name explosion
+                base-url sha path line))))
 
 (defun group-by-dir (sorted-poss)
   (let ((results '()))
@@ -183,9 +253,10 @@
                (push pos remaining-poss))))
 
     (setf files (sort files #'string< :key
-                      #'(lambda (f) (format nil "~a~a"
+                      #'(lambda (f) (format nil "~a~a~a"
                                             (nth ri (cdr (assoc :paths f)))
-                                            (cdr (assoc :line f))))))
+                                            (cdr (assoc :line f))
+                                            (cdr (assoc :combination (cdr (assoc :origin f))))))))
     (setf results (append files results))
 
     (when (= (length remaining-poss) 0)

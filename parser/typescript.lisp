@@ -12,6 +12,7 @@
 (defparameter *parenthesized-expression* 208)
 (defparameter *arrow-function* 210)
 (defparameter *variable-statement* 233)
+(defparameter *if-statement* 235)
 (defparameter *return-statement* 243)
 (defparameter *variable-declaration* 250)
 (defparameter *function-declaration* 252)
@@ -104,6 +105,55 @@
         (when (jsown:keyp ast "statements")
           (loop for s in (jsown:val ast "statements") do
                 (enqueue q (cdr s))))))))
+
+(defmethod count-combinations ((parser parser-typescript) file-path ast line-nos)
+  (loop
+    with found-items = '()
+    with result = 1
+    for line-no in line-nos do
+    (let ((q (make-queue))
+          (ast-pos (cdr (assoc :pos (convert-to-ast-pos
+                                      (parser-path parser)
+                                      (list
+                                        (cons :path file-path)
+                                        (cons :line line-no)
+                                        (cons :offset -1)))))))
+      (enqueue q ast)
+      (loop
+        (let ((ast (dequeue q)))
+          (if (null ast) (return))
+
+          (when (and
+                  (jsown:keyp ast "kind") (= (jsown:val ast "kind") *if-statement*)
+                  (jsown:keyp ast "start") (<= (jsown:val ast "start") ast-pos)
+                  (jsown:keyp ast "end") (> (jsown:val ast "end") ast-pos)
+                  (null (assoc (jsown:val ast "start") found-items)))
+            (push (cons (jsown:val ast "start") t) found-items)
+            (setf result (* result 2)))
+
+          (when (and
+                  (jsown:keyp ast "kind") (= (jsown:val ast "kind") *method-declaration*)
+                  (jsown:keyp ast "start") (<= (jsown:val ast "start") ast-pos)
+                  (jsown:keyp ast "end") (> (jsown:val ast "end") ast-pos))
+            (enqueue q (jsown:val ast "body")))
+
+          (when (and
+                  (jsown:keyp ast "kind")
+                  (= (jsown:val ast "kind") *variable-statement*))
+            (let ((dec-list (jsown:val (jsown:val ast "declarationList") "declarations")))
+              (loop for d in dec-list do
+                    (enqueue q (cdr d)))))
+
+          (when (and
+                  (jsown:keyp ast "kind")
+                  (= (jsown:val ast "kind") *class-declaration*))
+            (loop for m in (jsown:val ast "members") do
+                  (enqueue q (cdr m))))
+
+          (when (jsown:keyp ast "statements")
+            (loop for s in (jsown:val ast "statements") do
+                  (enqueue q (cdr s)))))))
+    finally (return result)))
 
 (defmethod find-entrypoint ((parser parser-typescript) pos)
   (let ((ast-pos (convert-to-ast-pos (parser-path parser) pos)))
