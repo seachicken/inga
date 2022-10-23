@@ -18,6 +18,7 @@
                 #:stop-parser
                 #:exec-parser
                 #:find-affected-pos
+                #:count-combinations
                 #:find-entrypoint)
   (:import-from #:inga/utils
                 #:split-trim-comma)
@@ -184,6 +185,8 @@
                                 (log-debug (format nil "affected-pos: ~a, src-path: ~a, line-no: ~a" item-pos src-path line-no))
                                 (setf item-pos (acons :line-no line-no item-pos))
                                 (setf item-pos (acons :path src-path item-pos))
+                                (when (assoc :origin range)
+                                  (setf item-pos (acons :origin (cdr (assoc :origin range)) item-pos)))
                                 item-pos)))
                           (loop for line-no
                                 from (cdr (assoc :start range))
@@ -197,19 +200,32 @@
             for current in affected-poss do
             (progn
               (if (or (null prev) (equal (cdr (assoc :name current)) (cdr (assoc :name prev))))
-                  (push (cdr (assoc :line-no current)) line-nos)
+                  (progn
+                    (push (cdr (assoc :line-no current)) line-nos)
+                    (setf current (remove :line-no current :key 'car)))
                   (progn
                     (setf current (acons :line-nos line-nos current))
                     (push current results)))
               (setf prev current))
             finally (progn 
                       (setf prev (acons :line-nos line-nos prev))
+                      (setf prev (remove :line-no prev :key 'car))
                       (push prev results)
                       (return results))))
-    (format t "aposs: ~a~%" affected-poss)
+    (setf affected-poss
+          (mapcar (lambda (pos)
+                    (acons :combination 
+                           (count-combinations (context-parser ctx)
+                                               src-path ast
+                                               (cdr (assoc :line-nos pos)))
+                           pos))
+                  affected-poss))
     affected-poss))
 
 (defun find-entrypoints (ctx pos q)
+  (unless (assoc :origin pos)
+    (push (cons :origin pos) pos))
+
   (let ((refs (references-client (context-lc ctx) pos))
         (results '()))
     (setf refs (remove nil (mapcar (lambda (ref)
@@ -222,11 +238,13 @@
     (if refs
         (loop for ref in refs
               do (progn 
+                   (push (cons :origin (cdr (assoc :origin pos))) ref)
                    (let ((entrypoint (find-entrypoint (context-parser ctx) ref)))
                      (if entrypoint
                          (setf results (append results (list entrypoint)))
                          (enqueue q (list
                                       (cons :path (cdr (assoc :path ref)))
+                                      (cons :origin (cdr (assoc :origin ref)))
                                       (cons :start (cdr (assoc :line ref)))
                                       (cons :end (cdr (assoc :line ref)))))))))
         (setf results
@@ -235,7 +253,8 @@
                                                      (context-project-path ctx)))
                       (cons :name (cdr (assoc :name pos)))
                       (cons :line (cdr (assoc :line pos)))
-                      (cons :offset (cdr (assoc :offset pos)))))))
+                      (cons :offset (cdr (assoc :offset pos)))
+                      (cons :origin (cdr (assoc :origin pos)))))))
     results))
 
 (defun inject-mark (project-path component-poss)

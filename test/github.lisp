@@ -7,6 +7,23 @@
 (def-suite github)
 (in-suite github)
 
+(test get-combination-table
+  (is (equal (format nil "~a~%~a~%~a~%~a~%~a~%"
+                     "| Rank | Origin | Combination |"
+                     "| - | - | - |"
+                     "| 1 | 1.ts - a | 3 |"
+                     "| 2 | 1.ts - b | 2 |"
+                     "| 3 | 1.ts - c | 1 |")
+             (inga/github::get-combination-table
+               '(((:path . "b/a/1.tsx") (:name . "a") (:line . 1)
+                  (:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2)))
+                 ((:path . "b/a/1.tsx") (:name . "a") (:line . 1)
+                  (:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3)))
+                 ((:path . "b/a/1.tsx") (:name . "a") (:line . 1)
+                  (:origin (:path . "a/1.ts") (:name . "c") (:line . 1) (:combination . 1)))
+                 ((:path . "b/a/1.tsx") (:name . "a") (:line . 1)
+                  (:origin (:path . "a/1.ts") (:name . "d") (:line . 1) (:combination . 1))))))))
+
 (test get-code-hierarchy
   (is (equal (format nil "~a~%~a~%~a~%~a~%~a~%~a~%~a~%~a~%"
                      "- 📂 b"

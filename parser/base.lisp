@@ -8,6 +8,7 @@
            #:stop-parser
            #:exec-parser
            #:find-affected-pos
+           #:count-combinations
            #:find-entrypoint
            #:exec-command))
 (in-package #:inga/parser/base)
@@ -29,6 +30,8 @@
 (defgeneric exec-parser (parser file-path))
 
 (defgeneric find-affected-pos (parser file-path ast line-no))
+
+(defgeneric count-combinations (parser file-path ast line-nos))
 
 (defgeneric find-entrypoint (parser pos))
 

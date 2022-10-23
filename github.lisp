@@ -47,10 +47,11 @@
 
 (defun send-pr-comment (hostname base-url owner-repo number affected-poss project-path sha)
   (let ((comment (format nil
-                         "~a~%**~a affected by the change**~a~%~%<details><summary>Affected files</summary>~%~%~a~%</details>"
+                         "~a~%**~a affected by the change**~a~%~%<details><summary>Affected files</summary>~%~%~a~%~a~%</details>"
                          "# Inga Report"
                          (get-affected-display-name affected-poss)
                          " (powered by [Inga](https://github.com/seachicken/inga))"
+                         (get-combination-table affected-poss)
                          (get-code-hierarchy base-url sha affected-poss))))
     (handler-case
       (uiop:run-program (format nil
@@ -74,6 +75,39 @@
   (if (equal (length affected-poss) 1)
       "A entrypoint"
       (format nil "~a entrypoints" (length affected-poss))))
+
+(defun get-combination-table (poss)
+  (let ((poss
+          (sort (copy-list poss)
+                #'(lambda (a b) (> (cdr (assoc :combination (cdr (assoc :origin a))))
+                                   (cdr (assoc :combination (cdr (assoc :origin b))))))))
+        (result ""))
+    (setf poss
+          (loop
+            with idx = 0
+            with results = '()
+            for pos in poss do
+            (progn
+              (when (and (< idx 3) (> (length poss) idx))
+                  (setf results (append results (list pos))))
+              (setf idx (+ idx 1)))
+            finally (return results)))
+    (format nil "~a~%~a~%~a"
+            "| Rank | Origin | Combination |"
+            "| - | - | - |"
+            (loop
+              with idx = 1
+              with result = ""
+              for pos in poss do
+              (let ((origin (cdr (assoc :origin pos))))
+                (setf result (format nil "~a| ~a | ~a - ~a | ~a |~%"
+                                     result
+                                     idx
+                                     (get-file (split #\/ (cdr (assoc :path origin))))
+                                     (cdr (assoc :name origin))
+                                     (cdr (assoc :combination origin))))
+                (setf idx (+ idx 1)))
+              finally (return result)))))
 
 (defun get-code-hierarchy (base-url sha poss)
   (setf poss (mapcar (lambda (p)
