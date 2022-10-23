@@ -49,7 +49,7 @@
   (let ((combination-items (sort-combination affected-poss))
         comment)
     (setf comment (format nil
-                          "~a~%**~a affected by the change**~a~%~%<details><summary>Affected files</summary>~%~%~a~%~a~%</details>"
+                          "~a~%**~a affected by the change**~a~%~%<details><summary>Affected files</summary>~%~%Change with the highest number of combinations:~%~%~a~%~a~%</details>"
                           "# Inga Report"
                           (get-affected-display-name affected-poss)
                           " (powered by [Inga](https://github.com/seachicken/inga))"
