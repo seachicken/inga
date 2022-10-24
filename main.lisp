@@ -192,26 +192,27 @@
                                 from (cdr (assoc :start range))
                                 to (cdr (assoc :end range))
                                 collect line-no)))))
-    (setf affected-poss 
-          (loop
-            with prev
-            with line-nos = '()
-            with results = '()
-            for current in affected-poss do
-            (progn
-              (if (or (null prev) (equal (cdr (assoc :name current)) (cdr (assoc :name prev))))
-                  (progn
-                    (push (cdr (assoc :line-no current)) line-nos)
-                    (setf current (remove :line-no current :key 'car)))
-                  (progn
-                    (setf current (acons :line-nos line-nos current))
-                    (push current results)))
-              (setf prev current))
-            finally (progn 
-                      (setf prev (acons :line-nos line-nos prev))
-                      (setf prev (remove :line-no prev :key 'car))
-                      (push prev results)
-                      (return results))))
+    (when affected-poss
+      (setf affected-poss 
+            (loop
+              with prev
+              with line-nos = '()
+              with results = '()
+              for current in affected-poss do
+              (progn
+                (if (or (null prev) (equal (cdr (assoc :name current)) (cdr (assoc :name prev))))
+                    (progn
+                      (push (cdr (assoc :line-no current)) line-nos)
+                      (setf current (remove :line-no current :key 'car)))
+                    (progn
+                      (setf current (acons :line-nos line-nos current))
+                      (push current results)))
+                (setf prev current))
+              finally (progn 
+                        (setf prev (acons :line-nos line-nos prev))
+                        (setf prev (remove :line-no prev :key 'car))
+                        (push prev results)
+                        (return results)))))
     (setf affected-poss
           (mapcar (lambda (pos)
                     (acons :combination 
