@@ -134,7 +134,8 @@
           (when (and
                   (jsown:keyp ast "kind") (= (jsown:val ast "kind") *method-declaration*)
                   (jsown:keyp ast "start") (<= (jsown:val ast "start") ast-pos)
-                  (jsown:keyp ast "end") (> (jsown:val ast "end") ast-pos))
+                  (jsown:keyp ast "end") (> (jsown:val ast "end") ast-pos)
+                  (jsown:keyp ast "body"))
             (enqueue q (jsown:val ast "body")))
 
           (when (and
