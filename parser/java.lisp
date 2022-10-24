@@ -91,8 +91,9 @@
                     (string= (cdr (car ast)) "com.github.javaparser.ast.body.ConstructorDeclaration")
                     (string= (cdr (car ast)) "com.github.javaparser.ast.body.MethodDeclaration"))
                   (<= (jsown:val (jsown:val ast "range") "beginLine") line-no)
-                  (>= (jsown:val (jsown:val ast "range") "endLine") line-no))
-            (enqueue q (cdr (jsown:val ast "body"))))
+                  (>= (jsown:val (jsown:val ast "range") "endLine") line-no)
+                  (when (jsown:keyp ast "body")
+                    (enqueue q (cdr (jsown:val ast "body"))))))
 
           (when (jsown:keyp ast "types")
             (loop for type in (jsown:val ast "types") do
