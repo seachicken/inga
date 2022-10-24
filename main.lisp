@@ -212,15 +212,15 @@
                         (setf prev (acons :line-nos line-nos prev))
                         (setf prev (remove :line-no prev :key 'car))
                         (push prev results)
-                        (return results)))))
-    (setf affected-poss
-          (mapcar (lambda (pos)
-                    (acons :combination 
-                           (count-combinations (context-parser ctx)
-                                               src-path ast
-                                               (cdr (assoc :line-nos pos)))
-                           pos))
-                  affected-poss))
+                        (return results))))
+      (setf affected-poss
+            (mapcar (lambda (pos)
+                      (acons :combination 
+                             (count-combinations (context-parser ctx)
+                                                 src-path ast
+                                                 (cdr (assoc :line-nos pos)))
+                             pos))
+                    affected-poss)))
     affected-poss))
 
 (defun find-entrypoints (ctx pos q)
@@ -240,10 +240,12 @@
         (loop for ref in refs
               do (progn 
                    (let ((entrypoint (find-entrypoint (context-parser ctx) ref)))
+                     (format t "entorypoint: ~a~%" entrypoint)
                      (if entrypoint
                          (setf results (append results
-                                               (acons :origin (cdr (assoc :origin pos))
-                                                      (list entrypoint))))
+                                               (list
+                                                 (acons :origin (cdr (assoc :origin pos))
+                                                        entrypoint))))
                          (enqueue q (list
                                       (cons :path (cdr (assoc :path ref)))
                                       (cons :origin (cdr (assoc :origin pos)))
