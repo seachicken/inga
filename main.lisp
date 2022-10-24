@@ -164,6 +164,7 @@
     (loop
       (let ((range (dequeue q)))
         (if (null range) (return results))
+        (format t "range: ~a~%" range)
 
         (let ((src-path (cdr (assoc :path range)))
               ast)
@@ -244,11 +245,13 @@
                          (setf results (append results
                                                (acons :origin (cdr (assoc :origin pos))
                                                       (list entrypoint))))
-                         (enqueue q (list
-                                      (cons :path (cdr (assoc :path ref)))
-                                      (cons :origin (cdr (assoc :origin pos)))
-                                      (cons :start (cdr (assoc :line ref)))
-                                      (cons :end (cdr (assoc :line ref)))))))))
+                         (progn
+                           (format t "enqueue ref: ~a" ref)
+                           (enqueue q (list
+                                        (cons :path (cdr (assoc :path ref)))
+                                        (cons :origin (cdr (assoc :origin pos)))
+                                        (cons :start (cdr (assoc :line ref)))
+                                        (cons :end (cdr (assoc :line ref))))))))))
         (setf results
               (list
                 (list (cons :path (enough-namestring (cdr (assoc :path pos))
