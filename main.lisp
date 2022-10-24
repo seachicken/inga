@@ -226,6 +226,7 @@
   (unless (assoc :origin pos)
     (push (cons :origin pos) pos))
 
+  (format t "reference in pos: ~a~%" pos)
   (let ((refs (references-client (context-lc ctx) pos))
         (results '()))
     (setf refs (remove nil (mapcar (lambda (ref)
