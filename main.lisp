@@ -207,12 +207,15 @@
                   (progn
                     (setf current (acons :line-nos line-nos current))
                     (push current results)))
+              (format t " loop current: ~a~%" current)
               (setf prev current))
             finally (progn 
                       (setf prev (acons :line-nos line-nos prev))
                       (setf prev (remove :line-no prev :key 'car))
+                      (format t " finally prev: ~a~%" prev)
                       (push prev results)
                       (return results))))
+    (format t " affected-poss: ~a~%" affected-poss)
     (setf affected-poss
           (mapcar (lambda (pos)
                     (acons :combination 
@@ -246,7 +249,7 @@
                                                (acons :origin (cdr (assoc :origin pos))
                                                       (list entrypoint))))
                          (progn
-                           (format t "enqueue ref: ~a" ref)
+                           (format t "enqueue ref: ~a~%" ref)
                            (enqueue q (list
                                         (cons :path (cdr (assoc :path ref)))
                                         (cons :origin (cdr (assoc :origin pos)))
