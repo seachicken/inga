@@ -14,20 +14,21 @@
                      "| 1 | 1.ts - a | 3 💥 |"
                      "| 2 | 1.ts - b | 2 |")
              (inga/github::get-combination-table
-               (inga/github::filter-by-key
-                 (inga/github::sort-by-combination
-                   '(((:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))
-                      (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
-                     ((:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))
-                      (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
-                     ((:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))
-                      (:entorypoint (:path . "b/a/1.tsx") (:name . "b") (:line . 1)))
-                     ((:origin (:path . "a/1.ts") (:name . "c") (:line . 1) (:combination . 1))
-                      (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
-                     ((:origin (:path . "a/1.ts") (:name . "d") (:line . 1) (:combination . 1))
-                      (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))))
-                 :origin)
-               2))))
+               (inga/github::filter-combinations
+                 (inga/github::filter-by-key
+                   (inga/github::sort-by-combination
+                     '(((:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))
+                        (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
+                       ((:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))
+                        (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
+                       ((:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))
+                        (:entorypoint (:path . "b/a/1.tsx") (:name . "b") (:line . 1)))
+                       ((:origin (:path . "a/1.ts") (:name . "c") (:line . 1) (:combination . 1))
+                        (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
+                       ((:origin (:path . "a/1.ts") (:name . "d") (:line . 1) (:combination . 1))
+                        (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))))
+                   :origin)
+                 2)))))
 
 (test get-code-hierarchy
   (is (equal (format nil "~a~%~a~%~a~%~a~%~a~%~a~%~a~%~a~%"
