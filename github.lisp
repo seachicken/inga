@@ -47,7 +47,8 @@
 
 (defun send-pr-comment (hostname base-url owner-repo number affected-poss project-path sha)
   (setf affected-poss (sort-by-combination affected-poss))
-  (let ((entorypoints (filter-by-entorypoint affected-poss))
+  (let ((origins (filter-by-key affected-poss :origin))
+        (entorypoints (filter-by-key affected-poss :entorypoint))
         comment)
     (setf comment
           (format nil
@@ -55,7 +56,7 @@
                   "# Inga Report"
                   (get-affected-display-name entorypoints)
                   " (powered by [Inga](https://github.com/seachicken/inga))"
-                  (get-combination-table affected-poss)
+                  (get-combination-table origins)
                   (get-code-hierarchy base-url sha entorypoints)))
     (handler-case
       (uiop:run-program (format nil
@@ -85,14 +86,14 @@
         #'(lambda (a b) (> (cdr (assoc :combination (cdr (assoc :origin a))))
                            (cdr (assoc :combination (cdr (assoc :origin b))))))))
 
-(defun filter-by-entorypoint (poss)
+(defun filter-by-key (poss key)
   (loop
     with prev
     with results = '()
     for pos in poss do
-    (let ((entorypoint-current (cdr (assoc :entorypoint pos)))
-          (entorypoint-prev (cdr (assoc :entorypoint prev))))
-      (when (not (equal entorypoint-current entorypoint-prev))
+    (let ((val-current (cdr (assoc key pos)))
+          (val-prev (cdr (assoc key prev))))
+      (when (not (equal val-current val-prev))
         (setf results (append results (list pos))))
       (setf prev pos))
     finally (return results)))
