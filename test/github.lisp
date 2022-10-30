@@ -37,19 +37,28 @@
                      "- 📄 [a.tsx - a](https://github.com/owner/repo/blob/sha/a.tsx#L4)")
              (inga/github::get-code-hierarchy
                "https://github.com/owner/repo/" "sha"
-               '(((:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))
+               '(((:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))
+                  (:entorypoint (:path . "b/a/1.tsx") (:name . "b") (:line . 2)))
+                 ((:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))
                   (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
                  ((:origin (:path . "a/1.ts") (:name . "c") (:line . 1) (:combination . 2))
-                  (:entorypoint (:path . "b/a/1.tsx") (:name . "b") (:line . 2)))
-                 ((:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))
                   (:entorypoint (:path . "b/a/1.tsx") (:name . "b") (:line . 2)))
                  ((:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))
                   (:entorypoint (:path . "b/1.tsx") (:name . "a") (:line . 1)))
                  ((:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))
                   (:entorypoint (:path . "c/a/1.tsx") (:name . "a") (:line . 3)))
                  ((:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))
-                  (:entorypoint (:path . "a.tsx") (:name . "a") (:line . 4))))
-               '(((:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))))))))
+                  (:entorypoint (:path . "a.tsx") (:name . "a") (:line . 4))))))))
+
+(test filter-by-entorypoint
+  (is (equal
+        '(((:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))
+           (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1))))
+        (inga/github::filter-by-entorypoint
+          '(((:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))
+             (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
+            ((:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))
+             (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1))))))))
 
 (test output-dirs-with-nest-nested-dirs
   (is (equal
