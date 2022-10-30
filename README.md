@@ -42,6 +42,10 @@ If GitHub token is set, send the analysis report to comments in pull requests. A
 
 Analyze by the difference between the `base-sha` and the checked out sha. Not to be used with `--github-token` option.
 
+`--min-combination <number>`
+
+Minimum number of combinations to display in the results.
+
 ### Run on GitHub Actions
 
 #### Example projects
