@@ -55,7 +55,7 @@
                   (get-affected-display-name entorypoints)
                   " (powered by [Inga](https://github.com/seachicken/inga))"
                   (get-combination-table affected-poss)
-                  (get-code-hierarchy base-url sha entorypoints))))
+                  (get-code-hierarchy base-url sha affected-poss))))
     (handler-case
       (uiop:run-program (format nil
                                 "(cd ~a && gh pr comment ~a -R ~a/~a --body '~a' --edit-last)"
