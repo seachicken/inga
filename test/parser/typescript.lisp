@@ -43,7 +43,7 @@
     (start-parser parser)
     (is (equal
           '((:path . "src/article/article.service.ts")
-            (:name . "findAll") (:line . 45) (:offset . 3))
+            (:name . "findAll") (:line . 45) (:offset . 9))
           (let ((src-path "src/article/article.service.ts"))
             (inga/parser/typescript::find-affected-pos
               parser

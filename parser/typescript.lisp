@@ -63,9 +63,11 @@
           (let ((init (jsown:val ast "initializer")))
             (alexandria:switch ((jsown:val init "kind"))
               (*object-literal-expression*
-               (return (convert-to-pos (parser-path parser) file-path
-                                       (jsown:val (cdr (jsown:val ast "name")) "escapedText")
-                                       (jsown:val ast "start"))))
+                (when (jsown:keyp ast "name")
+                  (let ((name (cdr (jsown:val ast "name"))))
+                    (return (convert-to-pos (parser-path parser) file-path
+                                            (jsown:val name "escapedText")
+                                            (jsown:val name "start"))))))
               (*arrow-function*
                 (if (equal (find-return-type init) *jsx-element*)
                     (enqueue q (jsown:val init "body"))
@@ -77,17 +79,21 @@
                 (jsown:keyp ast "kind") (= (jsown:val ast "kind") *function-declaration*)
                 (jsown:keyp ast "start") (<= (jsown:val ast "start") ast-pos)
                 (jsown:keyp ast "end") (> (jsown:val ast "end") ast-pos))
-          (return (convert-to-pos (parser-path parser) file-path
-                                  (jsown:val (cdr (jsown:val ast "name")) "escapedText")
-                                  (jsown:val ast "start"))))
+          (when (jsown:keyp ast "name")
+            (let ((name (cdr (jsown:val ast "name"))))
+              (return (convert-to-pos (parser-path parser) file-path
+                                      (jsown:val name "escapedText")
+                                      (jsown:val name "start"))))))
 
         (when (and
                 (jsown:keyp ast "kind") (= (jsown:val ast "kind") *method-declaration*)
                 (jsown:keyp ast "start") (<= (jsown:val ast "start") ast-pos)
                 (jsown:keyp ast "end") (> (jsown:val ast "end") ast-pos))
-          (return (convert-to-pos (parser-path parser) file-path
-                                  (jsown:val (cdr (jsown:val ast "name")) "escapedText")
-                                  (jsown:val ast "start"))))
+          (when (jsown:keyp ast "name")
+            (let ((name (cdr (jsown:val ast "name"))))
+              (return (convert-to-pos (parser-path parser) file-path
+                                      (jsown:val name "escapedText")
+                                      (jsown:val name "start"))))))
 
         (when (and
                 (jsown:keyp ast "kind")
