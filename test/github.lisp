@@ -15,15 +15,19 @@
                      "| 2 | 1.ts - b | 2 |"
                      "| 3 | 1.ts - c | 1 |")
              (inga/github::get-combination-table
-               (inga/github::sort-combination
-                 '(((:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))
-                    (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
-                   ((:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))
-                    (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
-                   ((:origin (:path . "a/1.ts") (:name . "c") (:line . 1) (:combination . 1))
-                    (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
-                   ((:origin (:path . "a/1.ts") (:name . "d") (:line . 1) (:combination . 1))
-                    (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))))))))
+               (inga/github::filter-by-key
+                 (inga/github::sort-by-combination
+                   '(((:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))
+                      (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
+                     ((:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))
+                      (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
+                     ((:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))
+                      (:entorypoint (:path . "b/a/1.tsx") (:name . "b") (:line . 1)))
+                     ((:origin (:path . "a/1.ts") (:name . "c") (:line . 1) (:combination . 1))
+                      (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
+                     ((:origin (:path . "a/1.ts") (:name . "d") (:line . 1) (:combination . 1))
+                      (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))))
+                 :origin)))))
 
 (test get-code-hierarchy
   (is (equal (format nil "~a~%~a~%~a~%~a~%~a~%~a~%~a~%~a~%"
@@ -50,15 +54,16 @@
                  ((:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))
                   (:entorypoint (:path . "a.tsx") (:name . "a") (:line . 4))))))))
 
-(test filter-by-entorypoint
+(test filter-by-key
   (is (equal
         '(((:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))
            (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1))))
-        (inga/github::filter-by-entorypoint
+        (inga/github::filter-by-key
           '(((:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))
              (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
             ((:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))
-             (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1))))))))
+             (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1))))
+          :entorypoint))))
 
 (test output-dirs-with-nest-nested-dirs
   (is (equal
