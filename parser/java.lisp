@@ -57,7 +57,7 @@
                         (cons :offset (jsown:val (jsown:val name "range") "beginColumn"))))))
             (when (jsown:keyp ast "variables")
               (format t "variables ast: ~a~%" (inga/utils::top ast 30))
-              (let ((name (cdr (first (jsown:val ast "variables")))))
+              (let ((name (cdr (jsown:val (cdr (first (jsown:val ast "variables"))) "name"))))
                 (return
                   (list (cons :name (jsown:val name "identifier"))
                         (cons :line (jsown:val (jsown:val name "range") "beginLine"))
