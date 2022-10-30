@@ -47,17 +47,17 @@
 
 (defun send-pr-comment (hostname base-url owner-repo number affected-poss project-path sha min-combination)
   (setf affected-poss (sort-by-combination affected-poss))
-  (let ((origins (filter-by-key affected-poss :origin))
+  (let ((combinations (filter-combinations (filter-by-key affected-poss :origin) min-combination))
         (entorypoints (filter-by-key affected-poss :entorypoint))
         comment)
     (setf comment
           (format nil
-                  "~a~%**~a affected by the change**~a~%~%<details><summary>Affected files</summary>~%~%Change with the highest number of combinations:~%~%~a~%~a~%</details>"
-                  "# Inga Report"
+                  "# Inga Report~%**~a affected by the change** (powered by [Inga](https://github.com/seachicken/inga))~%~%<details><summary>Affected files</summary>~%~%~a~a~%</details>"
                   (get-affected-display-name entorypoints)
-                  " (powered by [Inga](https://github.com/seachicken/inga))"
-                  (get-combination-table origins min-combination)
-                  (get-code-hierarchy base-url sha entorypoints)))
+                  (if (> (length combinations) 0)
+                      (format nil "Change with the highest number of combinations:~%~%~a~%" (get-combination-table combinations))
+                      "")
+                  (get-code-hierarchy base-url sha entorypoints combinations)))
     (handler-case
       (uiop:run-program (format nil
                                 "(cd ~a && gh pr comment ~a -R ~a/~a --body '~a' --edit-last)"
@@ -98,20 +98,21 @@
       (setf prev pos))
     finally (return results)))
 
-(defun get-combination-table (poss min-combination)
+(defun filter-combinations (poss min-combination)
+  (loop
+    with idx = 0
+    with results = '()
+    for pos in poss do
+    (let ((origin (cdr (assoc :origin pos))))
+      (when (and
+              (>= (cdr (assoc :combination origin)) min-combination)
+              (< idx 3) (> (length poss) idx))
+          (setf results (append results (list pos))))
+      (setf idx (+ idx 1)))
+    finally (return results)))
+
+(defun get-combination-table (poss)
   (let ((result ""))
-    (setf poss
-          (loop
-            with idx = 0
-            with results = '()
-            for pos in poss do
-            (let ((origin (cdr (assoc :origin pos))))
-              (when (and
-                      (>= (cdr (assoc :combination origin)) min-combination)
-                      (< idx 3) (> (length poss) idx))
-                  (setf results (append results (list pos))))
-              (setf idx (+ idx 1)))
-            finally (return results)))
     (format nil "~a~%~a~%~a"
             "| Rank | Origin | Combination |"
             "| - | - | - |"
@@ -130,11 +131,11 @@
                 (setf idx (+ idx 1)))
               finally (return result)))))
 
-(defun get-code-hierarchy (base-url sha poss)
+(defun get-code-hierarchy (base-url sha poss combinations)
   (setf poss (mapcar (lambda (p)
                        (acons :paths (split #\/ (cdr (assoc :path (cdr (assoc :entorypoint p))))) p))
                      poss))
-  (let ((most-affected-pos (first poss))
+  (let ((most-affected-pos (first combinations))
         (sorted-poss (group-by-dir (sort-flat base-url sha poss '() 0))) (result ""))
     (setf sorted-poss 
           (loop
