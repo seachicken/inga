@@ -57,7 +57,7 @@
   (let ((ctx (inga/main::start *back-path* '(:java) '("src/test/**"))))
     (is (equal
           '(((:path . "src/main/java/io/spring/api/ArticlesApi.java")
-             (:name . "getArticles") (:line . 48) (:offset . 3)))
+             (:name . "getArticles") (:line . 49) (:offset . 25)))
           (mapcar (lambda (e) (cdr (assoc :entorypoint e)))
                   (inga/main::analyze-by-range
                     ctx
@@ -69,9 +69,9 @@
   (let ((ctx (inga/main::start *back-path* '(:java) '("src/test/**"))))
     (is (equal
           '(((:path . "src/main/java/io/spring/api/ArticlesApi.java")
-             (:name . "createArticle") (:line . 28) (:offset . 3))
+             (:name . "createArticle") (:line . 29) (:offset . 25))
             ((:path . "src/main/java/io/spring/graphql/ArticleMutation.java")
-             (:name . "createArticle") (:line . 35) (:offset . 3)))
+             (:name . "createArticle") (:line . 36) (:offset . 44)))
           (mapcar (lambda (e) (cdr (assoc :entorypoint e)))
                   (inga/main::analyze-by-range
                     ctx
@@ -83,13 +83,13 @@
   (let ((ctx (inga/main::start *back-path* '(:java) '("src/test/**"))))
     (is (equal
           '(((:path . "src/main/java/io/spring/api/ArticlesApi.java")
-             (:name . "createArticle") (:line . 28) (:offset . 3))
+             (:name . "createArticle") (:line . 29) (:offset . 25))
             ((:path . "src/main/java/io/spring/graphql/ArticleMutation.java")
-             (:name . "createArticle") (:line . 35) (:offset . 3))
+             (:name . "createArticle") (:line . 36) (:offset . 44))
             ((:path . "src/main/java/io/spring/api/ArticleApi.java")
-             (:name . "updateArticle") (:line . 44) (:offset . 3))
+             (:name . "updateArticle") (:line . 45) (:offset . 28))
             ((:path . "src/main/java/io/spring/graphql/ArticleMutation.java")
-             (:name . "updateArticle") (:line . 53) (:offset . 3)))
+             (:name . "updateArticle") (:line . 54) (:offset . 44)))
           (mapcar (lambda (e) (cdr (assoc :entorypoint e)))
                   (inga/main::analyze-by-range
                     ctx
@@ -101,11 +101,11 @@
   (let ((ctx (inga/main::start *back-path* '(:java) '("src/test/**"))))
     (is (equal
           '(((:path . "src/main/java/io/spring/graphql/ArticleMutation.java")
-             (:name . "createArticle") (:line . 35) (:offset . 3))
+             (:name . "createArticle") (:line . 36) (:offset . 44))
             ((:path . "src/main/java/io/spring/api/ArticlesApi.java")
-             (:name . "createArticle") (:line . 28) (:offset . 3))
+             (:name . "createArticle") (:line . 29) (:offset . 25))
             ((:path . "src/main/java/io/spring/graphql/ArticleMutation.java")
-             (:name . "createArticle") (:line . 35) (:offset . 3)))
+             (:name . "createArticle") (:line . 36) (:offset . 44)))
           (mapcar (lambda (e) (cdr (assoc :entorypoint e)))
                   (inga/main::analyze-by-range
                     ctx
@@ -117,7 +117,7 @@
   (let ((ctx (inga/main::start *nestjs-path* '(:typescript))))
     (is (equal
           '(((:path . "src/article/article.controller.ts")
-             (:name . "findAll") (:line . 21) (:offset . 3)))
+             (:name . "findAll") (:line . 24) (:offset . 9)))
           (mapcar (lambda (e) (cdr (assoc :entorypoint e)))
                   (inga/main::analyze-by-range
                     ctx
