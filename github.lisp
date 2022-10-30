@@ -47,7 +47,7 @@
 
 (defun send-pr-comment (hostname base-url owner-repo number affected-poss project-path sha min-combination)
   (setf affected-poss (sort-by-combination affected-poss))
-  (let ((combinations (filter-combinations (filter-by-key affected-poss :origin)))
+  (let ((combinations (filter-combinations (filter-by-key affected-poss :origin) min-combination))
         (entorypoints (filter-by-key affected-poss :entorypoint))
         comment)
     (setf comment
