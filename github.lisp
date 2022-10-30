@@ -115,7 +115,7 @@
 
 (defun get-code-hierarchy (base-url sha poss combination-items)
   (setf poss (mapcar (lambda (p)
-                       (acons :paths (split #\/ (cdr (assoc :path p))) p))
+                       (acons :paths (split #\/ (cdr (assoc :path (cdr (assoc :entorypoint p))))) p))
                      poss))
   (let ((sorted-poss (group-by-dir (sort-flat base-url sha poss '() 0))) (result ""))
     (setf sorted-poss 
@@ -128,13 +128,9 @@
                             with prev
                             with results = '()
                             for pos in poss do
-                            (progn
-                              (when (and
-                                      (not (null prev))
-                                      (equal (cdr (assoc :path pos)) (cdr (assoc :path prev)))
-                                      (equal (cdr (assoc :name pos)) (cdr (assoc :name prev)))
-                                      (equal (cdr (assoc :line pos)) (cdr (assoc :line prev)))
-                                      (equal (cdr (assoc :offset pos)) (cdr (assoc :offset prev))))
+                            (let ((entorypoint (cdr (assoc :entorypoint pos))))
+                              (when (and (not (null prev))
+                                         (equal entorypoint (cdr (assoc :entorypoint prev))))
                                 (setf results (remove prev results)))
                               (setf results (append results (list pos)))
                               (setf prev pos))
@@ -201,10 +197,8 @@
 
 (defun output-file (num-of-nested base-url sha pos combination-items)
   (let ((file (get-file (cdr (assoc :paths pos))))
-        (name (cdr (assoc :name pos)))
-        (path (cdr (assoc :path pos)))
-        (line (cdr (assoc :line pos)))
         (origin (cdr (assoc :origin pos)))
+        (entorypoint (cdr (assoc :entorypoint pos)))
         (explosion ""))
     (loop for item in combination-items do
           (let (target-file
@@ -218,12 +212,12 @@
               (setf explosion " 💥"))))
     (if (= num-of-nested 0)
         (format nil "- 📄 [~a - ~a~a](~ablob/~a/~a#L~a)"
-                file name explosion
-                base-url sha path line)
+                file (cdr (assoc :name entorypoint)) explosion
+                base-url sha (cdr (assoc :path entorypoint)) (cdr (assoc :line entorypoint)))
         (format nil "~vt- 📄 [~a - ~a~a](~ablob/~a/~a#L~a)"
                 (* num-of-nested 2)
-                file name explosion
-                base-url sha path line))))
+                file (cdr (assoc :name entorypoint)) explosion
+                base-url sha (cdr (assoc :path entorypoint)) (cdr (assoc :line entorypoint))))))
 
 (defun group-by-dir (sorted-poss)
   (let ((results '()))
@@ -253,10 +247,13 @@
                (push pos remaining-poss))))
 
     (setf files (sort files #'string< :key
-                      #'(lambda (f) (format nil "~a~a~a"
-                                            (nth ri (cdr (assoc :paths f)))
-                                            (cdr (assoc :line f))
-                                            (cdr (assoc :combination (cdr (assoc :origin f))))))))
+                      #'(lambda (f)
+                          (let ((origin (cdr (assoc :origin f)))
+                                (entorypoint (cdr (assoc :entorypoint f))))
+                            (format nil "~a~a~a"
+                                     (nth ri (cdr (assoc :paths entorypoint)))
+                                     (cdr (assoc :line entorypoint))
+                                     (cdr (assoc :combination origin)))))))
     (setf results (append files results))
 
     (when (= (length remaining-poss) 0)

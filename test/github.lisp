@@ -16,14 +16,14 @@
                      "| 3 | 1.ts - c | 1 |")
              (inga/github::get-combination-table
                (inga/github::sort-combination
-                 '(((:path . "b/a/1.tsx") (:name . "a") (:line . 1)
-                    (:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2)))
-                   ((:path . "b/a/1.tsx") (:name . "a") (:line . 1)
-                    (:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3)))
-                   ((:path . "b/a/1.tsx") (:name . "a") (:line . 1)
-                    (:origin (:path . "a/1.ts") (:name . "c") (:line . 1) (:combination . 1)))
-                   ((:path . "b/a/1.tsx") (:name . "a") (:line . 1)
-                    (:origin (:path . "a/1.ts") (:name . "d") (:line . 1) (:combination . 1)))))))))
+                 '(((:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))
+                    (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
+                   ((:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))
+                    (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
+                   ((:origin (:path . "a/1.ts") (:name . "c") (:line . 1) (:combination . 1))
+                    (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
+                   ((:origin (:path . "a/1.ts") (:name . "d") (:line . 1) (:combination . 1))
+                    (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))))))))
 
 (test get-code-hierarchy
   (is (equal (format nil "~a~%~a~%~a~%~a~%~a~%~a~%~a~%~a~%"
@@ -37,18 +37,18 @@
                      "- 📄 [a.tsx - a](https://github.com/owner/repo/blob/sha/a.tsx#L4)")
              (inga/github::get-code-hierarchy
                "https://github.com/owner/repo/" "sha"
-               '(((:path . "b/a/1.tsx") (:name . "a") (:line . 1)
-                  (:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2)))
-                 ((:path . "b/a/1.tsx") (:name . "b") (:line . 2)
-                  (:origin (:path . "a/1.ts") (:name . "c") (:line . 1) (:combination . 2)))
-                 ((:path . "b/a/1.tsx") (:name . "b") (:line . 2)
-                  (:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3)))
-                 ((:path . "b/1.tsx") (:name . "a") (:line . 1)
-                  (:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2)))
-                 ((:path . "c/a/1.tsx") (:name . "a") (:line . 3)
-                  (:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2)))
-                 ((:path . "a.tsx") (:name . "a") (:line . 4)
-                  (:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))))
+               '(((:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))
+                  (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
+                 ((:origin (:path . "a/1.ts") (:name . "c") (:line . 1) (:combination . 2))
+                  (:entorypoint (:path . "b/a/1.tsx") (:name . "b") (:line . 2)))
+                 ((:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))
+                  (:entorypoint (:path . "b/a/1.tsx") (:name . "b") (:line . 2)))
+                 ((:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))
+                  (:entorypoint (:path . "b/1.tsx") (:name . "a") (:line . 1)))
+                 ((:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))
+                  (:entorypoint (:path . "c/a/1.tsx") (:name . "a") (:line . 3)))
+                 ((:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))
+                  (:entorypoint (:path . "a.tsx") (:name . "a") (:line . 4))))
                '(((:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))))))))
 
 (test output-dirs-with-nest-nested-dirs

@@ -243,8 +243,8 @@
                      (if entrypoint
                          (setf results (append results
                                                (list
-                                                 (acons :origin (cdr (assoc :origin pos))
-                                                        entrypoint))))
+                                                 (list (cons :origin (cdr (assoc :origin pos)))
+                                                       (cons :entorypoint entrypoint)))))
                          (enqueue q (list
                                       (cons :path (cdr (assoc :path ref)))
                                       (cons :origin (cdr (assoc :origin pos)))
@@ -252,12 +252,15 @@
                                       (cons :end (cdr (assoc :line ref)))))))))
         (setf results
               (list
-                (list (cons :path (enough-namestring (cdr (assoc :path pos))
-                                                     (context-project-path ctx)))
-                      (cons :name (cdr (assoc :name pos)))
-                      (cons :line (cdr (assoc :line pos)))
-                      (cons :offset (cdr (assoc :offset pos)))
-                      (cons :origin (cdr (assoc :origin pos)))))))
+                (list
+                  (cons :origin (cdr (assoc :origin pos)))
+                  (cons :entorypoint
+                            (list
+                              (cons :path (enough-namestring (cdr (assoc :path pos))
+                                                             (context-project-path ctx)))
+                              (cons :name (cdr (assoc :name pos)))
+                              (cons :line (cdr (assoc :line pos)))
+                              (cons :offset (cdr (assoc :offset pos)))))))))
     results))
 
 (defun inject-mark (project-path component-poss)

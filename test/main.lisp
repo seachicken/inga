@@ -22,10 +22,11 @@
     (is (equal
           '(((:path . "src/App/TodoList/Item/index.tsx")
              (:name . "input") (:line . 107) (:offset . 12)))
-          (inga/main::analyze-by-range
-            ctx
-            '((:path . "src/App/TodoList/Item/index.tsx")
-              (:start . 65) (:end . 65)))))
+          (mapcar (lambda (e) (cdr (assoc :entorypoint e)))
+                  (inga/main::analyze-by-range
+                    ctx
+                    '((:path . "src/App/TodoList/Item/index.tsx")
+                      (:start . 65) (:end . 65))))))
     (inga/main::stop ctx)))
 
 (test analyze-by-range-in-function-declaration
@@ -33,10 +34,11 @@
     (is (equal
           '(((:path . "src/App/NewTodoInput/index.tsx")
              (:name . "input") (:line . 34) (:offset . 10)))
-          (inga/main::analyze-by-range
-            ctx
-            '((:path . "src/App/NewTodoInput/index.tsx")
-              (:start . 14) (:end . 14)))))
+          (mapcar (lambda (e) (cdr (assoc :entorypoint e)))
+                  (inga/main::analyze-by-range
+                    ctx
+                    '((:path . "src/App/NewTodoInput/index.tsx")
+                      (:start . 14) (:end . 14))))))
     (inga/main::stop ctx)))
 
 (test analyze-by-range-in-external-function
@@ -44,10 +46,11 @@
     (is (equal
           '(((:path . "src/App/NewTodoInput/index.tsx")
              (:name . "input") (:line . 34) (:offset . 10)))
-          (inga/main::analyze-by-range
-            ctx
-            '((:path . "src/functions.ts")
-              (:start . 2) (:end . 2)))))
+          (mapcar (lambda (e) (cdr (assoc :entorypoint e)))
+                  (inga/main::analyze-by-range
+                    ctx
+                    '((:path . "src/functions.ts")
+                      (:start . 2) (:end . 2))))))
     (inga/main::stop ctx)))
 
 (test analyze-by-range-in-external-function-for-back
@@ -55,10 +58,11 @@
     (is (equal
           '(((:path . "src/main/java/io/spring/api/ArticlesApi.java")
              (:name . "getArticles") (:line . 48) (:offset . 3)))
-          (inga/main::analyze-by-range
-            ctx
-            '((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
-              (:start . 105) (:end . 105)))))
+          (mapcar (lambda (e) (cdr (assoc :entorypoint e)))
+                  (inga/main::analyze-by-range
+                    ctx
+                    '((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
+                      (:start . 105) (:end . 105))))))
     (inga/main::stop ctx)))
 
 (test analyze-by-range-in-nested-external-function-for-back
@@ -68,10 +72,11 @@
              (:name . "createArticle") (:line . 28) (:offset . 3))
             ((:path . "src/main/java/io/spring/graphql/ArticleMutation.java")
              (:name . "createArticle") (:line . 35) (:offset . 3)))
-          (inga/main::analyze-by-range
-            ctx
-            '((:path . "src/main/java/io/spring/core/article/Article.java")
-              (:start . 30) (:end . 30)))))
+          (mapcar (lambda (e) (cdr (assoc :entorypoint e)))
+                  (inga/main::analyze-by-range
+                    ctx
+                    '((:path . "src/main/java/io/spring/core/article/Article.java")
+                      (:start . 30) (:end . 30))))))
     (inga/main::stop ctx)))
 
 (test analyze-by-range-in-interface-for-back
@@ -85,23 +90,27 @@
              (:name . "updateArticle") (:line . 44) (:offset . 3))
             ((:path . "src/main/java/io/spring/graphql/ArticleMutation.java")
              (:name . "updateArticle") (:line . 53) (:offset . 3)))
-          (inga/main::analyze-by-range
-            ctx
-            '((:path . "src/main/java/io/spring/core/article/ArticleRepository.java")
-              (:start . 7) (:end . 8)))))
+          (mapcar (lambda (e) (cdr (assoc :entorypoint e)))
+                  (inga/main::analyze-by-range
+                    ctx
+                    '((:path . "src/main/java/io/spring/core/article/ArticleRepository.java")
+                      (:start . 7) (:end . 8))))))
     (inga/main::stop ctx)))
 
 (test analyze-by-range-in-field-annotation
   (let ((ctx (inga/main::start *back-path* '(:java) '("src/test/**"))))
     (is (equal
-          '(((:path . "src/main/java/io/spring/api/ArticlesApi.java")
+          '(((:path . "src/main/java/io/spring/graphql/ArticleMutation.java")
+             (:name . "createArticle") (:line . 35) (:offset . 3))
+            ((:path . "src/main/java/io/spring/api/ArticlesApi.java")
              (:name . "createArticle") (:line . 28) (:offset . 3))
             ((:path . "src/main/java/io/spring/graphql/ArticleMutation.java")
              (:name . "createArticle") (:line . 35) (:offset . 3)))
-          (inga/main::analyze-by-range
-            ctx
-            '((:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
-              (:start . 18) (:end . 18)))))
+          (mapcar (lambda (e) (cdr (assoc :entorypoint e)))
+                  (inga/main::analyze-by-range
+                    ctx
+                    '((:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
+                      (:start . 18) (:end . 18))))))
     (inga/main::stop ctx)))
 
 (test analyze-by-range-in-method
@@ -109,10 +118,11 @@
     (is (equal
           '(((:path . "src/article/article.controller.ts")
              (:name . "findAll") (:line . 21) (:offset . 3)))
-          (inga/main::analyze-by-range
-            ctx
-            '((:path . "src/article/article.service.ts")
-              (:start . 47) (:end . 47)))))
+          (mapcar (lambda (e) (cdr (assoc :entorypoint e)))
+                  (inga/main::analyze-by-range
+                    ctx
+                    '((:path . "src/article/article.service.ts")
+                      (:start . 47) (:end . 47))))))
     (inga/main::stop ctx)))
 
 (test get-analysis-kinds
