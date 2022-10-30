@@ -57,7 +57,7 @@
                   (if (> (length combinations) 0)
                       (format nil "Change with the highest number of combinations:~%~%~a~%" (get-combination-table combinations))
                       "")
-                  (get-code-hierarchy base-url sha entorypoints)))
+                  (get-code-hierarchy base-url sha entorypoints combinations)))
     (handler-case
       (uiop:run-program (format nil
                                 "(cd ~a && gh pr comment ~a -R ~a/~a --body '~a' --edit-last)"
@@ -131,11 +131,11 @@
                 (setf idx (+ idx 1)))
               finally (return result)))))
 
-(defun get-code-hierarchy (base-url sha poss)
+(defun get-code-hierarchy (base-url sha poss combinations)
   (setf poss (mapcar (lambda (p)
                        (acons :paths (split #\/ (cdr (assoc :path (cdr (assoc :entorypoint p))))) p))
                      poss))
-  (let ((most-affected-pos (first poss))
+  (let ((most-affected-pos (first combinations))
         (sorted-poss (group-by-dir (sort-flat base-url sha poss '() 0))) (result ""))
     (setf sorted-poss 
           (loop
