@@ -49,12 +49,14 @@
                     (jsown:keyp ast "tokenRange")
                     (= (jsown:val (jsown:val (jsown:val ast "tokenRange") "endToken") "kind") *java-rbrace**))
             (when (jsown:keyp ast "name")
+              (format t "name ast: ~a~%" (inga/utils::top ast 30))
               (let ((name (cdr (jsown:val ast "name"))))
                 (return
                   (list (cons :name (jsown:val name "identifier"))
                         (cons :line (jsown:val (jsown:val name "range") "beginLine"))
                         (cons :offset (jsown:val (jsown:val name "range") "beginColumn"))))))
             (when (jsown:keyp ast "variables")
+              (format t "variables ast: ~a~%" (inga/utils::top ast 30))
               (let ((name (cdr (first (jsown:val ast "variables")))))
                 (return
                   (list (cons :name (jsown:val name "identifier"))
