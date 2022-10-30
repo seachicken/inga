@@ -55,7 +55,7 @@
                   "# Inga Report"
                   (get-affected-display-name entorypoints)
                   " (powered by [Inga](https://github.com/seachicken/inga))"
-                  (get-combination-table entorypoints)
+                  (get-combination-table affected-poss)
                   (get-code-hierarchy base-url sha entorypoints)))
     (handler-case
       (uiop:run-program (format nil
