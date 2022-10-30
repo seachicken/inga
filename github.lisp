@@ -55,7 +55,7 @@
                   "# Inga Report~%**~a affected by the change** (powered by [Inga](https://github.com/seachicken/inga))~%~%<details><summary>Affected files</summary>~%~%~a~a~%</details>"
                   (get-affected-display-name entorypoints)
                   (if (> (length combinations) 0)
-                      (format nil "Change with the highest number of combinations:~%~%~a~%") (get-combination-table combinations)
+                      (format nil "Change with the highest number of combinations:~%~%~a~%" (get-combination-table combinations))
                       "")
                   (get-code-hierarchy base-url sha entorypoints)))
     (handler-case
