@@ -70,7 +70,7 @@
         with exclude = '()
         with github-token = nil
         with base-sha = nil
-        with min-combination = 2
+        with min-combination = 3
         for option = (pop argv)
         while option
         do (alexandria:switch (option :test #'equal)
