@@ -8,12 +8,11 @@
 (in-suite github)
 
 (test get-combination-table
-  (is (equal (format nil "~a~%~a~%~a~%~a~%~a~%"
+  (is (equal (format nil "~a~%~a~%~a~%~a~%"
                      "| Rank | Origin | Combination |"
                      "| - | - | - |"
                      "| 1 | 1.ts - a | 3 💥 |"
-                     "| 2 | 1.ts - b | 2 |"
-                     "| 3 | 1.ts - c | 1 |")
+                     "| 2 | 1.ts - b | 2 |")
              (inga/github::get-combination-table
                (inga/github::filter-by-key
                  (inga/github::sort-by-combination
@@ -27,7 +26,8 @@
                       (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
                      ((:origin (:path . "a/1.ts") (:name . "d") (:line . 1) (:combination . 1))
                       (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))))
-                 :origin)))))
+                 :origin)
+               2))))
 
 (test get-code-hierarchy
   (is (equal (format nil "~a~%~a~%~a~%~a~%~a~%~a~%~a~%~a~%"

@@ -45,7 +45,7 @@
     (setf result (format nil "~{~a/~}" (subseq paths 3 5)))
     (subseq result 0 (- (length result) 1))))
 
-(defun send-pr-comment (hostname base-url owner-repo number affected-poss project-path sha)
+(defun send-pr-comment (hostname base-url owner-repo number affected-poss project-path sha min-combination)
   (setf affected-poss (sort-by-combination affected-poss))
   (let ((origins (filter-by-key affected-poss :origin))
         (entorypoints (filter-by-key affected-poss :entorypoint))
@@ -56,7 +56,7 @@
                   "# Inga Report"
                   (get-affected-display-name entorypoints)
                   " (powered by [Inga](https://github.com/seachicken/inga))"
-                  (get-combination-table origins)
+                  (get-combination-table origins min-combination)
                   (get-code-hierarchy base-url sha entorypoints)))
     (handler-case
       (uiop:run-program (format nil
@@ -98,15 +98,17 @@
       (setf prev pos))
     finally (return results)))
 
-(defun get-combination-table (poss)
+(defun get-combination-table (poss min-combination)
   (let ((result ""))
     (setf poss
           (loop
             with idx = 0
             with results = '()
             for pos in poss do
-            (progn
-              (when (and (< idx 3) (> (length poss) idx))
+            (let ((origin (cdr (assoc :origin pos))))
+              (when (and
+                      (>= (cdr (assoc :combination origin)) min-combination)
+                      (< idx 3) (> (length poss) idx))
                   (setf results (append results (list pos))))
               (setf idx (+ idx 1)))
             finally (return results)))

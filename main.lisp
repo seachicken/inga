@@ -42,7 +42,7 @@
 
 (defun command (&rest argv)
   (handler-case
-    (destructuring-bind (&key root-path exclude github-token base-sha) (parse-argv argv)
+    (destructuring-bind (&key root-path exclude github-token base-sha min-combination) (parse-argv argv)
       (let (diffs pr hostname)
         (when github-token
           (setf hostname (inga/git:get-hostname root-path))
@@ -61,7 +61,7 @@
             (log-debug (format nil "results: ~a" results))
             (when (and pr results)
               (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha) pr
-                (inga/github:send-pr-comment hostname base-url owner-repo number results root-path head-sha))))
+                (inga/github:send-pr-comment hostname base-url owner-repo number results root-path head-sha min-combination))))
           (stop ctx))))
     (inga-error (e) (format t "~a~%" e))))
 
@@ -70,6 +70,7 @@
         with exclude = '()
         with github-token = nil
         with base-sha = nil
+        with min-combination = 2
         for option = (pop argv)
         while option
         do (alexandria:switch (option :test #'equal)
@@ -85,6 +86,8 @@
               (setf github-token (pop argv)))
              ("--base-sha"
               (setf base-sha (pop argv)))
+             ("--min-combination"
+              (setf min-combination (pop argv)))
              (t (error 'inga-error-option-not-found)))
         finally
           (return (append 
@@ -93,7 +96,8 @@
                     (when github-token
                       (list :github-token github-token))
                     (when base-sha
-                      (list :base-sha base-sha))))))
+                      (list :base-sha base-sha))
+                    (list :min-combination min-combination)))))
 
 (defun start (root-path context-kinds &optional (exclude '()))
   (let ((ctx (alexandria:switch ((when (> (length context-kinds) 0) (first context-kinds)))
