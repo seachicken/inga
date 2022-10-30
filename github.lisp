@@ -48,14 +48,15 @@
 (defun send-pr-comment (hostname base-url owner-repo number affected-poss project-path sha)
   (setf affected-poss (sort-by-combination affected-poss))
   (let ((entorypoints (filter-by-entorypoint affected-poss))
-        (comment
+        comment)
+    (setf comment
           (format nil
                   "~a~%**~a affected by the change**~a~%~%<details><summary>Affected files</summary>~%~%Change with the highest number of combinations:~%~%~a~%~a~%</details>"
                   "# Inga Report"
                   (get-affected-display-name entorypoints)
                   " (powered by [Inga](https://github.com/seachicken/inga))"
-                  (get-combination-table affected-poss)
-                  (get-code-hierarchy base-url sha affected-poss))))
+                  (get-combination-table entorypoint)
+                  (get-code-hierarchy base-url sha entorypoints)))
     (handler-case
       (uiop:run-program (format nil
                                 "(cd ~a && gh pr comment ~a -R ~a/~a --body '~a' --edit-last)"
