@@ -57,7 +57,7 @@
                   (if (> (length combinations) 0)
                       (format nil "Change with the highest number of combinations:~%~%~a~%" (get-combination-table combinations))
                       "")
-                  (get-code-hierarchy base-url sha entorypoints combinations)))
+                  (get-code-hierarchy base-url sha entorypoints (first combinations))))
     (handler-case
       (uiop:run-program (format nil
                                 "(cd ~a && gh pr comment ~a -R ~a/~a --body '~a' --edit-last)"
@@ -131,12 +131,11 @@
                 (setf idx (+ idx 1)))
               finally (return result)))))
 
-(defun get-code-hierarchy (base-url sha poss combinations)
+(defun get-code-hierarchy (base-url sha poss most-affected-pos)
   (setf poss (mapcar (lambda (p)
                        (acons :paths (split #\/ (cdr (assoc :path (cdr (assoc :entorypoint p))))) p))
                      poss))
-  (let ((most-affected-pos (first combinations))
-        (sorted-poss (group-by-dir (sort-flat base-url sha poss '() 0))) (result ""))
+  (let ((sorted-poss (group-by-dir (sort-flat base-url sha poss '() 0))) (result ""))
     (setf sorted-poss 
           (loop
             with results = '()
@@ -258,12 +257,10 @@
 
     (setf files (sort files #'string< :key
                       #'(lambda (f)
-                          (let ((origin (cdr (assoc :origin f)))
-                                (entorypoint (cdr (assoc :entorypoint f))))
-                            (format nil "~a~a~a"
-                                     (nth ri (cdr (assoc :paths entorypoint)))
-                                     (cdr (assoc :line entorypoint))
-                                     (cdr (assoc :combination origin)))))))
+                          (let ((entorypoint (cdr (assoc :entorypoint f))))
+                            (format nil "~a~a"
+                                     (nth ri (cdr (assoc :paths f)))
+                                     (cdr (assoc :line entorypoint)))))))
     (setf results (append files results))
 
     (when (= (length remaining-poss) 0)
@@ -274,7 +271,9 @@
       with prev-dir
       with group = '()
       for pos in remaining-poss
-      do (let ((dir (nth ri (cdr (assoc :paths pos)))))
+      do (let ((entorypoint (cdr (assoc :entorypoint pos)))
+               (dir))
+           (setf dir (nth ri (cdr (assoc :paths pos))))
            (unless prev-dir
              (setf prev-dir dir))
 
