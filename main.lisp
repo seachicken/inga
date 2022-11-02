@@ -188,7 +188,6 @@
                               (when item-pos
                                 (log-debug (format nil "affected-pos: ~a, src-path: ~a, line-no: ~a" item-pos src-path line-no))
                                 (setf item-pos (acons :line-no line-no item-pos))
-                                (setf item-pos (acons :path src-path item-pos))
                                 (when (assoc :origin range)
                                   (setf item-pos (acons :origin (cdr (assoc :origin range)) item-pos)))
                                 item-pos)))
@@ -219,11 +218,11 @@
                         (return results))))
       (setf affected-poss
             (mapcar (lambda (pos)
-                      (acons :combination 
-                             (count-combinations (context-parser ctx)
-                                                 src-path ast
-                                                 (cdr (assoc :line-nos pos)))
-                             pos))
+                      (let ((combination (count-combinations (context-parser ctx)
+                                                             src-path ast
+                                                             (cdr (assoc :line-nos pos)))))
+                        (setf pos (remove :line-nos pos :key 'car))
+                        (acons :combination combination pos)))
                     affected-poss)))
     affected-poss))
 

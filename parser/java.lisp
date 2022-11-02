@@ -51,13 +51,15 @@
             (when (jsown:keyp ast "name")
               (let ((name (cdr (jsown:val ast "name"))))
                 (return
-                  (list (cons :name (jsown:val name "identifier"))
+                  (list (cons :path src-path)
+                        (cons :name (jsown:val name "identifier"))
                         (cons :line (jsown:val (jsown:val name "range") "beginLine"))
                         (cons :offset (jsown:val (jsown:val name "range") "beginColumn"))))))
             (when (jsown:keyp ast "variables")
               (let ((name (cdr (jsown:val (cdr (first (jsown:val ast "variables"))) "name"))))
                 (return
-                  (list (cons :name (jsown:val name "identifier"))
+                  (list (cons :path src-path)
+                        (cons :name (jsown:val name "identifier"))
                         (cons :line (jsown:val (jsown:val name "range") "beginLine"))
                         (cons :offset (jsown:val (jsown:val name "range") "beginColumn"))))))))
 
