@@ -55,7 +55,7 @@
                   "# Inga Report~%**~a affected by the change** (powered by [Inga](https://github.com/seachicken/inga))~%~%<details><summary>Affected files</summary>~%~%~a~a~%</details>"
                   (get-affected-display-name entorypoints)
                   (if (> (length combinations) 0)
-                      (format nil "Change with the highest number of combinations:~%~%~a~%" (get-combination-table combinations))
+                      (format nil "Change with the highest number of combinations:~%~%~a~%" (get-combination-table base-url sha combinations))
                       "")
                   (get-code-hierarchy base-url sha entorypoints (first combinations))))
     (handler-case
@@ -104,7 +104,6 @@
     with results = '()
     for pos in poss do
     (let ((origin (cdr (assoc :origin pos))))
-      (format t "v: ~a, a: ~a~%" (cdr (assoc :combination origin)) min-combination)
       (when (and
               (>= (cdr (assoc :combination origin)) min-combination)
               (< idx 3) (> (length poss) idx))
@@ -112,7 +111,7 @@
       (setf idx (+ idx 1)))
     finally (return results)))
 
-(defun get-combination-table (poss)
+(defun get-combination-table (base-url sha poss)
   (let ((result ""))
     (format nil "~a~%~a~%~a"
             "| Rank | Origin | Combination |"
@@ -121,12 +120,19 @@
               with idx = 1
               with result = ""
               for pos in poss do
-              (let ((origin (cdr (assoc :origin pos))))
-                (setf result (format nil "~a| ~a | ~a - ~a | ~a~a |~%"
+              (let ((origin (cdr (assoc :origin pos)))
+                    origin-link)
+                (setf origin-link 
+                      (get-code-url (format nil "~a - ~a"
+                                            (get-file (split #\/ (cdr (assoc :path origin))))
+                                            (cdr (assoc :name origin)))
+                                    base-url sha
+                                    (cdr (assoc :path origin))
+                                    (cdr (assoc :line origin))))
+                (setf result (format nil "~a| ~a | ~a | ~a~a |~%"
                                      result
                                      idx
-                                     (get-file (split #\/ (cdr (assoc :path origin))))
-                                     (cdr (assoc :name origin))
+                                     origin-link
                                      (cdr (assoc :combination origin))
                                      (if (= idx 1) " 💥" "")))
                 (setf idx (+ idx 1)))
@@ -221,13 +227,23 @@
     (when (equal origin (cdr (assoc :origin most-affected-pos)))
       (setf explosion " 💥"))
     (if (= num-of-nested 0)
-        (format nil "- 📄 [~a - ~a~a](~ablob/~a/~a#L~a)"
-                file (cdr (assoc :name entorypoint)) explosion
-                base-url sha (cdr (assoc :path entorypoint)) (cdr (assoc :line entorypoint)))
-        (format nil "~vt- 📄 [~a - ~a~a](~ablob/~a/~a#L~a)"
+        (format nil "- 📄 ~a"
+                (get-code-url (format nil "~a - ~a~a"
+                                      file (cdr (assoc :name entorypoint)) explosion)
+                              base-url sha
+                              (cdr (assoc :path entorypoint))
+                              (cdr (assoc :line entorypoint))))
+        (format nil "~vt- 📄 ~a"
                 (* num-of-nested 2)
-                file (cdr (assoc :name entorypoint)) explosion
-                base-url sha (cdr (assoc :path entorypoint)) (cdr (assoc :line entorypoint))))))
+                (get-code-url (format nil "~a - ~a~a"
+                                      file (cdr (assoc :name entorypoint)) explosion)
+                              base-url sha
+                              (cdr (assoc :path entorypoint))
+                              (cdr (assoc :line entorypoint)))))))
+
+(defun get-code-url (text base-url sha file-path line)
+  (format nil "[~a](~ablob/~a/~a#L~a)"
+          text base-url sha file-path line))
 
 (defun group-by-dir (sorted-poss)
   (let ((results '()))
