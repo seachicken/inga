@@ -11,9 +11,10 @@
   (is (equal (format nil "~a~%~a~%~a~%~a~%"
                      "| Rank | Origin | Combination |"
                      "| - | - | - |"
-                     "| 1 | 1.ts - a | 3 💥 |"
-                     "| 2 | 1.ts - b | 2 |")
+                     "| 1 | [1.ts - a](https://github.com/owner/repo/blob/sha/a/1.ts#L1) | 3 💥 |"
+                     "| 2 | [1.ts - b](https://github.com/owner/repo/blob/sha/a/1.ts#L1) | 2 |")
              (inga/github::get-combination-table
+               "https://github.com/owner/repo/" "sha"
                (inga/github::filter-combinations
                  (inga/github::filter-by-key
                    (inga/github::sort-by-combination
