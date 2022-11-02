@@ -54,8 +54,8 @@
                   (:entorypoint (:path . "c/a/1.tsx") (:name . "a") (:line . 3)))
                  ((:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))
                   (:entorypoint (:path . "a.tsx") (:name . "a") (:line . 4))))
-               '(((:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))
-                  (:entorypoint (:path . "b/a/1.tsx") (:name . "b") (:line . 2))))))))
+               '((:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))
+                 (:entorypoint (:path . "b/a/1.tsx") (:name . "b") (:line . 2)))))))
 
 (test filter-by-key
   (is (equal
