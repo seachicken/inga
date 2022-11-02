@@ -221,7 +221,7 @@
                       (let ((combination (count-combinations (context-parser ctx)
                                                              src-path ast
                                                              (cdr (assoc :line-nos pos)))))
-                        (remove :line-nos pos)
+                        (setf pos (remove :line-nos pos :key 'car))
                         (acons :combination combination pos)))
                     affected-poss)))
     affected-poss))
