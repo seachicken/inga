@@ -87,7 +87,7 @@
              ("--base-sha"
               (setf base-sha (pop argv)))
              ("--min-combination"
-              (setf min-combination (pop argv)))
+              (setf min-combination (parse-integer (pop argv))))
              (t (error 'inga-error-option-not-found)))
         finally
           (return (append 
