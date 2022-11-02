@@ -104,6 +104,7 @@
     with results = '()
     for pos in poss do
     (let ((origin (cdr (assoc :origin pos))))
+      (format t "v: ~a, a: ~a~%" (cdr (assoc :combination origin)) min-combination)
       (when (and
               (>= (cdr (assoc :combination origin)) min-combination)
               (< idx 3) (> (length poss) idx))
