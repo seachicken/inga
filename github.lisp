@@ -259,7 +259,7 @@
                       #'(lambda (f)
                           (let ((entorypoint (cdr (assoc :entorypoint f))))
                             (format nil "~a~a"
-                                     (nth ri (cdr (assoc :paths entorypoint)))
+                                     (nth ri (cdr (assoc :paths f)))
                                      (cdr (assoc :line entorypoint)))))))
     (setf results (append files results))
 
@@ -271,7 +271,9 @@
       with prev-dir
       with group = '()
       for pos in remaining-poss
-      do (let ((dir (nth ri (cdr (assoc :paths pos)))))
+      do (let ((entorypoint (cdr (assoc :entorypoint pos)))
+               (dir))
+           (setf dir (nth ri (cdr (assoc :paths pos))))
            (unless prev-dir
              (setf prev-dir dir))
 
