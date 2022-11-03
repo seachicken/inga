@@ -120,7 +120,7 @@
 (defun get-combination-table (base-url sha poss)
   (let ((result ""))
     (format nil "~a~%~a~%~a"
-            "| Rank | Origin | Combination |"
+            "| Rank | Changed Functions | Combinations |"
             "| - | - | - |"
             (loop
               with result = ""

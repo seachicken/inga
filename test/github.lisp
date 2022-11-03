@@ -9,7 +9,7 @@
 
 (test get-combination-table
   (is (equal (format nil "~a~%~a~%~a~%~a~%~a~%"
-                     "| Rank | Origin | Combination |"
+                     "| Rank | Changed Functions | Combinations |"
                      "| - | - | - |"
                      "| 1 | [1.ts - b](https://github.com/owner/repo/blob/sha/a/1.ts#L1) | 3 💥 |"
                      "| 1 | [1.ts - a](https://github.com/owner/repo/blob/sha/a/1.ts#L1) | 3 💥 |"
