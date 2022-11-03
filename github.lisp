@@ -57,7 +57,7 @@
                   (if (> (length combinations) 0)
                       (format nil "Change with the highest number of combinations:~%~%~a~%" (get-combination-table base-url sha combinations))
                       "")
-                  (get-code-hierarchy base-url sha entorypoints (first combinations))))
+                  (get-code-hierarchy base-url sha entorypoints combinations)))
     (handler-case
       (uiop:run-program (format nil
                                 "(cd ~a && gh pr comment ~a -R ~a/~a --body '~a' --edit-last)"
@@ -100,15 +100,21 @@
 
 (defun filter-combinations (poss min-combination)
   (loop
-    with idx = 0
+    with rank = 1
+    with prev-combination = 0
     with results = '()
     for pos in poss do
-    (let ((origin (cdr (assoc :origin pos))))
+    (let ((origin (cdr (assoc :origin pos)))
+          combination)
+      (setf combination (cdr (assoc :combination origin)))
       (when (and
-              (>= (cdr (assoc :combination origin)) min-combination)
-              (< idx 3) (> (length poss) idx))
-          (setf results (append results (list pos))))
-      (setf idx (+ idx 1)))
+              (>= combination min-combination)
+              (<= rank 3) (>= (length poss) rank))
+        (when (< combination prev-combination)
+          (setf rank (+ rank 1)))
+        (setf prev-combination combination)
+        (setf pos (acons :rank rank pos))
+        (setf results (append results (list pos)))))
     finally (return results)))
 
 (defun get-combination-table (base-url sha poss)
@@ -117,10 +123,10 @@
             "| Rank | Origin | Combination |"
             "| - | - | - |"
             (loop
-              with idx = 1
               with result = ""
               for pos in poss do
               (let ((origin (cdr (assoc :origin pos)))
+                    (rank (cdr (assoc :rank pos)))
                     origin-link)
                 (setf origin-link 
                       (get-code-url (format nil "~a - ~a"
@@ -131,18 +137,21 @@
                                     (cdr (assoc :line origin))))
                 (setf result (format nil "~a| ~a | ~a | ~a~a |~%"
                                      result
-                                     idx
+                                     rank
                                      origin-link
                                      (cdr (assoc :combination origin))
-                                     (if (= idx 1) " 💥" "")))
-                (setf idx (+ idx 1)))
+                                     (if (= rank 1) " 💥" ""))))
               finally (return result)))))
 
-(defun get-code-hierarchy (base-url sha poss most-affected-pos)
+(defun get-code-hierarchy (base-url sha poss combinations)
   (setf poss (mapcar (lambda (p)
                        (acons :paths (split #\/ (cdr (assoc :path (cdr (assoc :entorypoint p))))) p))
                      poss))
-  (let ((sorted-poss (group-by-dir (sort-flat base-url sha poss '() 0))) (result ""))
+  (let ((sorted-poss (group-by-dir (sort-flat base-url sha poss '() 0)))
+        (most-affected-poss (remove-if-not (lambda (p)
+                                             (= (cdr (assoc :rank p)) 1))
+                                           combinations))
+        (result ""))
     (setf sorted-poss 
           (loop
             with results = '()
@@ -181,7 +190,7 @@
                do (setf result
                         (format nil "~a~a~%"
                                 result
-                                (output-file num-of-nested base-url sha pos most-affected-pos)))))
+                                (output-file num-of-nested base-url sha pos most-affected-poss)))))
            (setf i (+ i 1))))
     result))
 
@@ -219,12 +228,13 @@
                 (format nil "~a~%" result))
             nested-i)))
 
-(defun output-file (num-of-nested base-url sha pos most-affected-pos)
+(defun output-file (num-of-nested base-url sha pos most-affected-poss)
   (let ((file (get-file (cdr (assoc :paths pos))))
         (origin (cdr (assoc :origin pos)))
+        (origins (mapcar (lambda (p) (cdr (assoc :origin p))) most-affected-poss))
         (entorypoint (cdr (assoc :entorypoint pos)))
         (explosion ""))
-    (when (equal origin (cdr (assoc :origin most-affected-pos)))
+    (when (find origin origins :test #'equal)
       (setf explosion " 💥"))
     (if (= num-of-nested 0)
         (format nil "- 📄 ~a"

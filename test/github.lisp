@@ -8,17 +8,18 @@
 (in-suite github)
 
 (test get-combination-table
-  (is (equal (format nil "~a~%~a~%~a~%~a~%"
+  (is (equal (format nil "~a~%~a~%~a~%~a~%~a~%"
                      "| Rank | Origin | Combination |"
                      "| - | - | - |"
+                     "| 1 | [1.ts - b](https://github.com/owner/repo/blob/sha/a/1.ts#L1) | 3 💥 |"
                      "| 1 | [1.ts - a](https://github.com/owner/repo/blob/sha/a/1.ts#L1) | 3 💥 |"
-                     "| 2 | [1.ts - b](https://github.com/owner/repo/blob/sha/a/1.ts#L1) | 2 |")
+                     "| 2 | [1.ts - d](https://github.com/owner/repo/blob/sha/a/1.ts#L1) | 2 |")
              (inga/github::get-combination-table
                "https://github.com/owner/repo/" "sha"
                (inga/github::filter-combinations
                  (inga/github::filter-by-key
                    (inga/github::sort-by-combination
-                     '(((:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))
+                     '(((:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 3))
                         (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
                        ((:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))
                         (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
@@ -26,7 +27,7 @@
                         (:entorypoint (:path . "b/a/1.tsx") (:name . "b") (:line . 1)))
                        ((:origin (:path . "a/1.ts") (:name . "c") (:line . 1) (:combination . 1))
                         (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
-                       ((:origin (:path . "a/1.ts") (:name . "d") (:line . 1) (:combination . 1))
+                       ((:origin (:path . "a/1.ts") (:name . "d") (:line . 1) (:combination . 2))
                         (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))))
                    :origin)
                  2)))))
@@ -55,8 +56,9 @@
                   (:entorypoint (:path . "c/a/1.tsx") (:name . "a") (:line . 3)))
                  ((:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))
                   (:entorypoint (:path . "a.tsx") (:name . "a") (:line . 4))))
-               '((:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))
-                 (:entorypoint (:path . "b/a/1.tsx") (:name . "b") (:line . 2)))))))
+               '(((:rank . 1)
+                  (:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))
+                  (:entorypoint (:path . "b/a/1.tsx") (:name . "b") (:line . 2))))))))
 
 (test filter-by-key
   (is (equal
