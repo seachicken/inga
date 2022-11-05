@@ -35,8 +35,11 @@ jobs:
                           (unless (asdf:test-system :inga)
                             (uiop:quit 1))
                           (ql:quickload :inga/test-typescript)
-                          (unless (fiveam:run! (uiop:find-symbol* '#:typescript
-                                                                  :inga/test/parser/typescript))
+                          (unless (fiveam:run! (list
+                                                 (uiop:find-symbol* '#:typescript
+                                                                    :inga/test/main)
+                                                 (uiop:find-symbol* '#:typescript
+                                                                    :inga/test/parser/typescript)))
                             (uiop:quit 1))"
 
   test-java:
