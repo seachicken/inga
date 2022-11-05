@@ -50,7 +50,6 @@ RUN set -eux && \
 
 ENV INGA_HOME /
 ENV INGA_CONTEXT java
-ENV INGA_DEBUG 1
 
 ENTRYPOINT ["inga"]
 
