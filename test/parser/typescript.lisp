@@ -10,6 +10,10 @@
 (defparameter *react-path* (uiop:merge-pathnames* "test/fixtures/react-typescript-todo/"))
 (defparameter *nestjs-path* (uiop:merge-pathnames* "test/fixtures/nestjs-realworld-example-app-prisma/"))
 
+;;       ↓[out]
+;; const article = {
+;;   title: "Hello" ←[in]
+;; };
 (test find-affected-pos-for-variable-object-literal-expression
   (let ((parser (make-parser :typescript *nestjs-path*)))
     (start-parser parser)
@@ -24,6 +28,32 @@
               8))))
     (stop-parser parser)))
 
+;; const NewTodoTextInput: React.FC = () => {
+;;            ↓[out]
+;;   function addTodo(e: React.KeyboardEvent<HTMLInputElement>): void {
+;;     if (textInput.current === null) return ←[in]
+;;   }
+;; }
+(test find-affected-pos-for-function
+  (let ((parser (make-parser :typescript *react-path*)))
+    (start-parser parser)
+    (is (equal
+          '((:path . "src/App/NewTodoInput/index.tsx")
+            (:name . "addTodo") (:line . 12) (:offset . 12))
+          (let ((src-path "src/App/NewTodoInput/index.tsx"))
+            (inga/parser/typescript::find-affected-pos
+              parser
+              src-path
+              (exec-parser parser src-path)
+              13))))
+    (stop-parser parser)))
+
+;;       ↓[out]
+;; const reverseCompleted = (id: Todo['id']): void => {
+;;   const toggled: TodoListType = appState.todoList.map((t) => {
+;;     return t ←[in]
+;;   })
+;; }
 (test find-affected-pos-for-variable-arrow-function
   (let ((parser (make-parser :typescript *react-path*)))
     (start-parser parser)
@@ -38,6 +68,12 @@
               65))))
     (stop-parser parser)))
 
+;; class ArticleService {
+;;         ↓[out]
+;;   async findAll(userId: number, query): Promise<any> {
+;;     const andQueries = this.buildFindAllQuery(query); ←[in]
+;;   }
+;; }
 (test find-affected-pos-for-method
   (let ((parser (make-parser :typescript *nestjs-path*)))
     (start-parser parser)
@@ -49,9 +85,14 @@
               parser
               src-path
               (exec-parser parser src-path)
-              47))))
+              46))))
     (stop-parser parser)))
 
+;; class ArticleService {
+;;   async findAll(userId: number, query): Promise<any> {
+;;     const andQueries = this.buildFindAllQuery(query);
+;;   }
+;; } ←[in]
 (test ignore-affected-pos-when-end-block
   (let ((parser (make-parser :typescript *nestjs-path*)))
     (start-parser parser)
@@ -76,6 +117,18 @@
               src-path
               (exec-parser parser src-path)
               '(69 70)))))
+    (stop-parser parser)))
+
+(test find-entrypoint
+  (let ((parser (make-parser :typescript *react-path*)))
+    (start-parser parser)
+    (is (equal
+          '((:path . "src/App/TodoList/Item/index.tsx")
+            (:name . "input") (:line . 107) (:offset . 12))
+          (inga/parser/typescript::find-entrypoint
+            parser
+            '((:path . "src/App/TodoList/Item/index.tsx")
+              (:line . 111) (:offset . 29)))))
     (stop-parser parser)))
 
 (test convert-tsserver-pos-to-tsparser-pos
