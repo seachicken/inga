@@ -70,7 +70,10 @@ jobs:
                           (unless (asdf:test-system :inga)
                             (uiop:quit 1))
                           (ql:quickload :inga/test-java)
-                          (unless (fiveam:run! (uiop:find-symbol* '#:java
-                                                                  :inga/test/parser/java))
+                          (unless (fiveam:run! (list
+                                                 (uiop:find-symbol* '#:java
+                                                                    :inga/test/main)
+                                                 (uiop:find-symbol* '#:java
+                                                                    :inga/test/parser/java)))
                             (uiop:quit 1))"
 
