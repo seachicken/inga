@@ -46,9 +46,10 @@
     (subseq result 0 (- (length result) 1))))
 
 (defun send-pr-comment (hostname base-url owner-repo number affected-poss project-path sha min-combination)
-  (setf affected-poss (sort-by-combination affected-poss))
-  (let ((combinations (filter-combinations (filter-by-key affected-poss :origin) min-combination))
-        (entorypoints (filter-by-key affected-poss :entorypoint))
+  (let ((combinations (filter-combinations
+                        (filter-by-key (sort-by-combination affected-poss) :origin)
+                        min-combination))
+        (entorypoints (group-by-entorypoint affected-poss))
         comment)
     (setf comment
           (format nil
@@ -85,6 +86,34 @@
   (sort (copy-list poss)
         #'(lambda (a b) (> (cdr (assoc :combination (cdr (assoc :origin a))))
                            (cdr (assoc :combination (cdr (assoc :origin b))))))))
+
+(defun group-by-entorypoint (poss)
+  (setf poss (mapcar (lambda (p)
+                       (acons :paths (split #\/ (cdr (assoc :path (cdr (assoc :entorypoint p))))) p))
+                     poss))
+  (setf sorted-poss (sort poss #'string< :key
+                          #'(lambda (p)
+                              (format nil "~a~a"
+                                      (cdr (assoc :paths p))
+                                      (cdr (assoc :line (cdr (assoc :entorypoint p))))))))
+  (loop
+    with prev
+    with results = '()
+    for pos in sorted-poss do
+    (let ((entorypoint-current (cdr (assoc :entorypoint pos)))
+          (entorypoint-prev (cdr (assoc :entorypoint prev))))
+      (if (equal entorypoint-current entorypoint-prev)
+          (progn
+            (setf (cadr (assoc :origins (car (last results))))
+                  (append (cadr (assoc :origins (car (last results))))
+                          (list (cdr (assoc :origin pos))))))
+          (setf results (append results
+                                (list
+                                  (list
+                                    (cons :entorypoint (cdr (assoc :entorypoint pos)))
+                                    (cons :origins (list (list (cdr (assoc :origin pos))))))))))
+      (setf prev pos))
+    finally (return results)))
 
 (defun filter-by-key (poss key)
   (loop
@@ -230,12 +259,13 @@
 
 (defun output-file (num-of-nested base-url sha pos most-affected-poss)
   (let ((file (get-file (cdr (assoc :paths pos))))
-        (origin (cdr (assoc :origin pos)))
-        (origins (mapcar (lambda (p) (cdr (assoc :origin p))) most-affected-poss))
+        (origins (cadr (assoc :origins pos)))
+        (most-affected-origins (mapcar (lambda (p) (cdr (assoc :origin p))) most-affected-poss))
         (entorypoint (cdr (assoc :entorypoint pos)))
         (explosion ""))
-    (when (find origin origins :test #'equal)
-      (setf explosion " 💥"))
+    (loop for origin in origins do
+          (when (find origin most-affected-origins :test #'equal)
+            (setf explosion " 💥")))
     (if (= num-of-nested 0)
         (format nil "- 📄 ~a"
                 (get-code-url (format nil "~a - ~a~a"
