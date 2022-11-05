@@ -36,22 +36,22 @@
   (is (equal (format nil "~a~%~a~%~a~%~a~%~a~%~a~%~a~%~a~%"
                      "- 📂 b"
                      "  - 📂 a"
-                     "    - 📄 [1.tsx - a](https://github.com/owner/repo/blob/sha/b/a/1.tsx#L1)"
-                     "    - 📄 [1.tsx - b 💥](https://github.com/owner/repo/blob/sha/b/a/1.tsx#L2)"
-                     "  - 📄 [1.tsx - a](https://github.com/owner/repo/blob/sha/b/1.tsx#L1)"
+                     "    - 📄 [1.tsx - a](https://github.com/owner/repo/blob/sha/b/a/1.tsx#L1) ⇠ [✶](https://github.com/owner/repo/blob/sha/a/1.ts#L2)"
+                     "    - 📄 [1.tsx - b 💥](https://github.com/owner/repo/blob/sha/b/a/1.tsx#L2) ⇠ [✶](https://github.com/owner/repo/blob/sha/a/1.ts#L1) [✶](https://github.com/owner/repo/blob/sha/a/1.ts#L3)"
+                     "  - 📄 [1.tsx - a](https://github.com/owner/repo/blob/sha/b/1.tsx#L1) ⇠ [✶](https://github.com/owner/repo/blob/sha/a/1.ts#L2)"
                      "- 📂 c/a"
-                     "  - 📄 [1.tsx - a](https://github.com/owner/repo/blob/sha/c/a/1.tsx#L3)"
-                     "- 📄 [a.tsx - a](https://github.com/owner/repo/blob/sha/a.tsx#L4)")
+                     "  - 📄 [1.tsx - a](https://github.com/owner/repo/blob/sha/c/a/1.tsx#L3) ⇠ [✶](https://github.com/owner/repo/blob/sha/a/1.ts#L1)"
+                     "- 📄 [a.tsx - a](https://github.com/owner/repo/blob/sha/a.tsx#L4) ⇠ [✶](https://github.com/owner/repo/blob/sha/a/1.ts#L1)")
              (inga/github::get-code-hierarchy
                "https://github.com/owner/repo/" "sha"
                (inga/github::group-by-entorypoint
                  '(((:origin (:path . "a/1.ts") (:name . "a") (:line . 1) (:combination . 3))
                     (:entorypoint (:path . "b/a/1.tsx") (:name . "b") (:line . 2)))
-                   ((:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))
+                   ((:origin (:path . "a/1.ts") (:name . "b") (:line . 2) (:combination . 2))
                     (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
-                   ((:origin (:path . "a/1.ts") (:name . "c") (:line . 1) (:combination . 2))
+                   ((:origin (:path . "a/1.ts") (:name . "c") (:line . 3) (:combination . 2))
                     (:entorypoint (:path . "b/a/1.tsx") (:name . "b") (:line . 2)))
-                   ((:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))
+                   ((:origin (:path . "a/1.ts") (:name . "b") (:line . 2) (:combination . 2))
                     (:entorypoint (:path . "b/1.tsx") (:name . "a") (:line . 1)))
                    ((:origin (:path . "a/1.ts") (:name . "b") (:line . 1) (:combination . 2))
                     (:entorypoint (:path . "c/a/1.tsx") (:name . "a") (:line . 3)))
