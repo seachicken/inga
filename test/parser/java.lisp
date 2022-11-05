@@ -10,6 +10,11 @@
 (defparameter *spring-boot-path*
   (truename (uiop:merge-pathnames* "test/fixtures/spring-boot-realworld-example-app/")))
 
+;; public class NewArticleParam {
+;;   @DuplicatedArticleConstraint ←[in]
+;;                  ↓[out]
+;;   private String title;
+;; }
 (test find-affected-pos-for-field-annotation
   (let ((parser (make-parser :java *spring-boot-path*)))
     (start-parser parser)
