@@ -10,25 +10,6 @@
 (defparameter *spring-boot-path*
   (truename (uiop:merge-pathnames* "test/fixtures/spring-boot-realworld-example-app/")))
 
-;; public class NewArticleParam {
-;;   @DuplicatedArticleConstraint ←[in]
-;;                  ↓[out]
-;;   private String title;
-;; }
-(test find-affected-pos-for-field-annotation
-  (let ((parser (make-parser :java *spring-boot-path*)))
-    (start-parser parser)
-    (is (equal
-          '((:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
-            (:name . "title") (:line . 19) (:offset . 18))
-          (let ((src-path "src/main/java/io/spring/application/article/NewArticleParam.java"))
-            (find-affected-pos
-              parser
-              src-path
-              (exec-parser parser src-path)
-              18))))
-    (stop-parser parser)))
-
 ;; public class ArticleQueryService {
 ;;                                ↓[out]
 ;;   public Optional<ArticleData> findById(String id, User user) {
@@ -65,6 +46,25 @@
               src-path
               (exec-parser parser src-path)
               7))))
+    (stop-parser parser)))
+
+;; public class NewArticleParam {
+;;   @DuplicatedArticleConstraint ←[in]
+;;                  ↓[out]
+;;   private String title;
+;; }
+(test find-affected-pos-for-field-annotation
+  (let ((parser (make-parser :java *spring-boot-path*)))
+    (start-parser parser)
+    (is (equal
+          '((:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
+            (:name . "title") (:line . 19) (:offset . 18))
+          (let ((src-path "src/main/java/io/spring/application/article/NewArticleParam.java"))
+            (find-affected-pos
+              parser
+              src-path
+              (exec-parser parser src-path)
+              18))))
     (stop-parser parser)))
 
 ;; public class Article {
