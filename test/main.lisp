@@ -28,6 +28,19 @@
                       (:start . 2) (:end . 2))))))
     (inga/main::stop ctx)))
 
+(test inject-mark
+  (uiop:run-program (format nil "cp -r ~a ~a" *front-path* *build-path*))
+
+  (inga/main::inject-mark
+    *build-path*
+    '(((:path . "src/App/NewTodoInput/index.tsx")
+       (:line . 34) (:offset . 10))))
+  (is (equal
+        (uiop:read-file-string (uiop:merge-pathnames* "test/fixtures/index.tsx"))
+        (uiop:read-file-string (uiop:merge-pathnames* "src/App/NewTodoInput/index.tsx" *build-path*))))
+
+  (uiop:run-program (format nil "rm -r ~a" *build-path*)))
+
 (def-suite java)
 (in-suite java)
 
@@ -73,17 +86,4 @@
 (test throw-error-when-option-does-not-exist
   (signals inga/main::inga-error-option-not-found
     (inga/main::parse-argv '("--not-exist"))))
-
-(test inject-mark
-  (uiop:run-program (format nil "cp -r ~a ~a" *front-path* *build-path*))
-
-  (inga/main::inject-mark
-    *build-path*
-    '(((:path . "src/App/NewTodoInput/index.tsx")
-       (:line . 34) (:offset . 10))))
-  (is (equal
-        (uiop:read-file-string (uiop:merge-pathnames* "test/fixtures/index.tsx"))
-        (uiop:read-file-string (uiop:merge-pathnames* "src/App/NewTodoInput/index.tsx" *build-path*))))
-  
-  (uiop:run-program (format nil "rm -r ~a" *build-path*)))
 
