@@ -55,6 +55,7 @@ RUN set -eux && \
 
 ENV INGA_HOME /
 ENV INGA_CONTEXT typescript
+ENV INGA_DEBUG 1
 
 ENTRYPOINT ["inga"]
 
