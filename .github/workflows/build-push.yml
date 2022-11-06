@@ -49,6 +49,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: ./docker/${{ matrix.target }}
+          platforms: linux/amd64,linux/arm64
           build-args: VERSION=${{ github.ref_name }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
