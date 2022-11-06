@@ -42,17 +42,17 @@
 
 (defun command (&rest argv)
   (handler-case
-    (destructuring-bind (&key root-path exclude github-token base-sha min-combination) (parse-argv argv)
+    (destructuring-bind (&key root-path exclude github-token base-commit min-combination) (parse-argv argv)
       (let (diffs pr hostname)
         (when github-token
           (setf hostname (inga/git:get-hostname root-path))
           (inga/github:login hostname github-token)
           (setf pr (inga/github:get-pr root-path))
           (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha) pr
-            (unless base-sha
+            (unless base-commit
               (inga/git:track-branch base-ref-name root-path)
-              (setf base-sha base-ref-name))))
-        (setf diffs (get-diff root-path base-sha))
+              (setf base-commit base-ref-name))))
+        (setf diffs (get-diff root-path base-commit))
 
         (let ((ctx (start root-path
                           (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
@@ -69,7 +69,7 @@
   (loop with root-path = "."
         with exclude = '()
         with github-token = nil
-        with base-sha = nil
+        with base-commit = nil
         with min-combination = 3
         for option = (pop argv)
         while option
@@ -84,8 +84,8 @@
               (setf exclude (split-trim-comma (pop argv))))
              ("--github-token"
               (setf github-token (pop argv)))
-             ("--base-sha"
-              (setf base-sha (pop argv)))
+             ("--base-commit"
+              (setf base-commit (pop argv)))
              ("--min-combination"
               (setf min-combination (parse-integer (pop argv))))
              (t (error 'inga-error-option-not-found)))
@@ -95,8 +95,8 @@
                     (list :exclude exclude)
                     (when github-token
                       (list :github-token github-token))
-                    (when base-sha
-                      (list :base-sha base-sha))
+                    (when base-commit
+                      (list :base-commit base-commit))
                     (list :min-combination min-combination)))))
 
 (defun start (root-path context-kinds &optional (exclude '()))
