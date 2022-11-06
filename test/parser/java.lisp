@@ -67,6 +67,28 @@
               18))))
     (stop-parser parser)))
 
+;; class DuplicatedArticleValidator
+;;                                    ↓[out]
+;;     implements ConstraintValidator<DuplicatedArticleConstraint, String> {
+;;   @Override
+;;   public boolean isValid(String value, ConstraintValidatorContext context) {
+;;     return true; ←[in]
+;;   }
+;; }
+(test find-affected-pos-for-constraint-validator
+  (let ((parser (make-parser :java *spring-boot-path*)))
+    (start-parser parser)
+    (is (equal
+          '((:path . "src/main/java/io/spring/application/article/DuplicatedArticleValidator.java")
+            (:name . "DuplicatedArticleConstraint") (:line . 10) (:offset . 36))
+          (let ((src-path "src/main/java/io/spring/application/article/DuplicatedArticleValidator.java"))
+            (find-affected-pos
+              parser
+              src-path
+              (exec-parser parser src-path)
+              16))))
+    (stop-parser parser)))
+
 ;; public class Article {
 ;;   public void update(String title, String description, String body) {
 ;;   } ←[in]
