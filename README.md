@@ -5,7 +5,7 @@
 
 A static analysis tool that traces references to changed code to detect entry points that have a strong impact on the user.
 
-<img width="897" alt="screenshot" src="https://user-images.githubusercontent.com/5178598/175807955-9cda92ae-de65-4ae5-8ac8-98080f4e1c26.png">
+<img width="902" alt="image" src="https://user-images.githubusercontent.com/5178598/200149748-efc00608-287e-48a3-86c6-22f040b32e92.png">
 
 ## Why?
 
