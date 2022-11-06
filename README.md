@@ -13,10 +13,21 @@ Code changes daily, and it is always important to check the impact of changes.
 In many cases, checking the impact of a change depends on how vigilant the author is in writing the code, making it difficult to detect unintended effects during the code review and QA phases.
 This tool improves software quality by detecting unintended changes at an early phase.
 
-## Supported languages
+## Quick Start
 
-- Java
-- TypeScript
+Run in the Docker container:
+
+### Java
+
+```sh
+docker run --rm -v $PWD:/work ghcr.io/seachicken/inga:latest-java --root-path /work --base-commit main
+```
+
+### TypeScript
+
+```sh
+docker run --rm -v $PWD:/work ghcr.io/seachicken/inga:latest-typescript --root-path /work --base-commit main
+```
 
 ## Usage
 
@@ -38,9 +49,9 @@ Filenames to exclude from the analysis.
 
 If GitHub token is set, send the analysis report to comments in pull requests. Analyze with diffs of base and head branch of pull requests.
 
-`--base-sha <string>`
+`--base-commit <string>`
 
-Analyze by the difference between the `base-sha` and the checked out sha. Not to be used with `--github-token` option.
+Analyze the difference between the base-commit and the checked-out commit. Set refname or SHA. If the github-token option is used, this option will be ignored and set automatically.
 
 `--min-combination <number>`
 
