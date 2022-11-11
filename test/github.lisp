@@ -36,12 +36,12 @@
   (is (equal (format nil "~a~%~a~%~a~%~a~%~a~%~a~%~a~%~a~%"
                      "- 📂 b"
                      "  - 📂 a"
-                     "    - 📄 [1.tsx - a](https://github.com/owner/repo/blob/sha/b/a/1.tsx#L1) ⇠ [✶](https://github.com/owner/repo/blob/sha/a/1.ts#L2)"
-                     "    - 📄 [1.tsx - b 💥](https://github.com/owner/repo/blob/sha/b/a/1.tsx#L2) ⇠ [✶](https://github.com/owner/repo/blob/sha/a/1.ts#L1) [✶](https://github.com/owner/repo/blob/sha/a/1.ts#L3)"
-                     "  - 📄 [1.tsx - a](https://github.com/owner/repo/blob/sha/b/1.tsx#L1) ⇠ [✶](https://github.com/owner/repo/blob/sha/a/1.ts#L2)"
+                     "    - 📄 [1.tsx - a](https://github.com/owner/repo/blob/sha/b/a/1.tsx#L1)"
+                     "    - 📄 [1.tsx - b 💥](https://github.com/owner/repo/blob/sha/b/a/1.tsx#L2)"
+                     "  - 📄 [1.tsx - a](https://github.com/owner/repo/blob/sha/b/1.tsx#L1)"
                      "- 📂 c/a"
-                     "  - 📄 [1.tsx - a](https://github.com/owner/repo/blob/sha/c/a/1.tsx#L3) ⇠ [✶](https://github.com/owner/repo/blob/sha/a/1.ts#L1)"
-                     "- 📄 [a.tsx - a](https://github.com/owner/repo/blob/sha/a.tsx#L4) ⇠ [✶](https://github.com/owner/repo/blob/sha/a/1.ts#L1)")
+                     "  - 📄 [1.tsx - a](https://github.com/owner/repo/blob/sha/c/a/1.tsx#L3)"
+                     "- 📄 [a.tsx - a](https://github.com/owner/repo/blob/sha/a.tsx#L4)")
              (inga/github::get-code-hierarchy
                "https://github.com/owner/repo/" "sha"
                (inga/github::group-by-entorypoint

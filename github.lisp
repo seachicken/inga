@@ -271,37 +271,23 @@
           (when (find origin most-affected-origins :test #'equal)
             (setf explosion " 💥")))
     (if (= num-of-nested 0)
-        (format nil "- 📄 ~a ⇠ ~a"
+        (format nil "- 📄 ~a"
                 (get-code-url (format nil "~a - ~a~a"
                                       file (cdr (assoc :name entorypoint)) explosion)
                               base-url sha
                               (cdr (assoc :path entorypoint))
-                              (cdr (assoc :line entorypoint)))
-                (get-origin-links base-url sha pos))
-        (format nil "~vt- 📄 ~a ⇠ ~a"
+                              (cdr (assoc :line entorypoint))))
+        (format nil "~vt- 📄 ~a"
                 (* num-of-nested 2)
                 (get-code-url (format nil "~a - ~a~a"
                                       file (cdr (assoc :name entorypoint)) explosion)
                               base-url sha
                               (cdr (assoc :path entorypoint))
-                              (cdr (assoc :line entorypoint)))
-                (get-origin-links base-url sha pos)))))
+                              (cdr (assoc :line entorypoint)))))))
 
 (defun get-code-url (text base-url sha file-path line)
   (format nil "[~a](~ablob/~a/~a#L~a)"
           text base-url sha file-path line))
-
-(defun get-origin-links (base-url sha pos)
-  (loop
-    with results = ""
-    for origin in (cadr (assoc :origins pos)) do
-    (setf results (format nil "~a~a~a"
-                          results
-                          (if (= (length results) 0) "" " ")
-                          (get-code-url "✶" base-url sha
-                                        (cdr (assoc :path origin))
-                                        (cdr (assoc :line origin)))))
-    finally (return results)))
 
 (defun group-by-dir (sorted-poss)
   (let ((results '()))
