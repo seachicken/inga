@@ -17,7 +17,7 @@
 (defun get-pr (project-path)
   (let ((json (jsown:parse
                 (uiop:run-program (format nil
-                                          "(cd ~a && gh pr view --json url --json number --json baseRefName --json commits)"
+                                          "(cd ~a && gh pr view --json url --json number --json mergeStateStatus --json baseRefName --json commits)"
                                           project-path)
                                   :output :string
                                   :ignore-error-status t))))
@@ -29,6 +29,8 @@
               (get-owner-repo (jsown:val json "url")))
         (list :number
               (jsown:val json "number"))
+        (list :merge-state-status
+              (jsown:val json "mergeStateStatus"))
         (list :base-ref-name
               (jsown:val json "baseRefName"))
         (list :head-sha
