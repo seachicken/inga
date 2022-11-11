@@ -48,7 +48,11 @@
           (setf hostname (inga/git:get-hostname root-path))
           (inga/github:login hostname github-token)
           (setf pr (inga/github:get-pr root-path))
-          (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha) pr
+          (destructuring-bind (&key base-url owner-repo number merge-state-status base-ref-name head-sha) pr
+            (when (string= merge-state-status "BEHIND")
+              (log-debug (format nil "can't diff when a branch is behind"))
+              (return-from command))
+
             (unless base-commit
               (inga/git:track-branch base-ref-name root-path)
               (setf base-commit base-ref-name))))
@@ -58,10 +62,9 @@
                           (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
                           exclude)))
           (let ((results (analyze ctx diffs)))
-            (log-debug (format nil "results: ~a" results))
+            (log-debug (format nil "results: ~a~%" results))
             (when (and pr results)
-              (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha) pr
-                (inga/github:send-pr-comment hostname base-url owner-repo number results root-path head-sha min-combination))))
+              (inga/github:send-pr-comment hostname pr results root-path min-combination)))
           (stop ctx))))
     (inga-error (e) (format t "~a~%" e))))
 

@@ -17,7 +17,7 @@
 (defun get-pr (project-path)
   (let ((json (jsown:parse
                 (uiop:run-program (format nil
-                                          "(cd ~a && gh pr view --json url --json number --json baseRefName --json commits)"
+                                          "(cd ~a && gh pr view --json url --json number --json mergeStateStatus --json baseRefName --json commits)"
                                           project-path)
                                   :output :string
                                   :ignore-error-status t))))
@@ -29,6 +29,8 @@
               (get-owner-repo (jsown:val json "url")))
         (list :number
               (jsown:val json "number"))
+        (list :merge-state-status
+              (jsown:val json "mergeStateStatus"))
         (list :base-ref-name
               (jsown:val json "baseRefName"))
         (list :head-sha
@@ -45,37 +47,39 @@
     (setf result (format nil "~{~a/~}" (subseq paths 3 5)))
     (subseq result 0 (- (length result) 1))))
 
-(defun send-pr-comment (hostname base-url owner-repo number affected-poss project-path sha min-combination)
-  (let ((combinations (filter-combinations
-                        (filter-by-key (sort-by-combination affected-poss) :origin)
-                        min-combination))
-        (entorypoints (group-by-entorypoint affected-poss))
-        comment)
-    (setf comment
-          (format nil
-                  "# Inga Report~%**~a affected by the change** (powered by [Inga](https://github.com/seachicken/inga))~%~%<details><summary>Affected files</summary>~%~%~a~a~%</details>"
-                  (get-affected-display-name entorypoints)
-                  (if (> (length combinations) 0)
-                      (format nil "Change with the highest number of combinations:~%~%~a~%" (get-combination-table base-url sha combinations))
-                      "")
-                  (get-code-hierarchy base-url sha entorypoints combinations)))
-    (handler-case
-      (uiop:run-program (format nil
-                                "(cd ~a && gh pr comment ~a -R ~a/~a --body '~a' --edit-last)"
-                                project-path
-                                number
-                                hostname owner-repo
-                                comment)
-                        :output :string)
-      (uiop:subprocess-error ()
-                             (uiop:run-program
-                               (format nil
-                                       "(cd ~a && gh pr comment ~a -R ~a/~a --body '~a')"
-                                       project-path
-                                       number
-                                       hostname owner-repo
-                                       comment)
-                               :output :string)))))
+(defun send-pr-comment (hostname pr affected-poss project-path min-combination)
+  (destructuring-bind (&key base-url owner-repo number merge-state-status
+                            merge-state-status base-ref-name head-sha) pr
+    (let ((combinations (filter-combinations
+                          (filter-by-key (sort-by-combination affected-poss) :origin)
+                          min-combination))
+          (entorypoints (group-by-entorypoint affected-poss))
+          comment)
+      (setf comment
+            (format nil
+                    "# Inga Report~%**~a affected by the change** (powered by [Inga](https://github.com/seachicken/inga))~%~%<details><summary>Affected files</summary>~%~%~a~a~%</details>"
+                    (get-affected-display-name entorypoints)
+                    (if (> (length combinations) 0)
+                        (format nil "Change with the highest number of combinations:~%~%~a~%" (get-combination-table base-url head-sha combinations))
+                        "")
+                    (get-code-hierarchy base-url head-sha entorypoints combinations)))
+      (handler-case
+        (uiop:run-program (format nil
+                                  "(cd ~a && gh pr comment ~a -R ~a/~a --body '~a' --edit-last)"
+                                  project-path
+                                  number
+                                  hostname owner-repo
+                                  comment)
+                          :output :string)
+        (uiop:subprocess-error ()
+                               (uiop:run-program
+                                 (format nil
+                                         "(cd ~a && gh pr comment ~a -R ~a/~a --body '~a')"
+                                         project-path
+                                         number
+                                         hostname owner-repo
+                                         comment)
+                                 :output :string))))))
 
 (defun get-affected-display-name (affected-poss)
   (if (equal (length affected-poss) 1)
