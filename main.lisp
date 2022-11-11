@@ -64,7 +64,7 @@
           (let ((results (analyze ctx diffs)))
             (log-debug (format nil "results: ~a~%" results))
             (when (and pr results)
-              (destructuring-bind (&key base-url owner-repo number base-ref-name head-sha) pr
+              (destructuring-bind (&key base-url owner-repo number head-sha &rest o) pr
                 (inga/github:send-pr-comment hostname base-url owner-repo number results root-path head-sha min-combination))))
           (stop ctx))))
     (inga-error (e) (format t "~a~%" e))))
