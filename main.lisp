@@ -170,6 +170,7 @@
     (enqueue q range)
     (loop
       (let ((range (dequeue q)))
+        (format t "range: ~a~%" range)
         (if (null range) (return results))
 
         (let ((src-path (cdr (assoc :path range)))
