@@ -18,11 +18,6 @@ RUN set -eux && \
   curl -o /tmp/inga/setup_node -fsSL https://deb.nodesource.com/setup_14.x
 
 RUN set -eux && \
-  curl -o ./tsparser.tar.gz -L https://github.com/seachicken/tsparser/archive/refs/tags/v0.1.0.tar.gz && \
-  mkdir /tmp/inga/tsparser && \
-  tar xvf ./tsparser.tar.gz -C /tmp/inga/tsparser --strip-components 1
-
-RUN set -eux && \
   curl -o ./inga.tar.gz -L https://github.com/seachicken/inga/archive/refs/tags/$VERSION.tar.gz && \
   mkdir inga && \
   tar xvf ./inga.tar.gz -C ./inga --strip-components 1 && \
@@ -47,11 +42,7 @@ RUN set -eux && \
   apt update && \
   apt install -y gh
 
-RUN npm install -g typescript
-
-RUN set -eux && \
-  cd /tmp/inga/tsparser && npm ci && npm run build && \
-  npm install -g .
+RUN npm install -g typescript @seachicken/tsparser
 
 ENV INGA_HOME /
 ENV INGA_CONTEXT typescript

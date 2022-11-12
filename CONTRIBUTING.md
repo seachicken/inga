@@ -14,9 +14,7 @@ If you find a security vulnerability, do NOT open an issue. Email lavish.hut.0z@
 
 ```shell
 # Install dependencies for TypeScript
-npm install -g typescript
-git clone git@github.com:seachicken/tsparser.git
-npm install -g </youer/local/path/tsparser>
+npm install -g typescript @seachicken/tsparser
 
 # Install dependencies for Java
 curl -o ./libs/lombok.jar -L https://projectlombok.org/downloads/lombok.jar
