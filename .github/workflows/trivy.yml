@@ -2,7 +2,7 @@ name: Scan Docker images
 
 on:
   schedule:
-    - cron: '22 15 * * 1'
+    - cron: '22 15 * * *'
 
 env:
   REGISTRY: ghcr.io
