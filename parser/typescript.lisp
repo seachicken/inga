@@ -57,12 +57,13 @@
     (loop
       (let ((ast (dequeue q)))
         (if (null ast) (return))
+        (format t "ast-pos: ~a, ast: ~a~%" ast-pos (inga/utils::top ast 6))
 
         (when (and
                 (jsown:keyp ast "kind") (= (jsown:val ast "kind") *variable-declaration*)
                 (jsown:keyp ast "start") (<= (jsown:val ast "start") ast-pos)
                 (jsown:keyp ast "end") (> (jsown:val ast "end") ast-pos))
-          (format t "ast-pos: ~a, ast: ~a~%" ast-pos (inga/utils::top ast 20))
+          (format t "!!!!~%")
           (let ((init (jsown:val ast "initializer")))
             (alexandria:switch ((jsown:val init "kind"))
               (*object-literal-expression*
