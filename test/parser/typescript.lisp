@@ -48,6 +48,24 @@
               13))))
     (stop-parser parser)))
 
+;;              ↓[out]
+;; export const User = createParamDecorator((data: any) => {
+;;   const a = 0; ←[in]
+;; });
+(test find-affected-pos-for-variable-call-expression
+  (let ((parser (make-parser :typescript *nestjs-path*)))
+    (start-parser parser)
+    (is (equal
+          '((:path . "src/user/user.decorator.ts")
+            (:name . "User") (:line . 5) (:offset . 14))
+          (let ((src-path "src/user/user.decorator.ts"))
+            (inga/parser/typescript::find-affected-pos
+              parser
+              src-path
+              (exec-parser parser src-path)
+              9))))
+    (stop-parser parser)))
+
 ;;       ↓[out]
 ;; const reverseCompleted = (id: Todo['id']): void => {
 ;;   const toggled: TodoListType = appState.todoList.map((t) => {

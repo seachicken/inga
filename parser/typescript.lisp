@@ -5,22 +5,6 @@
   (:export #:parser-typescript))
 (in-package #:inga/parser/typescript)
 
-;; typescript v4.3.5
-(defparameter *void-keyword* 113)
-(defparameter *method-declaration* 166)
-(defparameter *object-literal-expression* 201)
-(defparameter *parenthesized-expression* 208)
-(defparameter *arrow-function* 210)
-(defparameter *variable-statement* 233)
-(defparameter *if-statement* 235)
-(defparameter *return-statement* 243)
-(defparameter *variable-declaration* 250)
-(defparameter *function-declaration* 252)
-(defparameter *class-declaration* 253)
-(defparameter *jsx-element* 274)
-(defparameter *jsx-self-closing-element* 275)
-(defparameter *jsx-opening-element* 276)
-
 (defclass parser-typescript (parser)
   ((nearest-ast-pos :initform nil
                     :accessor parser-nearest-ast-pos)))
@@ -57,26 +41,32 @@
         (if (null ast) (return))
 
         (when (and
-                (jsown:keyp ast "kind") (= (jsown:val ast "kind") *variable-declaration*)
+                (jsown:keyp ast "kindName") (string= (jsown:val ast "kindName") "VariableDeclaration")
                 (jsown:keyp ast "start") (<= (jsown:val ast "start") ast-pos)
                 (jsown:keyp ast "end") (> (jsown:val ast "end") ast-pos))
           (let ((init (jsown:val ast "initializer")))
-            (alexandria:switch ((jsown:val init "kind"))
-              (*object-literal-expression*
+            (alexandria:switch ((jsown:val init "kindName") :test #'string=)
+              ("ObjectLiteralExpression"
                 (when (jsown:keyp ast "name")
                   (let ((name (cdr (jsown:val ast "name"))))
                     (return (convert-to-pos (parser-path parser) file-path
                                             (jsown:val name "escapedText")
                                             (jsown:val name "start"))))))
-              (*arrow-function*
-                (if (equal (find-return-type init) *jsx-element*)
+              ("CallExpression"
+                (when (jsown:keyp ast "name")
+                  (let ((name (cdr (jsown:val ast "name"))))
+                    (return (convert-to-pos (parser-path parser) file-path
+                                            (jsown:val name "escapedText")
+                                            (jsown:val name "start"))))))
+              ("ArrowFunction"
+                (if (equal (find-return-type init) "JsxElement")
                     (enqueue q (jsown:val init "body"))
                     (return (convert-to-pos (parser-path parser) file-path
                                             (jsown:val (cdr (jsown:val ast "name")) "escapedText")
                                             (jsown:val ast "start"))))))))
 
         (when (and
-                (jsown:keyp ast "kind") (= (jsown:val ast "kind") *function-declaration*)
+                (jsown:keyp ast "kindName") (string= (jsown:val ast "kindName") "FunctionDeclaration")
                 (jsown:keyp ast "start") (<= (jsown:val ast "start") ast-pos)
                 (jsown:keyp ast "end") (> (jsown:val ast "end") ast-pos))
           (when (jsown:keyp ast "name")
@@ -86,7 +76,7 @@
                                       (jsown:val name "start"))))))
 
         (when (and
-                (jsown:keyp ast "kind") (= (jsown:val ast "kind") *method-declaration*)
+                (jsown:keyp ast "kindName") (string= (jsown:val ast "kindName") "MethodDeclaration")
                 (jsown:keyp ast "start") (<= (jsown:val ast "start") ast-pos)
                 (jsown:keyp ast "end") (> (jsown:val ast "end") ast-pos))
           (when (jsown:keyp ast "name")
@@ -96,15 +86,13 @@
                                       (jsown:val name "start"))))))
 
         (when (and
-                (jsown:keyp ast "kind")
-                (= (jsown:val ast "kind") *variable-statement*))
+                (jsown:keyp ast "kindName") (string= (jsown:val ast "kindName") "FirstStatement"))
           (let ((dec-list (jsown:val (jsown:val ast "declarationList") "declarations")))
             (loop for d in dec-list do
                   (enqueue q (cdr d)))))
 
         (when (and
-                (jsown:keyp ast "kind")
-                (= (jsown:val ast "kind") *class-declaration*))
+                (jsown:keyp ast "kindName") (string= (jsown:val ast "kindName") "ClassDeclaration"))
           (loop for m in (jsown:val ast "members") do
                 (enqueue q (cdr m))))
 
@@ -130,7 +118,7 @@
           (if (null ast) (return))
 
           (when (and
-                  (jsown:keyp ast "kind") (= (jsown:val ast "kind") *if-statement*)
+                  (jsown:keyp ast "kindName") (string= (jsown:val ast "kindName") "IfStatement")
                   (jsown:keyp ast "start") (<= (jsown:val ast "start") ast-pos)
                   (jsown:keyp ast "end") (> (jsown:val ast "end") ast-pos)
                   (null (assoc (jsown:val ast "start") found-items)))
@@ -138,22 +126,20 @@
             (setf result (* result 2)))
 
           (when (and
-                  (jsown:keyp ast "kind") (= (jsown:val ast "kind") *method-declaration*)
+                  (jsown:keyp ast "kindName") (string= (jsown:val ast "kindName") "MethodDeclaration")
                   (jsown:keyp ast "start") (<= (jsown:val ast "start") ast-pos)
                   (jsown:keyp ast "end") (> (jsown:val ast "end") ast-pos)
                   (jsown:keyp ast "body"))
             (enqueue q (jsown:val ast "body")))
 
           (when (and
-                  (jsown:keyp ast "kind")
-                  (= (jsown:val ast "kind") *variable-statement*))
+                  (jsown:keyp ast "kindName") (string= (jsown:val ast "kindName") "VariableStatement"))
             (let ((dec-list (jsown:val (jsown:val ast "declarationList") "declarations")))
               (loop for d in dec-list do
                     (enqueue q (cdr d)))))
 
           (when (and
-                  (jsown:keyp ast "kind")
-                  (= (jsown:val ast "kind") *class-declaration*))
+                  (jsown:keyp ast "kindName") (string= (jsown:val ast "kindName") "ClassDeclaration"))
             (loop for m in (jsown:val ast "members") do
                   (enqueue q (cdr m))))
 
@@ -175,10 +161,11 @@
                           (cdr (assoc :pos component-pos))))))))
 
 (defun find-component (parser ast pos)
-  (when (and (jsown:keyp ast "kind")
+  (when (and (jsown:keyp ast "kindName")
              (or
-               (equal (jsown:val ast "kind") *jsx-opening-element*) 
-               (equal (jsown:val ast "kind") *jsx-self-closing-element*)))
+               (string= (jsown:val ast "kindName") "JsxOpeningElement") 
+               (string= (jsown:val ast "kindName") "JsxSelfClosingElement"))
+             (jsown:keyp ast "tagName"))
     (setf (parser-nearest-ast-pos parser)
           (list
             (cons :name (let ((tag-name (cdr (jsown:val ast "tagName"))))
@@ -207,8 +194,7 @@
 
 (defun find-return-type (ast)
   (when (and
-          (jsown:keyp ast "type")
-          (= (jsown:val (jsown:val ast "type") "kind") *void-keyword*))
+          (jsown:keyp ast "type") (string= (jsown:val (jsown:val ast "type") "kindName") "VoidKeyword"))
     (return-from find-return-type))
 
   (let ((q (make-queue)))
@@ -217,12 +203,12 @@
       (let ((ast (dequeue q)))
         (if (null ast) (return))
 
-        (when (and (jsown:keyp ast "kind") (= (jsown:val ast "kind") *return-statement*))
-          (when (= (jsown:val (jsown:val ast "expression") "kind") *parenthesized-expression*)
+        (when (and (jsown:keyp ast "kindName") (string= (jsown:val ast "kindName") "ReturnStatement"))
+          (when (string= (jsown:val (jsown:val ast "expression") "kindName") "ParenthesizedExpression")
             (when 
-              (= (jsown:val (jsown:val
-                              (jsown:val ast "expression") "expression") "kind") *jsx-element*)
-              (return *jsx-element*))))
+              (string= (jsown:val (jsown:val
+                                    (jsown:val ast "expression") "expression") "kindName") "JsxElement")
+              (return "JsxElement"))))
 
         (when (jsown:keyp ast "statements")
           (loop for s in (jsown:val ast "statements") do
