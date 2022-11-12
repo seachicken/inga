@@ -9,6 +9,7 @@
 (defparameter *void-keyword* 113)
 (defparameter *method-declaration* 166)
 (defparameter *object-literal-expression* 201)
+(defparameter *call-expression* 204)
 (defparameter *parenthesized-expression* 208)
 (defparameter *arrow-function* 210)
 (defparameter *variable-statement* 233)
@@ -63,6 +64,12 @@
           (let ((init (jsown:val ast "initializer")))
             (alexandria:switch ((jsown:val init "kind"))
               (*object-literal-expression*
+                (when (jsown:keyp ast "name")
+                  (let ((name (cdr (jsown:val ast "name"))))
+                    (return (convert-to-pos (parser-path parser) file-path
+                                            (jsown:val name "escapedText")
+                                            (jsown:val name "start"))))))
+              (*call-expression*
                 (when (jsown:keyp ast "name")
                   (let ((name (cdr (jsown:val ast "name"))))
                     (return (convert-to-pos (parser-path parser) file-path
