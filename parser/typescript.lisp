@@ -45,6 +45,7 @@
       (cdr (jsown:parse ast)))))
 
 (defmethod find-affected-pos ((parser parser-typescript) file-path ast line-no)
+  (format t "enter ast: ~a~%" (inga/utils::top ast 20))
   (let ((q (make-queue))
         (ast-pos (cdr (assoc :pos (convert-to-ast-pos
                                     (parser-path parser)
