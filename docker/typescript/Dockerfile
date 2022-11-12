@@ -18,7 +18,7 @@ RUN set -eux && \
   curl -o /tmp/inga/setup_node -fsSL https://deb.nodesource.com/setup_14.x
 
 RUN set -eux && \
-  curl -o ./tsparser.tar.gz -L https://github.com/seachicken/tsparser/archive/refs/tags/v0.0.2.tar.gz && \
+  curl -o ./tsparser.tar.gz -L https://github.com/seachicken/tsparser/archive/refs/tags/v0.1.0.tar.gz && \
   mkdir /tmp/inga/tsparser && \
   tar xvf ./tsparser.tar.gz -C /tmp/inga/tsparser --strip-components 1
 
