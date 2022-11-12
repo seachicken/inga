@@ -186,6 +186,7 @@
   (let ((affected-poss
           (remove nil
                   (mapcar (lambda (line-no)
+                            (format t "before find src-path: ~a, line-no: ~a~%" src-path line-no)
                             (let ((item-pos
                                     (find-affected-pos (context-parser ctx)
                                                        src-path ast line-no)))
