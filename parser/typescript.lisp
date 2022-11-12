@@ -56,6 +56,7 @@
     (loop
       (let ((ast (dequeue q)))
         (if (null ast) (return))
+        (format t "ast-pos: ~a, ast: ~a~%" ast-pos (inga/utils::top ast 20))
 
         (when (and
                 (jsown:keyp ast "kind") (= (jsown:val ast "kind") *variable-declaration*)
