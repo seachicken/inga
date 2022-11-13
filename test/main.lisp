@@ -17,7 +17,7 @@
   (truename (uiop:merge-pathnames* "test/fixtures/nestjs-realworld-example-app-prisma/")))
 
 (test analyze-by-range-for-react-components
-  (let ((ctx (inga/main::start *front-path* '(:typescript) '("*.test.ts"))))
+  (let ((ctx (inga/main::start *front-path* '(:typescript) '("**/*.test.(ts|tsx)"))))
     (is (equal
           '(((:path . "src/App/NewTodoInput/index.tsx")
              (:name . "input") (:line . 34) (:offset . 10)))

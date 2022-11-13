@@ -43,7 +43,7 @@ Relative path of the project to be analyzed, so if you do not give this option, 
 
 `--exclude <string>`
 
-Filenames to exclude from the analysis.
+Filenames of glob pattern matching to exclude from analysis. (e.g. "**/*.test.(ts|tsx)")
 
 `--github-token <string>`
 

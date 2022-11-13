@@ -30,11 +30,11 @@
 (in-package #:inga/main)
 
 (defparameter *include-typescript*
-  '("*.js" "*.jsx"
-    "*.ts" "*.tsx"))
+  '("**/*.(js|jsx)"
+    "**/*.(ts|tsx)"))
 
 (defparameter *include-java*
-  '("*.java"))
+  '("**/*.java"))
 
 (define-condition inga-error-option-not-found (inga-error) ())
 
