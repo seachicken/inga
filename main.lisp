@@ -18,7 +18,6 @@
                 #:stop-parser
                 #:exec-parser
                 #:find-affected-pos
-                #:count-combinations
                 #:find-entrypoint)
   (:import-from #:inga/utils
                 #:split-trim-comma)
@@ -42,7 +41,7 @@
 
 (defun command (&rest argv)
   (handler-case
-    (destructuring-bind (&key root-path exclude github-token base-commit min-combination) (parse-argv argv)
+    (destructuring-bind (&key root-path exclude github-token base-commit) (parse-argv argv)
       (let (diffs pr hostname)
         (when github-token
           (setf hostname (inga/git:get-hostname root-path))
@@ -64,7 +63,7 @@
           (let ((results (analyze ctx diffs)))
             (log-debug (format nil "results: ~a~%" results))
             (when (and pr results)
-              (inga/github:send-pr-comment hostname pr results root-path min-combination)))
+              (inga/github:send-pr-comment hostname pr results root-path)))
           (stop ctx))))
     (inga-error (e) (format t "~a~%" e))))
 
@@ -73,7 +72,6 @@
         with exclude = '()
         with github-token = nil
         with base-commit = nil
-        with min-combination = 3
         for option = (pop argv)
         while option
         do (alexandria:switch (option :test #'equal)
@@ -89,8 +87,6 @@
               (setf github-token (pop argv)))
              ("--base-commit"
               (setf base-commit (pop argv)))
-             ("--min-combination"
-              (setf min-combination (parse-integer (pop argv))))
              (t (error 'inga-error-option-not-found)))
         finally
           (return (append 
@@ -99,8 +95,7 @@
                     (when github-token
                       (list :github-token github-token))
                     (when base-commit
-                      (list :base-commit base-commit))
-                    (list :min-combination min-combination)))))
+                      (list :base-commit base-commit))))))
 
 (defun start (root-path context-kinds &optional (exclude '()))
   (let ((ctx (alexandria:switch ((when (> (length context-kinds) 0) (first context-kinds)))
@@ -182,52 +177,20 @@
                                 (get-affected-poss ctx ast src-path range)))))))))
 
 (defun get-affected-poss (ctx ast src-path range)
-  (let ((affected-poss
-          (remove nil
-                  (mapcar (lambda (line-no)
-                            (let ((item-pos
-                                    (find-affected-pos (context-parser ctx)
-                                                       src-path ast line-no)))
-                              (when item-pos
-                                (log-debug (format nil "found-affected-pos: [src-path: ~a, line-no: ~a]~% -> ~a, " src-path line-no item-pos))
-                                (setf item-pos (acons :line-no line-no item-pos))
-                                (when (assoc :origin range)
-                                  (setf item-pos (acons :origin (cdr (assoc :origin range)) item-pos)))
-                                item-pos)))
-                          (loop for line-no
-                                from (cdr (assoc :start range))
-                                to (cdr (assoc :end range))
-                                collect line-no)))))
-    (when affected-poss
-      (setf affected-poss 
-            (loop
-              with prev
-              with line-nos = '()
-              with results = '()
-              for current in affected-poss do
-              (progn
-                (if (or (null prev) (equal (cdr (assoc :name current)) (cdr (assoc :name prev))))
-                    (progn
-                      (push (cdr (assoc :line-no current)) line-nos)
-                      (setf current (remove :line-no current :key 'car)))
-                    (progn
-                      (setf current (acons :line-nos line-nos current))
-                      (push current results)))
-                (setf prev current))
-              finally (progn 
-                        (setf prev (acons :line-nos line-nos prev))
-                        (setf prev (remove :line-no prev :key 'car))
-                        (push prev results)
-                        (return results))))
-      (setf affected-poss
-            (mapcar (lambda (pos)
-                      (let ((combination (count-combinations (context-parser ctx)
-                                                             src-path ast
-                                                             (cdr (assoc :line-nos pos)))))
-                        (setf pos (remove :line-nos pos :key 'car))
-                        (acons :combination combination pos)))
-                    affected-poss)))
-    affected-poss))
+  (remove nil
+          (mapcar (lambda (line-no)
+                    (let ((item-pos
+                            (find-affected-pos (context-parser ctx)
+                                               src-path ast line-no)))
+                      (when item-pos
+                        (log-debug (format nil "found-affected-pos: [src-path: ~a, line-no: ~a]~% -> ~a, " src-path line-no item-pos))
+                        (when (assoc :origin range)
+                          (setf item-pos (acons :origin (cdr (assoc :origin range)) item-pos)))
+                        item-pos)))
+                  (loop for line-no
+                        from (cdr (assoc :start range))
+                        to (cdr (assoc :end range))
+                        collect line-no))))
 
 (defun find-entrypoints (ctx pos q)
   (unless (assoc :origin pos)

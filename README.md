@@ -53,10 +53,6 @@ If GitHub token is set, send the analysis report to comments in pull requests. A
 
 Analyze the difference between the --base-commit and the checked-out commit. Set refname or SHA. If the --github-token option is used, this option will be ignored and set automatically.
 
-`--min-combination <number>`
-
-Minimum number of combinations to display in the results.
-
 ### Run on GitHub Actions
 
 #### Example projects
