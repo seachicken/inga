@@ -32,6 +32,14 @@
         nil
         (is-analysis-target "src/App.test.js" '("*.js") '("*.test.js")))))
 
+(test not-analyze-when-the-file-extension-matches-exclude
+  (is (equal
+        nil
+        (is-analysis-target "src/App.test.js" '("**/*.(js|jsx)") '("**/*.test.(js|jsx)"))))
+  (is (equal
+        nil
+        (is-analysis-target "src/App.test.jsx" '("**/*.(js|jsx)") '("**/*.test.(js|jsx)")))))
+
 (test not-analyze-when-the-parent-directory-matches-exclude
   (is (equal
         nil
