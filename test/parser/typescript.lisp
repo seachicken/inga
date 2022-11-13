@@ -124,19 +124,6 @@
               150))))
     (stop-parser parser)))
 
-(test count-combinations
-  (let ((parser (make-parser :typescript *nestjs-path*)))
-    (start-parser parser)
-    (is (equal
-          2
-          (let ((src-path "src/article/article.service.ts"))
-            (inga/parser/typescript::count-combinations
-              parser
-              src-path
-              (exec-parser parser src-path)
-              '(69 70)))))
-    (stop-parser parser)))
-
 (test find-entrypoint
   (let ((parser (make-parser :typescript *react-path*)))
     (start-parser parser)
