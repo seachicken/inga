@@ -7,6 +7,17 @@
 (def-suite github)
 (in-suite github)
 
+(test group-by-entorypoint
+  (is (equal
+        '(((:entorypoint (:path . "b/a/1.ts") (:name . "a") (:line . 1))
+           (:origins (((:path . "a/1.ts") (:name . "a") (:line . 1))
+                      ((:path . "a/1.ts") (:name . "b") (:line . 1))))))
+        (inga/github::group-by-entorypoint
+          '(((:origin (:path . "a/1.ts") (:name . "a") (:line . 1))
+             (:entorypoint (:path . "b/a/1.ts") (:name . "a") (:line . 1)))
+            ((:origin (:path . "a/1.ts") (:name . "b") (:line . 1))
+             (:entorypoint (:path . "b/a/1.ts") (:name . "a") (:line . 1))))))))
+
 (test get-code-hierarchy
   (is (equal (format nil "~a~%~a~%~a~%~a~%~a~%~a~%~a~%~a~%"
                      "- 📂 b"
@@ -20,40 +31,11 @@
              (inga/github::get-code-hierarchy
                "https://github.com/owner/repo/" "sha"
                (inga/github::group-by-entorypoint
-                 '(((:origin (:path . "a/1.ts") (:name . "a") (:line . 1))
-                    (:entorypoint (:path . "b/a/1.tsx") (:name . "b") (:line . 2)))
-                   ((:origin (:path . "a/1.ts") (:name . "b") (:line . 2))
-                    (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
-                   ((:origin (:path . "a/1.ts") (:name . "c") (:line . 3))
-                    (:entorypoint (:path . "b/a/1.tsx") (:name . "b") (:line . 2)))
-                   ((:origin (:path . "a/1.ts") (:name . "b") (:line . 2))
-                    (:entorypoint (:path . "b/1.tsx") (:name . "a") (:line . 1)))
-                   ((:origin (:path . "a/1.ts") (:name . "b") (:line . 1))
-                    (:entorypoint (:path . "c/a/1.tsx") (:name . "a") (:line . 3)))
-                   ((:origin (:path . "a/1.ts") (:name . "b") (:line . 1))
-                    (:entorypoint (:path . "a.tsx") (:name . "a") (:line . 4)))))))))
-
-(test group-by-entorypoint
-  (is (equal
-        '(((:entorypoint (:path . "b/a/1.ts") (:name . "a") (:line . 1))
-           (:origins (((:path . "a/1.ts") (:name . "a") (:line . 1))
-                      ((:path . "a/1.ts") (:name . "b") (:line . 1))))))
-        (inga/github::group-by-entorypoint
-          '(((:origin (:path . "a/1.ts") (:name . "a") (:line . 1))
-             (:entorypoint (:path . "b/a/1.ts") (:name . "a") (:line . 1)))
-            ((:origin (:path . "a/1.ts") (:name . "b") (:line . 1))
-             (:entorypoint (:path . "b/a/1.ts") (:name . "a") (:line . 1))))))))
-
-(test filter-by-key
-  (is (equal
-        '(((:origin (:path . "a/1.ts") (:name . "a") (:line . 1))
-           (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1))))
-        (inga/github::filter-by-key
-          '(((:origin (:path . "a/1.ts") (:name . "a") (:line . 1))
-             (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
-            ((:origin (:path . "a/1.ts") (:name . "b") (:line . 1))
-             (:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1))))
-          :entorypoint))))
+                 '(((:entorypoint (:path . "b/a/1.tsx") (:name . "b") (:line . 2)))
+                   ((:entorypoint (:path . "b/1.tsx") (:name . "a") (:line . 1)))
+                   ((:entorypoint (:path . "c/a/1.tsx") (:name . "a") (:line . 3)))
+                   ((:entorypoint (:path . "b/a/1.tsx") (:name . "a") (:line . 1)))
+                   ((:entorypoint (:path . "a.tsx") (:name . "a") (:line . 4)))))))))
 
 (test output-dirs-with-nest-nested-dirs
   (is (equal

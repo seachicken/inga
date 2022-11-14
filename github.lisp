@@ -21,7 +21,7 @@
                                           project-path)
                                   :output :string
                                   :ignore-error-status t))))
-    (if (jsown:keyp json "url")
+    (when (jsown:keyp json "url")
       (append
         (list :base-url
               (get-base-url (jsown:val json "url")))
@@ -34,8 +34,7 @@
         (list :base-ref-name
               (jsown:val json "baseRefName"))
         (list :head-sha
-              (jsown:val (car (last (jsown:val json "commits"))) "oid")))
-      '())))
+              (jsown:val (car (last (jsown:val json "commits"))) "oid"))))))
 
 ;; url format: https://HOST/OWNER/REPO/pull/NUMBER
 (defun get-base-url (url)
@@ -91,7 +90,7 @@
                                       (cdr (assoc :line (cdr (assoc :entorypoint p))))))))
   (loop
     with prev
-    with results = '()
+    with results
     for pos in sorted-poss do
     (let ((entorypoint-current (cdr (assoc :entorypoint pos)))
           (entorypoint-prev (cdr (assoc :entorypoint prev))))
@@ -108,33 +107,21 @@
       (setf prev pos))
     finally (return results)))
 
-(defun filter-by-key (poss key)
-  (loop
-    with prev
-    with results = '()
-    for pos in poss do
-    (let ((val-current (cdr (assoc key pos)))
-          (val-prev (cdr (assoc key prev))))
-      (when (not (equal val-current val-prev))
-        (setf results (append results (list pos))))
-      (setf prev pos))
-    finally (return results)))
-
 (defun get-code-hierarchy (base-url sha poss)
   (setf poss (mapcar (lambda (p)
                        (acons :paths (split #\/ (cdr (assoc :path (cdr (assoc :entorypoint p))))) p))
                      poss))
-  (let ((sorted-poss (group-by-dir (sort-flat base-url sha poss '() 0)))
+  (let ((sorted-poss (group-by-dir (sort-flat base-url sha poss nil 0)))
         (result ""))
     (setf sorted-poss 
           (loop
-            with results = '()
+            with results
             for poss in sorted-poss do
             (setf results
                   (append results
                           (loop
                             with prev
-                            with results = '()
+                            with results
                             for pos in poss do
                             (let ((entorypoint (cdr (assoc :entorypoint pos))))
                               (when (and (not (null prev))
@@ -226,9 +213,9 @@
           text base-url sha file-path line))
 
 (defun group-by-dir (sorted-poss)
-  (let ((results '()))
+  (let (results)
     (loop
-      with same-dirs = '()
+      with same-dirs
       for pos in sorted-poss
       do (let ((dirs (get-dirs (cdr (assoc :paths pos))))
                (file (get-file (cdr (assoc :paths pos))))
@@ -238,13 +225,13 @@
                    (> (length same-dirs) 0)
                    (not (equal dirs (get-dirs (cdr (assoc :paths (car (last same-dirs))))))))
              (setf results (append results (list same-dirs)))
-             (setf same-dirs '()))
+             (setf same-dirs nil))
            (setf same-dirs (append same-dirs (list pos))))
       finally (setf results (append results (list same-dirs))))
     results))
 
 (defun sort-flat (base-url sha poss results ri)
-  (let ((files '()) (remaining-poss '()))
+  (let (files remaining-poss)
     (loop
       for pos in poss
       do (let ((paths (cdr (assoc :paths pos))))
@@ -266,11 +253,10 @@
     ;; sort by same directory
     (loop
       with prev-dir
-      with group = '()
+      with group
       for pos in remaining-poss
       do (let ((entorypoint (cdr (assoc :entorypoint pos)))
-               (dir))
-           (setf dir (nth ri (cdr (assoc :paths pos))))
+               (dir (nth ri (cdr (assoc :paths pos)))))
            (unless prev-dir
              (setf prev-dir dir))
 
@@ -278,7 +264,7 @@
              (setf group (sort group #'string< :key
                                #'(lambda (p) (nth (+ ri 1) (cdr (assoc :paths p))))))
              (setf results (sort-flat base-url sha group results (+ ri 1)))
-             (setf group '()))
+             (setf group nil))
            (push pos group)
            (setf prev-dir dir))
       finally (progn
