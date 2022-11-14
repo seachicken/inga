@@ -15,7 +15,7 @@ RUN set -eux && \
 RUN mkdir /tmp/inga
 
 RUN set -eux && \
-  curl -o /tmp/inga/setup_node -fsSL https://deb.nodesource.com/setup_14.x
+  curl -o /tmp/inga/setup_node -fsSL https://deb.nodesource.com/setup_current.x
 
 RUN set -eux && \
   curl -o ./inga.tar.gz -L https://github.com/seachicken/inga/archive/refs/tags/$VERSION.tar.gz && \
