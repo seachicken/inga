@@ -47,6 +47,7 @@
           (setf hostname (inga/git:get-hostname root-path))
           (inga/github:login hostname github-token)
           (setf pr (inga/github:get-pr root-path))
+          (format t "pr: ~a~%" pr)
           (destructuring-bind (&key base-url owner-repo number merge-state-status base-ref-name head-sha) pr
             (when (string= merge-state-status "BEHIND")
               (log-debug (format nil "can't diff when a branch is behind"))
