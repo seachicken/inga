@@ -47,9 +47,13 @@
           (setf hostname (inga/git:get-hostname root-path))
           (inga/github:login hostname github-token)
           (setf pr (inga/github:get-pr root-path))
+          (log-debug (format nil "pr: ~a~%" pr))
           (destructuring-bind (&key base-url owner-repo number merge-state-status base-ref-name head-sha) pr
-            (when (string= merge-state-status "BEHIND")
-              (log-debug (format nil "can't diff when a branch is behind"))
+            ;; https://docs.github.com/en/graphql/reference/enums#mergestatestatus
+            (when (or
+                    (string= merge-state-status "BEHIND")
+                    (string= merge-state-status "DIRTY"))
+              (log-debug (format nil "can't diff when merge state is not clean"))
               (return-from command))
 
             (unless base-commit
