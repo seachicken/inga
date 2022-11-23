@@ -3,19 +3,16 @@ FROM fukamachi/roswell:21.10.14.111-ubuntu AS build
 ARG VERSION
 ARG DEBIAN_FRONTEND=noninteractive
 
-RUN set -eux && \
-  apt-get update && \
+RUN apt-get update && \
   apt-get install -y curl
 
 # https://github.com/cli/cli/blob/trunk/docs/install_linux.md#installing-gh-on-linux-and-bsd
-RUN set -eux && \
-  curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && \
+RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && \
   chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
 
 RUN mkdir libs
 
-RUN set -eux && \
-  curl -o ./jdtls.tar.gz -L https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz && \
+RUN curl -o ./jdtls.tar.gz -L https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz && \
   mkdir libs/jdtls && \
   tar xvf ./jdtls.tar.gz -C ./libs/jdtls
 
@@ -23,8 +20,7 @@ RUN curl -o ./libs/javaparser.jar -L https://github.com/seachicken/javaparser/re
 
 RUN curl -o ./libs/lombok.jar -L https://projectlombok.org/downloads/lombok.jar
 
-RUN set -eux && \
-  curl -o ./inga.tar.gz -L https://github.com/seachicken/inga/archive/refs/tags/$VERSION.tar.gz && \
+RUN curl -o ./inga.tar.gz -L https://github.com/seachicken/inga/archive/refs/tags/$VERSION.tar.gz && \
   mkdir inga && \
   tar xvf ./inga.tar.gz -C ./inga --strip-components 1 && \
   ros && \
@@ -38,15 +34,14 @@ COPY --from=build /usr/share/keyrings/githubcli-archive-keyring.gpg /usr/share/k
 COPY --from=build /libs /libs
 COPY --from=build /inga/roswell/inga /usr/local/bin/
 
-RUN set -eux && \
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
   apt-get update && \
-  apt-get install -y git
-
-RUN set -eux && \
-  echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
-  apt update && \
-  apt install -y gh && \
-  apt install -y openjdk-17-jdk
+  apt-get install -y \
+    git \
+    gh \
+    openjdk-17-jdk && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/*
 
 ENV INGA_HOME /
 ENV INGA_CONTEXT java
