@@ -32,21 +32,21 @@ RUN set -eux && \
   ros build /inga/roswell/inga.ros
 
 
-FROM ubuntu:22.04
+FROM debian:bullseye-slim
 
 COPY --from=build /usr/share/keyrings/githubcli-archive-keyring.gpg /usr/share/keyrings/githubcli-archive-keyring.gpg
 COPY --from=build /libs /libs
 COPY --from=build /inga/roswell/inga /usr/local/bin/
 
-RUN set -eux && \
-  apt-get update && \
+RUN apt-get update && \
   apt-get install -y git
 
-RUN set -eux && \
-  echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
-  apt update && \
-  apt install -y gh && \
-  apt install -y openjdk-17-jdk
+RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
+  apt-get update && \
+  apt-get install -y --no-install-recommends \
+    gh \
+    openjdk-17-jdk-headless && \
+  rm -rf /var/lib/apt/lists/*
 
 ENV INGA_HOME /
 ENV INGA_CONTEXT java
