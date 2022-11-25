@@ -112,6 +112,7 @@
                        (acons :paths (split #\/ (cdr (assoc :path (cdr (assoc :entorypoint p))))) p))
                      poss))
   (let ((sorted-poss (group-by-dir (sort-flat base-url sha poss nil 0)))
+        dirs
         (result ""))
     (setf sorted-poss 
           (loop
@@ -131,63 +132,109 @@
                               (setf prev pos))
                             finally (return (list results)))))
             finally (return results)))
+    (setf dirs
+          (group-by-short-dirs
+            (remove nil
+                    (mapcar (lambda (poss)
+                              (get-dirs (cdr (assoc :paths (first poss)))))
+                            sorted-poss))))
     (loop
-      with i = 0
-      with prev-dirs
-      for poss in sorted-poss
-      do (let ((dirs (get-dirs (cdr (assoc :paths (first poss)))))
-               (prev-dirs (if (> i 0 )
-                              (get-dirs (cdr (assoc :paths (car (nth (- i 1) sorted-poss)))))   
-                              nil))
-               (next-dirs (if (= (+ i 1) (length sorted-poss))
-                              nil
-                              (get-dirs (cdr (assoc :paths (car (nth (+ i 1) sorted-poss))))))))
-           (multiple-value-bind (dirs-result num-of-nested) (output-dirs prev-dirs dirs next-dirs)
-             (setf result
-                   (format nil "~a~a" result dirs-result))
-
-             (loop
-               for pos in poss
-               do (setf result
-                        (format nil "~a~a~%"
-                                result
-                                (output-file num-of-nested base-url sha pos)))))
-           (setf i (+ i 1))))
+      for i from 0 below (length sorted-poss) collect
+      (let ((poss (nth i sorted-poss)))
+        (multiple-value-bind (dirs-result num-of-nested) (output-dirs dirs i)
+          (setf result
+                (format nil "~a~a" result dirs-result))
+          (loop
+            for pos in poss
+            do (setf result
+                     (format nil "~a~a~%"
+                             result
+                             (output-file num-of-nested base-url sha pos)))))))
     result))
 
-(defun output-dirs (prev current next)
-  (when (= (length current) 0)
-    (return-from output-dirs (values "" 0)))
+(defun group-by-short-dirs (dirs-list)
+  (loop
+    with results
+    for sub-i from 0 below (length dirs-list) collect
+    (let ((dirs (nth sub-i dirs-list)))
+      (setf results 
+            (append results
+                    (list
+                      (loop
+                        with tmp-dirs-list = dirs-list
+                        with tail-dirs = dirs
+                        with sub-results
+                        for i from 0 below (length dirs) collect
+                        (progn
+                          (setf min-i (get-min-matching-index tmp-dirs-list sub-i))
+                          (let ((head-dirs (subseq tail-dirs 0 min-i)))
+                            (setf tail-dirs (subseq tail-dirs min-i))
+                            (setf sub-results
+                                  (append sub-results (remove nil (list head-dirs))))
+                            (setf tmp-dirs-list (delete-matched-sub-dirs tmp-dirs-list head-dirs))
+                            (unless tail-dirs
+                              (loop-finish))))
+                        finally (progn
+                                  (setf sub-results
+                                        (append sub-results (remove nil (list tail-dirs))))
+                                  (return sub-results)))))))
+    finally (return results)))
 
-  (let ((prev-diff-i (get-diff-index current prev))
-        (next-diff-i (get-diff-index current next))
-        (result "")
-        (nested-i 0))
+(defun delete-matched-sub-dirs (dirs-list target-dirs)
+  (mapcar (lambda (dirs)
+            (let ((subset-size (get-subset-size dirs target-dirs)))
+              (if (> subset-size 0)
+                (subseq dirs subset-size)
+                dirs)))
+          dirs-list))
+
+(defun output-dirs (dirs-list output-i)
+  (let ((sub-dirs-list (nth output-i dirs-list))
+        (head-sub-dirs-list (subseq dirs-list 0 output-i)))
     (loop
-      with i = 0
-      for path in current
-      do (progn
-           (if (< i prev-diff-i)
-               (when (= (+ i 1) prev-diff-i)
-                 (setf nested-i (+ nested-i 1)))
-               (if (or (= next-diff-i 0) (< i next-diff-i))
-                   (if (= (length result) 0)
-                       (progn
-                         (if (= nested-i 0)
-                             (setf result (format nil "- 📂 ~a" path))
-                             (setf result (format nil "~vt- 📂 ~a" (* nested-i 2) path)))
-                         (setf nested-i (+ nested-i 1)))
-                       (setf result (format nil "~a/~a" result path)))
-                   (progn
-                     (if (= (length result) 0)
-                         (setf result (format nil "~vt- 📂 ~a" (* nested-i 2) path))
-                         (setf result (format nil "~a~%~vt- 📂 ~a" result (* nested-i 2) path)))
-                     (setf nested-i (+ nested-i 1)))))
-           (setf i (+ i 1))))
-    (values (if (= (length result) 0)
-                result
-                (format nil "~a~%" result))
-            nested-i)))
+      with result = ""
+      for i from 0 below (length sub-dirs-list) collect
+      (let ((dirs (nth i sub-dirs-list))
+            matched-index)
+        (setf matched-index (get-matched-index head-sub-dirs-list i dirs))
+        (unless matched-index
+          (if (= i 0)
+              (setf result (format nil "- 📂 ~{~a~^/~}~%" dirs))
+              (setf result (format nil "~a~vt- 📂 ~{~a~^/~}~%" result (* i 2) dirs)))))
+      finally (return (values result i)))))
+
+(defun get-matched-index (dirs-list num-of-nested target-dirs)
+  (loop
+    with result
+    for i from 0 below (length dirs-list) collect
+    (let ((dirs (nth num-of-nested (nth i dirs-list))))
+      (when (equal dirs target-dirs)
+        (setf result i)
+        (loop-finish)))
+    finally (return result)))
+
+(defun get-min-matching-index (dirs-list target-i)
+  (let ((sub-dirs (subseq dirs-list target-i (length dirs-list)))
+        current)
+    (setf current (first sub-dirs))
+    (unless current
+      (return-from get-min-matching-index 0))
+
+    (loop
+      with prev-i
+      with result = 0
+      for i from target-i below (length dirs-list) collect
+      (let ((dirs (nth i dirs-list))
+            diff-i)
+        (setf diff-i (if (equal current dirs)
+                         (length current)
+                         (get-diff-index current dirs)))
+        (when 
+          (and (> diff-i 0)
+               (or (null prev-i) (< diff-i prev-i)))
+          (setf result diff-i))
+        (setf prev-i diff-i))
+      finally (return result))))
 
 (defun output-file (num-of-nested base-url sha pos)
   (let ((file (get-file (cdr (assoc :paths pos))))
@@ -283,6 +330,17 @@
                   (return-from get-diff-index i))
                 (return-from get-diff-index i)))
   0)
+
+(defun get-subset-size (a b)
+  (loop
+    with result = 0
+    for i from 0 below (max (length a) (length b)) collect
+    (progn
+      (if (and (< i (length a)) (< i (length b)))
+          (if (equal (subseq a 0 (+ i 1)) (subseq b 0 (+ i 1)))
+              (setf result (+ result 1))
+              (loop-finish))))
+    finally (return result)))
 
 (defun get-dirs (paths)
   (when (> (length paths) 0))
