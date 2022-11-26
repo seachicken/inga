@@ -1,4 +1,4 @@
-# Inga
+# <img src=".github/logo.png" align="right" width="100"> Inga
 
 [![CI](https://github.com/seachicken/inga/actions/workflows/ci.yml/badge.svg)](https://github.com/seachicken/inga/actions/workflows/ci.yml)
 [![Stake to support us](https://badge.devprotocol.xyz/0xdCF85312C0a1F3f0159aF728286B017739474b07/descriptive)](https://stakes.social/0xdCF85312C0a1F3f0159aF728286B017739474b07)
