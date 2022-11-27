@@ -22,21 +22,36 @@
   (uiop:close-streams (client-process client)))
 
 (defmethod references-client ((client language-client-java) pos)
-  (let ((full-path (namestring
+  (let ((key (list (cdr (assoc :path pos)) (cdr (assoc :line pos)) (cdr (assoc :offset pos))))
+        cache
+        (full-path (namestring
                      (uiop:merge-pathnames* (cdr (assoc :path pos))
                                             (client-path client)))))
-    (increment-req-id client)
-    (let ((refs (exec-command client (format nil "{\"jsonrpc\":\"2.0\",\"id\":~a,\"method\":\"textDocument/references\",\"params\":{\"textDocument\":{\"uri\":\"file://~a\"},\"position\":{\"line\":~a,\"character\":~a},\"context\":{\"includeDeclaration\":false}}}"
-                              (client-req-id client) full-path
-                              ;; the zero-based line and offset
-                              (- (cdr (assoc :line pos)) 1) (- (cdr (assoc :offset pos)) 1)))))
-      (mapcar (lambda (ref)
-                (list
-                  (cons :path (enough-namestring (subseq (jsown:val ref "uri") 7)
-                                                 (client-path client)))
-                  (cons :line (+ (jsown:val (jsown:val (jsown:val ref "range") "start") "line") 1))
-                  (cons :offset (+ (jsown:val (jsown:val (jsown:val ref "range") "start") "character") 1))))
-                         (jsown:val refs "result")))))
+    (setf cache (cdr (assoc key (client-cache-refs client) :test #'equal)))
+    (values
+      (if cache
+          cache
+          (progn
+            (increment-req-id client)
+            (let ((refs (exec-command client (format nil "{\"jsonrpc\":\"2.0\",\"id\":~a,\"method\":\"textDocument/references\",\"params\":{\"textDocument\":{\"uri\":\"file://~a\"},\"position\":{\"line\":~a,\"character\":~a},\"context\":{\"includeDeclaration\":false}}}"
+                                                     (client-req-id client) full-path
+                                                     ;; the zero-based line and offset
+                                                     (- (cdr (assoc :line pos)) 1) (- (cdr (assoc :offset pos)) 1))))
+                  result)
+              (setf result (mapcar
+                             (lambda (ref)
+                               (list
+                                 (cons :path (enough-namestring (subseq (jsown:val ref "uri") 7)
+                                                                (client-path client)))
+                                 (cons :line (+ (jsown:val (jsown:val (jsown:val ref "range") "start") "line") 1))
+                                 (cons :offset (+ (jsown:val (jsown:val (jsown:val ref "range") "start") "character") 1))))
+                             (jsown:val refs "result")))
+              (push (cons
+                      (list (cdr (assoc :path pos)) (cdr (assoc :line pos)) (cdr (assoc :offset pos)))
+                      result)
+                    (client-cache-refs client))
+              result)))
+      (when cache t))))
 
 (defmethod get-command ((client language-client-java) command)
   (format nil "Content-Length: ~a~c~c~c~c~a"

@@ -7,6 +7,7 @@
            #:client-process
            #:client-req-id
            #:client-path
+           #:client-cache-refs
            #:start-client
            #:stop-client
            #:references-client
@@ -25,7 +26,9 @@
          :accessor client-path)
    (id-key :initarg :id-key
            :initform "id"
-           :reader client-id-key)))
+           :reader client-id-key)
+   (cache-refs :initform nil
+               :accessor client-cache-refs)))
 
 (defgeneric make-client (kind path)
   (:method (kind path)
