@@ -34,6 +34,7 @@
 ;; for debug
 (defstruct measuring-time
   (times 0)
+  (cache-hit 0)
   (total-time 0))
 
 (defun top (sequence limit)
@@ -48,10 +49,14 @@
 
 (defun measure (target func)
   (let ((start-time (get-internal-real-time)))
-    (setf (measuring-time-times target)
-          (+ (measuring-time-times target) 1))
-    (prog1
-      (funcall func)
-      (setf (measuring-time-total-time target)
-            (+ (measuring-time-total-time target) (- (get-internal-real-time) start-time))))))
+    (multiple-value-bind (result cache-hit) (funcall func)
+      (if cache-hit
+          (setf (measuring-time-cache-hit target)
+                (+ (measuring-time-cache-hit target) 1))
+          (progn
+            (setf (measuring-time-total-time target)
+                  (+ (measuring-time-total-time target) (- (get-internal-real-time) start-time)))
+            (setf (measuring-time-times target)
+                  (+ (measuring-time-times target) 1))))
+      result)))
 
