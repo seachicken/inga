@@ -221,19 +221,13 @@
       (return-from get-min-matching-index 0))
 
     (loop
-      with prev-i
-      with result = 0
-      for i from target-i below (length dirs-list) collect
+      with result = (length current)
+      for i from 0 below (length dirs-list) collect
       (let ((dirs (nth i dirs-list))
             diff-i)
-        (setf diff-i (if (equal current dirs)
-                         (length current)
-                         (get-diff-index current dirs)))
-        (when 
-          (and (> diff-i 0)
-               (or (null prev-i) (< diff-i prev-i)))
-          (setf result diff-i))
-        (setf prev-i diff-i))
+        (setf diff-i (get-diff-index current dirs))
+        (when (and (> diff-i 0) (< diff-i result))
+          (setf result diff-i)))
       finally (return result))))
 
 (defun output-file (num-of-nested base-url sha pos)
