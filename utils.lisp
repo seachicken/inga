@@ -55,7 +55,7 @@
                 (+ (measuring-time-cache-hit target) 1))
           (progn
             (setf (measuring-time-total-time target)
-                  (+ (measuring-time-total-time target) (- (get-internal-real-time) start-time)))  
+                  (+ (measuring-time-total-time target) (- (get-internal-real-time) start-time)))
             (setf (measuring-time-times target)
                   (+ (measuring-time-times target) 1))))
       result)))
