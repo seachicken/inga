@@ -32,6 +32,10 @@
           (split #\, sequence)))
 
 ;; for debug
+(defstruct measuring-time
+  (times 0)
+  (total-time 0))
+
 (defun top (sequence limit)
   (let ((line-no 0) (result ""))
     (with-input-from-string (in (format nil "~a" sequence))
@@ -41,4 +45,13 @@
                   (setf result (format nil "~a~a~%" result line))
                   (when (= line-no limit)
                     (return-from top result)))))))
+
+(defun measure (target func)
+  (let ((start-time (get-internal-real-time)))
+    (setf (measuring-time-times target)
+          (+ (measuring-time-times target) 1))
+    (prog1
+      (funcall func)
+      (setf (measuring-time-total-time target)
+            (+ (measuring-time-total-time target) (- (get-internal-real-time) start-time))))))
 

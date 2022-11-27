@@ -35,6 +35,10 @@
 (defparameter *include-java*
   '("**/*.java"))
 
+(defparameter *debug-parse* (inga/utils::make-measuring-time))
+(defparameter *debug-find-affected-pos* (inga/utils::make-measuring-time))
+(defparameter *debug-find-refs* (inga/utils::make-measuring-time))
+
 (define-condition inga-error-option-not-found (inga-error) ())
 
 (define-condition inga-error-context-not-found (inga-error) ())
@@ -66,6 +70,13 @@
                           exclude)))
           (let ((results (analyze ctx diffs)))
             (log-debug (format nil "results: ~a~%" results))
+            (log-debug (format nil "measuring time:~% parse: [times: ~a, avg-sec: ~f]~% find-affected-pos: [times: ~a, avg-sec: ~f]~% find-refs: [times: ~a, avg-sec: ~f]~%"
+                               (inga/utils::measuring-time-times *debug-parse*)
+                               (/ (inga/utils::measuring-time-total-time *debug-parse*) (inga/utils::measuring-time-times *debug-parse*) internal-time-units-per-second)
+                               (inga/utils::measuring-time-times *debug-find-affected-pos*)
+                               (/ (inga/utils::measuring-time-total-time *debug-find-affected-pos*) (inga/utils::measuring-time-times *debug-find-affected-pos*) internal-time-units-per-second)
+                               (inga/utils::measuring-time-times *debug-find-refs*)
+                               (/ (inga/utils::measuring-time-total-time *debug-find-refs*) (inga/utils::measuring-time-times *debug-find-refs*) internal-time-units-per-second)))
             (when (and pr results)
               (inga/github:send-pr-comment hostname pr results root-path)))
           (stop ctx))))
@@ -173,7 +184,9 @@
 
         (let ((src-path (cdr (assoc :path range)))
               ast)
-          (setf ast (exec-parser (context-parser ctx) src-path))
+          (setf ast (inga/utils::measure
+                      *debug-parse*
+                      (lambda () (exec-parser (context-parser ctx) src-path))))
           (setf results
                 (append results
                         (mapcan (lambda (pos)
@@ -184,8 +197,10 @@
   (remove nil
           (mapcar (lambda (line-no)
                     (let ((item-pos
-                            (find-affected-pos (context-parser ctx)
-                                               src-path ast line-no)))
+                            (inga/utils::measure
+                              *debug-find-affected-pos*
+                              (lambda () (find-affected-pos (context-parser ctx)
+                                                            src-path ast line-no)))))
                       (when item-pos
                         (log-debug (format nil "found-affected-pos: [src-path: ~a, line-no: ~a]~% -> ~a, " src-path line-no item-pos))
                         (when (assoc :origin range)
@@ -200,7 +215,9 @@
   (unless (assoc :origin pos)
     (push (cons :origin pos) pos))
 
-  (let ((refs (references-client (context-lc ctx) pos))
+  (let ((refs (inga/utils::measure
+                *debug-find-refs*
+                (lambda () (references-client (context-lc ctx) pos))))
         (results '()))
     (setf refs (remove nil (mapcar (lambda (ref)
                                      (when (is-analysis-target (cdr (assoc :path ref))
