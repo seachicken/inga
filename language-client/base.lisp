@@ -7,10 +7,11 @@
            #:client-process
            #:client-req-id
            #:client-path
-           #:client-cache-refs
+           #:client-cache
            #:start-client
            #:stop-client
            #:references-client
+           #:get-references-key
            #:get-command
            #:increment-req-id
            #:exec-command
@@ -27,11 +28,11 @@
    (id-key :initarg :id-key
            :initform "id"
            :reader client-id-key)
-   (cache-refs :initform nil
-               :accessor client-cache-refs)))
+   (cache :initarg :cache
+          :accessor client-cache)))
 
-(defgeneric make-client (kind path)
-  (:method (kind path)
+(defgeneric make-client (kind path cache)
+  (:method (kind path cache)
     (error 'unknown-client :name kind)))
 
 (defgeneric start-client (client))
@@ -69,4 +70,7 @@
       repeat len
       do (vector-push (read-byte stream) buff)
       finally (return (flexi-streams:octets-to-string buff :external-format :utf-8)))))
+
+(defun get-references-key (pos)
+  (intern (format nil "refs-~a-~a-~a" (cdr (assoc :path pos)) (cdr (assoc :line pos)) (cdr (assoc :offset pos)))))
 
