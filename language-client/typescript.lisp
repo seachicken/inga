@@ -1,15 +1,18 @@
 (defpackage #:inga/language-client/typescript
   (:use #:cl
         #:inga/language-client/base)
+  (:import-from #:inga/cache
+                #:put-value
+                #:get-value)
   (:export #:language-client-typescript))
 (in-package #:inga/language-client/typescript)
 
 (defclass language-client-typescript (language-client)
   ())
 
-(defmethod make-client ((kind (eql :typescript)) path)
+(defmethod make-client ((kind (eql :typescript)) path cache)
   (make-instance 'language-client-typescript
-                 :path path :id-key "request_seq"))
+                 :path path :id-key "request_seq" :cache cache))
 
 (defmethod start-client ((client language-client-typescript))
   (setf (client-process client)
@@ -21,12 +24,10 @@
   (uiop:close-streams (client-process client)))
 
 (defmethod references-client ((client language-client-typescript) pos)
-  (let ((key (list (cdr (assoc :path pos)) (cdr (assoc :line pos)) (cdr (assoc :offset pos))))
-        cache
+  (let ((cache (get-value (client-cache client) (get-references-key pos)))
         (full-path (namestring
                      (uiop:merge-pathnames* (cdr (assoc :path pos))
                                             (client-path client)))))
-    (setf cache (cdr (assoc key (client-cache-refs client) :test #'equal)))
     (values
       (if cache
           cache
@@ -52,10 +53,7 @@
                                   (unless (= (cdr (assoc :line ref-pos)) (cdr (assoc :line pos)))
                                     ref-pos)))
                               (jsown:val (jsown:val refs "body") "refs"))))
-              (push (cons
-                      (list (cdr (assoc :path pos)) (cdr (assoc :line pos)) (cdr (assoc :offset pos)))
-                      result)
-                    (client-cache-refs client))
+              (put-value (client-cache client) (get-references-key pos) result)
               result)))
       (when cache t))))
 

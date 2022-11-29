@@ -1,14 +1,17 @@
 (defpackage #:inga/language-client/java
   (:use #:cl
         #:inga/language-client/base)
+  (:import-from #:inga/cache
+                #:put-value
+                #:get-value)
   (:export #:language-client-java))
 (in-package #:inga/language-client/java)
 
 (defclass language-client-java (language-client)
   ())
 
-(defmethod make-client ((kind (eql :java)) path)
-  (make-instance 'language-client-java :path path))
+(defmethod make-client ((kind (eql :java)) path cache)
+  (make-instance 'language-client-java :path path :cache cache))
 
 (defmethod start-client ((client language-client-java))
   (let ((home (uiop:getenv "INGA_HOME")))
@@ -22,12 +25,10 @@
   (uiop:close-streams (client-process client)))
 
 (defmethod references-client ((client language-client-java) pos)
-  (let ((key (list (cdr (assoc :path pos)) (cdr (assoc :line pos)) (cdr (assoc :offset pos))))
-        cache
+  (let ((cache (get-value (client-cache client) (get-references-key pos)))
         (full-path (namestring
                      (uiop:merge-pathnames* (cdr (assoc :path pos))
                                             (client-path client)))))
-    (setf cache (cdr (assoc key (client-cache-refs client) :test #'equal)))
     (values
       (if cache
           cache
@@ -46,10 +47,7 @@
                                  (cons :line (+ (jsown:val (jsown:val (jsown:val ref "range") "start") "line") 1))
                                  (cons :offset (+ (jsown:val (jsown:val (jsown:val ref "range") "start") "character") 1))))
                              (jsown:val refs "result")))
-              (push (cons
-                      (list (cdr (assoc :path pos)) (cdr (assoc :line pos)) (cdr (assoc :offset pos)))
-                      result)
-                    (client-cache-refs client))
+              (put-value (client-cache client) (get-references-key pos) result)
               result)))
       (when cache t))))
 

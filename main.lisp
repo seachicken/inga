@@ -19,6 +19,8 @@
                 #:exec-parser
                 #:find-affected-pos
                 #:find-entrypoint)
+  (:import-from #:inga/cache
+                #:make-cache)
   (:import-from #:inga/utils
                 #:split-trim-comma)
   (:import-from #:inga/errors
@@ -34,6 +36,8 @@
 
 (defparameter *include-java*
   '("**/*.java"))
+
+(defparameter *cache* (make-cache 300))
 
 (defparameter *debug-parse* (inga/utils::make-measuring-time))
 (defparameter *debug-find-affected-pos* (inga/utils::make-measuring-time))
@@ -120,14 +124,14 @@
                    :project-path root-path
                    :include *include-typescript*
                    :exclude exclude
-                   :lc (make-client :typescript root-path)
+                   :lc (make-client :typescript root-path *cache*)
                    :parser (make-parser :typescript root-path)))
                (:java
                  (make-context
                    :project-path root-path
                    :include *include-java*
                    :exclude exclude
-                   :lc (make-client :java root-path)
+                   :lc (make-client :java root-path *cache*)
                    :parser (make-parser :java root-path)))
                (t (error 'inga-error-context-not-found)))))
     (start-client (context-lc ctx))
