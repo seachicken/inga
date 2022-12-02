@@ -2,6 +2,9 @@
   (:use #:cl
         #:inga/parser/base
         #:inga/utils)
+  (:import-from #:inga/cache
+                #:put-value
+                #:get-value)
   (:export #:parser-typescript))
 (in-package #:inga/parser/typescript)
 
@@ -9,9 +12,8 @@
   ((nearest-ast-pos :initform nil
                     :accessor parser-nearest-ast-pos)))
 
-(defmethod make-parser ((kind (eql :typescript)) path)
-  (make-instance 'parser-typescript
-                 :path path))
+(defmethod make-parser ((kind (eql :typescript)) path cache)
+  (make-instance 'parser-typescript :path path :cache cache))
 
 (defmethod start-parser ((parser parser-typescript))
   (setf (parser-process parser)
@@ -22,10 +24,21 @@
   (uiop:close-streams (parser-process parser)))
 
 (defmethod exec-parser ((parser parser-typescript) file-path)
-  (let ((ast (exec-command parser (namestring
-                                    (uiop:merge-pathnames* file-path (parser-path parser))))))
-    (when (> (length ast) 0)
-      (cdr (jsown:parse ast)))))
+  (let ((path (namestring
+                (uiop:merge-pathnames* file-path (parser-path parser))))
+        cache
+        ast)
+    (setf cache (get-value (parser-cache parser) (get-parse-key path)))
+    (values
+      (if cache
+          (when (> (length cache) 0)
+            (cdr (jsown:parse cache)))
+          (progn
+            (setf ast (exec-command parser path))
+            (put-value (parser-cache parser) (get-parse-key path) ast)
+            (when (> (length ast) 0)
+              (cdr (jsown:parse ast)))))
+      (when cache t))))
 
 (defmethod find-affected-pos ((parser parser-typescript) file-path ast line-no)
   (let ((q (make-queue))

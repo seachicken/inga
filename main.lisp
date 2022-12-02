@@ -74,9 +74,10 @@
                           exclude)))
           (let ((results (analyze ctx diffs)))
             (log-debug (format nil "results: ~a~%" results))
-            (log-debug (format nil "measuring time:~% parse: [times: ~a, avg-sec: ~f]~% find-affected-pos: [times: ~a, avg-sec: ~f]~% find-refs: [times: ~a, avg-sec: ~f, cache-hit: ~a]~%"
+            (log-debug (format nil "measuring time:~% parse: [times: ~a, avg-sec: ~f, cache-hit: ~a]~% find-affected-pos: [times: ~a, avg-sec: ~f]~% find-refs: [times: ~a, avg-sec: ~f, cache-hit: ~a]~%"
                                (inga/utils::measuring-time-times *debug-parse*)
                                (/ (inga/utils::measuring-time-total-time *debug-parse*) (inga/utils::measuring-time-times *debug-parse*) internal-time-units-per-second)
+                               (inga/utils::measuring-time-cache-hit *debug-parse*)
                                (inga/utils::measuring-time-times *debug-find-affected-pos*)
                                (/ (inga/utils::measuring-time-total-time *debug-find-affected-pos*) (inga/utils::measuring-time-times *debug-find-affected-pos*) internal-time-units-per-second)
                                (inga/utils::measuring-time-times *debug-find-refs*)
@@ -125,14 +126,14 @@
                    :include *include-typescript*
                    :exclude exclude
                    :lc (make-client :typescript root-path *cache*)
-                   :parser (make-parser :typescript root-path)))
+                   :parser (make-parser :typescript root-path *cache*)))
                (:java
                  (make-context
                    :project-path root-path
                    :include *include-java*
                    :exclude exclude
                    :lc (make-client :java root-path *cache*)
-                   :parser (make-parser :java root-path)))
+                   :parser (make-parser :java root-path *cache*)))
                (t (error 'inga-error-context-not-found)))))
     (start-client (context-lc ctx))
     (start-parser (context-parser ctx))

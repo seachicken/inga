@@ -9,6 +9,7 @@
 
 (defparameter *spring-boot-path*
   (truename (uiop:merge-pathnames* "test/fixtures/spring-boot-realworld-example-app/")))
+(defparameter *cache* (inga/cache:make-cache 100))
 
 ;; public class ArticleQueryService {
 ;;                                ↓[out]
@@ -17,7 +18,7 @@
 ;;   }
 ;; }
 (test find-affected-pos-for-method
-  (let ((parser (make-parser :java *spring-boot-path*)))
+  (let ((parser (make-parser :java *spring-boot-path* *cache*)))
     (start-parser parser)
     (is (equal
           '((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
@@ -35,7 +36,7 @@
 ;;   void save(Article article); ←[in]
 ;; }
 (test find-affected-pos-for-interface
-  (let ((parser (make-parser :java *spring-boot-path*)))
+  (let ((parser (make-parser :java *spring-boot-path* *cache*)))
     (start-parser parser)
     (is (equal
           '((:path . "src/main/java/io/spring/core/article/ArticleRepository.java")
@@ -54,7 +55,7 @@
 ;;   private String title;
 ;; }
 (test find-affected-pos-for-field-annotation
-  (let ((parser (make-parser :java *spring-boot-path*)))
+  (let ((parser (make-parser :java *spring-boot-path* *cache*)))
     (start-parser parser)
     (is (equal
           '((:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
@@ -76,7 +77,7 @@
 ;;   }
 ;; }
 (test find-affected-pos-for-constraint-validator
-  (let ((parser (make-parser :java *spring-boot-path*)))
+  (let ((parser (make-parser :java *spring-boot-path* *cache*)))
     (start-parser parser)
     (is (equal
           '((:path . "src/main/java/io/spring/application/article/DuplicatedArticleValidator.java")
@@ -94,7 +95,7 @@
 ;;   } ←[in]
 ;; }
 (test ignore-affected-pos-when-end-block
-  (let ((parser (make-parser :java *spring-boot-path*)))
+  (let ((parser (make-parser :java *spring-boot-path* *cache*)))
     (start-parser parser)
     (is (equal
           nil
