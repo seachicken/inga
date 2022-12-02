@@ -9,13 +9,14 @@
 
 (defparameter *react-path* (uiop:merge-pathnames* "test/fixtures/react-typescript-todo/"))
 (defparameter *nestjs-path* (uiop:merge-pathnames* "test/fixtures/nestjs-realworld-example-app-prisma/"))
+(defparameter *cache* (inga/cache:make-cache 100))
 
 ;;       ↓[out]
 ;; const article = {
 ;;   title: "Hello" ←[in]
 ;; };
 (test find-affected-pos-for-variable-object-literal-expression
-  (let ((parser (make-parser :typescript *nestjs-path*)))
+  (let ((parser (make-parser :typescript *nestjs-path* *cache*)))
     (start-parser parser)
     (is (equal
           '((:path . "src/article/article.service.ts")
@@ -35,7 +36,7 @@
 ;;   }
 ;; }
 (test find-affected-pos-for-function
-  (let ((parser (make-parser :typescript *react-path*)))
+  (let ((parser (make-parser :typescript *react-path* *cache*)))
     (start-parser parser)
     (is (equal
           '((:path . "src/App/NewTodoInput/index.tsx")
@@ -53,7 +54,7 @@
 ;;   const a = 0; ←[in]
 ;; });
 (test find-affected-pos-for-variable-call-expression
-  (let ((parser (make-parser :typescript *nestjs-path*)))
+  (let ((parser (make-parser :typescript *nestjs-path* *cache*)))
     (start-parser parser)
     (is (equal
           '((:path . "src/user/user.decorator.ts")
@@ -73,7 +74,7 @@
 ;;   })
 ;; }
 (test find-affected-pos-for-variable-arrow-function
-  (let ((parser (make-parser :typescript *react-path*)))
+  (let ((parser (make-parser :typescript *react-path* *cache*)))
     (start-parser parser)
     (is (equal
           '((:path . "src/App/TodoList/Item/index.tsx")
@@ -93,7 +94,7 @@
 ;;   }
 ;; }
 (test find-affected-pos-for-method
-  (let ((parser (make-parser :typescript *nestjs-path*)))
+  (let ((parser (make-parser :typescript *nestjs-path* *cache*)))
     (start-parser parser)
     (is (equal
           '((:path . "src/article/article.service.ts")
@@ -112,7 +113,7 @@
 ;;   }
 ;; } ←[in]
 (test ignore-affected-pos-when-end-block
-  (let ((parser (make-parser :typescript *nestjs-path*)))
+  (let ((parser (make-parser :typescript *nestjs-path* *cache*)))
     (start-parser parser)
     (is (equal
           nil
@@ -125,7 +126,7 @@
     (stop-parser parser)))
 
 (test find-entrypoint
-  (let ((parser (make-parser :typescript *react-path*)))
+  (let ((parser (make-parser :typescript *react-path* *cache*)))
     (start-parser parser)
     (is (equal
           '((:path . "src/App/TodoList/Item/index.tsx")
