@@ -64,7 +64,8 @@
                                   hostname owner-repo
                                   comment)
                           :output :string)
-        (uiop:subprocess-error ()
+        (uiop:subprocess-error (error)
+                               (format t "subprocess-error: ~a~%" error)
                                (uiop:run-program
                                  (format nil
                                          "(cd ~a && gh pr comment ~a -R ~a/~a --body '~a')"
