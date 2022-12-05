@@ -57,14 +57,14 @@
                     (get-affected-display-name entorypoints)
                     (get-code-hierarchy base-url head-sha entorypoints)))
       (handler-case
-        (format t "gh: ~a~%" (uiop:run-program (format nil
-                                                       "(cd ~a && gh pr comment ~a -R ~a/~a --body '~a' --edit-last)"
-                                                       project-path
-                                                       number
-                                                       hostname owner-repo
-                                                       comment)
-                                               :output :string
-                                               :error-output :string))
+        (uiop:run-program (format nil
+                                  "(cd ~a && gh pr comment ~a -R ~a/~a --body '~a' --edit-last)"
+                                  project-path
+                                  number
+                                  hostname owner-repo
+                                  comment)
+                          :output :string
+                          :error-output t)
         (uiop:subprocess-error (error)
                                (format t "subprocess-error: ~a~%" error)
                                (uiop:run-program
