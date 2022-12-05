@@ -4,7 +4,7 @@ ARG VERSION
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
-  apt-get install -y curl
+  apt-get install -y curl ca-certificates
 
 # https://github.com/cli/cli/blob/trunk/docs/install_linux.md#installing-gh-on-linux-and-bsd
 RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && \
