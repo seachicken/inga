@@ -60,3 +60,9 @@
                   (+ (measuring-time-times target) 1))))
       result)))
 
+(defun avg-sec (time)
+  (if (= (measuring-time-times time) 0)
+      0
+      (/ (measuring-time-total-time time) (measuring-time-times time)
+         internal-time-units-per-second)))
+
