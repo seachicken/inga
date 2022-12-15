@@ -48,45 +48,45 @@
 (define-condition inga-error-context-not-found (inga-error) ())
 
 (defun command (&rest argv)
-  (handler-case
-    (destructuring-bind (&key root-path exclude github-token base-commit) (parse-argv argv)
-      (let (diffs pr hostname)
-        (when github-token
-          (setf hostname (inga/git:get-hostname root-path))
-          (inga/github:login hostname github-token)
-          (setf pr (inga/github:get-pr root-path))
-          (log-debug (format nil "pr: ~a~%" pr))
-          (destructuring-bind (&key base-url owner-repo number merge-state-status base-ref-name head-sha) pr
-            ;; https://docs.github.com/en/graphql/reference/enums#mergestatestatus
-            (when (or
-                    (string= merge-state-status "BEHIND")
-                    (string= merge-state-status "DIRTY"))
-              (log-debug (format nil "can't diff when merge state is not clean"))
-              (return-from command))
+  (time (handler-case
+          (destructuring-bind (&key root-path exclude github-token base-commit) (parse-argv argv)
+            (let (diffs pr hostname)
+              (when github-token
+                (setf hostname (inga/git:get-hostname root-path))
+                (inga/github:login hostname github-token)
+                (setf pr (inga/github:get-pr root-path))
+                (log-debug (format nil "pr: ~a~%" pr))
+                (destructuring-bind (&key base-url owner-repo number merge-state-status base-ref-name head-sha) pr
+                  ;; https://docs.github.com/en/graphql/reference/enums#mergestatestatus
+                  (when (or
+                          (string= merge-state-status "BEHIND")
+                          (string= merge-state-status "DIRTY"))
+                    (log-debug (format nil "can't diff when merge state is not clean"))
+                    (return-from command))
 
-            (unless base-commit
-              (inga/git:track-branch base-ref-name root-path)
-              (setf base-commit base-ref-name))))
-        (setf diffs (get-diff root-path base-commit))
+                  (unless base-commit
+                    (inga/git:track-branch base-ref-name root-path)
+                    (setf base-commit base-ref-name))))
+              (setf diffs (get-diff root-path base-commit))
 
-        (let ((ctx (start root-path
-                          (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
-                          exclude)))
-          (let ((results (analyze ctx diffs)))
-            (log-debug (format nil "results: ~a~%" results))
-            (log-debug (format nil "measuring time:~% parse: [times: ~a, avg-sec: ~f, cache-hit: ~a]~% find-affected-pos: [times: ~a, avg-sec: ~f]~% find-refs: [times: ~a, avg-sec: ~f, cache-hit: ~a]~%"
-                               (inga/utils::measuring-time-times *debug-parse*)
-                               (inga/utils::avg-sec *debug-parse*)
-                               (inga/utils::measuring-time-cache-hit *debug-parse*)
-                               (inga/utils::measuring-time-times *debug-find-affected-pos*)
-                               (inga/utils::avg-sec *debug-find-affected-pos*)
-                               (inga/utils::measuring-time-times *debug-find-refs*)
-                               (inga/utils::avg-sec *debug-find-refs*)
-                               (inga/utils::measuring-time-cache-hit *debug-find-refs*)))
-            (when (and pr results)
-              (inga/github:send-pr-comment hostname pr results root-path)))
-          (stop ctx))))
-    (inga-error (e) (format t "~a~%" e))))
+              (let ((ctx (start root-path
+                                (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
+                                exclude)))
+                (let ((results (analyze ctx diffs)))
+                  (log-debug (format nil "results: ~a~%" results))
+                  (log-debug (format nil "measuring time:~% parse: [times: ~a, avg-sec: ~f, cache-hit: ~a]~% find-affected-pos: [times: ~a, avg-sec: ~f]~% find-refs: [times: ~a, avg-sec: ~f, cache-hit: ~a]~%"
+                                     (inga/utils::measuring-time-times *debug-parse*)
+                                     (inga/utils::avg-sec *debug-parse*)
+                                     (inga/utils::measuring-time-cache-hit *debug-parse*)
+                                     (inga/utils::measuring-time-times *debug-find-affected-pos*)
+                                     (inga/utils::avg-sec *debug-find-affected-pos*)
+                                     (inga/utils::measuring-time-times *debug-find-refs*)
+                                     (inga/utils::avg-sec *debug-find-refs*)
+                                     (inga/utils::measuring-time-cache-hit *debug-find-refs*)))
+                  (when (and pr results)
+                    (inga/github:send-pr-comment hostname pr results root-path)))
+                (stop ctx))))
+          (inga-error (e) (format t "~a~%" e)))))
 
 (defun parse-argv (argv)
   (loop with root-path = "."
