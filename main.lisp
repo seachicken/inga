@@ -208,7 +208,6 @@
                               (lambda () (find-affected-pos (context-parser ctx)
                                                             src-path ast line-no)))))
                       (when item-pos
-                        (log-debug (format nil "found-affected-pos: [src-path: ~a, line-no: ~a]~% -> ~a, " src-path line-no item-pos))
                         (when (assoc :origin range)
                           (setf item-pos (acons :origin (cdr (assoc :origin range)) item-pos)))
                         item-pos)))
@@ -231,7 +230,6 @@
                                                                (context-exclude ctx))
                                        ref))
                                    refs)))
-    (log-debug (format nil "found-references: [pos: ~a]~% -> ~a, " pos refs))
     (if refs
         (loop for ref in refs
               do (progn 
