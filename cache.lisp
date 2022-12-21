@@ -3,7 +3,8 @@
   (:export #:cache
            #:make-cache
            #:put-value
-           #:get-value))
+           #:get-value
+           #:size))
 (in-package #:inga/cache)
 
 (defclass cache ()
@@ -29,4 +30,7 @@
       (delete pair (cache-store cache))
       (push pair (cache-store cache))
       (cdr pair))))
+
+(defmethod size ((cache cache))
+  (length (cache-store cache)))
 

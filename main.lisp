@@ -20,7 +20,8 @@
                 #:find-affected-pos
                 #:find-entrypoint)
   (:import-from #:inga/cache
-                #:make-cache)
+                #:make-cache
+                #:size)
   (:import-from #:inga/utils
                 #:split-trim-comma)
   (:import-from #:inga/errors
@@ -33,11 +34,10 @@
 (defparameter *include-typescript*
   '("**/*.(js|jsx)"
     "**/*.(ts|tsx)"))
-
 (defparameter *include-java*
   '("**/*.java"))
-
-(defparameter *cache* (make-cache 300))
+(defparameter *cache-max-size* 50)
+(defparameter *cache* (make-cache *cache-max-size*))
 
 (defparameter *debug-parse* (inga/utils::make-measuring-time))
 (defparameter *debug-find-affected-pos* (inga/utils::make-measuring-time))
@@ -55,7 +55,7 @@
           (setf hostname (inga/git:get-hostname root-path))
           (inga/github:login hostname github-token)
           (setf pr (inga/github:get-pr root-path))
-          (log-debug (format nil "pr: ~a~%" pr))
+          (log-debug (format nil "pr: ~a" pr))
           (destructuring-bind (&key base-url owner-repo number merge-state-status base-ref-name head-sha) pr
             ;; https://docs.github.com/en/graphql/reference/enums#mergestatestatus
             (when (or
@@ -73,8 +73,9 @@
                           (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
                           exclude)))
           (let ((results (analyze ctx diffs)))
-            (log-debug (format nil "results: ~a~%" results))
-            (log-debug (format nil "measuring time:~% parse: [times: ~a, avg-sec: ~f, cache-hit: ~a]~% find-affected-pos: [times: ~a, avg-sec: ~f]~% find-refs: [times: ~a, avg-sec: ~f, cache-hit: ~a]~%"
+            (log-debug (format nil "results: ~a" results))
+            (log-debug (format nil "cache size: ~a/~a" (size *cache*) *cache-max-size*))
+            (log-debug (format nil "measuring time:~% parse: [times: ~a, avg-sec: ~f, cache-hit: ~a]~% find-affected-pos: [times: ~a, avg-sec: ~f]~% find-refs: [times: ~a, avg-sec: ~f, cache-hit: ~a]"
                                (inga/utils::measuring-time-times *debug-parse*)
                                (inga/utils::avg-sec *debug-parse*)
                                (inga/utils::measuring-time-cache-hit *debug-parse*)
