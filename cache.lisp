@@ -3,7 +3,8 @@
   (:export #:cache
            #:make-cache
            #:put-value
-           #:get-value))
+           #:get-value
+           #:size))
 (in-package #:inga/cache)
 
 (defclass cache ()
