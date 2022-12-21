@@ -30,3 +30,6 @@
       (push pair (cache-store cache))
       (cdr pair))))
 
+(defmethod size ((cache cache))
+  (length (cache-store cache)))
+
