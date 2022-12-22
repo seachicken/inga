@@ -20,18 +20,16 @@
                  :max-size max-size))
 
 (defmethod put-value ((cache cache) key value)
-  ;;(when (>= (length (cache-store cache)) (cache-max-size cache))
-  ;;  (nbutlast (cache-store cache) (+ (- (length (cache-store cache)) (cache-max-size cache)) 1)))
-  ;;(push (cons key value) (cache-store cache)))
-  )
+  (when (= (length (cache-store cache)) (cache-max-size cache))
+    (nbutlast (cache-store cache) (- (cache-max-size cache) 1)))
+  (push (cons key value) (cache-store cache)))
 
 (defmethod get-value ((cache cache) key)
-  ;;(let ((pair (assoc key (cache-store cache))))
-  ;;  (when pair
-  ;;    (delete pair (cache-store cache))
-  ;;    (push pair (cache-store cache))
-  ;;    (cdr pair))))
-  )
+  (let ((pair (assoc key (cache-store cache))))
+    (when pair
+      (delete pair (cache-store cache))
+      (push pair (cache-store cache))
+      (cdr pair))))
 
 (defmethod size ((cache cache))
   (length (cache-store cache)))
