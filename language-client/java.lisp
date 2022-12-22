@@ -17,7 +17,7 @@
   (let ((home (uiop:getenv "INGA_HOME")))
     (setf (client-process client)
           (uiop:launch-program
-            (format nil "~a/libs/jdtls/bin/jdtls -data ~a/libs/jdtls/workspace --jvm-arg=-Xmx500m --jvm-arg=-Xms100m --jvm-arg=-javaagent:~a/libs/lombok.jar" home home home)
+            (format nil "~a/libs/jdtls/bin/jdtls -data ~a/libs/jdtls/workspace --jvm-arg=-javaagent:~a/libs/lombok.jar" home home home)
             :input :stream :output :stream)))
   (initialize-client client))
 
