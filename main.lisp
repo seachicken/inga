@@ -36,7 +36,7 @@
     "**/*.(ts|tsx)"))
 (defparameter *include-java*
   '("**/*.java"))
-(defparameter *cache-max-size* 50)
+(defparameter *cache-max-size* 10)
 (defparameter *cache* (make-cache *cache-max-size*))
 
 (defparameter *debug-parse* (inga/utils::make-measuring-time))
