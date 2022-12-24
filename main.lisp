@@ -36,7 +36,7 @@
     "**/*.(ts|tsx)"))
 (defparameter *include-java*
   '("**/*.java"))
-(defparameter *cache-max-size* 50)
+(defparameter *cache-max-size* 100)
 (defparameter *cache* (make-cache *cache-max-size*))
 
 (defparameter *debug-parse* (inga/utils::make-measuring-time))
@@ -69,10 +69,10 @@
               (setf base-commit base-ref-name))))
         (setf diffs (get-diff root-path base-commit))
 
-        (let ((ctx (start root-path
-                          (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
-                          exclude)))
-          (let ((results (analyze ctx diffs)))
+        (let ((ctx (time (start root-path
+                                (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
+                                exclude))))
+          (let ((results (time (analyze ctx diffs))))
             (log-debug (format nil "results: ~a" results))
             (log-debug (format nil "cache size: ~a/~a" (size *cache*) *cache-max-size*))
             (log-debug (format nil "measuring time:~% parse: [times: ~a, avg-sec: ~f, cache-hit: ~a]~% find-affected-pos: [times: ~a, avg-sec: ~f]~% find-refs: [times: ~a, avg-sec: ~f, cache-hit: ~a]"
