@@ -1,6 +1,5 @@
 FROM fukamachi/roswell:21.10.14.111-ubuntu AS build
 
-ARG VERSION
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
@@ -20,10 +19,8 @@ RUN curl -o ./libs/javaparser.jar -L https://github.com/seachicken/javaparser/re
 
 RUN curl -o ./libs/lombok.jar -L https://projectlombok.org/downloads/lombok.jar
 
-RUN curl -o ./inga.tar.gz -L https://github.com/seachicken/inga/archive/refs/tags/$VERSION.tar.gz && \
-  mkdir inga && \
-  tar xvf ./inga.tar.gz -C ./inga --strip-components 1 && \
-  ros && \
+COPY ../.. /inga
+RUN ros && \
   cd ~/.roswell/local-projects && ln -s /inga inga && \
   ros build /inga/roswell/inga.ros
 
