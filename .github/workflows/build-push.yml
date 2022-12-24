@@ -48,6 +48,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
         with:
+          context: ./docker/${{ matrix.target }}
           file: ./docker/${{ matrix.target }}/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
