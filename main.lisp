@@ -75,7 +75,7 @@
           (let ((results (time (analyze ctx diffs))))
             (log-debug (format nil "results: ~a" results))
             (log-debug (format nil "cache size: ~a/~a" (size *cache*) *cache-max-size*))
-            (log-debug (format nil "measuring time:~% parse: [times: ~a, avg-sec: ~f, cache-hit: ~a]~% find-affected-pos: [times: ~a, avg-sec: ~f]~% find-refs: [times: ~a, avg-sec: ~f, cache-hit: ~a]"
+            (log-debug (format nil "measuring time:~%  parse: [times: ~a, avg-sec: ~f, cache-hit: ~a]~%  find-affected-pos: [times: ~a, avg-sec: ~f]~%  find-refs: [times: ~a, avg-sec: ~f, cache-hit: ~a]"
                                (inga/utils::measuring-time-times *debug-parse*)
                                (inga/utils::avg-sec *debug-parse*)
                                (inga/utils::measuring-time-cache-hit *debug-parse*)
