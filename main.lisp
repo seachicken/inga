@@ -73,7 +73,6 @@
                                 (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
                                 exclude))))
           (let ((results (time (analyze ctx diffs))))
-            (log-debug (format nil "results: ~a" results))
             (log-debug (format nil "cache size: ~a/~a" (size *cache*) *cache-max-size*))
             (log-debug (format nil "measuring time:~%  parse: [times: ~a, avg-sec: ~f, cache-hit: ~a]~%  find-affected-pos: [times: ~a, avg-sec: ~f]~%  find-refs: [times: ~a, avg-sec: ~f, cache-hit: ~a]"
                                (inga/utils::measuring-time-times *debug-parse*)
@@ -84,6 +83,7 @@
                                (inga/utils::measuring-time-times *debug-find-refs*)
                                (inga/utils::avg-sec *debug-find-refs*)
                                (inga/utils::measuring-time-cache-hit *debug-find-refs*)))
+            (format t (to-json results))
             (when (and pr results)
               (inga/github:send-pr-comment hostname pr results root-path)))
           (stop ctx))))
@@ -257,6 +257,14 @@
                               (cons :line (cdr (assoc :line pos)))
                               (cons :offset (cdr (assoc :offset pos)))))))))
     results))
+
+(defun to-json (results)
+  (jsown:to-json
+    (mapcan (lambda (r)
+              (list (cons :obj (list
+                                 (cons :origin (cons :obj (cdr (assoc :origin r))))
+                                 (cons :entorypoint (cons :obj (cdr (assoc :entorypoint r))))))))
+            results)))
 
 (defun inject-mark (project-path component-poss)
   (loop for pos in component-poss collect
