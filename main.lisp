@@ -83,7 +83,12 @@
                                (inga/utils::measuring-time-times *debug-find-refs*)
                                (inga/utils::avg-sec *debug-find-refs*)
                                (inga/utils::measuring-time-cache-hit *debug-find-refs*)))
-            (format t (to-json results))
+            (ensure-directories-exist "reports/")
+            (with-open-file (out "reports/report.json"
+                                 :direction :output
+                                 :if-exists :supersede
+                                 :if-does-not-exist :create)
+              (format out "~a" (to-json results)))
             (when (and pr results)
               (inga/github:send-pr-comment hostname pr results root-path)))
           (stop ctx))))
