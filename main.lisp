@@ -267,9 +267,14 @@
   (jsown:to-json
     (mapcan (lambda (r)
               (list (cons :obj (list
-                                 (cons :origin (cons :obj (cdr (assoc :origin r))))
-                                 (cons :entorypoint (cons :obj (cdr (assoc :entorypoint r))))))))
+                                 (cons "origin"
+                                       (cons :obj (key-downcase (cdr (assoc :origin r)))))
+                                 (cons "entorypoint"
+                                       (cons :obj (key-downcase (cdr (assoc :entorypoint r)))))))))
             results)))
+
+(defun key-downcase (obj)
+  (mapcar (lambda (p) (cons (string-downcase (car p)) (cdr p))) obj))
 
 (defun inject-mark (project-path component-poss)
   (loop for pos in component-poss collect
