@@ -89,6 +89,7 @@
                                  :if-exists :supersede
                                  :if-does-not-exist :create)
               (format out "~a" (to-json results)))
+            (format t "~%~a~%" (to-json results))
             (when (and pr results)
               (inga/github:send-pr-comment hostname pr results root-path)))
           (stop ctx))))
