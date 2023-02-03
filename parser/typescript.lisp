@@ -68,9 +68,21 @@
               ("CallExpression"
                 (when (jsown:keyp ast "name")
                   (let ((name (cdr (jsown:val ast "name"))))
-                    (return (convert-to-pos (parser-path parser) file-path
-                                            (jsown:val name "escapedText")
-                                            (jsown:val name "start"))))))
+                    (alexandria:switch ((jsown:val name "kindName") :test #'string=)
+                      ("ArrayBindingPattern"
+                       (let ((elements (jsown:val name "elements")))
+                         (return (convert-to-pos
+                                   (parser-path parser) file-path
+                                   (format nil "~{~a~^, ~}"
+                                           (mapcar (lambda (e)
+                                                     (when (jsown:keyp e "name")
+                                                       (jsown:val (jsown:val e "name") "escapedText")))
+                                                   elements))
+                                   (jsown:val (first elements) "start")))))
+                      ("Identifier"
+                       (return (convert-to-pos (parser-path parser) file-path
+                                               (jsown:val name "escapedText")
+                                               (jsown:val name "start"))))))))
               ("ArrowFunction"
                 (if (equal (find-return-type init) "JsxElement")
                     (enqueue q (jsown:val init "body"))

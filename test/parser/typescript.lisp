@@ -7,6 +7,7 @@
 (def-suite typescript)
 (in-suite typescript)
 
+(defparameter *fixtures-path* (uiop:merge-pathnames* "test/fixtures/"))
 (defparameter *react-path* (uiop:merge-pathnames* "test/fixtures/react-typescript-todo/"))
 (defparameter *nestjs-path* (uiop:merge-pathnames* "test/fixtures/nestjs-realworld-example-app-prisma/"))
 (defparameter *cache* (inga/cache:make-cache 100))
@@ -65,6 +66,24 @@
               src-path
               (exec-parser parser src-path)
               9))))
+    (stop-parser parser)))
+
+;;        ↓[out]
+;; const [a, b] = f(
+;;   list.forEach((a) => a) ←[in]
+;; );
+(test find-affected-pos-for-variable-call-expression-array
+  (let ((parser (make-parser :typescript *fixtures-path* *cache*)))
+    (start-parser parser)
+    (is (equal
+          '((:path . "declaration.ts")
+            (:name . "a, b") (:line . 4) (:offset . 8))
+          (let ((src-path "declaration.ts"))
+            (inga/parser/typescript::find-affected-pos
+              parser
+              src-path
+              (exec-parser parser src-path)
+              5))))
     (stop-parser parser)))
 
 ;;       ↓[out]
