@@ -55,6 +55,8 @@ Analyze the difference between the --base-commit and the checked-out commit. Set
 
 ### Run on GitHub Actions
 
+[Inga Action](https://github.com/seachicken/inga-action)
+
 #### Example projects
 
 - [create-react-app-typescript-todo-example-2022](https://github.com/seachicken/create-react-app-typescript-todo-example-2022/blob/master/.github/workflows/inga.yml)
