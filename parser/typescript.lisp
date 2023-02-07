@@ -181,7 +181,9 @@
         (if (null ast) (return))
 
         (when (and (jsown:keyp ast "kindName") (string= (jsown:val ast "kindName") "ReturnStatement"))
-          (when (string= (jsown:val (jsown:val ast "expression") "kindName") "ParenthesizedExpression")
+          (when (and
+                  (jsown:keyp ast "expression")
+                  (string= (jsown:val (jsown:val ast "expression") "kindName") "ParenthesizedExpression"))
             (when 
               (string= (jsown:val (jsown:val
                                     (jsown:val ast "expression") "expression") "kindName") "JsxElement")
