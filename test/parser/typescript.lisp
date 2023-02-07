@@ -106,6 +106,24 @@
               65))))
     (stop-parser parser)))
 
+;;       ↓[out]
+;; const f2 = () => {
+;;   return; ←[in]
+;; };
+(test find-affected-pos-for-variable-arrow-function-return-undefined
+  (let ((parser (make-parser :typescript *fixtures-path* *cache*)))
+    (start-parser parser)
+    (is (equal
+          '((:path . "declaration.ts")
+            (:name . "f2") (:line . 8) (:offset . 7))
+          (let ((src-path "declaration.ts"))
+            (inga/parser/typescript::find-affected-pos
+              parser
+              src-path
+              (exec-parser parser src-path)
+              9))))
+    (stop-parser parser)))
+
 ;; class ArticleService {
 ;;         ↓[out]
 ;;   async findAll(userId: number, query): Promise<any> {
