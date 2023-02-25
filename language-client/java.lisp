@@ -18,7 +18,7 @@
     (setf (client-process client)
           (uiop:launch-program
             ;; https://github.com/redhat-developer/vscode-java/blob/f93cc8bb574956aa27edaff32a798f33283c9195/package.json#L218
-            (format nil "~a/libs/jdtls/bin/jdtls -data ~a/libs/jdtls/workspace --jvm-arg=-XX:+UseParallelGC --jvm-arg=-XX:GCTimeRatio=4 --jvm-arg=-XX:AdaptiveSizePolicyWeight=90 --jvm-arg=-Dsun.zip.disableMemoryMapping=true --jvm-arg=-Xmx1g --jvm-arg=-Xms100m --jvm-arg=-javaagent:~a/libs/lombok.jar" home home home)
+            (format nil "~a/libs/jdtls/bin/jdtls -data ~a/libs/jdtls/workspace --jvm-arg=-XX:+UseParallelGC --jvm-arg=-XX:GCTimeRatio=4 --jvm-arg=-XX:AdaptiveSizePolicyWeight=90 --jvm-arg=-Dsun.zip.disableMemoryMapping=true --jvm-arg=-Xmx1g --jvm-arg=-Xms100m --jvm-arg=-javaagent:~a/libs/lombok.jar --jvm-arg=-Djava.import.generatesMetadataFilesAtProjectRoot=false" home home home)
             :input :stream :output :stream)))
   (initialize-client client))
 
