@@ -5,6 +5,8 @@
   (:import-from #:inga/cache
                 #:put-value
                 #:get-value)
+  (:import-from #:inga/parser/kotlin
+                #:parser-kotlin)
   (:export #:parser-java))
 (in-package #:inga/parser/java)
 
@@ -15,7 +17,8 @@
   ())
 
 (defmethod make-parser ((kind (eql :java)) path cache)
-  (make-instance 'parser-java :path path :cache cache))
+  (list (make-instance 'parser-java :path path :cache cache)
+        (make-instance 'parser-kotlin :path path :cache cache)))
 
 (defmethod start-parser ((parser parser-java))
   (setf (parser-process parser)
