@@ -53,6 +53,7 @@
       (find-affected-pos p file-path ast line-no))))
 
 (defgeneric find-entrypoint (parser pos))
+(defmethod find-entrypoint ((parser list) pos))
 
 (defun convert-to-ast-pos (project-path pos)
   (let ((path (uiop:merge-pathnames* (cdr (assoc :path pos)) project-path))
