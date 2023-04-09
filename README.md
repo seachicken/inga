@@ -17,13 +17,13 @@ This tool improves software quality by detecting unintended changes at an early 
 
 Run in the Docker container:
 
-### Java
+### Java / Kotlin
 
 ```sh
 docker run --rm -v $PWD:/work ghcr.io/seachicken/inga:latest-java --root-path /work --base-commit main
 ```
 
-### TypeScript
+### JavaScript / TypeScript
 
 ```sh
 docker run --rm -v $PWD:/work ghcr.io/seachicken/inga:latest-typescript --root-path /work --base-commit main
