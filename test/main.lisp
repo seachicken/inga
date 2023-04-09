@@ -78,13 +78,22 @@
 (def-suite main)
 (in-suite main)
 
-(test get-analysis-kinds
+(test get-analysis-kinds-for-java
   (is (equal
         '(:java)
         (inga/main::get-analysis-kinds
           '(((:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
              (:start . 18) (:end . 18))
             ((:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
+             (:start . 20) (:end . 20)))))))
+
+(test get-analysis-kinds-for-kotlin
+  (is (equal
+        '(:java)
+        (inga/main::get-analysis-kinds
+          '(((:path . "src/main/java/io/spring/application/article/NewArticleParam.kt")
+             (:start . 18) (:end . 18))
+            ((:path . "src/main/java/io/spring/application/article/NewArticleParam.kt")
              (:start . 20) (:end . 20)))))))
 
 (test filter-active-context-with-no-env

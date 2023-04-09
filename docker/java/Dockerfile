@@ -17,6 +17,8 @@ RUN curl -o ./jdtls.tar.gz -L https://download.eclipse.org/jdtls/snapshots/jdt-l
 
 RUN curl -o ./libs/javaparser.jar -L https://github.com/seachicken/javaparser/releases/download/javaparser-0.1.0/javaparser-0.1.0.jar
 
+RUN curl -o ./libs/ktparser.jar -L https://github.com/seachicken/ktparser/releases/download/ktparser-0.1.0/ktparser-0.1.0.jar
+
 RUN curl -o ./libs/lombok.jar -L https://projectlombok.org/downloads/lombok.jar
 
 COPY ../.. /inga

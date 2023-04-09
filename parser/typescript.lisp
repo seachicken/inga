@@ -196,39 +196,3 @@
         (when (jsown:keyp ast "body")
           (enqueue q (jsown:val ast "body")))))))
 
-(defun convert-to-ast-pos (project-path pos)
-  (let ((path (uiop:merge-pathnames* (cdr (assoc :path pos)) project-path))
-        (offset (cdr (assoc :offset pos)))
-        (line-no 0)
-        (result 0))
-    (with-open-file (stream path)
-      (loop for line = (read-line stream nil)
-            while line
-            when (= line-no (- (cdr (assoc :line pos)) 1))
-            return (list
-                     (cons :path (pathname path))
-                     (cons :pos (+ result (if (< offset 0)
-                                              (length line)
-                                              (- offset 1)))))
-            do
-            (setq line-no (+ line-no 1))
-            ;; add newline code
-            (setq result (+ result (+ (length line) 1)))))))
-
-(defun convert-to-pos (project-path path name pos)
-  (let ((line-no 0)
-        (cnt 0))
-    (with-open-file (stream (uiop:merge-pathnames* path project-path))
-      (loop for line = (read-line stream nil)
-            while line
-            when (<= pos (+ cnt (length line)))
-            return (list
-                     (cons :path (enough-namestring path project-path))
-                     (cons :name name)
-                     (cons :line (+ line-no 1))
-                     (cons :offset (- (+ (length line) 1) (- (+ cnt (length line)) pos))))
-            do
-              (setq line-no (+ line-no 1))
-              ;; add newline code
-              (setq cnt (+ cnt (length line) 1))))))
-

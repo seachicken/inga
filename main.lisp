@@ -35,7 +35,8 @@
   '("**/*.(js|jsx)"
     "**/*.(ts|tsx)"))
 (defparameter *include-java*
-  '("**/*.java"))
+  '("**/*.java"
+    "**/*.kt"))
 (defparameter *cache-max-size* 100)
 (defparameter *cache* (make-cache *cache-max-size*))
 

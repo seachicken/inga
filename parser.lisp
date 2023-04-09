@@ -1,5 +1,6 @@
 (uiop:define-package #:inga/parser
   (:use-reexport #:inga/parser/base
-                 #:inga/parser/typescript
-                 #:inga/parser/java))
+                 #:inga/parser/java
+                 #:inga/parser/kotlin
+                 #:inga/parser/typescript))
 
