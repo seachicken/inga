@@ -9,6 +9,7 @@
            #:parser-cache
            #:start-parser
            #:stop-parser
+           #:parse
            #:exec-parser
            #:find-affected-pos
            #:find-entrypoint
@@ -39,6 +40,15 @@
 (defmethod stop-parser ((parser list))
   (loop for p in parser
         do (stop-parser p)))
+
+(defgeneric parse (parser path)
+  (:method (parser path)
+    (exec-command parser path)))
+(defmethod parse ((parser list) path)
+  (loop for p in parser
+    do (let ((p (find-parser parser path)))
+         (when p
+           (return (parse p path))))))
 
 (defgeneric exec-parser (parser file-path))
 (defmethod exec-parser ((parser list) file-path)

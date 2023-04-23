@@ -16,6 +16,7 @@
                 #:make-parser
                 #:start-parser
                 #:stop-parser
+                #:parse
                 #:exec-parser
                 #:find-affected-pos
                 #:find-entrypoint)
@@ -145,9 +146,20 @@
                (t (error 'inga-error-context-not-found)))))
     (start-client (context-lc ctx))
     (start-parser (context-parser ctx))
+    (ensure-directories-exist "temp/") 
+    (time
+      (loop for path in (uiop:directory-files (format nil "~a/**/*" root-path))
+            do (when (is-analysis-target (enough-namestring (namestring path) root-path)
+                                         (context-include ctx) 
+                                         (context-exclude ctx))
+                 (alexandria:write-string-into-file
+                   (format nil "~a" (parse (context-parser ctx) (namestring path)))
+                   (format nil "temp/~a"
+                           (ppcre:regex-replace-all "/" (enough-namestring path root-path) "--"))))))
     ctx))
 
 (defun stop (ctx)
+  (uiop:delete-directory-tree #p"temp/" :validate t)
   (stop-parser (context-parser ctx)) 
   (stop-client (context-lc ctx)))
 
