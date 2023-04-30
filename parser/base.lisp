@@ -84,7 +84,7 @@
             ;; add newline code
             (setq result (+ result (+ (length line) 1)))))))
 
-(defun convert-to-pos (project-path path name pos)
+(defun convert-to-pos (project-path path name fq-name pos)
   (let ((line-no 0)
         (cnt 0))
     (with-open-file (stream (uiop:merge-pathnames* path project-path))
@@ -94,6 +94,7 @@
             return (list
                      (cons :path (enough-namestring path project-path))
                      (cons :name name)
+                     (cons :fq-name fq-name)
                      (cons :line (+ line-no 1))
                      (cons :offset (- (+ (length line) 1) (- (+ cnt (length line)) pos))))
             do

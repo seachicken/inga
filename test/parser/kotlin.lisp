@@ -23,7 +23,8 @@
     (start-parser parser)
     (is (equal
           '((:path . "declaration.kt")
-            (:name . "method") (:line . 6) (:offset . 5)) ;; FIXME: actual offset is 9
+            (:name . "method") (:fq-name . "com.example.Class.method")
+            (:line . 6) (:offset . 5)) ;; FIXME: actual offset is 9
           (let ((src-path "declaration.kt"))
             (find-affected-pos
               parser

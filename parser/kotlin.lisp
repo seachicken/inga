@@ -59,6 +59,7 @@
             (let ((name (jsown:val ast "name")))
               (return (convert-to-pos (parser-path parser) src-path
                                       name
+                                      (when (jsown:keyp ast "fqName") (jsown:val ast "fqName"))
                                       (jsown:val (jsown:val ast "textRange") "startOffset"))))))
 
         (when (jsown:keyp ast "children")
