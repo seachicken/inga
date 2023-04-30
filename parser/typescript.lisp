@@ -64,6 +64,7 @@
                   (let ((name (cdr (jsown:val ast "name"))))
                     (return (convert-to-pos (parser-path parser) file-path
                                             (jsown:val name "escapedText")
+                                            nil
                                             (jsown:val name "start"))))))
               ("CallExpression"
                 (when (jsown:keyp ast "name")
@@ -78,16 +79,19 @@
                                                      (when (jsown:keyp e "name")
                                                        (jsown:val (jsown:val e "name") "escapedText")))
                                                    elements))
+                                   nil
                                    (jsown:val (first elements) "start")))))
                       ("Identifier"
                        (return (convert-to-pos (parser-path parser) file-path
                                                (jsown:val name "escapedText")
+                                               nil
                                                (jsown:val name "start"))))))))
               ("ArrowFunction"
                 (if (equal (find-return-type init) "JsxElement")
                     (enqueue q (jsown:val init "body"))
                     (return (convert-to-pos (parser-path parser) file-path
                                             (jsown:val (cdr (jsown:val ast "name")) "escapedText")
+                                            nil
                                             (jsown:val ast "start"))))))))
 
         (when (and
@@ -98,6 +102,7 @@
             (let ((name (cdr (jsown:val ast "name"))))
               (return (convert-to-pos (parser-path parser) file-path
                                       (jsown:val name "escapedText")
+                                      nil
                                       (jsown:val name "start"))))))
 
         (when (and
@@ -108,6 +113,7 @@
             (let ((name (cdr (jsown:val ast "name"))))
               (return (convert-to-pos (parser-path parser) file-path
                                       (jsown:val name "escapedText")
+                                      nil
                                       (jsown:val name "start"))))))
 
         (when (and
@@ -135,6 +141,7 @@
         (when component-pos
           (convert-to-pos (parser-path parser) path
                           (cdr (assoc :name component-pos))
+                          nil
                           (cdr (assoc :pos component-pos))))))))
 
 (defun find-component (parser ast pos)

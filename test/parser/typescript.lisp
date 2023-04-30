@@ -191,7 +191,7 @@
         (inga/parser/typescript::convert-to-pos
           *react-path*
           "src/App/NewTodoInput/index.tsx"
-          "a" 1241))))
+          "a" nil 1241))))
 
 (test convert-tsserver-pos-to-tsparser-pos-with-offset1
   (is (equal
@@ -210,5 +210,5 @@
         (inga/parser/typescript::convert-to-pos
           *react-path*
           "src/dataStructure.ts"
-          "a" 328))))
+          "a" nil 328))))
 

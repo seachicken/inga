@@ -91,12 +91,15 @@
       (loop for line = (read-line stream nil)
             while line
             when (<= pos (+ cnt (length line)))
-            return (list
-                     (cons :path (enough-namestring path project-path))
-                     (cons :name name)
-                     (cons :fq-name fq-name)
-                     (cons :line (+ line-no 1))
-                     (cons :offset (- (+ (length line) 1) (- (+ cnt (length line)) pos))))
+            return (let ((results
+                           (list
+                             (cons :path (enough-namestring path project-path))
+                             (cons :name name)
+                             (cons :line (+ line-no 1))
+                             (cons :offset (- (+ (length line) 1) (- (+ cnt (length line)) pos))))))
+                     (when fq-name
+                       (setf results (append results (list (cons :fq-name fq-name)))))
+                     results)
             do
               (setq line-no (+ line-no 1))
               ;; add newline code
