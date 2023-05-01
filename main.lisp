@@ -19,7 +19,8 @@
                 #:parse
                 #:exec-parser
                 #:find-affected-pos
-                #:find-entrypoint)
+                #:find-entrypoint
+                #:find-references)
   (:import-from #:inga/cache
                 #:make-cache
                 #:size)
@@ -242,7 +243,8 @@
 
   (let ((refs (inga/utils::measure
                 *debug-find-refs*
-                (lambda () (references-client (context-lc ctx) pos))))
+                (lambda () (or (find-references (context-parser ctx) pos)
+                               (references-client (context-lc ctx) pos)))))
         (results '()))
     (setf refs (remove nil (mapcar (lambda (ref)
                                      (when (is-analysis-target (cdr (assoc :path ref))

@@ -13,6 +13,7 @@
            #:exec-parser
            #:find-affected-pos
            #:find-entrypoint
+           #:find-references
            #:convert-to-ast-pos
            #:convert-to-pos
            #:exec-command
@@ -64,6 +65,13 @@
 
 (defgeneric find-entrypoint (parser pos))
 (defmethod find-entrypoint ((parser list) pos))
+
+(defgeneric find-references (parser pos)
+  (:method (parser pos)))
+(defmethod find-references ((parser list) pos)
+  (let ((p (find-parser parser (cdr (assoc :path pos)))))
+    (when p
+      (find-references p pos))))
 
 (defun convert-to-ast-pos (project-path pos)
   (let ((path (uiop:merge-pathnames* (cdr (assoc :path pos)) project-path))
