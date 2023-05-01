@@ -41,6 +41,8 @@
     (is (equal
           '(((:path . "Main.kt")
              (:name)
+             (:line . 7) (:offset . 9))
+            ((:path . "java/Class.java")
              (:line . 7) (:offset . 9)))
           (find-references parser
                            '((:path . "kotlin/a/Class.kt")
