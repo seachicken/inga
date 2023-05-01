@@ -7,7 +7,8 @@
 (def-suite kotlin)
 (in-suite kotlin)
 
-(defparameter *fixtures-path* (uiop:merge-pathnames* "test/fixtures/"))
+(defparameter *fixtures-path* (merge-pathnames #p"test/fixtures/"))
+(defparameter *kotlin-path* (merge-pathnames #p"test/fixtures/kotlin/"))
 (defparameter *cache* (inga/cache:make-cache 100))
 
 ;; class Class {
@@ -34,9 +35,31 @@
               7))))
     (stop-parser parser)))
 
-(test find-references
-  (let ((parser (make-parser :java *fixtures-path* *cache*)))
-    (start-parser parser '("*.kt") nil)
-    ;; TODO: find references
+(test find-references-to-imported-class
+  (let ((parser (make-parser :java *kotlin-path* *cache*)))
+    (start-parser parser inga/main::*include-java* nil)
+    (is (equal
+          '(((:path . "Main.kt")
+             (:name)
+             (:line . 7) (:offset . 9)))
+          (find-references parser
+                           '((:path . "a/Class.kt")
+                             (:name . "method")
+                             (:line . 4) (:offset . 9)
+                             (:fq-name . "kotlin.a.Class.method")))))
+    (stop-parser parser)))
+
+(test find-references-to-fq-class
+  (let ((parser (make-parser :java *kotlin-path* *cache*)))
+    (start-parser parser inga/main::*include-java* nil)
+    (is (equal
+          '(((:path . "Main.kt")
+             (:name)
+             (:line . 8) (:offset . 9)))
+          (find-references parser
+                           '((:path . "b/Class.kt")
+                             (:name . "method")
+                             (:line . 4) (:offset . 9)
+                             (:fq-name . "kotlin.b.Class.method")))))
     (stop-parser parser)))
 

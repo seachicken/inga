@@ -79,22 +79,53 @@
                                 (subseq target-package 0 (- (length target-package) 1)))
           do (progn
                (setf ast (cdr (jsown:parse (uiop:read-file-string path))))
-               (when (find target (find-import-list ast) :test #'equal)
-                 (let ((callers (find-caller ast pos))
-                       (org-path (format nil "~{~a~^/~}"
-                                         (subseq (split #\/ (ppcre:regex-replace-all
-                                                              "--"
-                                                              (enough-namestring path)
-                                                              "/"))
-                                                 1))))
-                   (setf results (append results
-                                         (mapcar (lambda (caller)
-                                                   (convert-to-pos
-                                                     (parser-path parser) org-path
-                                                     (jsown:val caller "name") nil
-                                                     (jsown:val (jsown:val caller "textRange") "startOffset")))
-                                                 callers))))))
+               (let ((callers (find-caller ast target (cdr (assoc :name pos))))
+                     (org-path (format nil "~{~a~^/~}"
+                                       (subseq (split #\/ (ppcre:regex-replace-all
+                                                            "--"
+                                                            (enough-namestring path)
+                                                            "/"))
+                                               1))))
+                 (setf results (append results
+                                       (mapcar (lambda (caller)
+                                                 (convert-to-pos
+                                                   (parser-path parser) org-path
+                                                   nil nil
+                                                   (jsown:val (jsown:val caller "textRange") "startOffset")))
+                                                 callers)))))
           finally (return results))))
+
+(defun find-caller (ast target-fq-name target-name)
+  (let ((q (make-queue))
+        (imported-name
+          (concatenate 'string (car (last (split #\. target-fq-name))) "." target-name))
+        (is-found-import (not (null (find target-fq-name (find-import-list ast) :test #'equal))))
+        results)
+    (enqueue q ast)
+    (loop
+      (let ((ast (dequeue q)) result)
+        (if (null ast) (return))
+
+        (when (string= (cdr (car ast)) "DOT_QUALIFIED_EXPRESSION")
+          (let ((fq-name (get-fq-name ast nil)))
+            (when (or
+                    (and is-found-import (string= fq-name imported-name))
+                    (string= fq-name (concatenate 'string target-fq-name "." target-name)))
+              (setf results (append results (list ast))))))
+
+        (when (jsown:keyp ast "children")
+          (loop for child in (jsown:val ast "children")
+                do (enqueue q (cdr child))))))
+    results))
+
+(defun get-fq-name (ast result)
+  (when (string= (cdar ast) "REFERENCE_EXPRESSION")
+    (setf result (concatenate 'string
+                              (if result (concatenate 'string result ".") "")
+                              (jsown:val (cdr ast) "name"))))
+  (loop for child in (jsown:val ast "children")
+        do (setf result (get-fq-name (cdr child) result)))
+  result)
 
 (defun find-import-list (ast)
   (let ((q (make-queue)))
@@ -112,23 +143,3 @@
         (when (jsown:keyp ast "children")
           (loop for child in (jsown:val ast "children")
                 do (enqueue q (cdr child))))))))
-
-(defun find-caller (ast pos)
-  (let ((q (make-queue)) (target (cdr (assoc :name pos))) results)
-    (enqueue q ast)
-    (loop
-      (let ((ast (dequeue q)))
-        (if (null ast) (return))
-
-        (when (string= (cdr (car ast)) "DOT_QUALIFIED_EXPRESSION")
-          (loop for child in (jsown:val ast "children")
-                do (loop for child in (jsown:val child "children")
-                         do (when (and
-                                    (string= (cdadr child) "REFERENCE_EXPRESSION")
-                                    (string= (jsown:val (cdr child) "name") target))
-                              (setf results (append results (list (cdr child))))))))
-
-        (when (jsown:keyp ast "children")
-          (loop for child in (jsown:val ast "children")
-                do (enqueue q (cdr child))))))
-    results))
