@@ -20,7 +20,7 @@
 ;; }
 (test find-affected-pos-for-method
   (let ((parser (make-parser :java *fixtures-path* *cache*)))
-    (start-parser parser)
+    (start-parser parser '("*.kt") nil)
     (is (equal
           '((:path . "declaration.kt")
             (:name . "method")
@@ -32,5 +32,11 @@
               src-path
               (exec-parser parser src-path)
               7))))
+    (stop-parser parser)))
+
+(test find-references
+  (let ((parser (make-parser :java *fixtures-path* *cache*)))
+    (start-parser parser '("*.kt") nil)
+    ;; TODO: find references
     (stop-parser parser)))
 

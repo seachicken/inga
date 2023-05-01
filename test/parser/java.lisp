@@ -19,7 +19,7 @@
 ;; }
 (test find-affected-pos-for-method
   (let ((parser (make-parser :java *spring-boot-path* *cache*)))
-    (start-parser parser)
+    (start-parser parser nil nil)
     (is (equal
           '((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
             (:name . "findById") (:line . 30) (:offset . 32))
@@ -37,7 +37,7 @@
 ;; }
 (test find-affected-pos-for-interface
   (let ((parser (make-parser :java *spring-boot-path* *cache*)))
-    (start-parser parser)
+    (start-parser parser nil nil)
     (is (equal
           '((:path . "src/main/java/io/spring/core/article/ArticleRepository.java")
             (:name . "save") (:line . 7) (:offset . 8))
@@ -56,7 +56,7 @@
 ;; }
 (test find-affected-pos-for-field-annotation
   (let ((parser (make-parser :java *spring-boot-path* *cache*)))
-    (start-parser parser)
+    (start-parser parser nil nil)
     (is (equal
           '((:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
             (:name . "title") (:line . 19) (:offset . 18))
@@ -78,7 +78,7 @@
 ;; }
 (test find-affected-pos-for-constraint-validator
   (let ((parser (make-parser :java *spring-boot-path* *cache*)))
-    (start-parser parser)
+    (start-parser parser nil nil)
     (is (equal
           '((:path . "src/main/java/io/spring/application/article/DuplicatedArticleValidator.java")
             (:name . "DuplicatedArticleConstraint") (:line . 10) (:offset . 36))
@@ -96,7 +96,7 @@
 ;; }
 (test ignore-affected-pos-when-end-block
   (let ((parser (make-parser :java *spring-boot-path* *cache*)))
-    (start-parser parser)
+    (start-parser parser nil nil)
     (is (equal
           nil
           (let ((src-path "src/main/java/io/spring/core/article/Article.java"))

@@ -20,14 +20,16 @@
   (list (make-instance 'parser-java :path path :cache cache)
         (make-instance 'parser-kotlin :path path :cache cache)))
 
-(defmethod start-parser ((parser parser-java))
+(defmethod start-parser ((parser parser-java) include exclude)
   (setf (parser-process parser)
         (uiop:launch-program
           (format nil "java -cp ~a/libs/javaparser.jar inga.Main"
                   (uiop:getenv "INGA_HOME"))
-          :input :stream :output :stream)))
+          :input :stream :output :stream))
+  (create-indexes parser '("*.java") exclude))
 
 (defmethod stop-parser ((parser parser-java))
+  (clean-indexes)
   (uiop:close-streams (parser-process parser)))
 
 (defmethod exec-parser ((parser parser-java) file-path)

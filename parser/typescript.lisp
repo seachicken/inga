@@ -15,12 +15,14 @@
 (defmethod make-parser ((kind (eql :typescript)) path cache)
   (make-instance 'parser-typescript :path path :cache cache))
 
-(defmethod start-parser ((parser parser-typescript))
+(defmethod start-parser ((parser parser-typescript) include exclude)
   (setf (parser-process parser)
         (uiop:launch-program "tsparser"
-                             :input :stream :output :stream)))
+                             :input :stream :output :stream))
+  (create-indexes parser include exclude))
 
 (defmethod stop-parser ((parser parser-typescript))
+  (clean-indexes)
   (uiop:close-streams (parser-process parser)))
 
 (defmethod exec-parser ((parser parser-typescript) file-path)

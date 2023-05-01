@@ -18,7 +18,7 @@
 ;; };
 (test find-affected-pos-for-variable-object-literal-expression
   (let ((parser (make-parser :typescript *nestjs-path* *cache*)))
-    (start-parser parser)
+    (start-parser parser nil nil)
     (is (equal
           '((:path . "src/article/article.service.ts")
             (:name . "articleAuthorSelect") (:line . 7) (:offset . 7))
@@ -38,7 +38,7 @@
 ;; }
 (test find-affected-pos-for-function
   (let ((parser (make-parser :typescript *react-path* *cache*)))
-    (start-parser parser)
+    (start-parser parser nil nil)
     (is (equal
           '((:path . "src/App/NewTodoInput/index.tsx")
             (:name . "addTodo") (:line . 12) (:offset . 12))
@@ -56,7 +56,7 @@
 ;; });
 (test find-affected-pos-for-variable-call-expression
   (let ((parser (make-parser :typescript *nestjs-path* *cache*)))
-    (start-parser parser)
+    (start-parser parser nil nil)
     (is (equal
           '((:path . "src/user/user.decorator.ts")
             (:name . "User") (:line . 5) (:offset . 14))
@@ -74,7 +74,7 @@
 ;; );
 (test find-affected-pos-for-variable-call-expression-array
   (let ((parser (make-parser :typescript *fixtures-path* *cache*)))
-    (start-parser parser)
+    (start-parser parser nil nil)
     (is (equal
           '((:path . "declaration.ts")
             (:name . "a, b") (:line . 4) (:offset . 8))
@@ -94,7 +94,7 @@
 ;; }
 (test find-affected-pos-for-variable-arrow-function
   (let ((parser (make-parser :typescript *react-path* *cache*)))
-    (start-parser parser)
+    (start-parser parser nil nil)
     (is (equal
           '((:path . "src/App/TodoList/Item/index.tsx")
             (:name . "reverseCompleted") (:line . 62) (:offset . 9))
@@ -112,7 +112,7 @@
 ;; };
 (test find-affected-pos-for-variable-arrow-function-return-undefined
   (let ((parser (make-parser :typescript *fixtures-path* *cache*)))
-    (start-parser parser)
+    (start-parser parser nil nil)
     (is (equal
           '((:path . "declaration.ts")
             (:name . "f2") (:line . 8) (:offset . 7))
@@ -132,7 +132,7 @@
 ;; }
 (test find-affected-pos-for-method
   (let ((parser (make-parser :typescript *nestjs-path* *cache*)))
-    (start-parser parser)
+    (start-parser parser nil nil)
     (is (equal
           '((:path . "src/article/article.service.ts")
             (:name . "findAll") (:line . 45) (:offset . 9))
@@ -151,7 +151,7 @@
 ;; } ←[in]
 (test ignore-affected-pos-when-end-block
   (let ((parser (make-parser :typescript *nestjs-path* *cache*)))
-    (start-parser parser)
+    (start-parser parser nil nil)
     (is (equal
           nil
           (let ((src-path "src/article/article.service.ts"))
@@ -164,7 +164,7 @@
 
 (test find-entrypoint
   (let ((parser (make-parser :typescript *react-path* *cache*)))
-    (start-parser parser)
+    (start-parser parser nil nil)
     (is (equal
           '((:path . "src/App/TodoList/Item/index.tsx")
             (:name . "input") (:line . 107) (:offset . 12))

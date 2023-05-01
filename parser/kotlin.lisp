@@ -11,14 +11,16 @@
 (defclass parser-kotlin (parser)
   ())
 
-(defmethod start-parser ((parser parser-kotlin))
+(defmethod start-parser ((parser parser-kotlin) include exclude)
   (setf (parser-process parser)
         (uiop:launch-program
           (format nil "java -cp ~a/libs/ktparser.jar inga.Main"
                   (uiop:getenv "INGA_HOME"))
-          :input :stream :output :stream)))
+          :input :stream :output :stream))
+  (create-indexes parser '("*.kt") exclude))
 
 (defmethod stop-parser ((parser parser-kotlin))
+  (clean-indexes)
   (uiop:close-streams (parser-process parser)))
 
 (defmethod exec-parser ((parser parser-kotlin) file-path)
@@ -70,7 +72,7 @@
 
 (defmethod find-references ((parser parser-kotlin) pos)
   (let ((target-package (split #\. (cdr (assoc :fq-name pos)))))
-    (loop for path in (uiop:directory-files #p"temp/")
+    (loop for path in (uiop:directory-files *index-path*)
           with results
           with ast
           with target = (format nil "~{~a~^.~}"

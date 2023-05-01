@@ -1,8 +1,10 @@
 (defpackage #:inga/parser/base
   (:use #:cl)
   (:import-from #:inga/file
-                #:is-match)
+                #:is-match
+                #:is-analysis-target)
   (:export #:parser
+           #:*index-path*
            #:make-parser
            #:parser-process
            #:parser-path
@@ -17,8 +19,12 @@
            #:convert-to-ast-pos
            #:convert-to-pos
            #:exec-command
-           #:get-parse-key))
+           #:get-parse-key
+           #:create-indexes
+           #:clean-indexes))
 (in-package #:inga/parser/base)
+
+(defparameter *index-path* #p"temp/")
 
 (defclass parser ()
   ((process :initform nil
@@ -32,10 +38,10 @@
   (:method (kind path cache)
     (error 'unknown-parser :name kind)))
 
-(defgeneric start-parser (parser))
-(defmethod start-parser ((parser list))
+(defgeneric start-parser (parser include exclude))
+(defmethod start-parser ((parser list) include exclude)
   (loop for p in parser
-        do (start-parser p)))
+        do (start-parser p include exclude)))
 
 (defgeneric stop-parser (parser))
 (defmethod stop-parser ((parser list))
@@ -134,4 +140,20 @@
       'java
       (when (is-match path '("*.kt"))
         'kotlin)))
+
+(defun create-indexes (parser include exclude)
+  (ensure-directories-exist *index-path*) 
+  (loop for path in (uiop:directory-files (format nil "~a/**/*" (parser-path parser)))
+        do (let ((relative-path (enough-namestring path (parser-path parser))))
+             (when (is-analysis-target relative-path include exclude)
+               (alexandria:write-string-into-file
+                 (format nil "~a" (parse parser (namestring path)))
+                 (uiop:merge-pathnames*
+                   *index-path*
+                   (ppcre:regex-replace-all "/" relative-path "--")))))))
+
+(defun clean-indexes ()
+  (uiop:delete-directory-tree *index-path*
+                              :validate t
+                              :if-does-not-exist :ignore))
 
