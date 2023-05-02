@@ -11,15 +11,9 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
 
 RUN mkdir libs
 
-RUN curl -o ./jdtls.tar.gz -L https://download.eclipse.org/jdtls/snapshots/jdt-language-server-latest.tar.gz && \
-  mkdir libs/jdtls && \
-  tar xvf ./jdtls.tar.gz -C ./libs/jdtls
-
 RUN curl -o ./libs/javaparser.jar -L https://github.com/seachicken/javaparser/releases/download/javaparser-0.1.0/javaparser-0.1.0.jar
 
 RUN curl -o ./libs/ktparser.jar -L https://github.com/seachicken/ktparser/releases/download/ktparser-0.1.2/ktparser-0.1.2.jar
-
-RUN curl -o ./libs/lombok.jar -L https://projectlombok.org/downloads/lombok.jar
 
 COPY ../.. /inga
 RUN ros && \
