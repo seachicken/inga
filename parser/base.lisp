@@ -1,5 +1,6 @@
 (defpackage #:inga/parser/base
-  (:use #:cl)
+  (:use #:cl
+        #:inga/utils)
   (:import-from #:inga/file
                 #:is-match
                 #:is-analysis-target)
@@ -15,13 +16,17 @@
            #:exec-parser
            #:find-affected-pos
            #:find-entrypoint
+           #:find-caller
+           #:get-fq-name
+           #:find-import-list
            #:find-references
            #:convert-to-ast-pos
            #:convert-to-pos
            #:exec-command
            #:get-parse-key
            #:create-indexes
-           #:clean-indexes))
+           #:clean-indexes
+           #:get-original-path))
 (in-package #:inga/parser/base)
 
 (defparameter *index-path* #p"temp/")
@@ -72,12 +77,28 @@
 (defgeneric find-entrypoint (parser pos))
 (defmethod find-entrypoint ((parser list) pos))
 
-(defgeneric find-references (parser pos)
-  (:method (parser pos)))
-(defmethod find-references ((parser list) pos)
-  (let ((p (find-parser parser (cdr (assoc :path pos)))))
-    (when p
-      (find-references p pos))))
+(defgeneric find-caller (parser index-path ast target-fq-name target-name)
+  (:method (parser index-path ast target-fq-name target-name)))
+
+(defgeneric get-fq-name (parser ast result))
+
+(defgeneric find-import-list (parser ast))
+
+(defun find-references (parser pos)
+  (let ((target-package (split #\. (cdr (assoc :fq-name pos)))))
+    (loop for path in (uiop:directory-files *index-path*)
+          with results
+          with ast
+          with target-parser
+          with target = (format nil "~{~a~^.~}"
+                                (subseq target-package 0 (- (length target-package) 1)))
+          do (progn
+               (setf target-parser (find-parser parser (namestring path)))
+               (setf ast (cdr (jsown:parse (uiop:read-file-string path))))
+               (let ((callers (find-caller target-parser path ast target (cdr (assoc :name pos)))))
+                 (when callers
+                   (setf results (append results callers)))))
+          finally (return results))))
 
 (defun convert-to-ast-pos (project-path pos)
   (let ((path (uiop:merge-pathnames* (cdr (assoc :path pos)) project-path))
@@ -127,13 +148,14 @@
 (defun get-parse-key (path)
   (intern (format nil "parse-~a" path)))
 
-(defun find-parser (parsers file-path)
+(defmethod find-parser (parser file-path)
+  parser)
+(defmethod find-parser ((parsers list) file-path)
   (loop for p in parsers
         with type = (get-file-type file-path)
-        when (or (and (string= (string (type-of p)) "PARSER-JAVA") (eq type 'java))
-                 (and (string= (string (type-of p)) "PARSER-KOTLIN") (eq type 'kotlin)))
-        when t
-        return p))
+        do (when (or (and (string= (string (type-of p)) "PARSER-JAVA") (eq type 'java))
+                     (and (string= (string (type-of p)) "PARSER-KOTLIN") (eq type 'kotlin)))
+             (return p))))
 
 (defun get-file-type (path)
   (if (is-match path '("*.java"))
@@ -156,4 +178,11 @@
   (uiop:delete-directory-tree *index-path*
                               :validate t
                               :if-does-not-exist :ignore))
+(defun get-original-path (index-path)
+  (format nil "~{~a~^/~}"
+          (subseq (split #\/ (ppcre:regex-replace-all
+                               "--"
+                               (enough-namestring index-path)
+                               "/"))
+                  1)))  
 

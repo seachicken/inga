@@ -119,3 +119,81 @@
 
 (defmethod find-entrypoint ((parser parser-java) pos))
 
+(defmethod find-caller ((parser parser-java) index-path ast target-fq-name target-name)
+  (let ((q (make-queue))
+        (imported-name
+          (concatenate 'string (car (last (split #\. target-fq-name))) "." target-name))
+        (is-found-import (not (null (find target-fq-name (find-import-list parser ast) :test #'equal))))
+        results)
+    (enqueue q ast)
+    (loop
+      (let ((ast (dequeue q)) result)
+        (if (null ast) (return))
+
+        (when (string= (cdar ast) "com.github.javaparser.ast.stmt.ExpressionStmt")
+          (let ((fq-name (get-fq-name parser ast nil)))
+            (when (or
+                    (and is-found-import (string= fq-name imported-name))
+                    (string= fq-name (concatenate 'string target-fq-name "." target-name)))
+              (setf results (append results
+                                    (list
+                                      (list (cons :path (get-original-path index-path))
+                                            (cons :line (jsown:val (jsown:val ast "range") "beginLine"))
+                                            (cons :offset (jsown:val (jsown:val ast "range") "beginColumn")))))))))
+
+        (when (jsown:keyp ast "types")
+          (loop for child in (jsown:val ast "types") do
+                (enqueue q (cdr child))))
+
+        (when (jsown:keyp ast "members")
+          (loop for child in (jsown:val ast "members") do
+                (enqueue q (cdr child))))
+
+        (when (jsown:keyp ast "body")
+          (let ((body (jsown:val ast "body")))
+            (when (jsown:keyp body "statements")
+              (loop for child in (jsown:val body "statements") do
+                    (enqueue q (cdr child))))))))
+    results))
+
+(defmethod get-fq-name ((parser parser-java) ast result)
+  (when (or
+          (string= (cdar ast) "com.github.javaparser.ast.expr.Name")
+          (string= (cdar ast) "com.github.javaparser.ast.expr.SimpleName"))
+    (setf result (concatenate 'string
+                              (jsown:val (cdr ast) "identifier")
+                              (if result (concatenate 'string "." result) ""))))
+
+  (when (jsown:keyp ast "name")
+    (setf result (get-fq-name parser (cdr (jsown:val ast "name")) result)))
+
+  (when (jsown:keyp ast "qualifier")
+    (setf result (get-fq-name parser (cdr (jsown:val ast "qualifier")) result)))
+
+  (when (jsown:keyp ast "expression")
+    (setf result (get-fq-name parser (cdr (jsown:val ast "expression")) result)))
+
+  (when (jsown:keyp ast "scope")
+    (setf result (get-fq-name parser (cdr (jsown:val ast "scope")) result)))
+
+  (when (jsown:keyp ast "type")
+    (setf result (get-fq-name parser (cdr (jsown:val ast "type")) result)))
+
+  result)
+
+(defmethod find-import-list ((parser parser-java) ast)
+  (let ((q (make-queue))
+        results)
+    (enqueue q ast)
+    (loop
+      (let ((ast (dequeue q)))
+        (if (null ast) (return))
+
+        (when (string= (cdar ast) "com.github.javaparser.ast.ImportDeclaration")
+          (setf results (append results (list (get-fq-name parser ast nil)))))
+
+        (when (jsown:keyp ast "imports")
+          (loop for child in (jsown:val ast "imports")
+                do (enqueue q (cdr child))))))
+    results))
+

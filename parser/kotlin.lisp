@@ -70,64 +70,43 @@
 
 (defmethod find-entrypoint ((parser parser-kotlin) pos))
 
-(defmethod find-references ((parser parser-kotlin) pos)
-  (let ((target-package (split #\. (cdr (assoc :fq-name pos)))))
-    (loop for path in (uiop:directory-files *index-path*)
-          with results
-          with ast
-          with target = (format nil "~{~a~^.~}"
-                                (subseq target-package 0 (- (length target-package) 1)))
-          do (progn
-               (setf ast (cdr (jsown:parse (uiop:read-file-string path))))
-               (let ((callers (find-caller ast target (cdr (assoc :name pos))))
-                     (org-path (format nil "~{~a~^/~}"
-                                       (subseq (split #\/ (ppcre:regex-replace-all
-                                                            "--"
-                                                            (enough-namestring path)
-                                                            "/"))
-                                               1))))
-                 (setf results (append results
-                                       (mapcar (lambda (caller)
-                                                 (convert-to-pos
-                                                   (parser-path parser) org-path
-                                                   nil nil
-                                                   (jsown:val (jsown:val caller "textRange") "startOffset")))
-                                                 callers)))))
-          finally (return results))))
-
-(defun find-caller (ast target-fq-name target-name)
+(defmethod find-caller ((parser parser-kotlin) index-path ast target-fq-name target-name)
   (let ((q (make-queue))
         (imported-name
           (concatenate 'string (car (last (split #\. target-fq-name))) "." target-name))
-        (is-found-import (not (null (find target-fq-name (find-import-list ast) :test #'equal))))
+        (is-found-import (not (null (find target-fq-name (find-import-list parser ast) :test #'equal))))
         results)
     (enqueue q ast)
     (loop
       (let ((ast (dequeue q)) result)
         (if (null ast) (return))
 
-        (when (string= (cdr (car ast)) "DOT_QUALIFIED_EXPRESSION")
-          (let ((fq-name (get-fq-name ast nil)))
+        (when (string= (cdar ast) "DOT_QUALIFIED_EXPRESSION")
+          (let ((fq-name (get-fq-name parser ast nil)))
             (when (or
                     (and is-found-import (string= fq-name imported-name))
                     (string= fq-name (concatenate 'string target-fq-name "." target-name)))
-              (setf results (append results (list ast))))))
+              (setf results (append results (list (convert-to-pos
+                                                    (parser-path parser)
+                                                    (get-original-path index-path)
+                                                    nil nil
+                                                    (jsown:val (jsown:val ast "textRange") "startOffset"))))))))
 
         (when (jsown:keyp ast "children")
           (loop for child in (jsown:val ast "children")
                 do (enqueue q (cdr child))))))
     results))
 
-(defun get-fq-name (ast result)
+(defmethod get-fq-name ((parser parser-kotlin) ast result)
   (when (string= (cdar ast) "REFERENCE_EXPRESSION")
     (setf result (concatenate 'string
                               (if result (concatenate 'string result ".") "")
                               (jsown:val (cdr ast) "name"))))
   (loop for child in (jsown:val ast "children")
-        do (setf result (get-fq-name (cdr child) result)))
+        do (setf result (get-fq-name parser (cdr child) result)))
   result)
 
-(defun find-import-list (ast)
+(defmethod find-import-list ((parser parser-kotlin) ast)
   (let ((q (make-queue)))
     (enqueue q ast)
     (loop
@@ -143,3 +122,4 @@
         (when (jsown:keyp ast "children")
           (loop for child in (jsown:val ast "children")
                 do (enqueue q (cdr child))))))))
+

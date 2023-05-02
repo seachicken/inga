@@ -1,4 +1,4 @@
-package kotlin.a
+package jvm.kotlin.b
 
 class Class {
     fun method() {

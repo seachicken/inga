@@ -8,7 +8,7 @@
 (in-suite kotlin)
 
 (defparameter *fixtures-path* (merge-pathnames #p"test/fixtures/"))
-(defparameter *kotlin-path* (merge-pathnames #p"test/fixtures/kotlin/"))
+(defparameter *jvm-path* (merge-pathnames #p"test/fixtures/jvm/"))
 (defparameter *cache* (inga/cache:make-cache 100))
 
 ;; class Class {
@@ -36,30 +36,32 @@
     (stop-parser parser)))
 
 (test find-references-to-imported-class
-  (let ((parser (make-parser :java *kotlin-path* *cache*)))
+  (let ((parser (make-parser :java *jvm-path* *cache*)))
     (start-parser parser inga/main::*include-java* nil)
     (is (equal
           '(((:path . "Main.kt")
              (:name)
+             (:line . 7) (:offset . 9))
+            ((:path . "java/Class.java")
              (:line . 7) (:offset . 9)))
           (find-references parser
-                           '((:path . "a/Class.kt")
+                           '((:path . "kotlin/a/Class.kt")
                              (:name . "method")
                              (:line . 4) (:offset . 9)
-                             (:fq-name . "kotlin.a.Class.method")))))
+                             (:fq-name . "jvm.kotlin.a.Class.method")))))
     (stop-parser parser)))
 
 (test find-references-to-fq-class
-  (let ((parser (make-parser :java *kotlin-path* *cache*)))
+  (let ((parser (make-parser :java *jvm-path* *cache*)))
     (start-parser parser inga/main::*include-java* nil)
     (is (equal
           '(((:path . "Main.kt")
              (:name)
              (:line . 8) (:offset . 9)))
           (find-references parser
-                           '((:path . "b/Class.kt")
+                           '((:path . "kotlin/b/Class.kt")
                              (:name . "method")
                              (:line . 4) (:offset . 9)
-                             (:fq-name . "kotlin.b.Class.method")))))
+                             (:fq-name . "jvm.kotlin.b.Class.method")))))
     (stop-parser parser)))
 
