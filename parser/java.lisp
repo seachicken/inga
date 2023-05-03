@@ -62,6 +62,7 @@
                                       (cons :path src-path)
                                       (cons :line line-no)
                                       (cons :offset -1)))))) 
+        (root-ast ast)
         annotation-pos)
     (enqueue q ast)
     (loop
@@ -76,10 +77,12 @@
                 (>= (jsown:val ast "endPos") ast-pos))
           (when (jsown:keyp ast "name")
             (let ((name (jsown:val ast "name")))
-              (return (convert-to-pos (parser-path parser) src-path
-                                      name
-                                      nil
-                                      (jsown:val ast "pos"))))))
+              (let ((pos (convert-to-pos (parser-path parser) src-path
+                                         name
+                                         nil
+                                         (jsown:val ast "pos"))))
+                (push (cons :fq-name (get-fq-name-of-declaration root-ast pos (parser-path parser))) pos)
+                (return pos)))))
 
         (when (and
                 (string= (cdar ast) "com.github.javaparser.ast.body.ClassOrInterfaceDeclaration")
@@ -217,16 +220,29 @@
                 do (enqueue q (cdr child))))))
     results))
 
-(defun get-fq-name-of-declaration (ast pos &optional result)
-  (when (equal (cdar ast) "PACKAGE") 
-    (setf result (format nil "~{~a~^.~}" (remove nil (list result (jsown:val ast "packageName"))))))
-  (when (or
-          (equal (cdar ast) "CLASS")
-          (equal (cdar ast) "METHOD"))
-    (setf result (format nil "~{~a~^.~}" (remove nil (list result (jsown:val ast "name"))))))
+(defun get-fq-name-of-declaration (ast pos root-path)
+  (let ((ast-pos (cdr (assoc :pos (convert-to-ast-pos root-path pos))))
+        (stack (list ast))
+        result)
+    (loop
+      (let ((ast (pop stack)))
+        (if (null ast) (return))
 
-  (loop for child in (jsown:val ast "children")
-        do (setf result
-                 (get-fq-name-of-declaration (cdr child) pos result)))
-  result)
+        (when (equal (cdar ast) "PACKAGE")
+          (setf result (format nil "~{~a~^.~}" (remove nil (list result (jsown:val ast "packageName"))))))
+        (when (or
+                (equal (cdar ast) "CLASS")
+                (equal (cdar ast) "INTERFACE")
+                (equal (cdar ast) "METHOD"))
+          (setf result (format nil "~{~a~^.~}" (remove nil (list result (jsown:val ast "name"))))))
+
+        (when (and
+                (jsown:keyp ast "name")
+                (equal (jsown:val ast "name") (cdr (assoc :name pos)))
+                (<= (jsown:val ast "startPos") ast-pos)
+                (>= (jsown:val ast "endPos") ast-pos))
+          (return-from get-fq-name-of-declaration result))
+
+        (loop for child in (jsown:val ast "children")
+              do (setf stack (append stack (list (cdr child)))))))))
 

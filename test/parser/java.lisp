@@ -22,7 +22,8 @@
   (let ((parser (make-parser :java *spring-boot-path* *cache*)))
     (start-parser parser nil nil)
     (is (equal
-          '((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
+          '((:fq-name . "io.spring.application.ArticleQueryService.findById")
+            (:path . "src/main/java/io/spring/application/ArticleQueryService.java")
             (:name . "findById") (:line . 30) (:offset . 32))
           (let ((src-path "src/main/java/io/spring/application/ArticleQueryService.java"))
             (find-affected-pos
@@ -40,7 +41,8 @@
   (let ((parser (make-parser :java *spring-boot-path* *cache*)))
     (start-parser parser nil nil)
     (is (equal
-          '((:path . "src/main/java/io/spring/core/article/ArticleRepository.java")
+          '((:fq-name . "io.spring.core.article.ArticleRepository.save")
+            (:path . "src/main/java/io/spring/core/article/ArticleRepository.java")
             (:name . "save") (:line . 7) (:offset . 8))
           (let ((src-path "src/main/java/io/spring/core/article/ArticleRepository.java"))
             (find-affected-pos
@@ -59,7 +61,8 @@
   (let ((parser (make-parser :java *spring-boot-path* *cache*)))
     (start-parser parser nil nil)
     (is (equal
-          '((:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
+          '((:fq-name . "io.spring.application.article.NewArticleParam")
+            (:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
             (:name . "title") (:line . 19) (:offset . 18))
           (let ((src-path "src/main/java/io/spring/application/article/NewArticleParam.java"))
             (find-affected-pos
@@ -120,6 +123,7 @@
           (inga/parser/java::get-fq-name-of-declaration
             (exec-parser parser "java/Class.java")
             '((:path . "java/Class.java")
-              (:name . "method") (:line . 6) (:offset . 17)))))
+              (:name . "method") (:line . 6) (:offset . 17))
+            *jvm-path*)))
     (stop-parser parser)))
 
