@@ -23,8 +23,13 @@
 (defmethod start-parser ((parser parser-java) include exclude)
   (setf (parser-process parser)
         (uiop:launch-program
-          (format nil "java -cp ~a/libs/javaparser.jar inga.Main"
-                  (uiop:getenv "INGA_HOME"))
+          (format nil "~{~a~^ ~}"
+                  (list "java" "-cp"
+                        (format nil "~a/libs/javaparser.jar" (uiop:getenv "INGA_HOME"))
+                        "--add-opens" "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
+                        "--add-opens" "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED"
+                        "--add-opens" "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"
+                        "inga.Main"))
           :input :stream :output :stream))
   (create-indexes parser '("*.java") exclude))
 
@@ -51,11 +56,33 @@
 
 (defmethod find-affected-pos ((parser parser-java) src-path ast line-no)
   (let ((q (make-queue))
+        (ast-pos (cdr (assoc :pos (convert-to-ast-pos
+                                    (parser-path parser)
+                                    (list
+                                      (cons :path src-path)
+                                      (cons :line line-no)
+                                      (cons :offset -1)))))) 
+        (root-ast ast)
         annotation-pos)
     (enqueue q ast)
     (loop
       (let ((ast (dequeue q)))
         (if (null ast) (return))
+
+        (when (and
+                (or
+                  (string= (cdar ast) "VARIABLE") 
+                  (string= (cdar ast) "METHOD"))
+                (<= (jsown:val ast "startPos") ast-pos)
+                (>= (jsown:val ast "endPos") ast-pos))
+          (when (jsown:keyp ast "name")
+            (let ((name (jsown:val ast "name")))
+              (let ((pos (convert-to-pos (parser-path parser) src-path
+                                         name
+                                         nil
+                                         (jsown:val ast "pos"))))
+                (push (cons :fq-name (get-fq-name-of-declaration root-ast pos (parser-path parser))) pos)
+                (return pos)))))
 
         (when (and
                 (string= (cdar ast) "com.github.javaparser.ast.body.ClassOrInterfaceDeclaration")
@@ -109,13 +136,9 @@
                         (cons :line (jsown:val (jsown:val name "range") "beginLine"))
                         (cons :offset (jsown:val (jsown:val name "range") "beginColumn"))))))))
 
-        (when (jsown:keyp ast "types")
-          (loop for type in (jsown:val ast "types") do
-                (enqueue q (cdr type))))
-
-        (when (jsown:keyp ast "members")
-          (loop for member in (jsown:val ast "members") do
-                (enqueue q (cdr member))))))))
+        (when (jsown:keyp ast "children")
+          (loop for child in (jsown:val ast "children") do
+                (enqueue q (cdr child))))))))
 
 (defmethod find-entrypoint ((parser parser-java) pos))
 
@@ -196,4 +219,30 @@
           (loop for child in (jsown:val ast "imports")
                 do (enqueue q (cdr child))))))
     results))
+
+(defun get-fq-name-of-declaration (ast pos root-path)
+  (let ((ast-pos (cdr (assoc :pos (convert-to-ast-pos root-path pos))))
+        (stack (list ast))
+        result)
+    (loop
+      (let ((ast (pop stack)))
+        (if (null ast) (return))
+
+        (when (equal (cdar ast) "PACKAGE")
+          (setf result (format nil "~{~a~^.~}" (remove nil (list result (jsown:val ast "packageName"))))))
+        (when (or
+                (equal (cdar ast) "CLASS")
+                (equal (cdar ast) "INTERFACE")
+                (equal (cdar ast) "METHOD"))
+          (setf result (format nil "~{~a~^.~}" (remove nil (list result (jsown:val ast "name"))))))
+
+        (when (and
+                (jsown:keyp ast "name")
+                (equal (jsown:val ast "name") (cdr (assoc :name pos)))
+                (<= (jsown:val ast "startPos") ast-pos)
+                (>= (jsown:val ast "endPos") ast-pos))
+          (return-from get-fq-name-of-declaration result))
+
+        (loop for child in (jsown:val ast "children")
+              do (setf stack (append stack (list (cdr child)))))))))
 
