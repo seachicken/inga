@@ -23,8 +23,13 @@
 (defmethod start-parser ((parser parser-java) include exclude)
   (setf (parser-process parser)
         (uiop:launch-program
-          (format nil "java -cp ~a/libs/javaparser.jar inga.Main"
-                  (uiop:getenv "INGA_HOME"))
+          (format nil "~{~a~^ ~}"
+                  (list "java" "-cp"
+                        (format nil "~a/libs/javaparser.jar" (uiop:getenv "INGA_HOME"))
+                        "--add-opens" "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
+                        "--add-opens" "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED"
+                        "--add-opens" "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"
+                        "inga.Main"))
           :input :stream :output :stream))
   (create-indexes parser '("*.java") exclude))
 
@@ -196,4 +201,17 @@
           (loop for child in (jsown:val ast "imports")
                 do (enqueue q (cdr child))))))
     results))
+
+(defun get-fq-name-of-declaration (ast pos &optional result)
+  (when (equal (cdar ast) "PACKAGE") 
+    (setf result (format nil "~{~a~^.~}" (remove nil (list result (jsown:val ast "packageName"))))))
+  (when (or
+          (equal (cdar ast) "CLASS")
+          (equal (cdar ast) "METHOD"))
+    (setf result (format nil "~{~a~^.~}" (remove nil (list result (jsown:val ast "name"))))))
+
+  (loop for child in (jsown:val ast "children")
+        do (setf result
+                 (get-fq-name-of-declaration (cdr child) pos result)))
+  result)
 

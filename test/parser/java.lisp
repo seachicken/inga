@@ -7,6 +7,7 @@
 (def-suite java)
 (in-suite java)
 
+(defparameter *jvm-path* (merge-pathnames #p"test/fixtures/jvm/"))
 (defparameter *spring-boot-path*
   (truename (uiop:merge-pathnames* "test/fixtures/spring-boot-realworld-example-app/")))
 (defparameter *cache* (inga/cache:make-cache 100))
@@ -105,5 +106,16 @@
               src-path
               (exec-parser parser src-path)
               65))))
+    (stop-parser parser)))
+
+(test get-fq-name-of-declaration
+  (let ((parser (make-parser :java *jvm-path* *cache*)))
+    (start-parser parser nil nil)
+    (is (equal
+          "jvm.java.Class.method"
+          (inga/parser/java::get-fq-name-of-declaration
+            (exec-parser parser "java/Class.java")
+            '((:path . "java/Class.java")
+              (:name . "method") (:line . 6) (:offset . 17)))))
     (stop-parser parser)))
 
