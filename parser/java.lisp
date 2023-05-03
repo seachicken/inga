@@ -56,11 +56,30 @@
 
 (defmethod find-affected-pos ((parser parser-java) src-path ast line-no)
   (let ((q (make-queue))
+        (ast-pos (cdr (assoc :pos (convert-to-ast-pos
+                                    (parser-path parser)
+                                    (list
+                                      (cons :path src-path)
+                                      (cons :line line-no)
+                                      (cons :offset -1)))))) 
         annotation-pos)
     (enqueue q ast)
     (loop
       (let ((ast (dequeue q)))
         (if (null ast) (return))
+
+        (when (and
+                (or
+                  (string= (cdar ast) "VARIABLE") 
+                  (string= (cdar ast) "METHOD"))
+                (<= (jsown:val ast "startPos") ast-pos)
+                (>= (jsown:val ast "endPos") ast-pos))
+          (when (jsown:keyp ast "name")
+            (let ((name (jsown:val ast "name")))
+              (return (convert-to-pos (parser-path parser) src-path
+                                      name
+                                      nil
+                                      (jsown:val ast "pos"))))))
 
         (when (and
                 (string= (cdar ast) "com.github.javaparser.ast.body.ClassOrInterfaceDeclaration")
@@ -114,13 +133,9 @@
                         (cons :line (jsown:val (jsown:val name "range") "beginLine"))
                         (cons :offset (jsown:val (jsown:val name "range") "beginColumn"))))))))
 
-        (when (jsown:keyp ast "types")
-          (loop for type in (jsown:val ast "types") do
-                (enqueue q (cdr type))))
-
-        (when (jsown:keyp ast "members")
-          (loop for member in (jsown:val ast "members") do
-                (enqueue q (cdr member))))))))
+        (when (jsown:keyp ast "children")
+          (loop for child in (jsown:val ast "children") do
+                (enqueue q (cdr child))))))))
 
 (defmethod find-entrypoint ((parser parser-java) pos))
 

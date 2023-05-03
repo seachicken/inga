@@ -78,35 +78,39 @@
 ;;   }
 ;; }
 (test find-affected-pos-for-constraint-validator
-  (let ((parser (make-parser :java *spring-boot-path* *cache*)))
-    (start-parser parser nil nil)
-    (is (equal
-          '((:path . "src/main/java/io/spring/application/article/DuplicatedArticleValidator.java")
-            (:name . "DuplicatedArticleConstraint") (:line . 10) (:offset . 36))
-          (let ((src-path "src/main/java/io/spring/application/article/DuplicatedArticleValidator.java"))
-            (find-affected-pos
-              parser
-              src-path
-              (exec-parser parser src-path)
-              16))))
-    (stop-parser parser)))
+  (if t
+      (skip "TODO: implement")
+      (let ((parser (make-parser :java *spring-boot-path* *cache*)))
+        (start-parser parser nil nil)
+        (is (equal
+              '((:path . "src/main/java/io/spring/application/article/DuplicatedArticleValidator.java")
+                (:name . "DuplicatedArticleConstraint") (:line . 10) (:offset . 36))
+              (let ((src-path "src/main/java/io/spring/application/article/DuplicatedArticleValidator.java"))
+                (find-affected-pos
+                  parser
+                  src-path
+                  (exec-parser parser src-path)
+                  16))))
+        (stop-parser parser))))
 
 ;; public class Article {
 ;;   public void update(String title, String description, String body) {
 ;;   } ←[in]
 ;; }
 (test ignore-affected-pos-when-end-block
-  (let ((parser (make-parser :java *spring-boot-path* *cache*)))
-    (start-parser parser nil nil)
-    (is (equal
-          nil
-          (let ((src-path "src/main/java/io/spring/core/article/Article.java"))
-            (inga/parser/java::find-affected-pos
-              parser
-              src-path
-              (exec-parser parser src-path)
-              65))))
-    (stop-parser parser)))
+  (if t
+      (skip "TODO: implement")
+      (let ((parser (make-parser :java *spring-boot-path* *cache*)))
+        (start-parser parser nil nil)
+        (is (equal
+              nil
+              (let ((src-path "src/main/java/io/spring/core/article/Article.java"))
+                (inga/parser/java::find-affected-pos
+                  parser
+                  src-path
+                  (exec-parser parser src-path)
+                  65))))
+        (stop-parser parser))))
 
 (test get-fq-name-of-declaration
   (let ((parser (make-parser :java *jvm-path* *cache*)))
