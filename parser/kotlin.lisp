@@ -74,7 +74,7 @@
   (let ((q (make-queue))
         (imported-name
           (concatenate 'string (car (last (split #\. target-fq-name))) "." target-name))
-        (is-found-import (not (null (find target-fq-name (find-import-list parser ast) :test #'equal))))
+        (is-found-import (not (null (find target-fq-name (find-import-list (get-original-path index-path) ast) :test #'equal))))
         results)
     (enqueue q ast)
     (loop
@@ -82,7 +82,7 @@
         (if (null ast) (return))
 
         (when (string= (cdar ast) "DOT_QUALIFIED_EXPRESSION")
-          (let ((fq-name (get-fq-name parser ast nil)))
+          (let ((fq-name (get-fq-name parser (get-original-path index-path) ast ast nil)))
             (when (or
                     (and is-found-import (string= fq-name imported-name))
                     (string= fq-name (concatenate 'string target-fq-name "." target-name)))
@@ -97,16 +97,16 @@
                 do (enqueue q (cdr child))))))
     results))
 
-(defmethod get-fq-name ((parser parser-kotlin) ast result)
+(defmethod get-fq-name ((parser parser-kotlin) src-path root-ast ast result)
   (when (string= (cdar ast) "REFERENCE_EXPRESSION")
     (setf result (concatenate 'string
                               (if result (concatenate 'string result ".") "")
                               (jsown:val (cdr ast) "name"))))
   (loop for child in (jsown:val ast "children")
-        do (setf result (get-fq-name parser (cdr child) result)))
+        do (setf result (get-fq-name parser src-path root-ast (cdr child) result)))
   result)
 
-(defmethod find-import-list ((parser parser-kotlin) ast)
+(defun find-import-list (src-path ast)
   (let ((q (make-queue)))
     (enqueue q ast)
     (loop

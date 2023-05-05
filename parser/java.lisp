@@ -146,65 +146,58 @@
   (let ((q (make-queue))
         (imported-name
           (concatenate 'string (car (last (split #\. target-fq-name))) "." target-name))
-        (is-found-import (not (null (find target-fq-name (find-import-list parser ast) :test #'equal))))
+        (is-found-import (not (null (find target-fq-name (find-import-list (get-original-path index-path) ast) :test #'equal))))
+        (root-ast ast)
         results)
     (enqueue q ast)
     (loop
-      (let ((ast (dequeue q)) result)
+      (let ((ast (dequeue q)))
         (if (null ast) (return))
 
-        (when (string= (cdar ast) "com.github.javaparser.ast.stmt.ExpressionStmt")
-          (let ((fq-name (get-fq-name parser ast nil)))
+        (when (string= (cdar ast) "METHOD_INVOCATION")
+          (let ((fq-name (get-fq-name parser (get-original-path index-path) root-ast ast nil)))
             (when (or
                     (and is-found-import (string= fq-name imported-name))
-                    (string= fq-name (concatenate 'string target-fq-name "." target-name)))
+                    (string= fq-name target-fq-name))
               (setf results (append results
                                     (list
-                                      (list (cons :path (get-original-path index-path))
-                                            (cons :line (jsown:val (jsown:val ast "range") "beginLine"))
-                                            (cons :offset (jsown:val (jsown:val ast "range") "beginColumn")))))))))
+                                      (convert-to-pos
+                                        (parser-path parser)
+                                        (get-original-path index-path)
+                                        nil
+                                        nil
+                                        (jsown:val ast "pos"))))))))
 
-        (when (jsown:keyp ast "types")
-          (loop for child in (jsown:val ast "types") do
-                (enqueue q (cdr child))))
-
-        (when (jsown:keyp ast "members")
-          (loop for child in (jsown:val ast "members") do
-                (enqueue q (cdr child))))
-
-        (when (jsown:keyp ast "body")
-          (let ((body (jsown:val ast "body")))
-            (when (jsown:keyp body "statements")
-              (loop for child in (jsown:val body "statements") do
-                    (enqueue q (cdr child))))))))
+        (when (jsown:keyp ast "children")
+          (loop for child in (jsown:val ast "children")
+                do (enqueue q (cdr child))))))
     results))
 
-(defmethod get-fq-name ((parser parser-java) ast result)
-  (when (or
-          (string= (cdar ast) "com.github.javaparser.ast.expr.Name")
-          (string= (cdar ast) "com.github.javaparser.ast.expr.SimpleName"))
+(defmethod get-fq-name ((parser parser-java) src-path root-ast ast result)
+  (when (string= (cdar ast) "MEMBER_SELECT")
     (setf result (concatenate 'string
-                              (jsown:val (cdr ast) "identifier")
-                              (if result (concatenate 'string "." result) ""))))
+                              (if result (concatenate 'string result ".") "")
+                              (jsown:val (cdr ast) "name"))))
 
-  (when (jsown:keyp ast "name")
-    (setf result (get-fq-name parser (cdr (jsown:val ast "name")) result)))
+  (when (and
+          result ;; already founded MEMBER_SELECT
+          (string= (cdar ast) "IDENTIFIER"))
+    (return-from get-fq-name
+                 (find-declaration-for-identifier
+                   root-ast
+                   (when (jsown:keyp ast "name")
+                     (let ((name (jsown:val ast "name")))
+                       (convert-to-pos (parser-path parser) src-path
+                                       name
+                                       nil
+                                       (jsown:val ast "pos"))))
+                   (parser-path parser))))
 
-  (when (jsown:keyp ast "qualifier")
-    (setf result (get-fq-name parser (cdr (jsown:val ast "qualifier")) result)))
-
-  (when (jsown:keyp ast "expression")
-    (setf result (get-fq-name parser (cdr (jsown:val ast "expression")) result)))
-
-  (when (jsown:keyp ast "scope")
-    (setf result (get-fq-name parser (cdr (jsown:val ast "scope")) result)))
-
-  (when (jsown:keyp ast "type")
-    (setf result (get-fq-name parser (cdr (jsown:val ast "type")) result)))
-
+  (loop for child in (jsown:val ast "children")
+        do (setf result (get-fq-name parser src-path root-ast (cdr child) result)))
   result)
 
-(defmethod find-import-list ((parser parser-java) ast)
+(defun find-import-list (src-path ast)
   (let ((q (make-queue))
         results)
     (enqueue q ast)
@@ -212,11 +205,11 @@
       (let ((ast (dequeue q)))
         (if (null ast) (return))
 
-        (when (string= (cdar ast) "com.github.javaparser.ast.ImportDeclaration")
-          (setf results (append results (list (get-fq-name parser ast nil)))))
+        (when (string= (cdar ast) "IMPORT")
+          (setf results (append results (list (jsown:val ast "fqName")))))
 
-        (when (jsown:keyp ast "imports")
-          (loop for child in (jsown:val ast "imports")
+        (when (jsown:keyp ast "children")
+          (loop for child in (jsown:val ast "children")
                 do (enqueue q (cdr child))))))
     results))
 
@@ -232,8 +225,7 @@
           (setf result (format nil "~{~a~^.~}" (remove nil (list result (jsown:val ast "packageName"))))))
         (when (or
                 (equal (cdar ast) "CLASS")
-                (equal (cdar ast) "INTERFACE")
-                (equal (cdar ast) "METHOD"))
+                (equal (cdar ast) "INTERFACE"))
           (setf result (format nil "~{~a~^.~}" (remove nil (list result (jsown:val ast "name"))))))
 
         (when (and
@@ -241,8 +233,55 @@
                 (equal (jsown:val ast "name") (cdr (assoc :name pos)))
                 (<= (jsown:val ast "startPos") ast-pos)
                 (>= (jsown:val ast "endPos") ast-pos))
+          ;;(setf result (format nil "~{~a~^.~}" (remove nil (list result (jsown:val ast "name")))))
           (return-from get-fq-name-of-declaration result))
 
         (loop for child in (jsown:val ast "children")
               do (setf stack (append stack (list (cdr child)))))))))
+
+(defun find-declaration-for-identifier (ast pos root-path)
+  (let ((ast-pos (cdr (assoc :pos (convert-to-ast-pos root-path pos))))
+        (stack (list ast))
+        (import-list (find-import-list root-path ast))
+        (target-name (cdr (assoc :name pos)))
+        result)
+    (loop
+      (let ((ast (pop stack)))
+        (if (null ast) (return))
+
+        (when (and
+                (jsown:keyp ast "name")
+                (equal (jsown:val ast "name") target-name)
+                (<= (jsown:val ast "startPos") ast-pos)
+                (>= (jsown:val ast "endPos") ast-pos))
+          (setf result (trace-declaration ast import-list target-name))
+          (return-from find-declaration-for-identifier result))
+
+        (loop for child in (jsown:val ast "children")
+              do (let ((body (cdr child)))
+                   (setf (jsown:val child "parent") ast)
+                   (setf stack (append stack (list body)))))))))
+
+(defun trace-declaration (ast import-list target-name)
+  (let ((q (make-queue))
+        results)
+    (enqueue q ast)
+    (loop
+      (let ((ast (dequeue q)))
+        (if (null ast) (return))
+
+        (when (equal (cdar ast) "CLASS")
+          (loop for child in (jsown:val ast "children")
+                do (when (and
+                           (equal (jsown:val child "type") "VARIABLE")
+                           (equal (jsown:val child "name") target-name))
+                     (loop for child in (jsown:val child "children")
+                           do (when (equal (jsown:val child "type") "IDENTIFIER")
+                                (let ((class-name (jsown:val child "name")))
+                                  (loop for import in import-list
+                                        do (when (equal (car (last (split #\. import))) class-name)
+                                             (setf results (append results (list import)))))))))))
+        (when (jsown:keyp ast "parent")
+          (enqueue q (jsown:val ast "parent")))))
+    (format nil "~{~a~^.~}" results)))
 

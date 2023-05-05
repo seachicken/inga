@@ -18,7 +18,6 @@
            #:find-entrypoint
            #:find-caller
            #:get-fq-name
-           #:find-import-list
            #:find-references
            #:convert-to-ast-pos
            #:convert-to-pos
@@ -80,18 +79,14 @@
 (defgeneric find-caller (parser index-path ast target-fq-name target-name)
   (:method (parser index-path ast target-fq-name target-name)))
 
-(defgeneric get-fq-name (parser ast result))
-
-(defgeneric find-import-list (parser ast))
+(defgeneric get-fq-name (parser src-path root-ast ast result))
 
 (defun find-references (parser pos)
-  (let ((target-package (split #\. (cdr (assoc :fq-name pos)))))
+  (let ((target (cdr (assoc :fq-name pos))))
     (loop for path in (uiop:directory-files *index-path*)
           with results
           with ast
           with target-parser
-          with target = (format nil "~{~a~^.~}"
-                                (subseq target-package 0 (- (length target-package) 1)))
           do (progn
                (setf target-parser (find-parser parser (namestring path)))
                (setf ast (cdr (jsown:parse (uiop:read-file-string path))))

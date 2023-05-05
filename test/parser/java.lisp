@@ -22,7 +22,7 @@
   (let ((parser (make-parser :java *spring-boot-path* *cache*)))
     (start-parser parser nil nil)
     (is (equal
-          '((:fq-name . "io.spring.application.ArticleQueryService.findById")
+          '((:fq-name . "io.spring.application.ArticleQueryService")
             (:path . "src/main/java/io/spring/application/ArticleQueryService.java")
             (:name . "findById") (:line . 30) (:offset . 32))
           (let ((src-path "src/main/java/io/spring/application/ArticleQueryService.java"))
@@ -41,7 +41,7 @@
   (let ((parser (make-parser :java *spring-boot-path* *cache*)))
     (start-parser parser nil nil)
     (is (equal
-          '((:fq-name . "io.spring.core.article.ArticleRepository.save")
+          '((:fq-name . "io.spring.core.article.ArticleRepository")
             (:path . "src/main/java/io/spring/core/article/ArticleRepository.java")
             (:name . "save") (:line . 7) (:offset . 8))
           (let ((src-path "src/main/java/io/spring/core/article/ArticleRepository.java"))
@@ -119,11 +119,23 @@
   (let ((parser (make-parser :java *jvm-path* *cache*)))
     (start-parser parser nil nil)
     (is (equal
-          "jvm.java.Class.method"
+          "jvm.java.Class"
           (inga/parser/java::get-fq-name-of-declaration
             (exec-parser parser "java/Class.java")
             '((:path . "java/Class.java")
-              (:name . "method") (:line . 6) (:offset . 17))
+              (:name . "method2") (:line . 13) (:offset . 17))
+            *jvm-path*)))
+    (stop-parser parser)))
+
+(test find-declaration-for-identifier
+  (let ((parser (make-parser :java *jvm-path* *cache*)))
+    (start-parser parser nil nil)
+    (is (equal
+          "jvm.kotlin.a.Class"
+          (inga/parser/java::find-declaration-for-identifier
+            (exec-parser parser "java/Class.java")
+            '((:path . "java/Class.java")
+              (:name . "classA") (:line . 9) (:offset . 9))
             *jvm-path*)))
     (stop-parser parser)))
 
