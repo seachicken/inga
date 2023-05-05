@@ -146,6 +146,8 @@
                           nil
                           (cdr (assoc :pos component-pos))))))))
 
+(defmethod find-references ((parser parser-typescript) pos))
+
 (defun find-component (parser ast pos)
   (when (and (jsown:keyp ast "kindName")
              (or

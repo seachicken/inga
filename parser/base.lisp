@@ -4,6 +4,9 @@
   (:import-from #:inga/file
                 #:is-match
                 #:is-analysis-target)
+  (:import-from #:inga/cache
+                #:put-value
+                #:get-value)
   (:export #:parser
            #:*index-path*
            #:make-parser
@@ -81,19 +84,30 @@
 
 (defgeneric get-fq-name (parser src-path root-ast ast result))
 
-(defun find-references (parser pos)
-  (let ((target (cdr (assoc :fq-name pos))))
-    (loop for path in (uiop:directory-files *index-path*)
-          with results
-          with ast
-          with target-parser
-          do (progn
-               (setf target-parser (find-parser parser (namestring path)))
-               (setf ast (cdr (jsown:parse (uiop:read-file-string path))))
-               (let ((callers (find-caller target-parser path ast target (cdr (assoc :name pos)))))
-                 (when callers
-                   (setf results (append results callers)))))
-          finally (return results))))
+(defgeneric find-references (parser pos)
+  (:method (parser pos)
+    (let ((target (cdr (assoc :fq-name pos)))
+          (cache (get-value (parser-cache (first parser)) (get-references-key pos))))
+      (values
+        (if (null cache)
+            (loop for path in (uiop:directory-files *index-path*)
+                  with results
+                  with ast
+                  with target-parser
+                  with cache
+                  do (progn
+                       (setf target-parser (find-parser parser (namestring path)))
+
+                       (setf ast (cdr (jsown:parse (uiop:read-file-string path))))
+                       (let ((callers (find-caller target-parser path ast target (cdr (assoc :name pos)))))
+                         (when callers
+                           (setf results (append results callers)))))
+                  finally (progn
+                            (put-value (parser-cache (first parser)) (get-references-key pos)
+                                       (if results results 'empty))
+                            (return (values results nil))))
+            (if (eq cache 'empty) nil cache))
+        (when cache t)))))
 
 (defun convert-to-ast-pos (project-path pos)
   (let ((path (uiop:merge-pathnames* (cdr (assoc :path pos)) project-path))
@@ -142,6 +156,9 @@
 
 (defun get-parse-key (path)
   (intern (format nil "parse-~a" path)))
+
+(defun get-references-key (pos)
+  (intern (format nil "refs-~a-~a-~a" (cdr (assoc :path pos)) (cdr (assoc :line pos)) (cdr (assoc :offset pos)))))
 
 (defmethod find-parser (parser file-path)
   parser)

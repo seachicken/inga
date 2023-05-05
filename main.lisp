@@ -232,9 +232,13 @@
 
   (let ((refs (inga/utils::measure
                 *debug-find-refs*
-                (lambda () (or (find-references (context-parser ctx) pos)
-                               (references-client (context-lc ctx) pos)))))
-        (results '()))
+                (lambda () (find-references (context-parser ctx) pos))))
+        results)
+    (unless refs
+      (setf refs (inga/utils::measure
+                   *debug-find-refs*
+                   (lambda () (references-client (context-lc ctx) pos)))))
+
     (setf refs (remove nil (mapcar (lambda (ref)
                                      (when (is-analysis-target (cdr (assoc :path ref))
                                                                (context-include ctx)
