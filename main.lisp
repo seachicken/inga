@@ -34,11 +34,11 @@
 (in-package #:inga/main)
 
 (defparameter *include-typescript*
-  '("**/*.(js|jsx)"
-    "**/*.(ts|tsx)"))
+  '("*.(js|jsx)"
+    "*.(ts|tsx)"))
 (defparameter *include-java*
-  '("**/*.java"
-    "**/*.kt"))
+  '("*.java"
+    "*.kt"))
 (defparameter *cache-max-size* 100)
 (defparameter *cache* (make-cache *cache-max-size*))
 
