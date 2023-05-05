@@ -77,10 +77,7 @@
                                 exclude))))
           (let ((results (time (analyze ctx diffs))))
             (log-debug (format nil "cache size: ~a/~a" (size *cache*) *cache-max-size*))
-            (log-debug (format nil "measuring time:~%  parse: [times: ~a, avg-sec: ~f, cache-hit: ~a]~%  find-affected-pos: [times: ~a, avg-sec: ~f]~%  find-refs: [times: ~a, avg-sec: ~f, cache-hit: ~a]"
-                               (inga/utils::measuring-time-times *debug-parse*)
-                               (inga/utils::avg-sec *debug-parse*)
-                               (inga/utils::measuring-time-cache-hit *debug-parse*)
+            (log-debug (format nil "measuring time:~%  find-affected-pos: [times: ~a, avg-sec: ~f]~%  find-refs: [times: ~a, avg-sec: ~f, cache-hit: ~a]"
                                (inga/utils::measuring-time-times *debug-find-affected-pos*)
                                (inga/utils::avg-sec *debug-find-affected-pos*)
                                (inga/utils::measuring-time-times *debug-find-refs*)
@@ -200,9 +197,7 @@
 
         (let ((src-path (cdr (assoc :path range)))
               ast)
-          (setf ast (inga/utils::measure
-                      *debug-parse*
-                      (lambda () (exec-parser (context-parser ctx) src-path))))
+          (setf ast (exec-parser (context-parser ctx) src-path))
           (setf results
                 (append results
                         (mapcan (lambda (pos)

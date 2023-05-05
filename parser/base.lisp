@@ -28,6 +28,7 @@
            #:get-parse-key
            #:create-indexes
            #:clean-indexes
+           #:get-index-path
            #:get-original-path))
 (in-package #:inga/parser/base)
 
@@ -64,7 +65,9 @@
          (when p
            (return (parse p path))))))
 
-(defgeneric exec-parser (parser file-path))
+(defgeneric exec-parser (parser file-path)
+  (:method (parser file-path)
+    (cdr (jsown:parse (uiop:read-file-string (get-index-path file-path))))))
 (defmethod exec-parser ((parser list) file-path)
   (let ((p (find-parser parser file-path)))
     (when p
@@ -119,7 +122,7 @@
             while line
             when (= line-no (- (cdr (assoc :line pos)) 1))
             return (list
-                     (cons :path (pathname path))
+                     (cons :path (enough-namestring path project-path))
                      (cons :pos (+ result (if (< offset 0)
                                               (length line)
                                               (- offset 1)))))
@@ -182,14 +185,18 @@
              (when (is-analysis-target relative-path include exclude)
                (alexandria:write-string-into-file
                  (format nil "~a" (parse parser (namestring path)))
-                 (uiop:merge-pathnames*
-                   *index-path*
-                   (ppcre:regex-replace-all "/" relative-path "--")))))))
+                 (get-index-path relative-path))))))
 
 (defun clean-indexes ()
   (uiop:delete-directory-tree *index-path*
                               :validate t
                               :if-does-not-exist :ignore))
+
+(defun get-index-path (original-path)
+  (uiop:merge-pathnames*
+    *index-path*
+    (ppcre:regex-replace-all "/" original-path "--")))
+
 (defun get-original-path (index-path)
   (format nil "~{~a~^/~}"
           (subseq (split #\/ (ppcre:regex-replace-all

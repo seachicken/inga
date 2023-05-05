@@ -23,23 +23,6 @@
   (clean-indexes)
   (uiop:close-streams (parser-process parser)))
 
-(defmethod exec-parser ((parser parser-kotlin) file-path)
-  (let ((path (namestring
-                (uiop:merge-pathnames* file-path (parser-path parser))))
-        cache
-        ast)
-    (setf cache (get-value (parser-cache parser) (get-parse-key path)))
-    (values
-      (if cache
-          (when (> (length cache) 0)
-            (cdr (jsown:parse cache)))
-          (progn
-            (setf ast (exec-command parser path))
-            (put-value (parser-cache parser) (get-parse-key path) ast)
-            (when (> (length ast) 0)
-              (cdr (jsown:parse ast)))))
-      (when cache t))))
-
 (defmethod find-affected-pos ((parser parser-kotlin) src-path ast line-no)
   (let ((q (make-queue))
         (ast-pos (cdr (assoc :pos (convert-to-ast-pos
