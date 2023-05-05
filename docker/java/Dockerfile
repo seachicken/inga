@@ -11,7 +11,7 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | d
 
 RUN mkdir libs
 
-RUN curl -o ./libs/javaparser.jar -L https://github.com/seachicken/javaparser/releases/download/javaparser-0.1.2/javaparser-0.1.2.jar
+RUN curl -o ./libs/javaparser.jar -L https://github.com/seachicken/javaparser/releases/download/javaparser-0.1.3/javaparser-0.1.3.jar
 
 RUN curl -o ./libs/ktparser.jar -L https://github.com/seachicken/ktparser/releases/download/ktparser-0.1.2/ktparser-0.1.2.jar
 
