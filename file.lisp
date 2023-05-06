@@ -23,5 +23,9 @@
 
 (defun to-scan-str (str)
   (format nil "^~a$"
-          (ppcre:regex-replace-all "\\*" str ".+")))
+          (ppcre:regex-replace-all
+            "\\*"
+            ;; replace from "." with escaped dot "\."
+            (ppcre:regex-replace-all "\\." str "\\.")
+            ".+")))
 
