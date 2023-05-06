@@ -15,7 +15,7 @@ RUN ros && \
   ros build /inga/roswell/inga.ros
 
 
-FROM --platform=linux/amd64 alpine:3.17.3
+FROM alpine:3.17.3
 
 COPY --from=build /libs /libs
 COPY --from=build /inga/roswell/inga /usr/local/bin/
