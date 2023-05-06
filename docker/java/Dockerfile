@@ -1,13 +1,7 @@
-FROM fukamachi/roswell:21.10.14.111-ubuntu AS build
+FROM fukamachi/roswell:22.12.14.113-alpine AS build
 
-ARG DEBIAN_FRONTEND=noninteractive
-
-RUN apt-get update && \
-  apt-get install -y curl
-
-# https://github.com/cli/cli/blob/trunk/docs/install_linux.md#installing-gh-on-linux-and-bsd
-RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg && \
-  chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+RUN apk update && apk upgrade && \
+  apk add curl
 
 RUN mkdir libs
 
@@ -21,23 +15,16 @@ RUN ros && \
   ros build /inga/roswell/inga.ros
 
 
-FROM ubuntu:22.10
+FROM alpine:3.17.3
 
-COPY --from=build /usr/share/keyrings/githubcli-archive-keyring.gpg /usr/share/keyrings/githubcli-archive-keyring.gpg
 COPY --from=build /libs /libs
 COPY --from=build /inga/roswell/inga /usr/local/bin/
 
-RUN apt-get update && \
-  apt-get install -y ca-certificates
-
-RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null && \
-  apt-get update && \
-  apt-get install -y \
+RUN apk update && \
+    apk --no-cache add \
     git \
-    gh \
-    openjdk-17-jdk && \
-  apt-get clean && \
-  rm -rf /var/lib/apt/lists/*
+    github-cli \
+    openjdk17-jre-headless
 
 ENV INGA_HOME /
 ENV INGA_CONTEXT java
