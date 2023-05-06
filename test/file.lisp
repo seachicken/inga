@@ -50,6 +50,11 @@
         t
         (is-analysis-target "src/index.js" '("*.js")))))
 
+(test not-analyze-when-the-file-name-is-the-same-extension
+  (is (equal
+        nil
+        (is-analysis-target "src/js" '("*.js")))))
+
 (test not-analyze-when-not-include
   (is (equal
         nil
