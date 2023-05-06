@@ -1,4 +1,4 @@
-FROM fukamachi/roswell:22.12.14.113-alpine AS build
+FROM --platform=linux/amd64 fukamachi/roswell:22.12.14.113-alpine AS build
 
 RUN apk update && apk upgrade && \
   apk add curl
