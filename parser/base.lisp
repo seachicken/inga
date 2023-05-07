@@ -7,6 +7,8 @@
   (:import-from #:inga/cache
                 #:put-value
                 #:get-value)
+  (:import-from #:inga/errors
+                #:inga-error)
   (:export #:parser
            #:*index-path*
            #:make-parser
@@ -20,7 +22,7 @@
            #:find-affected-pos
            #:find-entrypoint
            #:find-caller
-           #:get-fq-name
+           #:find-fq-method-name
            #:find-references
            #:convert-to-ast-pos
            #:convert-to-pos
@@ -82,15 +84,14 @@
 (defgeneric find-entrypoint (parser pos))
 (defmethod find-entrypoint ((parser list) pos))
 
-(defgeneric find-caller (parser index-path ast target-fq-name target-name)
-  (:method (parser index-path ast target-fq-name target-name)))
+(defgeneric find-caller (parser index-path ast pos)
+  (:method (parser index-path ast pos)))
 
-(defgeneric get-fq-name (parser src-path root-ast ast result))
+(defgeneric find-fq-method-name (parser src-path root-ast ast result))
 
 (defgeneric find-references (parser pos)
   (:method (parser pos)
-    (let ((target (cdr (assoc :fq-name pos)))
-          (cache (get-value (parser-cache (first parser)) (get-references-key pos))))
+    (let ((cache (get-value (parser-cache (first parser)) (get-references-key pos))))
       (values
         (if (null cache)
             (loop for path in (uiop:directory-files *index-path*)
@@ -102,7 +103,7 @@
                        (setf target-parser (find-parser parser (namestring path)))
 
                        (setf ast (cdr (jsown:parse (uiop:read-file-string path))))
-                       (let ((callers (find-caller target-parser path ast target (cdr (assoc :name pos)))))
+                       (let ((callers (find-caller target-parser path ast pos)))
                          (when callers
                            (setf results (append results callers)))))
                   finally (progn
@@ -183,9 +184,13 @@
   (loop for path in (uiop:directory-files (format nil "~a/**/*" (parser-path parser)))
         do (let ((relative-path (enough-namestring path (parser-path parser))))
              (when (is-analysis-target relative-path include exclude)
-               (alexandria:write-string-into-file
-                 (format nil "~a" (parse parser (namestring path)))
-                 (get-index-path relative-path))))))
+               (handler-case
+                 (alexandria:write-string-into-file
+                   (format nil "~a" (parse parser (namestring path)))
+                   (get-index-path relative-path))
+                 (error (e)
+                        (format t "error: ~a, path: ~a~%" e path)
+                        (error 'inga-error)))))))
 
 (defun clean-indexes ()
   (uiop:delete-directory-tree *index-path*

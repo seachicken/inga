@@ -8,6 +8,7 @@ public class Class {
     public void method() {
         classA.method();
         new Class().method();
+        method2();
     }
 
     public void method2() {

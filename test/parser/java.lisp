@@ -127,7 +127,7 @@
             *jvm-path*)))
     (stop-parser parser)))
 
-(test find-declaration-for-identifier
+(test find-fq-classs-name-with-field-instance
   (let ((parser (make-parser :java *jvm-path* *cache*)))
     (start-parser parser nil nil)
     (is (equal
@@ -136,6 +136,31 @@
             (exec-parser parser "java/Class.java")
             '((:path . "java/Class.java")
               (:name . "classA") (:line . 9) (:offset . 9))
+            *jvm-path*)))
+    (stop-parser parser)))
+
+(test find-fq-classs-name-with-field-method
+  (let ((parser (make-parser :java *jvm-path* *cache*)))
+    (start-parser parser nil nil)
+    (is (equal
+          "jvm.kotlin.a.Class"
+          (inga/parser/java::find-declaration-for-identifier
+            (exec-parser parser "java/Class.java")
+            '((:path . "java/Class.java")
+              (:name . "method") (:line . 9) (:offset . 16))
+            *jvm-path*)))
+    (stop-parser parser)))
+
+(test find-fq-classs-name-with-private-method
+  (let ((parser (make-parser :java *jvm-path* *cache*)))
+    (start-parser parser nil nil)
+    (is (equal
+          "jvm.java.Class"
+          (inga/parser/java::find-declaration-for-identifier
+            (exec-parser parser "java/Class.java")
+            '((:fq-name . "jvm.java.Class")
+              (:path . "java/Class.java")
+              (:name . "method2") (:line . 11) (:offset . 9))
             *jvm-path*)))
     (stop-parser parser)))
 

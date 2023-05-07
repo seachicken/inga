@@ -125,23 +125,25 @@
 
 (defmethod find-entrypoint ((parser parser-java) pos))
 
-(defmethod find-caller ((parser parser-java) index-path ast target-fq-name target-name)
+(defmethod find-caller ((parser parser-java) index-path ast pos)
   (let ((q (make-queue))
-        (imported-name
-          (concatenate 'string (car (last (split #\. target-fq-name))) "." target-name))
-        (is-found-import (not (null (find target-fq-name (find-import-list (get-original-path index-path) ast) :test #'equal))))
+        (target-fq-name (cdr (assoc :fq-name pos)))
+        (target-name (cdr (assoc :name pos)))
         (root-ast ast)
+        imported-name
+        is-found-import
         results)
+    (setf imported-name
+          (concatenate 'string (car (last (split #\. target-fq-name))) "." target-name))
+    (setf is-found-import (not (null (find target-fq-name (find-import-list (get-original-path index-path) ast) :test #'equal))))
     (enqueue q ast)
     (loop
       (let ((ast (dequeue q)))
         (if (null ast) (return))
 
         (when (string= (cdar ast) "METHOD_INVOCATION")
-          (let ((fq-name (get-fq-name parser (get-original-path index-path) root-ast ast nil)))
-            (when (or
-                    (and is-found-import (string= fq-name imported-name))
-                    (string= fq-name target-fq-name))
+          (let ((fq-method-name (find-fq-method-name parser (get-original-path index-path) root-ast ast nil)))
+            (when (string= fq-method-name (concatenate 'string target-fq-name "." target-name))
               (setf results (append results
                                     (list
                                       (convert-to-pos
@@ -156,28 +158,36 @@
                 do (enqueue q (cdr child))))))
     results))
 
-(defmethod get-fq-name ((parser parser-java) src-path root-ast ast result)
-  (when (string= (cdar ast) "MEMBER_SELECT")
-    (setf result (concatenate 'string
-                              (if result (concatenate 'string result ".") "")
-                              (jsown:val (cdr ast) "name"))))
+(defmethod find-fq-method-name ((parser parser-java) src-path root-ast ast result)
+  (let ((q (make-queue)))
+    (enqueue q ast)
+    (loop
+      (let ((ast (dequeue q)))
+        (if (null ast) (return))
 
-  (when (and
-          result ;; already founded MEMBER_SELECT
-          (string= (cdar ast) "IDENTIFIER"))
-    (return-from get-fq-name
-                 (find-declaration-for-identifier
-                   root-ast
-                   (when (jsown:keyp ast "name")
-                     (let ((name (jsown:val ast "name")))
-                       (convert-to-pos (parser-path parser) src-path
-                                       name
-                                       nil
-                                       (jsown:val ast "pos"))))
-                   (parser-path parser))))
+        (when (or
+                (string= (cdar ast) "MEMBER_SELECT") 
+                (string= (cdar ast) "IDENTIFIER"))
+          (let ((found-declaration
+                  (find-declaration-for-identifier
+                    root-ast
+                    (when (jsown:keyp ast "name")
+                      (let ((pos (convert-to-pos (parser-path parser) src-path
+                                                 (jsown:val ast "name")
+                                                 nil
+                                                 (jsown:val ast "pos"))))
+                        (push (cons :fq-name (get-fq-name-of-declaration root-ast pos (parser-path parser))) pos)
+                        pos))
+                    (parser-path parser))))
+            (return-from find-fq-method-name
+                         (concatenate
+                           'string
+                           found-declaration
+                           (when found-declaration ".")
+                           (jsown:val ast "name")))))
 
-  (loop for child in (jsown:val ast "children")
-        do (setf result (get-fq-name parser src-path root-ast (cdr child) result)))
+        (loop for child in (jsown:val ast "children")
+              do (enqueue q (cdr child))))))
   result)
 
 (defun find-import-list (src-path ast)
@@ -232,11 +242,21 @@
         (if (null ast) (return))
 
         (when (and
+                (or
+                  (equal (cdar ast) "IDENTIFIER") 
+                  (equal (cdar ast) "MEMBER_SELECT"))
                 (jsown:keyp ast "name")
                 (equal (jsown:val ast "name") target-name)
                 (<= (jsown:val ast "startPos") ast-pos)
                 (>= (jsown:val ast "endPos") ast-pos))
-          (setf result (trace-declaration ast import-list target-name))
+          (setf result (trace-declaration
+                         (if (equal (cdar ast) "MEMBER_SELECT")
+                             (let ((method-identifier-ast (first (jsown:val ast "children"))))
+                               (setf (jsown:val method-identifier-ast "parent") ast)
+                               (cdr method-identifier-ast))
+                             ast)
+                         import-list
+                         pos))
           (return-from find-declaration-for-identifier result))
 
         (loop for child in (jsown:val ast "children")
@@ -244,26 +264,38 @@
                    (setf (jsown:val child "parent") ast)
                    (setf stack (append stack (list body)))))))))
 
-(defun trace-declaration (ast import-list target-name)
+(defun trace-declaration (ast import-list target-pos)
   (let ((q (make-queue))
-        results)
+        (target-name (cdr (assoc :name target-pos)))
+        found-fq-name)
     (enqueue q ast)
     (loop
       (let ((ast (dequeue q)))
         (if (null ast) (return))
+                     
+        (when (and
+                (equal (cdar ast) "IDENTIFIER")
+                (equal (cdar (jsown:val ast "parent")) "MEMBER_SELECT")
+                (equal (jsown:val (jsown:val ast "parent") "name") target-name))
+          (let ((class-name (jsown:val ast "name")))
+            (setf target-name class-name)))
 
         (when (equal (cdar ast) "CLASS")
           (loop for child in (jsown:val ast "children")
-                do (when (and
-                           (equal (jsown:val child "type") "VARIABLE")
-                           (equal (jsown:val child "name") target-name))
-                     (loop for child in (jsown:val child "children")
-                           do (when (equal (jsown:val child "type") "IDENTIFIER")
-                                (let ((class-name (jsown:val child "name")))
-                                  (loop for import in import-list
-                                        do (when (equal (car (last (split #\. import))) class-name)
-                                             (setf results (append results (list import)))))))))))
+                do (progn
+                     (when (and
+                             (equal (jsown:val child "type") "VARIABLE")
+                             (equal (jsown:val child "name") target-name))
+                       (loop for child in (jsown:val child "children")
+                             do (when (equal (jsown:val child "type") "IDENTIFIER")
+                                  (let ((class-name (jsown:val child "name")))
+                                    (loop for import in import-list
+                                          do (when (equal (car (last (split #\. import))) class-name)
+                                               (return-from trace-declaration import)))))))
+                     (when (and
+                             (equal (jsown:val child "type") "METHOD")
+                             (equal (jsown:val child "name") target-name))
+                       (return-from trace-declaration (cdr (assoc :fq-name target-pos)))))))
         (when (jsown:keyp ast "parent")
-          (enqueue q (jsown:val ast "parent")))))
-    (format nil "~{~a~^.~}" results)))
+          (enqueue q (jsown:val ast "parent")))))))
 

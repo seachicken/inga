@@ -53,19 +53,23 @@
 
 (defmethod find-entrypoint ((parser parser-kotlin) pos))
 
-(defmethod find-caller ((parser parser-kotlin) index-path ast target-fq-name target-name)
+(defmethod find-caller ((parser parser-kotlin) index-path ast pos)
   (let ((q (make-queue))
-        (imported-name
-          (concatenate 'string (car (last (split #\. target-fq-name))) "." target-name))
-        (is-found-import (not (null (find target-fq-name (find-import-list (get-original-path index-path) ast) :test #'equal))))
+        (target-fq-name (cdr (assoc :fq-name pos)))
+        (target-name (cdr (assoc :name pos)))
+        imported-name
+        is-found-import
         results)
+    (setf imported-name
+          (concatenate 'string (car (last (split #\. target-fq-name))) "." target-name))
+    (setf is-found-import (not (null (find target-fq-name (find-import-list (get-original-path index-path) ast) :test #'equal))))
     (enqueue q ast)
     (loop
       (let ((ast (dequeue q)) result)
         (if (null ast) (return))
 
         (when (string= (cdar ast) "DOT_QUALIFIED_EXPRESSION")
-          (let ((fq-name (get-fq-name parser (get-original-path index-path) ast ast nil)))
+          (let ((fq-name (find-fq-method-name parser (get-original-path index-path) ast ast nil)))
             (when (or
                     (and is-found-import (string= fq-name imported-name))
                     (string= fq-name (concatenate 'string target-fq-name "." target-name)))
@@ -80,13 +84,13 @@
                 do (enqueue q (cdr child))))))
     results))
 
-(defmethod get-fq-name ((parser parser-kotlin) src-path root-ast ast result)
+(defmethod find-fq-method-name ((parser parser-kotlin) src-path root-ast ast result)
   (when (string= (cdar ast) "REFERENCE_EXPRESSION")
     (setf result (concatenate 'string
                               (if result (concatenate 'string result ".") "")
                               (jsown:val (cdr ast) "name"))))
   (loop for child in (jsown:val ast "children")
-        do (setf result (get-fq-name parser src-path root-ast (cdr child) result)))
+        do (setf result (find-fq-method-name parser src-path root-ast (cdr child) result)))
   result)
 
 (defun find-import-list (src-path ast)
