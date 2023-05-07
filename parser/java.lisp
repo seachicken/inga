@@ -249,7 +249,7 @@
                 (equal (jsown:val ast "name") target-name)
                 (<= (jsown:val ast "startPos") ast-pos)
                 (>= (jsown:val ast "endPos") ast-pos))
-          (setf result (trace-declaration
+          (setf result (backtrace-declaration
                          (if (equal (cdar ast) "MEMBER_SELECT")
                              (let ((method-identifier-ast (first (jsown:val ast "children"))))
                                (setf (jsown:val method-identifier-ast "parent") ast)
@@ -264,7 +264,7 @@
                    (setf (jsown:val child "parent") ast)
                    (setf stack (append stack (list body)))))))))
 
-(defun trace-declaration (ast import-list target-pos)
+(defun backtrace-declaration (ast import-list target-pos)
   (let ((q (make-queue))
         (target-name (cdr (assoc :name target-pos)))
         found-fq-name)
@@ -291,11 +291,11 @@
                                   (let ((class-name (jsown:val child "name")))
                                     (loop for import in import-list
                                           do (when (equal (car (last (split #\. import))) class-name)
-                                               (return-from trace-declaration import)))))))
+                                               (return-from backtrace-declaration import)))))))
                      (when (and
                              (equal (jsown:val child "type") "METHOD")
                              (equal (jsown:val child "name") target-name))
-                       (return-from trace-declaration (cdr (assoc :fq-name target-pos)))))))
+                       (return-from backtrace-declaration (cdr (assoc :fq-name target-pos)))))))
         (when (jsown:keyp ast "parent")
           (enqueue q (jsown:val ast "parent")))))))
 
