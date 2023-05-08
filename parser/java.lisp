@@ -168,23 +168,24 @@
         (when (or
                 (string= (cdar ast) "MEMBER_SELECT") 
                 (string= (cdar ast) "IDENTIFIER"))
-          (let ((found-declaration
-                  (find-declaration-for-identifier
-                    root-ast
-                    (when (jsown:keyp ast "name")
-                      (let ((pos (convert-to-pos (parser-path parser) src-path
+          (let ((pos (convert-to-pos (parser-path parser) src-path
                                                  (jsown:val ast "name")
                                                  nil
-                                                 (jsown:val ast "pos"))))
-                        (push (cons :fq-name (get-fq-name-of-declaration root-ast pos (parser-path parser))) pos)
-                        pos))
-                    (parser-path parser))))
-            (return-from find-fq-method-name
-                         (concatenate
-                           'string
-                           found-declaration
-                           (when found-declaration ".")
-                           (jsown:val ast "name")))))
+                                                 (jsown:val ast "pos")))
+                 found-declaration)
+            (when pos
+              (push (cons :fq-name (get-fq-name-of-declaration root-ast pos (parser-path parser))) pos)
+              (setf found-declaration
+                    (find-declaration-for-identifier
+                      root-ast
+                      pos
+                      (parser-path parser)))
+              (return-from find-fq-method-name
+                           (concatenate
+                             'string
+                             found-declaration
+                             (when found-declaration ".")
+                             (jsown:val ast "name"))))))
 
         (loop for child in (jsown:val ast "children")
               do (enqueue q (cdr child))))))
