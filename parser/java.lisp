@@ -177,6 +177,7 @@
                                                  (jsown:val ast "name")
                                                  nil
                                                  (jsown:val ast "pos"))))
+                        (format t "pos: ~a~%" pos)
                         (push (cons :fq-name (get-fq-name-of-declaration root-ast pos (parser-path parser))) pos)
                         pos))
                     (parser-path parser))))
