@@ -173,18 +173,19 @@
                                                  nil
                                                  (jsown:val ast "pos")))
                  found-declaration)
-            (push (cons :fq-name (get-fq-name-of-declaration root-ast pos (parser-path parser))) pos)
-            (setf found-declaration
-                  (find-declaration-for-identifier
-                    root-ast
-                    pos
-                    (parser-path parser)))
-            (return-from find-fq-method-name
-                         (concatenate
-                           'string
-                           found-declaration
-                           (when found-declaration ".")
-                           (jsown:val ast "name")))))
+            (when pos
+              (push (cons :fq-name (get-fq-name-of-declaration root-ast pos (parser-path parser))) pos)
+              (setf found-declaration
+                    (find-declaration-for-identifier
+                      root-ast
+                      pos
+                      (parser-path parser)))
+              (return-from find-fq-method-name
+                           (concatenate
+                             'string
+                             found-declaration
+                             (when found-declaration ".")
+                             (jsown:val ast "name"))))))
 
         (loop for child in (jsown:val ast "children")
               do (enqueue q (cdr child))))))
