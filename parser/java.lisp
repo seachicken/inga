@@ -173,7 +173,9 @@
                                                  nil
                                                  (jsown:val ast "pos")))
                  found-declaration)
+            (format t "pos: ~a~%" pos)
             (when pos
+              (format t "call get-fq-name-of-declaration~%")
               (push (cons :fq-name (get-fq-name-of-declaration root-ast pos (parser-path parser))) pos)
               (setf found-declaration
                     (find-declaration-for-identifier
