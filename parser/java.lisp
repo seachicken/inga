@@ -172,6 +172,7 @@
                   (find-declaration-for-identifier
                     root-ast
                     (when (jsown:keyp ast "name")
+                      (format t "src-path: ~a, name: ~a, pos: ~a~%" src-path (jsown:val ast "name") (jsown:val ast "pos"))
                       (let ((pos (convert-to-pos (parser-path parser) src-path
                                                  (jsown:val ast "name")
                                                  nil
