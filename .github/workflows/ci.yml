@@ -39,7 +39,7 @@ jobs:
                                                  (uiop:find-symbol* '#:java
                                                                     :inga/test/main)
                                                  (uiop:find-symbol* '#:java
-                                                                    :inga/test/parser/java)))
+                                                                    :inga/test/parser/java)
                                                  (uiop:find-symbol* '#:kotlin
                                                                     :inga/test/parser/kotlin)))
                             (uiop:quit 1))"

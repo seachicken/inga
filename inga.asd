@@ -27,5 +27,5 @@
   :depends-on ("fiveam"
                "inga/test/main"
                "inga/test/parser/java"
-               "inga/test/parser/typescript"))
+               "inga/test/parser/kotlin"))
 
