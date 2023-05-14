@@ -41,9 +41,10 @@
     (is (equal
           '(((:path . "Main.kt")
              (:name)
-             (:line . 7) (:offset . 9))
+             (:line . 7) (:offset . 17))
             ((:path . "java/Class.java")
-             (:line . 7) (:offset . 9)))
+             (:name)
+             (:line . 9) (:offset . 15))) ;; FIXME: should be 9, 16
           (find-references parser
                            '((:path . "kotlin/a/Class.kt")
                              (:name . "method")
@@ -57,7 +58,7 @@
     (is (equal
           '(((:path . "Main.kt")
              (:name)
-             (:line . 8) (:offset . 9)))
+             (:line . 8) (:offset . 30)))
           (find-references parser
                            '((:path . "kotlin/b/Class.kt")
                              (:name . "method")

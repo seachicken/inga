@@ -22,8 +22,9 @@
            #:find-affected-pos
            #:find-entrypoint
            #:find-caller
-           #:find-fq-method-name
            #:find-references
+           #:matches-reference-name
+           #:find-reference-pos
            #:convert-to-ast-pos
            #:convert-to-pos
            #:exec-command
@@ -87,8 +88,6 @@
 (defgeneric find-caller (parser index-path ast pos)
   (:method (parser index-path ast pos)))
 
-(defgeneric find-fq-method-name (parser src-path root-ast ast result))
-
 (defgeneric find-references (parser pos)
   (:method (parser pos)
     (let ((cache (get-value (parser-cache (first parser)) (get-references-key pos))))
@@ -101,9 +100,8 @@
                   with cache
                   do (progn
                        (setf target-parser (find-parser parser (namestring path)))
-
                        (setf ast (cdr (jsown:parse (uiop:read-file-string path))))
-                       (let ((callers (find-caller target-parser path ast pos)))
+                       (let ((callers (find-references-by-file target-parser path ast pos)))
                          (when callers
                            (setf results (append results callers)))))
                   finally (progn
@@ -112,6 +110,33 @@
                             (return (values results nil))))
             (if (eq cache 'empty) nil cache))
         (when cache t)))))
+
+(defgeneric matches-reference-name (parser ast target-name))
+
+(defgeneric find-reference-pos (parser index-path root-ast ast target-pos))
+
+(defun find-references-by-file (parser index-path ast target-pos)
+  (let ((q (make-queue))
+        (target-name (cdr (assoc :name target-pos)))
+        (root-ast ast)
+        results)
+    (enqueue q ast)
+    (loop
+      (let ((ast (dequeue q)))
+        (if (null ast) (return))
+
+        (when (matches-reference-name parser ast target-name)
+          (let ((found-reference-pos (find-reference-pos parser index-path root-ast ast target-pos)))
+            (when found-reference-pos
+              (setf results (append results (list found-reference-pos))))))
+
+        (when (jsown:keyp ast "children")
+          (loop for child in (jsown:val ast "children")
+                do
+                (let ((body (cdr child)))
+                  (setf (jsown:val child "parent") ast)
+                  (enqueue q (cdr child)))))))
+    results))
 
 (defun convert-to-ast-pos (project-path pos)
   (let ((path (uiop:merge-pathnames* (cdr (assoc :path pos)) project-path))

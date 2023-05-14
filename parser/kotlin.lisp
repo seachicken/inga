@@ -53,60 +53,74 @@
 
 (defmethod find-entrypoint ((parser parser-kotlin) pos))
 
-(defmethod find-caller ((parser parser-kotlin) index-path ast pos)
+(defmethod matches-reference-name ((parser parser-kotlin) ast target-name)
+  (and
+    (equal (cdar ast) "REFERENCE_EXPRESSION")
+    (equal (jsown:val ast "name") target-name)))
+
+(defmethod find-reference-pos ((parser parser-kotlin) index-path root-ast ast target-pos)
   (let ((q (make-queue))
-        (target-fq-name (cdr (assoc :fq-name pos)))
-        (target-name (cdr (assoc :name pos)))
-        imported-name
-        is-found-import
-        results)
-    (setf imported-name
-          (concatenate 'string (car (last (split #\. target-fq-name))) "." target-name))
-    (setf is-found-import (not (null (find target-fq-name (find-import-list (get-original-path index-path) ast) :test #'equal))))
-    (enqueue q ast)
-    (loop
-      (let ((ast (dequeue q)) result)
-        (if (null ast) (return))
-
-        (when (string= (cdar ast) "DOT_QUALIFIED_EXPRESSION")
-          (let ((fq-name (find-fq-method-name parser (get-original-path index-path) ast ast nil)))
-            (when (or
-                    (and is-found-import (string= fq-name imported-name))
-                    (string= fq-name (concatenate 'string target-fq-name "." target-name)))
-              (setf results (append results (list (convert-to-pos
-                                                    (parser-path parser)
-                                                    (get-original-path index-path)
-                                                    nil nil
-                                                    (jsown:val (jsown:val ast "textRange") "startOffset"))))))))
-
-        (when (jsown:keyp ast "children")
-          (loop for child in (jsown:val ast "children")
-                do (enqueue q (cdr child))))))
-    results))
-
-(defmethod find-fq-method-name ((parser parser-kotlin) src-path root-ast ast result)
-  (when (string= (cdar ast) "REFERENCE_EXPRESSION")
-    (setf result (concatenate 'string
-                              (if result (concatenate 'string result ".") "")
-                              (jsown:val (cdr ast) "name"))))
-  (loop for child in (jsown:val ast "children")
-        do (setf result (find-fq-method-name parser src-path root-ast (cdr child) result)))
-  result)
-
-(defun find-import-list (src-path ast)
-  (let ((q (make-queue)))
+        (target-name (cdr (assoc :name target-pos)))
+        (found-ast ast)
+        result)
     (enqueue q ast)
     (loop
       (let ((ast (dequeue q)))
         (if (null ast) (return))
 
-        (when (string= (cdr (car ast)) "IMPORT_LIST")
-          (return
-            (mapcar (lambda (child)
-                      (jsown:val child "fqName"))
-                    (jsown:val ast "children"))))
+        (when (equal (cdar ast) "DOT_QUALIFIED_EXPRESSION")
+          (let ((dot-expressions (get-dot-expressions ast nil)))
+            (when (equal (car (last dot-expressions)) target-name)
+              (let ((dot-expressions-name (format nil "~{~a~^.~}" dot-expressions)))
+                (when (equal dot-expressions-name (cdr (assoc :fq-name target-pos)))
+                  (return-from
+                    find-reference-pos
+                    (convert-to-pos
+                      (parser-path parser)
+                      (get-original-path index-path)
+                      nil
+                      nil
+                      (jsown:val found-ast "textOffset"))))
+                (setf result dot-expressions-name)))))
 
-        (when (jsown:keyp ast "children")
+        (when (equal (cdar ast) "kotlin.FILE")
           (loop for child in (jsown:val ast "children")
-                do (enqueue q (cdr child))))))))
+                with class-name = (first (split #\. result))
+                do (when (equal (jsown:val child "type") "IMPORT_LIST")
+                     (loop for child in (jsown:val child "children")
+                           do (when (and
+                                      (equal (jsown:val child "type") "IMPORT_DIRECTIVE")
+                                      (equal (car (last (split #\. (jsown:val child "fqName")))) class-name))
+                                (let ((split-import-names (split #\. (jsown:val child "fqName")))
+                                      fq-name)
+                                  (setf fq-name 
+                                        (format nil "~{~a~^.~}"
+                                                (append (subseq split-import-names
+                                                                0 
+                                                                (1- (length split-import-names)))
+                                                        (list result))))
+                                  (when (equal fq-name (cdr (assoc :fq-name target-pos)))
+                                    (return-from
+                                      find-reference-pos
+                                      (convert-to-pos
+                                        (parser-path parser)
+                                        (get-original-path index-path)
+                                        nil
+                                        nil
+                                        (jsown:val found-ast "textOffset"))))))))))
+
+        (when (jsown:keyp ast "parent")
+          (enqueue q (jsown:val ast "parent")))))))
+
+(defun get-dot-expressions (ast results)
+  (when (equal (cdar ast) "VALUE_ARGUMENT_LIST")
+    (return-from get-dot-expressions results))
+
+  (when (equal (cdar ast) "REFERENCE_EXPRESSION")
+    (setf results (append results (list (jsown:val ast "name")))))
+
+  (loop for child in (jsown:val ast "children")
+        do
+        (setf results (get-dot-expressions (cdr child) results)))
+  results)
 
