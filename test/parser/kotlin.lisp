@@ -44,7 +44,10 @@
              (:line . 7) (:offset . 17))
             ((:path . "java/Class.java")
              (:name)
-             (:line . 9) (:offset . 15))) ;; FIXME: should be 9, 16
+             (:line . 9) (:offset . 15)) ;; FIXME: should be 9, 16
+            ((:path . "kotlin/a/PrimaryConstructor.kt")
+             (:name)
+             (:line . 7) (:offset . 9)))
           (find-references parser
                            '((:path . "kotlin/a/Class.kt")
                              (:name . "method")
