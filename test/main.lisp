@@ -19,8 +19,9 @@
 (test analyze-by-range-for-react-components
   (let ((ctx (inga/main::start *front-path* '(:typescript) '("**/*.test.(ts|tsx)"))))
     (is (equal
-          '(((:path . "src/App/NewTodoInput/index.tsx")
-             (:name . "input") (:line . 34) (:offset . 10)))
+          '(((:name . "input")
+             (:path . "src/App/NewTodoInput/index.tsx")
+             (:line . 34) (:offset . 10)))
           (mapcar (lambda (e) (cdr (assoc :entorypoint e)))
                   (inga/main::analyze-by-range
                     ctx
