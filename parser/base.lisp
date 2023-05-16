@@ -25,7 +25,7 @@
            #:find-references
            #:matches-reference-name
            #:find-reference-pos
-           #:convert-to-ast-pos
+           #:convert-to-top-offset
            #:convert-to-pos
            #:exec-command
            #:get-parse-key
@@ -138,24 +138,20 @@
                   (enqueue q (cdr child)))))))
     results))
 
-(defun convert-to-ast-pos (project-path pos)
-  (let ((path (uiop:merge-pathnames* (cdr (assoc :path pos)) project-path))
-        (offset (cdr (assoc :offset pos)))
-        (line-no 0)
-        (result 0))
-    (with-open-file (stream path)
-      (loop for line = (read-line stream nil)
-            while line
-            when (= line-no (- (cdr (assoc :line pos)) 1))
-            return (list
-                     (cons :path (enough-namestring path project-path))
-                     (cons :pos (+ result (if (< offset 0)
-                                              (length line)
-                                              (- offset 1)))))
-            do
-            (setq line-no (+ line-no 1))
-            ;; add newline code
-            (setq result (+ result (+ (length line) 1)))))))
+(defun convert-to-top-offset (root-path path line offset)
+  (with-open-file (stream (uiop:merge-pathnames* path root-path))
+    (loop for file-line = (read-line stream nil)
+          with line-no = 0
+          with top-offset = 0
+          while file-line
+          when (eq line-no (1- line))
+          return (+ top-offset (if (< offset 0)
+                                   (length file-line)
+                                   (1- offset)))
+          do
+          (setq line-no (1+ line-no))
+          ;; add newline code
+          (setq top-offset (+ top-offset (1+ (length file-line)))))))
 
 (defun convert-to-pos (project-path path name fq-name pos)
   (let ((line-no 0)

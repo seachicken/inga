@@ -176,12 +176,11 @@
 
 (test convert-tsserver-pos-to-tsparser-pos
   (is (equal
-        (list (cons :path "src/App/NewTodoInput/index.tsx")
-              '(:pos . 1241))
-        (inga/parser/typescript::convert-to-ast-pos
+        1241
+        (inga/parser/typescript::convert-to-top-offset
           *react-path*
-          (list '(:path . "src/App/NewTodoInput/index.tsx")
-                '(:line . 39) '(:offset . 69))))))
+          "src/App/NewTodoInput/index.tsx"
+          39 69))))
 
 (test convert-tsparser-pos-to-tsserver-pos
   (is (equal
@@ -194,12 +193,11 @@
 
 (test convert-tsserver-pos-to-tsparser-pos-with-offset1
   (is (equal
-        (list (cons :path "src/dataStructure.ts")
-              '(:pos . 328))
-        (inga/parser/typescript::convert-to-ast-pos
+        328
+        (inga/parser/typescript::convert-to-top-offset
           *react-path*
-          (list '(:path . "src/dataStructure.ts")
-                '(:line . 21) '(:offset . 1))))))
+          "src/dataStructure.ts"
+          21 1))))
 
 (test convert-tsparser-pos-to-tsserver-pos-with-offset1
   (is (equal

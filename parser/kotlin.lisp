@@ -25,12 +25,7 @@
 
 (defmethod find-affected-pos ((parser parser-kotlin) src-path ast line-no)
   (let ((q (make-queue))
-        (ast-pos (cdr (assoc :pos (convert-to-ast-pos
-                                    (parser-path parser)
-                                    (list
-                                      (cons :path src-path)
-                                      (cons :line line-no)
-                                      (cons :offset -1)))))))
+        (top-offset (convert-to-top-offset (parser-path parser) src-path line-no -1)))
     (enqueue q ast)
     (loop
       (let ((ast (dequeue q)))
@@ -38,8 +33,8 @@
 
         (when (and
                 (string= (cdr (car ast)) "FUN")
-                (<= (jsown:val (jsown:val ast "textRange") "startOffset") ast-pos)
-                (>= (jsown:val (jsown:val ast "textRange") "endOffset") ast-pos))
+                (<= (jsown:val (jsown:val ast "textRange") "startOffset") top-offset)
+                (>= (jsown:val (jsown:val ast "textRange") "endOffset") top-offset))
           (when (jsown:keyp ast "name")
             (let ((name (jsown:val ast "name")))
               (return (convert-to-pos (parser-path parser) src-path

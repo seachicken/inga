@@ -27,12 +27,7 @@
 
 (defmethod find-affected-pos ((parser parser-typescript) file-path ast line-no)
   (let ((q (make-queue))
-        (ast-pos (cdr (assoc :pos (convert-to-ast-pos
-                                    (parser-path parser)
-                                    (list
-                                      (cons :path file-path)
-                                      (cons :line line-no)
-                                      (cons :offset -1)))))))
+        (top-offset (convert-to-top-offset (parser-path parser) file-path line-no -1)))
     (enqueue q ast)
     (loop
       (let ((ast (dequeue q)))
@@ -40,8 +35,8 @@
 
         (when (and
                 (jsown:keyp ast "kindName") (string= (jsown:val ast "kindName") "VariableDeclaration")
-                (jsown:keyp ast "start") (<= (jsown:val ast "start") ast-pos)
-                (jsown:keyp ast "end") (> (jsown:val ast "end") ast-pos))
+                (jsown:keyp ast "start") (<= (jsown:val ast "start") top-offset)
+                (jsown:keyp ast "end") (> (jsown:val ast "end") top-offset))
           (let ((init (jsown:val ast "initializer")))
             (alexandria:switch ((jsown:val init "kindName") :test #'string=)
               ("ObjectLiteralExpression"
@@ -81,8 +76,8 @@
 
         (when (and
                 (jsown:keyp ast "kindName") (string= (jsown:val ast "kindName") "FunctionDeclaration")
-                (jsown:keyp ast "start") (<= (jsown:val ast "start") ast-pos)
-                (jsown:keyp ast "end") (> (jsown:val ast "end") ast-pos))
+                (jsown:keyp ast "start") (<= (jsown:val ast "start") top-offset)
+                (jsown:keyp ast "end") (> (jsown:val ast "end") top-offset))
           (when (jsown:keyp ast "name")
             (let ((name (cdr (jsown:val ast "name"))))
               (return (convert-to-pos (parser-path parser) file-path
@@ -92,8 +87,8 @@
 
         (when (and
                 (jsown:keyp ast "kindName") (string= (jsown:val ast "kindName") "MethodDeclaration")
-                (jsown:keyp ast "start") (<= (jsown:val ast "start") ast-pos)
-                (jsown:keyp ast "end") (> (jsown:val ast "end") ast-pos))
+                (jsown:keyp ast "start") (<= (jsown:val ast "start") top-offset)
+                (jsown:keyp ast "end") (> (jsown:val ast "end") top-offset))
           (when (jsown:keyp ast "name")
             (let ((name (cdr (jsown:val ast "name"))))
               (return (convert-to-pos (parser-path parser) file-path
@@ -117,14 +112,14 @@
                 (enqueue q (cdr s))))))))
 
 (defmethod find-entrypoint ((parser parser-typescript) pos)
-  (let ((ast-pos (convert-to-ast-pos (parser-path parser) pos)))
-    (let ((path (cdr (assoc :path ast-pos)))
-          (pos (cdr (assoc :pos ast-pos)))
-          (ast (exec-parser parser (namestring (cdr (assoc :path ast-pos))))))
+  (let ((top-offset (convert-to-top-offset
+                      (parser-path parser) (cdr (assoc :path pos))
+                      (cdr (assoc :line pos)) (cdr (assoc :offset pos)))))
+    (let ((ast (exec-parser parser (namestring (cdr (assoc :path pos))))))
       (setf (parser-nearest-ast-pos parser) nil)
-      (let ((component-pos (find-component parser ast pos)))
+      (let ((component-pos (find-component parser ast top-offset)))
         (when component-pos
-          (convert-to-pos (parser-path parser) path
+          (convert-to-pos (parser-path parser) (cdr (assoc :path pos))
                           (cdr (assoc :name component-pos))
                           nil
                           (cdr (assoc :pos component-pos))))))))

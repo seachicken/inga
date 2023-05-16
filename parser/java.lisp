@@ -39,12 +39,7 @@
 
 (defmethod find-affected-pos ((parser parser-java) src-path ast line-no)
   (let ((q (make-queue))
-        (ast-pos (cdr (assoc :pos (convert-to-ast-pos
-                                    (parser-path parser)
-                                    (list
-                                      (cons :path src-path)
-                                      (cons :line line-no)
-                                      (cons :offset -1)))))) 
+        (top-offset (convert-to-top-offset (parser-path parser) src-path line-no -1))
         (root-ast ast)
         annotation-pos)
     (enqueue q ast)
@@ -56,8 +51,8 @@
                 (or
                   (string= (cdar ast) "VARIABLE") 
                   (string= (cdar ast) "METHOD"))
-                (<= (jsown:val ast "startPos") ast-pos)
-                (>= (jsown:val ast "endPos") ast-pos))
+                (<= (jsown:val ast "startPos") top-offset)
+                (>= (jsown:val ast "endPos") top-offset))
           (when (jsown:keyp ast "name")
             (let ((name (jsown:val ast "name")))
               (let ((pos (convert-to-pos (parser-path parser) src-path
@@ -191,7 +186,9 @@
           (enqueue q (jsown:val ast "parent")))))))
 
 (defun get-fq-name-of-declaration (ast pos root-path)
-  (let ((ast-pos (cdr (assoc :pos (convert-to-ast-pos root-path pos))))
+  (let ((top-offset (convert-to-top-offset
+                      root-path (cdr (assoc :path pos))
+                      (cdr (assoc :line pos)) (cdr (assoc :offset pos))))
         (stack (list ast))
         result)
     (loop
@@ -208,8 +205,8 @@
         (when (and
                 (jsown:keyp ast "name")
                 (equal (jsown:val ast "name") (cdr (assoc :name pos)))
-                (<= (jsown:val ast "startPos") ast-pos)
-                (>= (jsown:val ast "endPos") ast-pos))
+                (<= (jsown:val ast "startPos") top-offset)
+                (>= (jsown:val ast "endPos") top-offset))
           (setf result (format nil "~{~a~^.~}" (remove nil (list result (jsown:val ast "name"))))) 
           (return-from get-fq-name-of-declaration result))
 
