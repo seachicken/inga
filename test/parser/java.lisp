@@ -23,8 +23,9 @@
     (start-parser parser nil nil)
     (is (equal
           '((:fq-name . "io.spring.application.ArticleQueryService.findById")
+            (:name . "findById")
             (:path . "src/main/java/io/spring/application/ArticleQueryService.java")
-            (:name . "findById") (:line . 30) (:offset . 32))
+            (:line . 30) (:offset . 32))
           (let ((src-path "src/main/java/io/spring/application/ArticleQueryService.java"))
             (find-affected-pos
               parser
@@ -42,8 +43,9 @@
     (start-parser parser nil nil)
     (is (equal
           '((:fq-name . "io.spring.core.article.ArticleRepository.save")
+            (:name . "save")
             (:path . "src/main/java/io/spring/core/article/ArticleRepository.java")
-            (:name . "save") (:line . 7) (:offset . 8))
+            (:line . 7) (:offset . 8))
           (let ((src-path "src/main/java/io/spring/core/article/ArticleRepository.java"))
             (find-affected-pos
               parser
@@ -62,8 +64,9 @@
     (start-parser parser nil nil)
     (is (equal
           '((:fq-name . "io.spring.application.article.NewArticleParam.title")
+            (:name . "title")
             (:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
-            (:name . "title") (:line . 19) (:offset . 18))
+            (:line . 19) (:offset . 18))
           (let ((src-path "src/main/java/io/spring/application/article/NewArticleParam.java"))
             (find-affected-pos
               parser

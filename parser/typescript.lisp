@@ -27,7 +27,8 @@
 
 (defmethod find-affected-pos ((parser parser-typescript) file-path ast line-no)
   (let ((q (make-queue))
-        (top-offset (convert-to-top-offset (parser-path parser) file-path line-no -1)))
+        (top-offset (convert-to-top-offset (parser-path parser) file-path
+                                           (list (cons :line line-no) (cons :offset -1)))))
     (enqueue q ast)
     (loop
       (let ((ast (dequeue q)))
@@ -41,60 +42,70 @@
             (alexandria:switch ((jsown:val init "kindName") :test #'string=)
               ("ObjectLiteralExpression"
                 (when (jsown:keyp ast "name")
-                  (let ((name (cdr (jsown:val ast "name"))))
-                    (return (convert-to-pos (parser-path parser) file-path
-                                            (jsown:val name "escapedText")
-                                            nil
-                                            (jsown:val name "start"))))))
+                  (let ((name (cdr (jsown:val ast "name")))
+                        pos)
+                    (setf pos (convert-to-pos (parser-path parser) file-path
+                                              (jsown:val name "start")))
+                    (push (cons :path file-path) pos)
+                    (push (cons :name (jsown:val name "escapedText")) pos)
+                    (return pos))))
               ("CallExpression"
                 (when (jsown:keyp ast "name")
                   (let ((name (cdr (jsown:val ast "name"))))
                     (alexandria:switch ((jsown:val name "kindName") :test #'string=)
                       ("ArrayBindingPattern"
-                       (let ((elements (jsown:val name "elements")))
-                         (return (convert-to-pos
-                                   (parser-path parser) file-path
-                                   (format nil "~{~a~^, ~}"
-                                           (mapcar (lambda (e)
-                                                     (when (jsown:keyp e "name")
-                                                       (jsown:val (jsown:val e "name") "escapedText")))
-                                                   elements))
-                                   nil
-                                   (jsown:val (first elements) "start")))))
+                       (let ((elements (jsown:val name "elements"))
+                             pos)
+                         (setf pos (convert-to-pos
+                                     (parser-path parser) file-path
+                                     (jsown:val (first elements) "start")))
+                         (push (cons :path file-path) pos)
+                         (push (cons :name 
+                                     (format nil "~{~a~^, ~}"
+                                             (mapcar (lambda (e)
+                                                       (when (jsown:keyp e "name")
+                                                         (jsown:val (jsown:val e "name") "escapedText")))
+                                                     elements))) pos)
+                         (return pos)))
                       ("Identifier"
-                       (return (convert-to-pos (parser-path parser) file-path
-                                               (jsown:val name "escapedText")
-                                               nil
-                                               (jsown:val name "start"))))))))
+                       (let ((pos (convert-to-pos (parser-path parser) file-path
+                                                  (jsown:val name "start"))))
+                         (push (cons :path file-path) pos)
+                         (push (cons :name (jsown:val name "escapedText")) pos)
+                         (return pos)))))))
               ("ArrowFunction"
                 (if (equal (find-return-type init) "JsxElement")
                     (enqueue q (jsown:val init "body"))
-                    (return (convert-to-pos (parser-path parser) file-path
-                                            (jsown:val (cdr (jsown:val ast "name")) "escapedText")
-                                            nil
-                                            (jsown:val ast "start"))))))))
-
+                    (let ((pos (convert-to-pos (parser-path parser) file-path
+                                               (jsown:val ast "start"))))
+                      (push (cons :path file-path) pos)
+                      (push (cons :name (jsown:val (cdr (jsown:val ast "name")) "escapedText")) pos)
+                      (return pos)))))))
         (when (and
                 (jsown:keyp ast "kindName") (string= (jsown:val ast "kindName") "FunctionDeclaration")
                 (jsown:keyp ast "start") (<= (jsown:val ast "start") top-offset)
                 (jsown:keyp ast "end") (> (jsown:val ast "end") top-offset))
           (when (jsown:keyp ast "name")
-            (let ((name (cdr (jsown:val ast "name"))))
-              (return (convert-to-pos (parser-path parser) file-path
-                                      (jsown:val name "escapedText")
-                                      nil
-                                      (jsown:val name "start"))))))
+            (let ((name (cdr (jsown:val ast "name")))
+                  pos)
+              (setf pos (convert-to-pos (parser-path parser) file-path
+                                        (jsown:val name "start")))
+              (push (cons :path file-path) pos)
+              (push (cons :name (jsown:val name "escapedText")) pos)
+              (return pos))))
 
         (when (and
                 (jsown:keyp ast "kindName") (string= (jsown:val ast "kindName") "MethodDeclaration")
                 (jsown:keyp ast "start") (<= (jsown:val ast "start") top-offset)
                 (jsown:keyp ast "end") (> (jsown:val ast "end") top-offset))
           (when (jsown:keyp ast "name")
-            (let ((name (cdr (jsown:val ast "name"))))
-              (return (convert-to-pos (parser-path parser) file-path
-                                      (jsown:val name "escapedText")
-                                      nil
-                                      (jsown:val name "start"))))))
+            (let ((name (cdr (jsown:val ast "name")))
+                  pos)
+              (setf pos (convert-to-pos (parser-path parser) file-path
+                                        (jsown:val name "start")))
+              (push (cons :path file-path) pos)
+              (push (cons :name (jsown:val name "escapedText")) pos)
+              (return pos))))
 
         (when (and
                 (jsown:keyp ast "kindName") (string= (jsown:val ast "kindName") "FirstStatement"))
@@ -112,17 +123,17 @@
                 (enqueue q (cdr s))))))))
 
 (defmethod find-entrypoint ((parser parser-typescript) pos)
-  (let ((top-offset (convert-to-top-offset
-                      (parser-path parser) (cdr (assoc :path pos))
-                      (cdr (assoc :line pos)) (cdr (assoc :offset pos)))))
+  (let ((top-offset (convert-to-top-offset (parser-path parser) (cdr (assoc :path pos)) pos)))
     (let ((ast (exec-parser parser (namestring (cdr (assoc :path pos))))))
       (setf (parser-nearest-ast-pos parser) nil)
-      (let ((component-pos (find-component parser ast top-offset)))
+      (let ((component-pos (find-component parser ast top-offset))
+            result)
         (when component-pos
-          (convert-to-pos (parser-path parser) (cdr (assoc :path pos))
-                          (cdr (assoc :name component-pos))
-                          nil
-                          (cdr (assoc :pos component-pos))))))))
+          (setf result (convert-to-pos (parser-path parser) (cdr (assoc :path pos))
+                                    (cdr (assoc :pos component-pos))))
+          (push (cons :path (cdr (assoc :path pos))) result)
+          (push (cons :name (cdr (assoc :name component-pos))) result)
+          result)))))
 
 (defmethod find-references ((parser parser-typescript) pos))
 

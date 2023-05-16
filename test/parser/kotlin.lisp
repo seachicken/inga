@@ -23,10 +23,10 @@
   (let ((parser (make-parser :java *fixtures-path* *cache*)))
     (start-parser parser '("*.kt") nil)
     (is (equal
-          '((:path . "declaration.kt")
+          '((:fq-name . "com.example.Class.method")
             (:name . "method")
-            (:line . 6) (:offset . 5) ;; FIXME: actual offset is 9
-            (:fq-name . "com.example.Class.method"))
+            (:path . "declaration.kt")
+            (:line . 6) (:offset . 5)) ;; FIXME: actual offset is 9
           (let ((src-path "declaration.kt"))
             (find-affected-pos
               parser
@@ -40,13 +40,10 @@
     (start-parser parser inga/main::*include-java* nil)
     (is (equal
           '(((:path . "Main.kt")
-             (:name)
              (:line . 7) (:offset . 17))
             ((:path . "java/Class.java")
-             (:name)
              (:line . 9) (:offset . 15)) ;; FIXME: should be 9, 16
             ((:path . "kotlin/a/PrimaryConstructor.kt")
-             (:name)
              (:line . 7) (:offset . 9)))
           (find-references parser
                            '((:path . "kotlin/a/Class.kt")
@@ -60,7 +57,6 @@
     (start-parser parser inga/main::*include-java* nil)
     (is (equal
           '(((:path . "Main.kt")
-             (:name)
              (:line . 8) (:offset . 30)))
           (find-references parser
                            '((:path . "kotlin/b/Class.kt")

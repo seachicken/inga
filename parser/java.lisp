@@ -39,7 +39,8 @@
 
 (defmethod find-affected-pos ((parser parser-java) src-path ast line-no)
   (let ((q (make-queue))
-        (top-offset (convert-to-top-offset (parser-path parser) src-path line-no -1))
+        (top-offset (convert-to-top-offset (parser-path parser) src-path
+                                           (list (cons :line line-no) (cons :offset -1))))
         (root-ast ast)
         annotation-pos)
     (enqueue q ast)
@@ -54,13 +55,12 @@
                 (<= (jsown:val ast "startPos") top-offset)
                 (>= (jsown:val ast "endPos") top-offset))
           (when (jsown:keyp ast "name")
-            (let ((name (jsown:val ast "name")))
-              (let ((pos (convert-to-pos (parser-path parser) src-path
-                                         name
-                                         nil
-                                         (jsown:val ast "pos"))))
-                (push (cons :fq-name (get-fq-name-of-declaration root-ast pos (parser-path parser))) pos)
-                (return pos)))))
+            (let ((pos (convert-to-pos (parser-path parser) src-path (jsown:val ast "pos"))))
+              (push (cons :path src-path) pos)
+              (push (cons :name (jsown:val ast "name")) pos)
+              (push (cons :fq-name (get-fq-name-of-declaration
+                                     root-ast pos (parser-path parser))) pos)
+              (return pos))))
 
         (when (and
                 (string= (cdar ast) "com.github.javaparser.ast.body.ClassOrInterfaceDeclaration")
@@ -175,20 +175,16 @@
                     (when (equal fq-name (cdr (assoc :fq-name target-pos)))
                       (return-from
                         find-reference-pos
-                        (convert-to-pos
-                          (parser-path parser)
-                          (get-original-path index-path)
-                          nil
-                          nil
-                          (jsown:val reference-ast "pos"))))))))
+                        (let ((pos (convert-to-pos (parser-path parser) (get-original-path index-path)
+                                                   (jsown:val reference-ast "pos"))))
+                          (push (cons :path (get-original-path index-path)) pos)
+                          pos)))))))
 
         (when (jsown:keyp ast "parent")
           (enqueue q (jsown:val ast "parent")))))))
 
 (defun get-fq-name-of-declaration (ast pos root-path)
-  (let ((top-offset (convert-to-top-offset
-                      root-path (cdr (assoc :path pos))
-                      (cdr (assoc :line pos)) (cdr (assoc :offset pos))))
+  (let ((top-offset (convert-to-top-offset root-path (cdr (assoc :path pos)) pos))
         (stack (list ast))
         result)
     (loop

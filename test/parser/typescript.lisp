@@ -20,8 +20,9 @@
   (let ((parser (make-parser :typescript *nestjs-path* *cache*)))
     (start-parser parser inga/main::*include-typescript* nil)
     (is (equal
-          '((:path . "src/article/article.service.ts")
-            (:name . "articleAuthorSelect") (:line . 7) (:offset . 7))
+          '((:name . "articleAuthorSelect")
+            (:path . "src/article/article.service.ts")
+            (:line . 7) (:offset . 7))
           (let ((src-path "src/article/article.service.ts"))
             (find-affected-pos
               parser
@@ -40,8 +41,9 @@
   (let ((parser (make-parser :typescript *react-path* *cache*)))
     (start-parser parser inga/main::*include-typescript* nil)
     (is (equal
-          '((:path . "src/App/NewTodoInput/index.tsx")
-            (:name . "addTodo") (:line . 12) (:offset . 12))
+          '((:name . "addTodo")
+            (:path . "src/App/NewTodoInput/index.tsx")
+            (:line . 12) (:offset . 12))
           (let ((src-path "src/App/NewTodoInput/index.tsx"))
             (inga/parser/typescript::find-affected-pos
               parser
@@ -58,8 +60,9 @@
   (let ((parser (make-parser :typescript *nestjs-path* *cache*)))
     (start-parser parser inga/main::*include-typescript* nil)
     (is (equal
-          '((:path . "src/user/user.decorator.ts")
-            (:name . "User") (:line . 5) (:offset . 14))
+          '((:name . "User")
+            (:path . "src/user/user.decorator.ts")
+            (:line . 5) (:offset . 14))
           (let ((src-path "src/user/user.decorator.ts"))
             (inga/parser/typescript::find-affected-pos
               parser
@@ -76,8 +79,9 @@
   (let ((parser (make-parser :typescript *fixtures-path* *cache*)))
     (start-parser parser inga/main::*include-typescript* nil)
     (is (equal
-          '((:path . "declaration.ts")
-            (:name . "a, b") (:line . 4) (:offset . 8))
+          '((:name . "a, b")
+            (:path . "declaration.ts")
+            (:line . 4) (:offset . 8))
           (let ((src-path "declaration.ts"))
             (inga/parser/typescript::find-affected-pos
               parser
@@ -96,8 +100,9 @@
   (let ((parser (make-parser :typescript *react-path* *cache*)))
     (start-parser parser inga/main::*include-typescript* nil)
     (is (equal
-          '((:path . "src/App/TodoList/Item/index.tsx")
-            (:name . "reverseCompleted") (:line . 62) (:offset . 9))
+          '((:name . "reverseCompleted")
+            (:path . "src/App/TodoList/Item/index.tsx")
+            (:line . 62) (:offset . 9))
           (let ((src-path "src/App/TodoList/Item/index.tsx"))
             (inga/parser/typescript::find-affected-pos
               parser
@@ -114,8 +119,9 @@
   (let ((parser (make-parser :typescript *fixtures-path* *cache*)))
     (start-parser parser inga/main::*include-typescript* nil)
     (is (equal
-          '((:path . "declaration.ts")
-            (:name . "f2") (:line . 8) (:offset . 7))
+          '((:name . "f2")
+            (:path . "declaration.ts")
+            (:line . 8) (:offset . 7))
           (let ((src-path "declaration.ts"))
             (inga/parser/typescript::find-affected-pos
               parser
@@ -134,8 +140,9 @@
   (let ((parser (make-parser :typescript *nestjs-path* *cache*)))
     (start-parser parser inga/main::*include-typescript* nil)
     (is (equal
-          '((:path . "src/article/article.service.ts")
-            (:name . "findAll") (:line . 45) (:offset . 9))
+          '((:name . "findAll")
+            (:path . "src/article/article.service.ts")
+            (:line . 45) (:offset . 9))
           (let ((src-path "src/article/article.service.ts"))
             (inga/parser/typescript::find-affected-pos
               parser
@@ -166,8 +173,9 @@
   (let ((parser (make-parser :typescript *react-path* *cache*)))
     (start-parser parser inga/main::*include-typescript* nil)
     (is (equal
-          '((:path . "src/App/TodoList/Item/index.tsx")
-            (:name . "input") (:line . 107) (:offset . 12))
+          '((:name . "input")
+            (:path . "src/App/TodoList/Item/index.tsx")
+            (:line . 107) (:offset . 12))
           (inga/parser/typescript::find-entrypoint
             parser
             '((:path . "src/App/TodoList/Item/index.tsx")
@@ -180,16 +188,15 @@
         (inga/parser/typescript::convert-to-top-offset
           *react-path*
           "src/App/NewTodoInput/index.tsx"
-          39 69))))
+          '((:line . 39) (:offset . 69))))))
 
 (test convert-tsparser-pos-to-tsserver-pos
   (is (equal
-        (list '(:path . "src/App/NewTodoInput/index.tsx")
-              '(:name . "a") '(:line . 39) '(:offset . 69))
+        '((:line . 39) (:offset . 69))
         (inga/parser/typescript::convert-to-pos
           *react-path*
           "src/App/NewTodoInput/index.tsx"
-          "a" nil 1241))))
+          1241))))
 
 (test convert-tsserver-pos-to-tsparser-pos-with-offset1
   (is (equal
@@ -197,14 +204,13 @@
         (inga/parser/typescript::convert-to-top-offset
           *react-path*
           "src/dataStructure.ts"
-          21 1))))
+          '((:line . 21) (:offset . 1))))))
 
 (test convert-tsparser-pos-to-tsserver-pos-with-offset1
   (is (equal
-        (list '(:path . "src/dataStructure.ts")
-              '(:name . "a") '(:line . 21) '(:offset . 1))
+        '((:line . 21) (:offset . 1))
         (inga/parser/typescript::convert-to-pos
           *react-path*
           "src/dataStructure.ts"
-          "a" nil 328))))
+          328))))
 

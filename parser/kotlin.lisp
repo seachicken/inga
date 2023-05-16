@@ -25,7 +25,8 @@
 
 (defmethod find-affected-pos ((parser parser-kotlin) src-path ast line-no)
   (let ((q (make-queue))
-        (top-offset (convert-to-top-offset (parser-path parser) src-path line-no -1)))
+        (top-offset (convert-to-top-offset (parser-path parser) src-path
+                                           (list (cons :line line-no) (cons :offset -1)))))
     (enqueue q ast)
     (loop
       (let ((ast (dequeue q)))
@@ -36,11 +37,12 @@
                 (<= (jsown:val (jsown:val ast "textRange") "startOffset") top-offset)
                 (>= (jsown:val (jsown:val ast "textRange") "endOffset") top-offset))
           (when (jsown:keyp ast "name")
-            (let ((name (jsown:val ast "name")))
-              (return (convert-to-pos (parser-path parser) src-path
-                                      name
-                                      (when (jsown:keyp ast "fqName") (jsown:val ast "fqName"))
-                                      (jsown:val (jsown:val ast "textRange") "startOffset"))))))
+            (let ((pos (convert-to-pos (parser-path parser) src-path
+                                       (jsown:val (jsown:val ast "textRange") "startOffset"))))
+              (push (cons :path src-path) pos)
+              (push (cons :name (jsown:val ast "name")) pos)
+              (push (cons :fq-name (when (jsown:keyp ast "fqName") (jsown:val ast "fqName"))) pos)
+              (return pos))))
 
         (when (jsown:keyp ast "children")
           (loop for child in (jsown:val ast "children") do
@@ -71,12 +73,11 @@
                 (when (equal dot-expressions-name (cdr (assoc :fq-name target-pos)))
                   (return-from
                     find-reference-pos
-                    (convert-to-pos
-                      (parser-path parser)
-                      (get-original-path index-path)
-                      nil
-                      nil
-                      (jsown:val found-ast "textOffset"))))
+                    (let ((pos (convert-to-pos
+                                 (parser-path parser) (get-original-path index-path)
+                                 (jsown:val found-ast "textOffset"))))
+                      (push (cons :path (get-original-path index-path)) pos)
+                      pos)))
                 (setf result dot-expressions-name))))
           (loop for child in (jsown:val ast "children")
                 do
@@ -115,12 +116,11 @@
                             (when (equal fq-name target-fq-name)
                               (return-from
                                 find-reference-pos
-                                (convert-to-pos
-                                  (parser-path parser)
-                                  (get-original-path index-path)
-                                  nil
-                                  nil
-                                  (jsown:val found-ast "textOffset"))))))))))
+                                (let ((pos (convert-to-pos
+                                             (parser-path parser) (get-original-path index-path)
+                                             (jsown:val found-ast "textOffset"))))
+                                  (push (cons :path (get-original-path index-path)) pos)
+                                  pos)))))))))
 
         (when (jsown:keyp ast "parent")
           (enqueue q (jsown:val ast "parent")))))))

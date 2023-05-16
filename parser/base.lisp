@@ -138,41 +138,36 @@
                   (enqueue q (cdr child)))))))
     results))
 
-(defun convert-to-top-offset (root-path path line offset)
+(defun convert-to-top-offset (root-path path pos)
   (with-open-file (stream (uiop:merge-pathnames* path root-path))
     (loop for file-line = (read-line stream nil)
           with line-no = 0
           with top-offset = 0
           while file-line
-          when (eq line-no (1- line))
-          return (+ top-offset (if (< offset 0)
+          when (eq line-no (1- (cdr (assoc :line pos))))
+          return (+ top-offset (if (< (cdr (assoc :offset pos)) 0)
                                    (length file-line)
-                                   (1- offset)))
+                                   (1- (cdr (assoc :offset pos)))))
           do
-          (setq line-no (1+ line-no))
+          (setf line-no (1+ line-no))
           ;; add newline code
-          (setq top-offset (+ top-offset (1+ (length file-line)))))))
+          (setq top-offset (+ top-offset (length file-line) 1)))))
 
-(defun convert-to-pos (project-path path name fq-name pos)
-  (let ((line-no 0)
-        (cnt 0))
-    (with-open-file (stream (uiop:merge-pathnames* path project-path))
-      (loop for line = (read-line stream nil)
-            while line
-            when (<= pos (+ cnt (length line)))
-            return (let ((results
-                           (list
-                             (cons :path (enough-namestring path project-path))
-                             (cons :name name)
-                             (cons :line (+ line-no 1))
-                             (cons :offset (- (+ (length line) 1) (- (+ cnt (length line)) pos))))))
-                     (when fq-name
-                       (setf results (append results (list (cons :fq-name fq-name)))))
-                     results)
-            do
-              (setq line-no (+ line-no 1))
-              ;; add newline code
-              (setq cnt (+ cnt (length line) 1))))))
+(defun convert-to-pos (root-path path top-offset)
+  (with-open-file (stream (uiop:merge-pathnames* path root-path))
+    (loop for file-line = (read-line stream nil)
+          with line-no = 0
+          with current-offset = 0
+          while file-line
+          when (<= top-offset (+ current-offset (length file-line)))
+          return (list
+                   (cons :line (1+ line-no))
+                   (cons :offset (- (1+ (length file-line))
+                                    (- (+ current-offset (length file-line)) top-offset))))
+          do
+          (setf line-no (1+ line-no))
+          ;; add newline code
+          (setf current-offset (+ current-offset (length file-line) 1)))))
 
 (defun exec-command (parser command)
   (write-line command (uiop:process-info-input (parser-process parser)))
