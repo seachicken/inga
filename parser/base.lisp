@@ -19,7 +19,7 @@
            #:stop-parser
            #:parse
            #:exec-parser
-           #:find-affected-pos
+           #:find-affected-poss
            #:find-entrypoint
            #:find-caller
            #:find-references
@@ -32,7 +32,8 @@
            #:create-indexes
            #:clean-indexes
            #:get-index-path
-           #:get-original-path))
+           #:get-original-path
+           #:contains-offset))
 (in-package #:inga/parser/base)
 
 (defparameter *index-path* #p"temp/")
@@ -76,11 +77,11 @@
     (when p
       (exec-parser p file-path))))
 
-(defgeneric find-affected-pos (parser file-path ast line-no))
-(defmethod find-affected-pos ((parser list) file-path ast line-no)
-  (let ((p (find-parser parser file-path)))
+(defgeneric find-affected-poss (parser range))
+(defmethod find-affected-poss ((parser list) range)
+  (let ((p (find-parser parser (cdr (assoc :path range)))))
     (when p
-      (find-affected-pos p file-path ast line-no))))
+      (find-affected-poss p range))))
 
 (defgeneric find-entrypoint (parser pos))
 (defmethod find-entrypoint ((parser list) pos))
@@ -225,4 +226,7 @@
                                (enough-namestring index-path)
                                "/"))
                   1)))  
+
+(defun contains-offset (a-start a-end b-start b-end)
+  (and (<= a-start b-end) (>= a-end b-start)))
 

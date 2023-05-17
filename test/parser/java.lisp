@@ -18,40 +18,36 @@
 ;;     ArticleData articleData = articleReadService.findById(id); ←[in]
 ;;   }
 ;; }
-(test find-affected-pos-for-method
+(test find-affected-poss-for-method
   (let ((parser (make-parser :java *spring-boot-path* *cache*)))
     (start-parser parser nil nil)
     (is (equal
-          '((:fq-name . "io.spring.application.ArticleQueryService.findById")
-            (:name . "findById")
-            (:path . "src/main/java/io/spring/application/ArticleQueryService.java")
-            (:line . 30) (:offset . 32))
-          (let ((src-path "src/main/java/io/spring/application/ArticleQueryService.java"))
-            (find-affected-pos
-              parser
-              src-path
-              (exec-parser parser src-path)
-              31))))
+          '(((:fq-name . "io.spring.application.ArticleQueryService.findById")
+             (:name . "findById")
+             (:path . "src/main/java/io/spring/application/ArticleQueryService.java")
+             (:line . 30) (:offset . 32)))
+          (find-affected-poss
+            parser
+            '((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
+              (:start . 31) (:end . 31)))))
     (stop-parser parser)))
 
 ;; public interface ArticleRepository {
 ;;        ↓[out]
 ;;   void save(Article article); ←[in]
 ;; }
-(test find-affected-pos-for-interface
+(test find-affected-poss-for-interface
   (let ((parser (make-parser :java *spring-boot-path* *cache*)))
     (start-parser parser nil nil)
     (is (equal
-          '((:fq-name . "io.spring.core.article.ArticleRepository.save")
-            (:name . "save")
-            (:path . "src/main/java/io/spring/core/article/ArticleRepository.java")
-            (:line . 7) (:offset . 8))
-          (let ((src-path "src/main/java/io/spring/core/article/ArticleRepository.java"))
-            (find-affected-pos
-              parser
-              src-path
-              (exec-parser parser src-path)
-              7))))
+          '(((:fq-name . "io.spring.core.article.ArticleRepository.save")
+             (:name . "save")
+             (:path . "src/main/java/io/spring/core/article/ArticleRepository.java")
+             (:line . 7) (:offset . 8)))
+          (find-affected-poss
+            parser
+            '((:path . "src/main/java/io/spring/core/article/ArticleRepository.java")
+              (:start . 7) (:end . 7)))))
     (stop-parser parser)))
 
 ;; public class NewArticleParam {
@@ -59,20 +55,18 @@
 ;;                  ↓[out]
 ;;   private String title;
 ;; }
-(test find-affected-pos-for-field-annotation
+(test find-affected-poss-for-field-annotation
   (let ((parser (make-parser :java *spring-boot-path* *cache*)))
     (start-parser parser nil nil)
     (is (equal
-          '((:fq-name . "io.spring.application.article.NewArticleParam.title")
-            (:name . "title")
-            (:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
-            (:line . 19) (:offset . 18))
-          (let ((src-path "src/main/java/io/spring/application/article/NewArticleParam.java"))
-            (find-affected-pos
-              parser
-              src-path
-              (exec-parser parser src-path)
-              18))))
+          '(((:fq-name . "io.spring.application.article.NewArticleParam.title")
+             (:name . "title")
+             (:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
+             (:line . 19) (:offset . 18)))
+          (find-affected-poss
+            parser
+            '((:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
+              (:start . 18) (:end . 18)))))
     (stop-parser parser)))
 
 ;; class DuplicatedArticleValidator
@@ -83,39 +77,35 @@
 ;;     return true; ←[in]
 ;;   }
 ;; }
-(test find-affected-pos-for-constraint-validator
+(test find-affected-poss-for-constraint-validator
   (if t
       (skip "TODO: implement")
       (let ((parser (make-parser :java *spring-boot-path* *cache*)))
         (start-parser parser nil nil)
         (is (equal
-              '((:path . "src/main/java/io/spring/application/article/DuplicatedArticleValidator.java")
-                (:name . "DuplicatedArticleConstraint") (:line . 10) (:offset . 36))
-              (let ((src-path "src/main/java/io/spring/application/article/DuplicatedArticleValidator.java"))
-                (find-affected-pos
-                  parser
-                  src-path
-                  (exec-parser parser src-path)
-                  16))))
+              '(((:path . "src/main/java/io/spring/application/article/DuplicatedArticleValidator.java")
+                 (:name . "DuplicatedArticleConstraint") (:line . 10) (:offset . 36)))
+              (find-affected-poss
+                parser
+                '((:path . "src/main/java/io/spring/application/article/DuplicatedArticleValidator.java")
+                  (:start . 16) (:end . 16)))))
         (stop-parser parser))))
 
 ;; public class Article {
 ;;   public void update(String title, String description, String body) {
 ;;   } ←[in]
 ;; }
-(test ignore-affected-pos-when-end-block
+(test ignore-affected-poss-when-end-block
   (if t
       (skip "TODO: implement")
       (let ((parser (make-parser :java *spring-boot-path* *cache*)))
         (start-parser parser nil nil)
         (is (equal
               nil
-              (let ((src-path "src/main/java/io/spring/core/article/Article.java"))
-                (inga/parser/java::find-affected-pos
-                  parser
-                  src-path
-                  (exec-parser parser src-path)
-                  65))))
+              (find-affected-poss
+                parser
+                '((:path . "src/main/java/io/spring/core/article/Article.java")
+                (:start . 65) (:end . 65)))))
         (stop-parser parser))))
 
 (test get-fq-name-of-declaration

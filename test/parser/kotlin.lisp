@@ -19,20 +19,18 @@
 ;;       return 0 ←[in]
 ;;     }
 ;; }
-(test find-affected-pos-for-method
+(test find-affected-poss-for-method
   (let ((parser (make-parser :java *fixtures-path* *cache*)))
     (start-parser parser '("*.kt") nil)
     (is (equal
-          '((:fq-name . "com.example.Class.method")
-            (:name . "method")
-            (:path . "declaration.kt")
-            (:line . 6) (:offset . 5)) ;; FIXME: actual offset is 9
-          (let ((src-path "declaration.kt"))
-            (find-affected-pos
-              parser
-              src-path
-              (exec-parser parser src-path)
-              7))))
+          '(((:fq-name . "com.example.Class.method")
+             (:name . "method")
+             (:path . "declaration.kt")
+             (:line . 6) (:offset . 5))) ;; FIXME: actual offset is 9
+          (find-affected-poss
+            parser
+            '((:path . "declaration.kt")
+              (:start . 7) (:end . 7)))))
     (stop-parser parser)))
 
 (test find-references-to-imported-class

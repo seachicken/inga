@@ -37,86 +37,105 @@
   (clean-indexes)
   (uiop:close-streams (parser-process parser)))
 
-(defmethod find-affected-pos ((parser parser-java) src-path ast line-no)
+(defmethod find-affected-poss ((parser parser-java) range)
   (let ((q (make-queue))
-        (top-offset (convert-to-top-offset (parser-path parser) src-path
-                                           (list (cons :line line-no) (cons :offset -1))))
-        (root-ast ast)
-        annotation-pos)
+        (src-path (cdr (assoc :path range)))
+        (index-path (get-index-path (cdr (assoc :path range))))
+        ast
+        root-ast
+        start-offset
+        end-offset
+        annotation-pos
+        results)
+    (setf ast (cdr (jsown:parse (uiop:read-file-string index-path))))
+    (setf root-ast ast)
+    (setf start-offset
+          (convert-to-top-offset (parser-path parser) src-path
+                                 (list (cons :line (cdr (assoc :start range))) (cons :offset 0))))
+    (setf end-offset
+          (convert-to-top-offset (parser-path parser) src-path
+                                 (list (cons :line (cdr (assoc :start range))) (cons :offset -1))))
     (enqueue q ast)
     (loop
-      (let ((ast (dequeue q)))
-        (if (null ast) (return))
+      (setf ast (dequeue q))
+      (if (null ast) (return))
 
-        (when (and
-                (or
-                  (string= (cdar ast) "VARIABLE") 
-                  (string= (cdar ast) "METHOD"))
-                (<= (jsown:val ast "startPos") top-offset)
-                (>= (jsown:val ast "endPos") top-offset))
+      (when (and
+              (or
+                ;; field reference
+                (and
+                  (jsown:keyp ast "parent")
+                  (equal (cdar (jsown:val ast "parent")) "CLASS") 
+                  (equal (cdar ast) "VARIABLE"))
+                (equal (cdar ast) "METHOD"))
+              (contains-offset (jsown:val ast "startPos") (jsown:val ast "endPos")
+                               start-offset end-offset))
+        (when (jsown:keyp ast "name")
+          (let ((pos (convert-to-pos (parser-path parser) src-path (jsown:val ast "pos"))))
+            (push (cons :path src-path) pos)
+            (push (cons :name (jsown:val ast "name")) pos)
+            (push (cons :fq-name (get-fq-name-of-declaration
+                                   root-ast pos (parser-path parser))) pos)
+            (setf results (append results (list pos))))))
+
+      (when (and
+              (string= (cdar ast) "com.github.javaparser.ast.body.ClassOrInterfaceDeclaration")
+              (jsown:keyp ast "implementedTypes"))
+        (let ((implementedTypes (jsown:val ast "implementedTypes")))
+          (loop
+            with implemented-type-name
+            for implementedType in implementedTypes do
+            (when (jsown:keyp implementedType "name")
+              (setf implemented-type-name (cdr (jsown:val implementedType "name")))
+              (when (string= (jsown:val implemented-type-name "identifier") "ConstraintValidator")
+                (let ((annotation (first (jsown:val implementedType "typeArguments")))
+                      annotation-name)
+                  (when (jsown:keyp annotation "name")
+                    (setf annotation-name (jsown:val annotation "name"))
+                    (setf annotation-pos
+                          (list (cons :path src-path)
+                                (cons :name (jsown:val annotation-name "identifier"))
+                                (cons :line
+                                      (jsown:val (jsown:val annotation-name "range") "beginLine"))
+                                (cons :offset
+                                      (jsown:val (jsown:val annotation-name "range") "beginColumn")))))))))))
+
+      (when (and
+              (or
+                (string= (cdr (car ast)) "com.github.javaparser.ast.body.FieldDeclaration")
+                (string= (cdr (car ast)) "com.github.javaparser.ast.body.ConstructorDeclaration")
+                (string= (cdr (car ast)) "com.github.javaparser.ast.body.MethodDeclaration"))
+              (<= (jsown:val (jsown:val ast "range") "beginLine") line-no)
+              (>= (jsown:val (jsown:val ast "range") "endLine") line-no))
+        (unless (and
+                  (= (jsown:val (jsown:val ast "range") "endLine") line-no)
+                  (jsown:keyp ast "tokenRange")
+                  (= (jsown:val (jsown:val (jsown:val ast "tokenRange") "endToken") "kind") *java-rbrace*))
           (when (jsown:keyp ast "name")
-            (let ((pos (convert-to-pos (parser-path parser) src-path (jsown:val ast "pos"))))
-              (push (cons :path src-path) pos)
-              (push (cons :name (jsown:val ast "name")) pos)
-              (push (cons :fq-name (get-fq-name-of-declaration
-                                     root-ast pos (parser-path parser))) pos)
-              (return pos))))
+            (let ((name (cdr (jsown:val ast "name"))))
+              (if (and
+                    annotation-pos
+                    (string= (jsown:val name "identifier") "isValid"))
+                  (return annotation-pos)
+                  (return
+                    (list (cons :path src-path)
+                          (cons :name (jsown:val name "identifier"))
+                          (cons :line (jsown:val (jsown:val name "range") "beginLine"))
+                          (cons :offset (jsown:val (jsown:val name "range") "beginColumn")))))))
+          (when (jsown:keyp ast "variables")
+            (let ((name (cdr (jsown:val (cdr (first (jsown:val ast "variables"))) "name"))))
+              (return
+                (list (cons :path src-path)
+                      (cons :name (jsown:val name "identifier"))
+                      (cons :line (jsown:val (jsown:val name "range") "beginLine"))
+                      (cons :offset (jsown:val (jsown:val name "range") "beginColumn"))))))))
 
-        (when (and
-                (string= (cdar ast) "com.github.javaparser.ast.body.ClassOrInterfaceDeclaration")
-                (jsown:keyp ast "implementedTypes"))
-          (let ((implementedTypes (jsown:val ast "implementedTypes")))
-            (loop
-              with implemented-type-name
-              for implementedType in implementedTypes do
-              (when (jsown:keyp implementedType "name")
-                (setf implemented-type-name (cdr (jsown:val implementedType "name")))
-                (when (string= (jsown:val implemented-type-name "identifier") "ConstraintValidator")
-                  (let ((annotation (first (jsown:val implementedType "typeArguments")))
-                        annotation-name)
-                    (when (jsown:keyp annotation "name")
-                      (setf annotation-name (jsown:val annotation "name"))
-                      (setf annotation-pos
-                            (list (cons :path src-path)
-                                  (cons :name (jsown:val annotation-name "identifier"))
-                                  (cons :line
-                                        (jsown:val (jsown:val annotation-name "range") "beginLine"))
-                                  (cons :offset
-                                        (jsown:val (jsown:val annotation-name "range") "beginColumn")))))))))))
-
-        (when (and
-                (or
-                  (string= (cdr (car ast)) "com.github.javaparser.ast.body.FieldDeclaration")
-                  (string= (cdr (car ast)) "com.github.javaparser.ast.body.ConstructorDeclaration")
-                  (string= (cdr (car ast)) "com.github.javaparser.ast.body.MethodDeclaration"))
-                (<= (jsown:val (jsown:val ast "range") "beginLine") line-no)
-                (>= (jsown:val (jsown:val ast "range") "endLine") line-no))
-          (unless (and
-                    (= (jsown:val (jsown:val ast "range") "endLine") line-no)
-                    (jsown:keyp ast "tokenRange")
-                    (= (jsown:val (jsown:val (jsown:val ast "tokenRange") "endToken") "kind") *java-rbrace*))
-            (when (jsown:keyp ast "name")
-              (let ((name (cdr (jsown:val ast "name"))))
-                (if (and
-                      annotation-pos
-                      (string= (jsown:val name "identifier") "isValid"))
-                    (return annotation-pos)
-                    (return
-                      (list (cons :path src-path)
-                            (cons :name (jsown:val name "identifier"))
-                            (cons :line (jsown:val (jsown:val name "range") "beginLine"))
-                            (cons :offset (jsown:val (jsown:val name "range") "beginColumn")))))))
-            (when (jsown:keyp ast "variables")
-              (let ((name (cdr (jsown:val (cdr (first (jsown:val ast "variables"))) "name"))))
-                (return
-                  (list (cons :path src-path)
-                        (cons :name (jsown:val name "identifier"))
-                        (cons :line (jsown:val (jsown:val name "range") "beginLine"))
-                        (cons :offset (jsown:val (jsown:val name "range") "beginColumn"))))))))
-
-        (when (jsown:keyp ast "children")
-          (loop for child in (jsown:val ast "children") do
-                (enqueue q (cdr child))))))))
+      (loop for child in (jsown:val ast "children")
+            do
+            (let ((body (cdr child)))
+              (setf (jsown:val child "parent") ast)
+              (enqueue q (cdr child)))))
+    results))
 
 (defmethod find-entrypoint ((parser parser-java) pos))
 

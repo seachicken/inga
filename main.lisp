@@ -18,7 +18,7 @@
                 #:stop-parser
                 #:parse
                 #:exec-parser
-                #:find-affected-pos
+                #:find-affected-poss
                 #:find-entrypoint
                 #:find-references)
   (:import-from #:inga/cache
@@ -43,7 +43,7 @@
 (defparameter *cache* (make-cache *cache-max-size*))
 
 (defparameter *debug-parse* (inga/utils::make-measuring-time))
-(defparameter *debug-find-affected-pos* (inga/utils::make-measuring-time))
+(defparameter *debug-find-affected-poss* (inga/utils::make-measuring-time))
 (defparameter *debug-find-refs* (inga/utils::make-measuring-time))
 
 (define-condition inga-error-option-not-found (inga-error) ())
@@ -77,9 +77,9 @@
                                 exclude))))
           (let ((results (time (analyze ctx diffs))))
             (log-debug (format nil "cache size: ~a/~a" (size *cache*) *cache-max-size*))
-            (log-debug (format nil "measuring time:~%  find-affected-pos: [times: ~a, avg-sec: ~f]~%  find-refs: [times: ~a, avg-sec: ~f, cache-hit: ~a]"
-                               (inga/utils::measuring-time-times *debug-find-affected-pos*)
-                               (inga/utils::avg-sec *debug-find-affected-pos*)
+            (log-debug (format nil "measuring time:~%  find-affected-poss: [times: ~a, avg-sec: ~f]~%  find-refs: [times: ~a, avg-sec: ~f, cache-hit: ~a]"
+                               (inga/utils::measuring-time-times *debug-find-affected-poss*)
+                               (inga/utils::avg-sec *debug-find-affected-poss*)
                                (inga/utils::measuring-time-times *debug-find-refs*)
                                (inga/utils::avg-sec *debug-find-refs*)
                                (inga/utils::measuring-time-cache-hit *debug-find-refs*)))
@@ -189,37 +189,19 @@
 
 (defun analyze-by-range (ctx range)
   (let ((q (make-queue))
-        (results '()))
+        results)
     (enqueue q range)
     (loop
-      (let ((range (dequeue q)))
-        (if (null range) (return results))
+      (setf range (dequeue q))
+      (if (null range) (return results))
 
-        (let ((src-path (cdr (assoc :path range)))
-              ast)
-          (setf ast (exec-parser (context-parser ctx) src-path))
-          (setf results
-                (append results
-                        (mapcan (lambda (pos)
-                                  (find-entrypoints ctx pos q))
-                                (get-affected-poss ctx ast src-path range)))))))))
-
-(defun get-affected-poss (ctx ast src-path range)
-  (remove nil
-          (mapcar (lambda (line-no)
-                    (let ((item-pos
+      (setf results
+            (append results
+                    (mapcan (lambda (pos)
+                              (find-entrypoints ctx pos q))
                             (inga/utils::measure
-                              *debug-find-affected-pos*
-                              (lambda () (find-affected-pos (context-parser ctx)
-                                                            src-path ast line-no)))))
-                      (when item-pos
-                        (when (assoc :origin range)
-                          (setf item-pos (acons :origin (cdr (assoc :origin range)) item-pos)))
-                        item-pos)))
-                  (loop for line-no
-                        from (cdr (assoc :start range))
-                        to (cdr (assoc :end range))
-                        collect line-no))))
+                              *debug-find-affected-poss*
+                              (lambda () (find-affected-poss (context-parser ctx) range)))))))))
 
 (defun find-entrypoints (ctx pos q)
   (unless (assoc :origin pos)

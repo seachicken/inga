@@ -23,30 +23,42 @@
   (clean-indexes)
   (uiop:close-streams (parser-process parser)))
 
-(defmethod find-affected-pos ((parser parser-kotlin) src-path ast line-no)
+(defmethod find-affected-poss ((parser parser-kotlin) range)
   (let ((q (make-queue))
-        (top-offset (convert-to-top-offset (parser-path parser) src-path
-                                           (list (cons :line line-no) (cons :offset -1)))))
+        (src-path (cdr (assoc :path range)))
+        (index-path (get-index-path (cdr (assoc :path range))))
+        ast
+        results)
+    (setf ast (cdr (jsown:parse (uiop:read-file-string index-path))))
+    (setf start-offset
+          (convert-to-top-offset (parser-path parser) src-path
+                                 (list (cons :line (cdr (assoc :start range))) (cons :offset 0))))
+    (setf end-offset
+          (convert-to-top-offset (parser-path parser) src-path
+                                 (list (cons :line (cdr (assoc :start range))) (cons :offset -1))))
     (enqueue q ast)
     (loop
-      (let ((ast (dequeue q)))
-        (if (null ast) (return))
+      (setf ast (dequeue q))
+      (if (null ast) (return))
 
-        (when (and
-                (string= (cdr (car ast)) "FUN")
-                (<= (jsown:val (jsown:val ast "textRange") "startOffset") top-offset)
-                (>= (jsown:val (jsown:val ast "textRange") "endOffset") top-offset))
-          (when (jsown:keyp ast "name")
-            (let ((pos (convert-to-pos (parser-path parser) src-path
-                                       (jsown:val (jsown:val ast "textRange") "startOffset"))))
-              (push (cons :path src-path) pos)
-              (push (cons :name (jsown:val ast "name")) pos)
-              (push (cons :fq-name (when (jsown:keyp ast "fqName") (jsown:val ast "fqName"))) pos)
-              (return pos))))
+      (when (and
+              (string= (cdr (car ast)) "FUN")
+              (contains-offset (jsown:val (jsown:val ast "textRange") "startOffset")
+                               (jsown:val (jsown:val ast "textRange") "endOffset")            
+                               start-offset
+                               end-offset))
+        (when (jsown:keyp ast "name")
+          (let ((pos (convert-to-pos (parser-path parser) src-path
+                                     (jsown:val (jsown:val ast "textRange") "startOffset"))))
+            (push (cons :path src-path) pos)
+            (push (cons :name (jsown:val ast "name")) pos)
+            (push (cons :fq-name (when (jsown:keyp ast "fqName") (jsown:val ast "fqName"))) pos)
+            (setf results (append results (list pos))))))
 
-        (when (jsown:keyp ast "children")
-          (loop for child in (jsown:val ast "children") do
-                (enqueue q (cdr child))))))))
+      (when (jsown:keyp ast "children")
+        (loop for child in (jsown:val ast "children")
+              do (enqueue q (cdr child)))))
+    results))
 
 (defmethod find-entrypoint ((parser parser-kotlin) pos))
 
