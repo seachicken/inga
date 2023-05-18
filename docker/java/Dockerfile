@@ -21,7 +21,7 @@ RUN ros && \
   ros build /inga/roswell/inga.ros
 
 
-FROM ubuntu:22.10
+FROM ubuntu:latest
 
 COPY --from=build /usr/share/keyrings/githubcli-archive-keyring.gpg /usr/share/keyrings/githubcli-archive-keyring.gpg
 COPY --from=build /libs /libs
