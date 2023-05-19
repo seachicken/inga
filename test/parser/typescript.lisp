@@ -232,13 +232,21 @@
   (let ((parser (make-parser :typescript *react-path* *cache*)))
     (start-parser parser inga/main::*include-typescript* nil)
     (is (equal
-          '((:name . "input")
-            (:path . "src/App/TodoList/Item/index.tsx")
-            (:line . 107) (:offset . 12))
+          `((:path . "src/App/TodoList/Item/index.tsx")
+            (:name . "input")
+            ,(cons :top-offset
+                   (convert-to-top-offset
+                     *react-path*
+                     "src/App/TodoList/Item/index.tsx"
+                     '((:line . 107) (:offset . 12)))))
           (inga/parser/typescript::find-entrypoint
             parser
-            '((:path . "src/App/TodoList/Item/index.tsx")
-              (:line . 111) (:offset . 29)))))
+            `((:path . "src/App/TodoList/Item/index.tsx")
+              ,(cons :top-offset
+                     (convert-to-top-offset
+                       *react-path*
+                       "src/App/TodoList/Item/index.tsx"
+                       '((:line . 111) (:offset . 29))))))))
     (stop-parser parser)))
 
 (test convert-tsserver-pos-to-tsparser-pos
