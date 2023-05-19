@@ -22,14 +22,27 @@
   (let ((parser (make-parser :java *spring-boot-path* *cache*)))
     (start-parser parser nil nil)
     (is (equal
-          '(((:fq-name . "io.spring.application.ArticleQueryService.findById")
+          `(((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
              (:name . "findById")
-             (:path . "src/main/java/io/spring/application/ArticleQueryService.java")
-             (:line . 30) (:offset . 32)))
+             (:fq-name . "io.spring.application.ArticleQueryService.findById")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *spring-boot-path*
+                      "src/main/java/io/spring/application/ArticleQueryService.java"
+                      '((:line . 30) (:offset . 32))))))
           (find-affected-poss
             parser
-            '((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
-              (:start . 31) (:end . 31)))))
+            `((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
+              ,(cons :start-offset
+                     (convert-to-top-offset
+                       *spring-boot-path*
+                       "src/main/java/io/spring/application/ArticleQueryService.java"
+                       '((:line . 31) (:offset . 0))))
+              ,(cons :end-offset
+                     (convert-to-top-offset
+                       *spring-boot-path*
+                       "src/main/java/io/spring/application/ArticleQueryService.java"
+                       '((:line . 31) (:offset . -1))))))))
     (stop-parser parser)))
 
 ;; public interface ArticleRepository {
@@ -40,14 +53,27 @@
   (let ((parser (make-parser :java *spring-boot-path* *cache*)))
     (start-parser parser nil nil)
     (is (equal
-          '(((:fq-name . "io.spring.core.article.ArticleRepository.save")
+          `(((:path . "src/main/java/io/spring/core/article/ArticleRepository.java")
              (:name . "save")
-             (:path . "src/main/java/io/spring/core/article/ArticleRepository.java")
-             (:line . 7) (:offset . 8)))
+             (:fq-name . "io.spring.core.article.ArticleRepository.save")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *spring-boot-path*
+                      "src/main/java/io/spring/core/article/ArticleRepository.java"
+                      '((:line . 7) (:offset . 8))))))
           (find-affected-poss
             parser
-            '((:path . "src/main/java/io/spring/core/article/ArticleRepository.java")
-              (:start . 7) (:end . 7)))))
+            `((:path . "src/main/java/io/spring/core/article/ArticleRepository.java")
+              ,(cons :start-offset
+                     (convert-to-top-offset
+                       *spring-boot-path*
+                       "src/main/java/io/spring/core/article/ArticleRepository.java"
+                       '((:line . 7) (:offset . 0))))
+              ,(cons :end-offset
+                     (convert-to-top-offset
+                       *spring-boot-path*
+                       "src/main/java/io/spring/core/article/ArticleRepository.java"
+                       '((:line . 7) (:offset . -1))))))))
     (stop-parser parser)))
 
 ;; public class NewArticleParam {
@@ -59,14 +85,27 @@
   (let ((parser (make-parser :java *spring-boot-path* *cache*)))
     (start-parser parser nil nil)
     (is (equal
-          '(((:fq-name . "io.spring.application.article.NewArticleParam.title")
+          `(((:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
              (:name . "title")
-             (:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
-             (:line . 19) (:offset . 18)))
+             (:fq-name . "io.spring.application.article.NewArticleParam.title")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *spring-boot-path*
+                      "src/main/java/io/spring/application/article/NewArticleParam.java"
+                      '((:line . 19) (:offset . 18))))))
           (find-affected-poss
             parser
-            '((:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
-              (:start . 18) (:end . 18)))))
+            `((:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
+              ,(cons :start-offset
+                     (convert-to-top-offset
+                       *spring-boot-path*
+                       "src/main/java/io/spring/application/article/NewArticleParam.java"
+                       '((:line . 18) (:offset . 0))))
+              ,(cons :end-offset
+                     (convert-to-top-offset
+                       *spring-boot-path*
+                       "src/main/java/io/spring/application/article/NewArticleParam.java"
+                       '((:line . 18) (:offset . -1))))))))
     (stop-parser parser)))
 
 ;; class DuplicatedArticleValidator
@@ -115,8 +154,9 @@
           "jvm.java.Class.method2"
           (inga/parser/java::get-fq-name-of-declaration
             (exec-parser parser "java/Class.java")
-            '((:path . "java/Class.java")
-              (:name . "method2") (:line . 13) (:offset . 17))
-            *jvm-path*)))
+            *jvm-path* "method2"
+            (convert-to-top-offset
+              *jvm-path* "java/Class.java"
+              '((:line . 13) (:offset . 17))))))
     (stop-parser parser)))
 

@@ -13,6 +13,8 @@
                 #:stop-client
                 #:references-client)
   (:import-from #:inga/parser
+                #:convert-to-pos
+                #:convert-to-top-offset
                 #:make-parser
                 #:start-parser
                 #:stop-parser
@@ -180,6 +182,22 @@
       found-context))
 
 (defun analyze (ctx diffs)
+  (setf diffs (mapcar (lambda (diff)
+                        (push (cons :start-offset
+                                    (convert-to-top-offset
+                                      (context-project-path ctx)
+                                      (cdr (assoc :path diff))
+                                      (list
+                                        (cons :line (cdr (assoc :start diff)))
+                                        (cons :offset 0)))) diff)
+                        (push (cons :end-offset
+                                    (convert-to-top-offset
+                                      (context-project-path ctx)
+                                      (cdr (assoc :path diff))
+                                      (list
+                                        (cons :line (cdr (assoc :end diff)))
+                                        (cons :offset -1)))) diff))
+                      diffs))
   (remove-duplicates
     (mapcan (lambda (range)
               (when (is-analysis-target (cdr (assoc :path range)) (context-include ctx) (context-exclude ctx))
@@ -198,15 +216,14 @@
       (setf results
             (append results
                     (mapcan (lambda (pos)
+                              (unless (assoc :origin pos)
+                                (push (cons :origin pos) pos))
                               (find-entrypoints ctx pos q))
                             (inga/utils::measure
                               *debug-find-affected-poss*
                               (lambda () (find-affected-poss (context-parser ctx) range)))))))))
 
 (defun find-entrypoints (ctx pos q)
-  (unless (assoc :origin pos)
-    (push (cons :origin pos) pos))
-
   (let ((refs (inga/utils::measure
                 *debug-find-refs*
                 (lambda () (find-references (context-parser ctx) pos))))
@@ -224,30 +241,40 @@
                                    refs)))
     (if refs
         (loop for ref in refs
-              do (progn 
-                   (let ((entrypoint (find-entrypoint (context-parser ctx) ref)))
-                     (if entrypoint
-                         (setf results (append results
-                                               (list
-                                                 (list (cons :origin (cdr (assoc :origin pos)))
-                                                       (cons :entorypoint entrypoint)))))
-                         (enqueue q (list
-                                      (cons :path (cdr (assoc :path ref)))
-                                      (cons :origin (cdr (assoc :origin pos)))
-                                      (cons :start (cdr (assoc :line ref)))
-                                      (cons :end (cdr (assoc :line ref)))))))))
+              do
+              (let ((entrypoint (find-entrypoint (context-parser ctx) ref)))
+                (if entrypoint
+                    (setf results
+                          (append results
+                                  (list
+                                    (list (cons :origin
+                                                (convert-to-output-pos (context-project-path ctx)
+                                                                       (cdr (assoc :origin pos))))
+                                          (cons :entorypoint
+                                                (convert-to-output-pos (context-project-path ctx) entrypoint))))))
+                    (enqueue q (list
+                                 (cons :path (cdr (assoc :path ref)))
+                                 (cons :origin (cdr (assoc :origin pos)))
+                                 (cons :start-offset (cdr (assoc :top-offset ref)))
+                                 (cons :end-offset (cdr (assoc :top-offset ref))))))))
         (setf results
               (list
                 (list
-                  (cons :origin (cdr (assoc :origin pos)))
+                  (cons :origin
+                        (convert-to-output-pos (context-project-path ctx)
+                                               (cdr (assoc :origin pos))))
                   (cons :entorypoint
-                            (list
-                              (cons :path (enough-namestring (cdr (assoc :path pos))
-                                                             (context-project-path ctx)))
-                              (cons :name (cdr (assoc :name pos)))
-                              (cons :line (cdr (assoc :line pos)))
-                              (cons :offset (cdr (assoc :offset pos)))))))))
+                        (convert-to-output-pos (context-project-path ctx)
+                                               pos))))))
     results))
+
+(defun convert-to-output-pos (root-path pos)
+  (let ((text-pos (convert-to-pos root-path (cdr (assoc :path pos)) (cdr (assoc :top-offset pos)))))
+    (list
+      (cons :path (enough-namestring (cdr (assoc :path pos)) root-path))
+      (cons :name (cdr (assoc :name pos)))
+      (cons :line (cdr (assoc :line text-pos)))
+      (cons :offset (cdr (assoc :offset text-pos))))))
 
 (defun to-json (results)
   (jsown:to-json

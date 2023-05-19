@@ -19,14 +19,23 @@
 (test analyze-by-range-for-react-components
   (let ((ctx (inga/main::start *front-path* '(:typescript) '("**/*.test.(ts|tsx)"))))
     (is (equal
-          '(((:name . "input")
-             (:path . "src/App/NewTodoInput/index.tsx")
+          '(((:path . "src/App/NewTodoInput/index.tsx")
+             (:name . "input")
              (:line . 34) (:offset . 10)))
           (mapcar (lambda (e) (cdr (assoc :entorypoint e)))
                   (inga/main::analyze-by-range
                     ctx
-                    '((:path . "src/functions.ts")
-                      (:start . 2) (:end . 2))))))
+                    `((:path . "src/functions.ts")
+                      ,(cons :start-offset
+                             (inga/parser:convert-to-top-offset
+                               *front-path*
+                               "src/functions.ts"
+                               '((:line . 2) (:offset . 0))))
+                      ,(cons :end-offset
+                             (inga/parser:convert-to-top-offset
+                               *front-path*
+                               "src/functions.ts"
+                               '((:line . 2) (:offset . -1)))))))))
     (inga/main::stop ctx)))
 
 (test inject-mark
@@ -52,12 +61,22 @@
   (let ((ctx (inga/main::start *back-path* '(:java) '("src/test/**"))))
     (is (equal
           '(((:path . "src/main/java/io/spring/api/ArticlesApi.java")
-             (:name . "getArticles") (:line . 49) (:offset . 25)))
+             (:name . "getArticles")
+             (:line . 49) (:offset . 25)))
           (mapcar (lambda (e) (cdr (assoc :entorypoint e)))
                   (inga/main::analyze-by-range
                     ctx
-                    '((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
-                      (:start . 105) (:end . 105))))))
+                    `((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
+                      ,(cons :start-offset
+                             (inga/parser:convert-to-top-offset
+                               *back-path*
+                               "src/main/java/io/spring/application/ArticleQueryService.java"
+                               '((:line . 105) (:offset . 0))))
+                      ,(cons :end-offset
+                             (inga/parser:convert-to-top-offset
+                               *back-path*
+                               "src/main/java/io/spring/application/ArticleQueryService.java"
+                               '((:line . 105) (:offset . -1)))))))))
     (inga/main::stop ctx)))
 
 (test analyze-by-range-for-constraint-validator

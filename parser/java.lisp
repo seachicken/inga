@@ -41,20 +41,14 @@
   (let ((q (make-queue))
         (src-path (cdr (assoc :path range)))
         (index-path (get-index-path (cdr (assoc :path range))))
+        (start-offset (cdr (assoc :start-offset range)))
+        (end-offset (cdr (assoc :end-offset range)))
         ast
         root-ast
-        start-offset
-        end-offset
         annotation-pos
         results)
     (setf ast (cdr (jsown:parse (uiop:read-file-string index-path))))
     (setf root-ast ast)
-    (setf start-offset
-          (convert-to-top-offset (parser-path parser) src-path
-                                 (list (cons :line (cdr (assoc :start range))) (cons :offset 0))))
-    (setf end-offset
-          (convert-to-top-offset (parser-path parser) src-path
-                                 (list (cons :line (cdr (assoc :start range))) (cons :offset -1))))
     (enqueue q ast)
     (loop
       (setf ast (dequeue q))
@@ -71,12 +65,19 @@
               (contains-offset (jsown:val ast "startPos") (jsown:val ast "endPos")
                                start-offset end-offset))
         (when (jsown:keyp ast "name")
-          (let ((pos (convert-to-pos (parser-path parser) src-path (jsown:val ast "pos"))))
-            (push (cons :path src-path) pos)
-            (push (cons :name (jsown:val ast "name")) pos)
-            (push (cons :fq-name (get-fq-name-of-declaration
-                                   root-ast pos (parser-path parser))) pos)
-            (setf results (append results (list pos))))))
+          (setf results
+                (append results
+                        (list
+                          (let ((pos (list
+                                       (cons :path src-path)
+                                       (cons :name (jsown:val ast "name"))
+                                       (cons :fq-name (get-fq-name-of-declaration
+                                                        root-ast (parser-path parser)
+                                                        (jsown:val ast "name") (jsown:val ast "pos")))
+                                       (cons :top-offset (jsown:val ast "pos")))))
+                            (when (assoc :origin range)
+                              (push (cons :origin (cdr (assoc :origin range))) pos))
+                            pos))))))
 
       (when (and
               (string= (cdar ast) "com.github.javaparser.ast.body.ClassOrInterfaceDeclaration")
@@ -194,17 +195,15 @@
                     (when (equal fq-name (cdr (assoc :fq-name target-pos)))
                       (return-from
                         find-reference-pos
-                        (let ((pos (convert-to-pos (parser-path parser) (get-original-path index-path)
-                                                   (jsown:val reference-ast "pos"))))
-                          (push (cons :path (get-original-path index-path)) pos)
-                          pos)))))))
+                        (list
+                          (cons :path (get-original-path index-path))
+                          (cons :top-offset (jsown:val reference-ast "pos")))))))))
 
         (when (jsown:keyp ast "parent")
           (enqueue q (jsown:val ast "parent")))))))
 
-(defun get-fq-name-of-declaration (ast pos root-path)
-  (let ((top-offset (convert-to-top-offset root-path (cdr (assoc :path pos)) pos))
-        (stack (list ast))
+(defun get-fq-name-of-declaration (ast root-path name top-offset)
+  (let ((stack (list ast))
         result)
     (loop
       (let ((ast (pop stack)))
@@ -219,7 +218,7 @@
 
         (when (and
                 (jsown:keyp ast "name")
-                (equal (jsown:val ast "name") (cdr (assoc :name pos)))
+                (equal (jsown:val ast "name") name)
                 (<= (jsown:val ast "startPos") top-offset)
                 (>= (jsown:val ast "endPos") top-offset))
           (setf result (format nil "~{~a~^.~}" (remove nil (list result (jsown:val ast "name"))))) 

@@ -23,26 +23,45 @@
   (let ((parser (make-parser :java *fixtures-path* *cache*)))
     (start-parser parser '("*.kt") nil)
     (is (equal
-          '(((:fq-name . "com.example.Class.method")
+          `(((:path . "declaration.kt")
              (:name . "method")
-             (:path . "declaration.kt")
-             (:line . 6) (:offset . 5))) ;; FIXME: actual offset is 9
+             (:fq-name . "com.example.Class.method")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *fixtures-path* "declaration.kt"
+                      '((:line . 6) (:offset . 5)))))) ;; FIXME: actual offset is 9
           (find-affected-poss
             parser
-            '((:path . "declaration.kt")
-              (:start . 7) (:end . 7)))))
+            `((:path . "declaration.kt")
+              ,(cons :start-offset
+                     (convert-to-top-offset
+                       *fixtures-path* "declaration.kt"
+                       '((:line . 7) (:offset . 0))))
+              ,(cons :end-offset
+                     (convert-to-top-offset
+                       *fixtures-path* "declaration.kt"
+                       '((:line . 7) (:offset . -1))))))))
     (stop-parser parser)))
 
 (test find-references-to-imported-class
   (let ((parser (make-parser :java *jvm-path* *cache*)))
     (start-parser parser inga/main::*include-java* nil)
     (is (equal
-          '(((:path . "Main.kt")
-             (:line . 7) (:offset . 17))
+          `(((:path . "Main.kt")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *jvm-path* "Main.kt"
+                      '((:line . 7) (:offset . 17)))))
             ((:path . "java/Class.java")
-             (:line . 9) (:offset . 15)) ;; FIXME: should be 9, 16
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *jvm-path* "java/Class.java"
+                      '((:line . 9) (:offset . 15))))) ;; FIXME: should be 9, 16
             ((:path . "kotlin/a/PrimaryConstructor.kt")
-             (:line . 7) (:offset . 9)))
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *jvm-path* "kotlin/a/PrimaryConstructor.kt"
+                      '((:line . 7) (:offset . 9))))))
           (find-references parser
                            '((:path . "kotlin/a/Class.kt")
                              (:name . "method")
@@ -54,12 +73,14 @@
   (let ((parser (make-parser :java *jvm-path* *cache*)))
     (start-parser parser inga/main::*include-java* nil)
     (is (equal
-          '(((:path . "Main.kt")
-             (:line . 8) (:offset . 30)))
+          `(((:path . "Main.kt")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *jvm-path* "Main.kt"
+                      '((:line . 8) (:offset . 30))))))
           (find-references parser
                            '((:path . "kotlin/b/Class.kt")
                              (:name . "method")
-                             (:line . 4) (:offset . 9)
                              (:fq-name . "jvm.kotlin.b.Class.method")))))
     (stop-parser parser)))
 

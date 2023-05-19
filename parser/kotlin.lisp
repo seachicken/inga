@@ -27,15 +27,11 @@
   (let ((q (make-queue))
         (src-path (cdr (assoc :path range)))
         (index-path (get-index-path (cdr (assoc :path range))))
+        (start-offset (cdr (assoc :start-offset range)))
+        (end-offset (cdr (assoc :end-offset range)))
         ast
         results)
     (setf ast (cdr (jsown:parse (uiop:read-file-string index-path))))
-    (setf start-offset
-          (convert-to-top-offset (parser-path parser) src-path
-                                 (list (cons :line (cdr (assoc :start range))) (cons :offset 0))))
-    (setf end-offset
-          (convert-to-top-offset (parser-path parser) src-path
-                                 (list (cons :line (cdr (assoc :start range))) (cons :offset -1))))
     (enqueue q ast)
     (loop
       (setf ast (dequeue q))
@@ -48,12 +44,17 @@
                                start-offset
                                end-offset))
         (when (jsown:keyp ast "name")
-          (let ((pos (convert-to-pos (parser-path parser) src-path
-                                     (jsown:val (jsown:val ast "textRange") "startOffset"))))
-            (push (cons :path src-path) pos)
-            (push (cons :name (jsown:val ast "name")) pos)
-            (push (cons :fq-name (when (jsown:keyp ast "fqName") (jsown:val ast "fqName"))) pos)
-            (setf results (append results (list pos))))))
+          (setf results
+                (append results
+                        (list
+                          (let ((pos (list
+                                       (cons :path src-path)
+                                       (cons :name (jsown:val ast "name"))
+                                       (cons :fq-name (when (jsown:keyp ast "fqName") (jsown:val ast "fqName")))
+                                       (cons :top-offset (jsown:val (jsown:val ast "textRange") "startOffset")))))
+                            (when (assoc :origin range)
+                              (push (cons :origin (cdr (assoc :origin range))) pos))
+                            pos))))))
 
       (when (jsown:keyp ast "children")
         (loop for child in (jsown:val ast "children")
@@ -85,17 +86,14 @@
                 (when (equal dot-expressions-name (cdr (assoc :fq-name target-pos)))
                   (return-from
                     find-reference-pos
-                    (let ((pos (convert-to-pos
-                                 (parser-path parser) (get-original-path index-path)
-                                 (jsown:val found-ast "textOffset"))))
-                      (push (cons :path (get-original-path index-path)) pos)
-                      pos)))
+                    (list
+                      (cons :path (get-original-path index-path))
+                      (cons :top-offset (jsown:val found-ast "textOffset")))))
                 (setf result dot-expressions-name))))
           (loop for child in (jsown:val ast "children")
                 do
                 (when (equal (jsown:val child "type") "REFERENCE_EXPRESSION")
-                  (setf target-name (jsown:val child "name"))))
-          )
+                  (setf target-name (jsown:val child "name")))))
 
         (when (equal (cdar ast) "CLASS")
           (loop for child in (jsown:val ast "children")
@@ -128,11 +126,9 @@
                             (when (equal fq-name target-fq-name)
                               (return-from
                                 find-reference-pos
-                                (let ((pos (convert-to-pos
-                                             (parser-path parser) (get-original-path index-path)
-                                             (jsown:val found-ast "textOffset"))))
-                                  (push (cons :path (get-original-path index-path)) pos)
-                                  pos)))))))))
+                                (list
+                                  (cons :path (get-original-path index-path))
+                                  (cons :top-offset (jsown:val found-ast "textOffset")))))))))))
 
         (when (jsown:keyp ast "parent")
           (enqueue q (jsown:val ast "parent")))))))

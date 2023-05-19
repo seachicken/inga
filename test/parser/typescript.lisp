@@ -20,13 +20,26 @@
   (let ((parser (make-parser :typescript *nestjs-path* *cache*)))
     (start-parser parser inga/main::*include-typescript* nil)
     (is (equal
-          '(((:name . "articleAuthorSelect")
-             (:path . "src/article/article.service.ts")
-             (:line . 7) (:offset . 7)))
+          `(((:path . "src/article/article.service.ts")
+              (:name . "articleAuthorSelect")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *nestjs-path*
+                      "src/article/article.service.ts"
+                      '((:line . 7) (:offset . 7))))))
           (find-affected-poss
             parser
-            '((:path . "src/article/article.service.ts")
-              (:start . 8) (:end . 8)))))
+            `((:path . "src/article/article.service.ts")
+              ,(cons :start-offset
+                     (convert-to-top-offset
+                       *nestjs-path*
+                       "src/article/article.service.ts"
+                       '((:line . 8) (:offset . 0))))
+              ,(cons :end-offset
+                     (convert-to-top-offset
+                       *nestjs-path*
+                       "src/article/article.service.ts"
+                       '((:line . 8) (:offset . -1))))))))
     (stop-parser parser)))
 
 ;; const NewTodoTextInput: React.FC = () => {
@@ -39,13 +52,26 @@
   (let ((parser (make-parser :typescript *react-path* *cache*)))
     (start-parser parser inga/main::*include-typescript* nil)
     (is (equal
-          '(((:name . "addTodo")
-             (:path . "src/App/NewTodoInput/index.tsx")
-             (:line . 12) (:offset . 12)))
+          `(((:path . "src/App/NewTodoInput/index.tsx")
+              (:name . "addTodo")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *react-path*
+                      "src/App/NewTodoInput/index.tsx"
+                      '((:line . 12) (:offset . 12))))))
           (find-affected-poss
             parser
-            '((:path . "src/App/NewTodoInput/index.tsx")
-              (:start . 13) (:end . 13)))))
+            `((:path . "src/App/NewTodoInput/index.tsx")
+              ,(cons :start-offset
+                     (convert-to-top-offset
+                       *react-path*
+                       "src/App/NewTodoInput/index.tsx"
+                       '((:line . 13) (:offset . 0))))
+              ,(cons :end-offset
+                     (convert-to-top-offset
+                       *react-path*
+                       "src/App/NewTodoInput/index.tsx"
+                       '((:line . 13) (:offset . -1))))))))
     (stop-parser parser)))
 
 ;;              ↓[out]
@@ -56,13 +82,26 @@
   (let ((parser (make-parser :typescript *nestjs-path* *cache*)))
     (start-parser parser inga/main::*include-typescript* nil)
     (is (equal
-          '(((:name . "User")
-            (:path . "src/user/user.decorator.ts")
-            (:line . 5) (:offset . 14)))
+          `(((:path . "src/user/user.decorator.ts")
+              (:name . "User")  
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *nestjs-path*
+                      "src/user/user.decorator.ts"
+                      '((:line . 5) (:offset . 14))))))
           (find-affected-poss
             parser
-            '((:path . "src/user/user.decorator.ts")
-              (:start . 9) (:end . 9)))))
+            `((:path . "src/user/user.decorator.ts")
+              ,(cons :start-offset
+                     (convert-to-top-offset
+                       *nestjs-path*
+                       "src/user/user.decorator.ts"
+                       '((:line . 9) (:offset . 0))))
+              ,(cons :end-offset
+                     (convert-to-top-offset
+                       *nestjs-path*
+                       "src/user/user.decorator.ts"
+                       '((:line . 9) (:offset . -1))))))))
     (stop-parser parser)))
 
 ;;        ↓[out]
@@ -73,13 +112,26 @@
   (let ((parser (make-parser :typescript *fixtures-path* *cache*)))
     (start-parser parser inga/main::*include-typescript* nil)
     (is (equal
-          '(((:name . "a, b")
-            (:path . "declaration.ts")
-            (:line . 4) (:offset . 8)))
+          `(((:path . "declaration.ts")
+              (:name . "a, b")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *fixtures-path*
+                      "declaration.ts"
+                      '((:line . 4) (:offset . 8))))))
           (find-affected-poss
             parser
-            '((:path . "declaration.ts")
-              (:start . 5) (:end . 5)))))
+            `((:path . "declaration.ts")
+              ,(cons :start-offset
+                     (convert-to-top-offset
+                       *fixtures-path*
+                       "declaration.ts"
+                       '((:line . 5) (:offset . 0))))
+              ,(cons :end-offset
+                     (convert-to-top-offset
+                       *fixtures-path*
+                       "declaration.ts"
+                       '((:line . 5) (:offset . -1))))))))
     (stop-parser parser)))
 
 ;;       ↓[out]
@@ -92,13 +144,26 @@
   (let ((parser (make-parser :typescript *react-path* *cache*)))
     (start-parser parser inga/main::*include-typescript* nil)
     (is (equal
-          '(((:name . "reverseCompleted")
-             (:path . "src/App/TodoList/Item/index.tsx")
-             (:line . 62) (:offset . 9)))
+          `(((:path . "src/App/TodoList/Item/index.tsx")
+              (:name . "reverseCompleted")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *react-path*
+                      "src/App/TodoList/Item/index.tsx"
+                      '((:line . 62) (:offset . 9))))))
           (find-affected-poss
             parser
-            '((:path . "src/App/TodoList/Item/index.tsx")
-              (:start . 65) (:end . 65)))))
+            `((:path . "src/App/TodoList/Item/index.tsx")
+              ,(cons :start-offset
+                     (convert-to-top-offset
+                       *react-path*
+                       "src/App/TodoList/Item/index.tsx"
+                       '((:line . 65) (:offset . 0))))
+              ,(cons :end-offset
+                     (convert-to-top-offset
+                       *react-path*
+                       "src/App/TodoList/Item/index.tsx"
+                       '((:line . 65) (:offset . -1))))))))
     (stop-parser parser)))
 
 ;;       ↓[out]
@@ -109,13 +174,26 @@
   (let ((parser (make-parser :typescript *fixtures-path* *cache*)))
     (start-parser parser inga/main::*include-typescript* nil)
     (is (equal
-          '(((:name . "f2")
-             (:path . "declaration.ts")
-             (:line . 8) (:offset . 7)))
+          `(((:path . "declaration.ts")
+              (:name . "f2")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *fixtures-path*
+                      "declaration.ts"
+                      '((:line . 8) (:offset . 7))))))
           (find-affected-poss
             parser
-            '((:path . "declaration.ts")
-              (:start . 9) (:end . 9)))))
+            `((:path . "declaration.ts")
+              ,(cons :start-offset
+                     (convert-to-top-offset
+                       *fixtures-path*
+                       "declaration.ts"
+                       '((:line . 9) (:offset . 0))))
+              ,(cons :end-offset
+                     (convert-to-top-offset
+                       *fixtures-path*
+                       "declaration.ts"
+                       '((:line . 9) (:offset . -1))))))))
     (stop-parser parser)))
 
 ;; class ArticleService {
@@ -128,13 +206,26 @@
   (let ((parser (make-parser :typescript *nestjs-path* *cache*)))
     (start-parser parser inga/main::*include-typescript* nil)
     (is (equal
-          '(((:name . "findAll")
-            (:path . "src/article/article.service.ts")
-            (:line . 45) (:offset . 9)))
+          `(((:path . "src/article/article.service.ts")
+              (:name . "findAll")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *nestjs-path*
+                      "src/article/article.service.ts"
+                      '((:line . 45) (:offset . 9))))))
           (find-affected-poss
             parser
-            '((:path . "src/article/article.service.ts")
-              (:start . 46) (:end . 46)))))
+            `((:path . "src/article/article.service.ts")
+              ,(cons :start-offset
+                     (convert-to-top-offset
+                       *nestjs-path*
+                       "src/article/article.service.ts"
+                       '((:line . 46) (:offset . 0))))
+              ,(cons :end-offset
+                     (convert-to-top-offset
+                       *nestjs-path*
+                       "src/article/article.service.ts"
+                       '((:line . 46) (:offset . -1))))))))
     (stop-parser parser)))
 
 (test find-entrypoint

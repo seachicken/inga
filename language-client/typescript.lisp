@@ -4,6 +4,9 @@
   (:import-from #:inga/cache
                 #:put-value
                 #:get-value)
+  (:import-from #:inga/parser
+                #:convert-to-pos
+                #:convert-to-top-offset)
   (:export #:language-client-typescript))
 (in-package #:inga/language-client/typescript)
 
@@ -25,6 +28,8 @@
 
 (defmethod references-client ((client language-client-typescript) pos)
   (let ((cache (get-value (client-cache client) (get-references-key pos)))
+        (text-pos (convert-to-pos (client-path client) (cdr (assoc :path pos))
+                                  (cdr (assoc :top-offset pos))))
         (full-path (namestring
                      (uiop:merge-pathnames* (cdr (assoc :path pos))
                                             (client-path client)))))
@@ -39,7 +44,7 @@
             (increment-req-id client)
             (let ((refs (exec-command client (format nil "{\"seq\": ~a, \"command\": \"references\", \"arguments\": {\"file\": \"~a\", \"line\": ~a, \"offset\": ~a}}"
                                                      (client-req-id client) full-path
-                                                     (cdr (assoc :line pos)) (cdr (assoc :offset pos)))))
+                                                     (cdr (assoc :line text-pos)) (cdr (assoc :offset text-pos)))))
                   result)
               (setf result
                     (remove
@@ -50,8 +55,14 @@
                                                                                 (client-path client)))
                                                  (cons :line (jsown:val (jsown:val ref "start") "line"))
                                                  (cons :offset (jsown:val (jsown:val ref "start") "offset")))))
-                                  (unless (= (cdr (assoc :line ref-pos)) (cdr (assoc :line pos)))
-                                    ref-pos)))
+                                  (unless (= (cdr (assoc :line ref-pos)) (cdr (assoc :line text-pos)))
+                                    (let ((top-offset
+                                            (convert-to-top-offset (client-path client)
+                                                                   (cdr (assoc :path ref-pos))
+                                                                   ref-pos)))
+                                      (list
+                                        (cons :path (cdr (assoc :path ref-pos)))
+                                        (cons :top-offset top-offset))))))
                               (jsown:val (jsown:val refs "body") "refs"))))
               (put-value (client-cache client) (get-references-key pos) result)
               result)))
