@@ -35,11 +35,14 @@
   (:method (kind path cache)
     (error 'unknown-client :name kind)))
 
-(defgeneric start-client (client))
+(defgeneric start-client (client)
+  (:method (client)))
 
-(defgeneric stop-client (client))
+(defgeneric stop-client (client)
+  (:method (client)))
 
-(defgeneric references-client (client pos))
+(defgeneric references-client (client pos)
+  (:method (client pos)))
 
 (defgeneric get-command (client command))
 

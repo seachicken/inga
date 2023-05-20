@@ -141,7 +141,6 @@
                    :project-path root-path
                    :include *include-java*
                    :exclude exclude
-                   :lc (make-client :java root-path *cache*)
                    :parser (make-parser :java root-path *cache*)))
                (t (error 'inga-error-context-not-found)))))
     (start-client (context-lc ctx))
