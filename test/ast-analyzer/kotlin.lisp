@@ -1,8 +1,8 @@
-(defpackage #:inga/test/parser/kotlin
+(defpackage #:inga/test/ast-analyzer/kotlin
   (:use #:cl
         #:fiveam
-        #:inga/parser))
-(in-package #:inga/test/parser/kotlin)
+        #:inga/ast-analyzer))
+(in-package #:inga/test/ast-analyzer/kotlin)
 
 (def-suite kotlin)
 (in-suite kotlin)
@@ -20,8 +20,8 @@
 ;;     }
 ;; }
 (test find-affected-poss-for-method
-  (let ((parser (make-parser :java *fixtures-path* *cache*)))
-    (start-parser parser '("*.kt") nil)
+  (let ((ast-analyzer (make-ast-analyzer :java *fixtures-path* *cache*)))
+    (start-ast-analyzer ast-analyzer '("*.kt") nil)
     (is (equal
           `(((:path . "declaration.kt")
              (:name . "method")
@@ -31,7 +31,7 @@
                       *fixtures-path* "declaration.kt"
                       '((:line . 6) (:offset . 5)))))) ;; FIXME: actual offset is 9
           (find-affected-poss
-            parser
+            ast-analyzer
             `((:path . "declaration.kt")
               ,(cons :start-offset
                      (convert-to-top-offset
@@ -41,11 +41,11 @@
                      (convert-to-top-offset
                        *fixtures-path* "declaration.kt"
                        '((:line . 7) (:offset . -1))))))))
-    (stop-parser parser)))
+    (stop-ast-analyzer ast-analyzer)))
 
 (test find-references-to-imported-class
-  (let ((parser (make-parser :java *jvm-path* *cache*)))
-    (start-parser parser inga/main::*include-java* nil)
+  (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
+    (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
     (is (equal
           `(((:path . "Main.kt")
              ,(cons :top-offset
@@ -62,25 +62,25 @@
                     (convert-to-top-offset
                       *jvm-path* "kotlin/a/PrimaryConstructor.kt"
                       '((:line . 7) (:offset . 9))))))
-          (find-references parser
+          (find-references ast-analyzer
                            '((:path . "kotlin/a/Class.kt")
                              (:name . "method")
                              (:line . 4) (:offset . 9)
                              (:fq-name . "jvm.kotlin.a.Class.method")))))
-    (stop-parser parser)))
+    (stop-ast-analyzer ast-analyzer)))
 
 (test find-references-to-fq-class
-  (let ((parser (make-parser :java *jvm-path* *cache*)))
-    (start-parser parser inga/main::*include-java* nil)
+  (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
+    (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
     (is (equal
           `(((:path . "Main.kt")
              ,(cons :top-offset
                     (convert-to-top-offset
                       *jvm-path* "Main.kt"
                       '((:line . 8) (:offset . 30))))))
-          (find-references parser
+          (find-references ast-analyzer
                            '((:path . "kotlin/b/Class.kt")
                              (:name . "method")
                              (:fq-name . "jvm.kotlin.b.Class.method")))))
-    (stop-parser parser)))
+    (stop-ast-analyzer ast-analyzer)))
 

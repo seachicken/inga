@@ -1,27 +1,27 @@
-(defpackage #:inga/parser/java
+(defpackage #:inga/ast-analyzer/java
   (:use #:cl
-        #:inga/parser/base
+        #:inga/ast-analyzer/base
         #:inga/utils)
   (:import-from #:inga/cache
                 #:put-value
                 #:get-value)
-  (:import-from #:inga/parser/kotlin
-                #:parser-kotlin)
-  (:export #:parser-java))
-(in-package #:inga/parser/java)
+  (:import-from #:inga/ast-analyzer/kotlin
+                #:ast-analyzer-kotlin)
+  (:export #:ast-analyzer-java))
+(in-package #:inga/ast-analyzer/java)
 
 ;; https://github.com/javaparser/javaparser/blob/d7a83612e1fa0c3c93ebac243a768339346382b5/javaparser-core/src/main/java/com/github/javaparser/JavaToken.java#L258
 (defparameter *java-rbrace* 100) ;; }
 
-(defclass parser-java (parser)
+(defclass ast-analyzer-java (ast-analyzer)
   ())
 
-(defmethod make-parser ((kind (eql :java)) path cache)
-  (list (make-instance 'parser-java :path path :cache cache)
-        (make-instance 'parser-kotlin :path path :cache cache)))
+(defmethod make-ast-analyzer ((kind (eql :java)) path cache)
+  (list (make-instance 'ast-analyzer-java :path path :cache cache)
+        (make-instance 'ast-analyzer-kotlin :path path :cache cache)))
 
-(defmethod start-parser ((parser parser-java) include exclude)
-  (setf (parser-process parser)
+(defmethod start-ast-analyzer ((ast-analyzer ast-analyzer-java) include exclude)
+  (setf (ast-analyzer-process ast-analyzer)
         (uiop:launch-program
           (format nil "~{~a~^ ~}"
                   (list "java" "-cp"
@@ -31,13 +31,13 @@
                         "--add-opens" "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"
                         "inga.Main"))
           :input :stream :output :stream))
-  (create-indexes parser '("*.java") exclude))
+  (create-indexes ast-analyzer '("*.java") exclude))
 
-(defmethod stop-parser ((parser parser-java))
+(defmethod stop-ast-analyzer ((ast-analyzer ast-analyzer-java))
   (clean-indexes)
-  (uiop:close-streams (parser-process parser)))
+  (uiop:close-streams (ast-analyzer-process ast-analyzer)))
 
-(defmethod find-affected-poss ((parser parser-java) range)
+(defmethod find-affected-poss ((ast-analyzer ast-analyzer-java) range)
   (let ((q (make-queue))
         (src-path (cdr (assoc :path range)))
         (index-path (get-index-path (cdr (assoc :path range))))
@@ -72,7 +72,7 @@
                                        (cons :path src-path)
                                        (cons :name (jsown:val ast "name"))
                                        (cons :fq-name (get-fq-name-of-declaration
-                                                        root-ast (parser-path parser)
+                                                        root-ast (ast-analyzer-path ast-analyzer)
                                                         (jsown:val ast "name") (jsown:val ast "pos")))
                                        (cons :top-offset (jsown:val ast "pos")))))
                             (when (assoc :origin range)
@@ -138,16 +138,16 @@
               (enqueue q (cdr child)))))
     results))
 
-(defmethod find-entrypoint ((parser parser-java) pos))
+(defmethod find-entrypoint ((ast-analyzer ast-analyzer-java) pos))
 
-(defmethod matches-reference-name ((parser parser-java) ast target-name)
+(defmethod matches-reference-name ((ast-analyzer ast-analyzer-java) ast target-name)
   (and
     (or
       (equal (cdar ast) "MEMBER_SELECT") 
       (equal (cdar ast) "IDENTIFIER"))
     (equal (jsown:val ast "name") target-name)))
 
-(defmethod find-reference-pos ((parser parser-java) index-path root-ast ast target-pos)
+(defmethod find-reference-pos ((ast-analyzer ast-analyzer-java) index-path root-ast ast target-pos)
   (let ((q (make-queue))
         (target-name (cdr (assoc :name target-pos)))
         (reference-ast ast)

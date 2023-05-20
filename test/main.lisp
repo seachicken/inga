@@ -27,12 +27,12 @@
                     ctx
                     `((:path . "src/functions.ts")
                       ,(cons :start-offset
-                             (inga/parser:convert-to-top-offset
+                             (inga/ast-analyzer:convert-to-top-offset
                                *front-path*
                                "src/functions.ts"
                                '((:line . 2) (:offset . 0))))
                       ,(cons :end-offset
-                             (inga/parser:convert-to-top-offset
+                             (inga/ast-analyzer:convert-to-top-offset
                                *front-path*
                                "src/functions.ts"
                                '((:line . 2) (:offset . -1)))))))))
@@ -55,12 +55,12 @@
                     ctx
                     `((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
                       ,(cons :start-offset
-                             (inga/parser:convert-to-top-offset
+                             (inga/ast-analyzer:convert-to-top-offset
                                *back-path*
                                "src/main/java/io/spring/application/ArticleQueryService.java"
                                '((:line . 105) (:offset . 0))))
                       ,(cons :end-offset
-                             (inga/parser:convert-to-top-offset
+                             (inga/ast-analyzer:convert-to-top-offset
                                *back-path*
                                "src/main/java/io/spring/application/ArticleQueryService.java"
                                '((:line . 105) (:offset . -1)))))))))

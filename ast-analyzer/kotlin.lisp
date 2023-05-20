@@ -1,29 +1,29 @@
-(defpackage #:inga/parser/kotlin
+(defpackage #:inga/ast-analyzer/kotlin
   (:use #:cl
-        #:inga/parser/base
+        #:inga/ast-analyzer/base
         #:inga/utils)
   (:import-from #:inga/cache
                 #:put-value
                 #:get-value)
-  (:export #:parser-kotlin))
-(in-package #:inga/parser/kotlin)
+  (:export #:ast-analyzer-kotlin))
+(in-package #:inga/ast-analyzer/kotlin)
 
-(defclass parser-kotlin (parser)
+(defclass ast-analyzer-kotlin (ast-analyzer)
   ())
 
-(defmethod start-parser ((parser parser-kotlin) include exclude)
-  (setf (parser-process parser)
+(defmethod start-ast-analyzer ((ast-analyzer ast-analyzer-kotlin) include exclude)
+  (setf (ast-analyzer-process ast-analyzer)
         (uiop:launch-program
           (format nil "java -cp ~a/libs/ktparser.jar inga.Main"
                   (uiop:getenv "INGA_HOME"))
           :input :stream :output :stream))
-  (create-indexes parser '("*.kt") exclude))
+  (create-indexes ast-analyzer '("*.kt") exclude))
 
-(defmethod stop-parser ((parser parser-kotlin))
+(defmethod stop-ast-analyzer ((ast-analyzer ast-analyzer-kotlin))
   (clean-indexes)
-  (uiop:close-streams (parser-process parser)))
+  (uiop:close-streams (ast-analyzer-process ast-analyzer)))
 
-(defmethod find-affected-poss ((parser parser-kotlin) range)
+(defmethod find-affected-poss ((ast-analyzer ast-analyzer-kotlin) range)
   (let ((q (make-queue))
         (src-path (cdr (assoc :path range)))
         (index-path (get-index-path (cdr (assoc :path range))))
@@ -61,14 +61,14 @@
               do (enqueue q (cdr child)))))
     results))
 
-(defmethod find-entrypoint ((parser parser-kotlin) pos))
+(defmethod find-entrypoint ((ast-analyzer ast-analyzer-kotlin) pos))
 
-(defmethod matches-reference-name ((parser parser-kotlin) ast target-name)
+(defmethod matches-reference-name ((ast-analyzer ast-analyzer-kotlin) ast target-name)
   (and
     (equal (cdar ast) "REFERENCE_EXPRESSION")
     (equal (jsown:val ast "name") target-name)))
 
-(defmethod find-reference-pos ((parser parser-kotlin) index-path root-ast ast target-pos)
+(defmethod find-reference-pos ((ast-analyzer ast-analyzer-kotlin) index-path root-ast ast target-pos)
   (let ((q (make-queue))
         (target-name (cdr (assoc :name target-pos)))
         (found-ast ast)

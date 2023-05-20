@@ -1,31 +1,31 @@
-(defpackage #:inga/parser/typescript
+(defpackage #:inga/ast-analyzer/typescript
   (:use #:cl
-        #:inga/parser/base
+        #:inga/ast-analyzer/base
         #:inga/utils)
   (:import-from #:inga/cache
                 #:put-value
                 #:get-value)
-  (:export #:parser-typescript))
-(in-package #:inga/parser/typescript)
+  (:export #:ast-analyzer-typescript))
+(in-package #:inga/ast-analyzer/typescript)
 
-(defclass parser-typescript (parser)
+(defclass ast-analyzer-typescript (ast-analyzer)
   ((nearest-ast-pos :initform nil
-                    :accessor parser-nearest-ast-pos)))
+                    :accessor ast-analyzer-nearest-ast-pos)))
 
-(defmethod make-parser ((kind (eql :typescript)) path cache)
-  (make-instance 'parser-typescript :path path :cache cache))
+(defmethod make-ast-analyzer ((kind (eql :typescript)) path cache)
+  (make-instance 'ast-analyzer-typescript :path path :cache cache))
 
-(defmethod start-parser ((parser parser-typescript) include exclude)
-  (setf (parser-process parser)
+(defmethod start-ast-analyzer ((ast-analyzer ast-analyzer-typescript) include exclude)
+  (setf (ast-analyzer-process ast-analyzer)
         (uiop:launch-program "tsparser"
                              :input :stream :output :stream))
-  (create-indexes parser include exclude))
+  (create-indexes ast-analyzer include exclude))
 
-(defmethod stop-parser ((parser parser-typescript))
+(defmethod stop-ast-analyzer ((ast-analyzer ast-analyzer-typescript))
   (clean-indexes)
-  (uiop:close-streams (parser-process parser)))
+  (uiop:close-streams (ast-analyzer-process ast-analyzer)))
 
-(defmethod find-affected-poss ((parser parser-typescript) range)
+(defmethod find-affected-poss ((ast-analyzer ast-analyzer-typescript) range)
   (let ((q (make-queue))
         (src-path (cdr (assoc :path range)))
         (index-path (get-index-path (cdr (assoc :path range))))
@@ -151,11 +151,11 @@
                 do (enqueue q (cdr s)))))
     results))
 
-(defmethod find-entrypoint ((parser parser-typescript) pos)
+(defmethod find-entrypoint ((ast-analyzer ast-analyzer-typescript) pos)
   (let ((top-offset (cdr (assoc :top-offset pos))))
-    (let ((ast (exec-parser parser (namestring (cdr (assoc :path pos))))))
-      (setf (parser-nearest-ast-pos parser) nil)
-      (let ((component-pos (find-component parser ast top-offset)))
+    (let ((ast (exec-ast-analyzer ast-analyzer (namestring (cdr (assoc :path pos))))))
+      (setf (ast-analyzer-nearest-ast-pos ast-analyzer) nil)
+      (let ((component-pos (find-component ast-analyzer ast top-offset)))
         (when component-pos
           (let ((result (list
                        (cons :path (cdr (assoc :path pos)))
@@ -165,15 +165,15 @@
               (push (cons :origin (cdr (assoc :origin pos))) result))
             result))))))
 
-(defmethod find-references ((parser parser-typescript) pos))
+(defmethod find-references ((ast-analyzer ast-analyzer-typescript) pos))
 
-(defun find-component (parser ast pos)
+(defun find-component (ast-analyzer ast pos)
   (when (and (jsown:keyp ast "kindName")
              (or
                (string= (jsown:val ast "kindName") "JsxOpeningElement") 
                (string= (jsown:val ast "kindName") "JsxSelfClosingElement"))
              (jsown:keyp ast "tagName"))
-    (setf (parser-nearest-ast-pos parser)
+    (setf (ast-analyzer-nearest-ast-pos ast-analyzer)
           (list
             (cons :name (let ((tag-name (cdr (jsown:val ast "tagName"))))
                           (if (jsown:keyp tag-name "escapedText")
@@ -185,19 +185,19 @@
     (if (consp (car ast))
         (progn
           (when (and (jsown:keyp ast "start") (equal (jsown:val ast "start") pos))
-            (return-from find-component (parser-nearest-ast-pos parser)))
+            (return-from find-component (ast-analyzer-nearest-ast-pos ast-analyzer)))
 
         (if (consp (cdr (car ast)))
             (progn
-              (let ((comp-pos (find-component parser (cdr (car ast)) pos)))
+              (let ((comp-pos (find-component ast-analyzer (cdr (car ast)) pos)))
                 (when (not (null comp-pos))
                   (return-from find-component comp-pos)))
-              (return-from find-component (find-component parser (cdr ast) pos)))
+              (return-from find-component (find-component ast-analyzer (cdr ast) pos)))
             (progn
               (when (cdr ast)
-                (return-from find-component (find-component parser (cdr ast) pos))))))
+                (return-from find-component (find-component ast-analyzer (cdr ast) pos))))))
       (progn
-        (return-from find-component (find-component parser (cdr ast) pos))))))
+        (return-from find-component (find-component ast-analyzer (cdr ast) pos))))))
 
 (defun find-return-type (ast)
   (when (and

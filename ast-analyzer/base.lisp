@@ -1,4 +1,4 @@
-(defpackage #:inga/parser/base
+(defpackage #:inga/ast-analyzer/base
   (:use #:cl
         #:inga/utils)
   (:import-from #:inga/file
@@ -9,16 +9,16 @@
                 #:get-value)
   (:import-from #:inga/errors
                 #:inga-error)
-  (:export #:parser
+  (:export #:ast-analyzer
            #:*index-path*
-           #:make-parser
-           #:parser-process
-           #:parser-path
-           #:parser-cache
-           #:start-parser
-           #:stop-parser
+           #:make-ast-analyzer
+           #:ast-analyzer-process
+           #:ast-analyzer-path
+           #:ast-analyzer-cache
+           #:start-ast-analyzer
+           #:stop-ast-analyzer
            #:parse
-           #:exec-parser
+           #:exec-ast-analyzer
            #:find-affected-poss
            #:find-entrypoint
            #:find-caller
@@ -34,89 +34,89 @@
            #:get-index-path
            #:get-original-path
            #:contains-offset))
-(in-package #:inga/parser/base)
+(in-package #:inga/ast-analyzer/base)
 
 (defparameter *index-path* #p"temp/")
 
-(defclass parser ()
+(defclass ast-analyzer ()
   ((process :initform nil
-            :accessor parser-process)
+            :accessor ast-analyzer-process)
    (path :initarg :path
-         :accessor parser-path)
+         :accessor ast-analyzer-path)
    (cache :initarg :cache
-          :accessor parser-cache)))
+          :accessor ast-analyzer-cache)))
 
-(defgeneric make-parser (kind path cache)
+(defgeneric make-ast-analyzer (kind path cache)
   (:method (kind path cache)
-    (error 'unknown-parser :name kind)))
+    (error 'unknown-ast-analyzer :name kind)))
 
-(defgeneric start-parser (parser include exclude))
-(defmethod start-parser ((parser list) include exclude)
-  (loop for p in parser
-        do (start-parser p include exclude)))
+(defgeneric start-ast-analyzer (ast-analyzer include exclude))
+(defmethod start-ast-analyzer ((ast-analyzer list) include exclude)
+  (loop for a in ast-analyzer
+        do (start-ast-analyzer a include exclude)))
 
-(defgeneric stop-parser (parser))
-(defmethod stop-parser ((parser list))
-  (loop for p in parser
-        do (stop-parser p)))
+(defgeneric stop-ast-analyzer (ast-analyzer))
+(defmethod stop-ast-analyzer ((ast-analyzer list))
+  (loop for a in ast-analyzer
+        do (stop-ast-analyzer a)))
 
-(defgeneric parse (parser path)
-  (:method (parser path)
-    (exec-command parser path)))
-(defmethod parse ((parser list) path)
-  (loop for p in parser
-    do (let ((p (find-parser parser path)))
-         (when p
-           (return (parse p path))))))
+(defgeneric parse (ast-analyzer path)
+  (:method (ast-analyzer path)
+    (exec-command ast-analyzer path)))
+(defmethod parse ((ast-analyzer list) path)
+  (loop for a in ast-analyzer
+    do (let ((a (find-ast-analyzer ast-analyzer path)))
+         (when a
+           (return (parse a path))))))
 
-(defgeneric exec-parser (parser file-path)
-  (:method (parser file-path)
+(defgeneric exec-ast-analyzer (ast-analyzer file-path)
+  (:method (ast-analyzer file-path)
     (cdr (jsown:parse (uiop:read-file-string (get-index-path file-path))))))
-(defmethod exec-parser ((parser list) file-path)
-  (let ((p (find-parser parser file-path)))
-    (when p
-      (exec-parser p file-path))))
+(defmethod exec-ast-analyzer ((ast-analyzer list) file-path)
+  (let ((a (find-ast-analyzer ast-analyzer file-path)))
+    (when a
+      (exec-ast-analyzer a file-path))))
 
-(defgeneric find-affected-poss (parser range))
-(defmethod find-affected-poss ((parser list) range)
-  (let ((p (find-parser parser (cdr (assoc :path range)))))
-    (when p
-      (find-affected-poss p range))))
+(defgeneric find-affected-poss (ast-analyzer range))
+(defmethod find-affected-poss ((ast-analyzer list) range)
+  (let ((a (find-ast-analyzer ast-analyzer (cdr (assoc :path range)))))
+    (when a
+      (find-affected-poss a range))))
 
-(defgeneric find-entrypoint (parser pos))
-(defmethod find-entrypoint ((parser list) pos))
+(defgeneric find-entrypoint (ast-analyzer pos))
+(defmethod find-entrypoint ((ast-analyzer list) pos))
 
-(defgeneric find-caller (parser index-path ast pos)
-  (:method (parser index-path ast pos)))
+(defgeneric find-caller (ast-analyzer index-path ast pos)
+  (:method (ast-analyzer index-path ast pos)))
 
-(defgeneric find-references (parser pos)
-  (:method (parser pos)
-    (let ((cache (get-value (parser-cache (first parser)) (get-references-key pos))))
+(defgeneric find-references (ast-analyzer pos)
+  (:method (ast-analyzer pos)
+    (let ((cache (get-value (ast-analyzer-cache (first ast-analyzer)) (get-references-key pos))))
       (values
         (if (null cache)
             (loop for path in (uiop:directory-files *index-path*)
                   with results
                   with ast
-                  with target-parser
+                  with target-ast-analyzer
                   with cache
                   do (progn
-                       (setf target-parser (find-parser parser (namestring path)))
+                       (setf target-ast-analyzer (find-ast-analyzer ast-analyzer (namestring path)))
                        (setf ast (cdr (jsown:parse (uiop:read-file-string path))))
-                       (let ((callers (find-references-by-file target-parser path ast pos)))
+                       (let ((callers (find-references-by-file target-ast-analyzer path ast pos)))
                          (when callers
                            (setf results (append results callers)))))
                   finally (progn
-                            (put-value (parser-cache (first parser)) (get-references-key pos)
+                            (put-value (ast-analyzer-cache (first ast-analyzer)) (get-references-key pos)
                                        (if results results 'empty))
                             (return (values results nil))))
             (if (eq cache 'empty) nil cache))
         (when cache t)))))
 
-(defgeneric matches-reference-name (parser ast target-name))
+(defgeneric matches-reference-name (ast-analyzer ast target-name))
 
-(defgeneric find-reference-pos (parser index-path root-ast ast target-pos))
+(defgeneric find-reference-pos (ast-analyzer index-path root-ast ast target-pos))
 
-(defun find-references-by-file (parser index-path ast target-pos)
+(defun find-references-by-file (ast-analyzer index-path ast target-pos)
   (let ((q (make-queue))
         (target-name (cdr (assoc :name target-pos)))
         (root-ast ast)
@@ -126,8 +126,8 @@
       (let ((ast (dequeue q)))
         (if (null ast) (return))
 
-        (when (matches-reference-name parser ast target-name)
-          (let ((found-reference-pos (find-reference-pos parser index-path root-ast ast target-pos)))
+        (when (matches-reference-name ast-analyzer ast target-name)
+          (let ((found-reference-pos (find-reference-pos ast-analyzer index-path root-ast ast target-pos)))
             (when found-reference-pos
               (setf results (append results (list found-reference-pos))))))
 
@@ -170,10 +170,10 @@
           ;; add newline code
           (setf current-offset (+ current-offset (length file-line) 1)))))
 
-(defun exec-command (parser command)
-  (write-line command (uiop:process-info-input (parser-process parser)))
-  (force-output (uiop:process-info-input (parser-process parser)))
-  (read-line (uiop:process-info-output (parser-process parser))))
+(defun exec-command (ast-analyzer command)
+  (write-line command (uiop:process-info-input (ast-analyzer-process ast-analyzer)))
+  (force-output (uiop:process-info-input (ast-analyzer-process ast-analyzer)))
+  (read-line (uiop:process-info-output (ast-analyzer-process ast-analyzer))))
 
 (defun get-parse-key (path)
   (intern (format nil "parse-~a" path)))
@@ -181,14 +181,14 @@
 (defun get-references-key (pos)
   (intern (format nil "refs-~a-~a-~a" (cdr (assoc :path pos)) (cdr (assoc :line pos)) (cdr (assoc :offset pos)))))
 
-(defmethod find-parser (parser file-path)
-  parser)
-(defmethod find-parser ((parsers list) file-path)
-  (loop for p in parsers
+(defmethod find-ast-analyzer (ast-analyzer file-path)
+  ast-analyzer)
+(defmethod find-ast-analyzer ((ast-analyzers list) file-path)
+  (loop for a in ast-analyzers
         with type = (get-file-type file-path)
-        do (when (or (and (string= (string (type-of p)) "PARSER-JAVA") (eq type 'java))
-                     (and (string= (string (type-of p)) "PARSER-KOTLIN") (eq type 'kotlin)))
-             (return p))))
+        do (when (or (and (string= (string (type-of a)) "AST-ANALYZER-JAVA") (eq type 'java))
+                     (and (string= (string (type-of a)) "AST-ANALYZER-KOTLIN") (eq type 'kotlin)))
+             (return a))))
 
 (defun get-file-type (path)
   (if (is-match path '("*.java"))
@@ -196,14 +196,14 @@
       (when (is-match path '("*.kt"))
         'kotlin)))
 
-(defun create-indexes (parser include exclude)
+(defun create-indexes (ast-analyzer include exclude)
   (ensure-directories-exist *index-path*) 
-  (loop for path in (uiop:directory-files (format nil "~a/**/*" (parser-path parser)))
-        do (let ((relative-path (enough-namestring path (parser-path parser))))
+  (loop for path in (uiop:directory-files (format nil "~a/**/*" (ast-analyzer-path ast-analyzer)))
+        do (let ((relative-path (enough-namestring path (ast-analyzer-path ast-analyzer))))
              (when (is-analysis-target relative-path include exclude)
                (handler-case
                  (alexandria:write-string-into-file
-                   (format nil "~a" (parse parser (namestring path)))
+                   (format nil "~a" (parse ast-analyzer (namestring path)))
                    (get-index-path relative-path))
                  (error (e)
                         (format t "error: ~a, path: ~a~%" e path)

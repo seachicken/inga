@@ -11,14 +11,14 @@
                 #:start-client
                 #:stop-client
                 #:references-client)
-  (:import-from #:inga/parser
+  (:import-from #:inga/ast-analyzer
                 #:convert-to-pos
                 #:convert-to-top-offset
-                #:make-parser
-                #:start-parser
-                #:stop-parser
+                #:make-ast-analyzer
+                #:start-ast-analyzer
+                #:stop-ast-analyzer
                 #:parse
-                #:exec-parser
+                #:exec-ast-analyzer
                 #:find-affected-poss
                 #:find-entrypoint
                 #:find-references)
@@ -134,20 +134,20 @@
                    :include *include-typescript*
                    :exclude exclude
                    :lc (make-client :typescript root-path *cache*)
-                   :parser (make-parser :typescript root-path *cache*)))
+                   :ast-analyzer (make-ast-analyzer :typescript root-path *cache*)))
                (:java
                  (make-context
                    :project-path root-path
                    :include *include-java*
                    :exclude exclude
-                   :parser (make-parser :java root-path *cache*)))
+                   :ast-analyzer (make-ast-analyzer :java root-path *cache*)))
                (t (error 'inga-error-context-not-found)))))
     (start-client (context-lc ctx))
-    (start-parser (context-parser ctx) (context-include ctx) (context-exclude ctx))
+    (start-ast-analyzer (context-ast-analyzer ctx) (context-include ctx) (context-exclude ctx))
     ctx))
 
 (defun stop (ctx)
-  (stop-parser (context-parser ctx)) 
+  (stop-ast-analyzer (context-ast-analyzer ctx)) 
   (stop-client (context-lc ctx)))
 
 (defun get-analysis-kinds (diffs)
@@ -219,12 +219,12 @@
                               (find-entrypoints ctx pos q))
                             (inga/utils::measure
                               *debug-find-affected-poss*
-                              (lambda () (find-affected-poss (context-parser ctx) range)))))))))
+                              (lambda () (find-affected-poss (context-ast-analyzer ctx) range)))))))))
 
 (defun find-entrypoints (ctx pos q)
   (let ((refs (inga/utils::measure
                 *debug-find-refs*
-                (lambda () (find-references (context-parser ctx) pos))))
+                (lambda () (find-references (context-ast-analyzer ctx) pos))))
         results)
     (unless refs
       (setf refs (inga/utils::measure
@@ -240,7 +240,7 @@
     (if refs
         (loop for ref in refs
               do
-              (let ((entrypoint (find-entrypoint (context-parser ctx) ref)))
+              (let ((entrypoint (find-entrypoint (context-ast-analyzer ctx) ref)))
                 (if entrypoint
                     (setf results
                           (append results
@@ -292,5 +292,5 @@
   include
   exclude
   lc
-  parser)
+  ast-analyzer)
 

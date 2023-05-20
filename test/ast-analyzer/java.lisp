@@ -1,8 +1,8 @@
-(defpackage #:inga/test/parser/java
+(defpackage #:inga/test/ast-analyzer/java
   (:use #:cl
         #:fiveam
-        #:inga/parser))
-(in-package #:inga/test/parser/java)
+        #:inga/ast-analyzer))
+(in-package #:inga/test/ast-analyzer/java)
 
 (def-suite java)
 (in-suite java)
@@ -19,8 +19,8 @@
 ;;   }
 ;; }
 (test find-affected-poss-for-method
-  (let ((parser (make-parser :java *spring-boot-path* *cache*)))
-    (start-parser parser nil nil)
+  (let ((ast-analyzer (make-ast-analyzer :java *spring-boot-path* *cache*)))
+    (start-ast-analyzer ast-analyzer nil nil)
     (is (equal
           `(((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
              (:name . "findById")
@@ -31,7 +31,7 @@
                       "src/main/java/io/spring/application/ArticleQueryService.java"
                       '((:line . 30) (:offset . 32))))))
           (find-affected-poss
-            parser
+            ast-analyzer
             `((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
               ,(cons :start-offset
                      (convert-to-top-offset
@@ -43,15 +43,15 @@
                        *spring-boot-path*
                        "src/main/java/io/spring/application/ArticleQueryService.java"
                        '((:line . 31) (:offset . -1))))))))
-    (stop-parser parser)))
+    (stop-ast-analyzer ast-analyzer)))
 
 ;; public interface ArticleRepository {
 ;;        ↓[out]
 ;;   void save(Article article); ←[in]
 ;; }
 (test find-affected-poss-for-interface
-  (let ((parser (make-parser :java *spring-boot-path* *cache*)))
-    (start-parser parser nil nil)
+  (let ((ast-analyzer (make-ast-analyzer :java *spring-boot-path* *cache*)))
+    (start-ast-analyzer ast-analyzer nil nil)
     (is (equal
           `(((:path . "src/main/java/io/spring/core/article/ArticleRepository.java")
              (:name . "save")
@@ -62,7 +62,7 @@
                       "src/main/java/io/spring/core/article/ArticleRepository.java"
                       '((:line . 7) (:offset . 8))))))
           (find-affected-poss
-            parser
+            ast-analyzer
             `((:path . "src/main/java/io/spring/core/article/ArticleRepository.java")
               ,(cons :start-offset
                      (convert-to-top-offset
@@ -74,7 +74,7 @@
                        *spring-boot-path*
                        "src/main/java/io/spring/core/article/ArticleRepository.java"
                        '((:line . 7) (:offset . -1))))))))
-    (stop-parser parser)))
+    (stop-ast-analyzer ast-analyzer)))
 
 ;; public class NewArticleParam {
 ;;   @DuplicatedArticleConstraint ←[in]
@@ -82,8 +82,8 @@
 ;;   private String title;
 ;; }
 (test find-affected-poss-for-field-annotation
-  (let ((parser (make-parser :java *spring-boot-path* *cache*)))
-    (start-parser parser nil nil)
+  (let ((ast-analyzer (make-ast-analyzer :java *spring-boot-path* *cache*)))
+    (start-ast-analyzer ast-analyzer nil nil)
     (is (equal
           `(((:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
              (:name . "title")
@@ -94,7 +94,7 @@
                       "src/main/java/io/spring/application/article/NewArticleParam.java"
                       '((:line . 19) (:offset . 18))))))
           (find-affected-poss
-            parser
+            ast-analyzer
             `((:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
               ,(cons :start-offset
                      (convert-to-top-offset
@@ -106,7 +106,7 @@
                        *spring-boot-path*
                        "src/main/java/io/spring/application/article/NewArticleParam.java"
                        '((:line . 18) (:offset . -1))))))))
-    (stop-parser parser)))
+    (stop-ast-analyzer ast-analyzer)))
 
 ;; class DuplicatedArticleValidator
 ;;                                    ↓[out]
@@ -119,16 +119,16 @@
 (test find-affected-poss-for-constraint-validator
   (if t
       (skip "TODO: implement")
-      (let ((parser (make-parser :java *spring-boot-path* *cache*)))
-        (start-parser parser nil nil)
+      (let ((ast-analyzer (make-ast-analyzer :java *spring-boot-path* *cache*)))
+        (start-ast-analyzer ast-analyzer nil nil)
         (is (equal
               '(((:path . "src/main/java/io/spring/application/article/DuplicatedArticleValidator.java")
                  (:name . "DuplicatedArticleConstraint") (:line . 10) (:offset . 36)))
               (find-affected-poss
-                parser
+                ast-analyzer
                 '((:path . "src/main/java/io/spring/application/article/DuplicatedArticleValidator.java")
                   (:start . 16) (:end . 16)))))
-        (stop-parser parser))))
+        (stop-ast-analyzer ast-analyzer))))
 
 ;; public class Article {
 ;;   public void update(String title, String description, String body) {
@@ -137,26 +137,26 @@
 (test ignore-affected-poss-when-end-block
   (if t
       (skip "TODO: implement")
-      (let ((parser (make-parser :java *spring-boot-path* *cache*)))
-        (start-parser parser nil nil)
+      (let ((ast-analyzer (make-ast-analyzer :java *spring-boot-path* *cache*)))
+        (start-ast-analyzer ast-analyzer nil nil)
         (is (equal
               nil
               (find-affected-poss
-                parser
+                ast-analyzer
                 '((:path . "src/main/java/io/spring/core/article/Article.java")
                 (:start . 65) (:end . 65)))))
-        (stop-parser parser))))
+        (stop-ast-analyzer ast-analyzer))))
 
 (test get-fq-name-of-declaration
-  (let ((parser (make-parser :java *jvm-path* *cache*)))
-    (start-parser parser nil nil)
+  (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
+    (start-ast-analyzer ast-analyzer nil nil)
     (is (equal
           "jvm.java.Class.method2"
-          (inga/parser/java::get-fq-name-of-declaration
-            (exec-parser parser "java/Class.java")
+          (inga/ast-analyzer/java::get-fq-name-of-declaration
+            (exec-ast-analyzer ast-analyzer "java/Class.java")
             *jvm-path* "method2"
             (convert-to-top-offset
               *jvm-path* "java/Class.java"
               '((:line . 13) (:offset . 17))))))
-    (stop-parser parser)))
+    (stop-ast-analyzer ast-analyzer)))
 

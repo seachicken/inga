@@ -4,7 +4,7 @@
   (:import-from #:inga/cache
                 #:put-value
                 #:get-value)
-  (:import-from #:inga/parser
+  (:import-from #:inga/ast-analyzer
                 #:convert-to-pos
                 #:convert-to-top-offset)
   (:export #:language-client-typescript))

@@ -8,7 +8,6 @@
 (defsystem "inga/test"
   :class :package-inferred-system
   :depends-on ("fiveam"
-               "inga/test/jsx"
                "inga/test/git"
                "inga/test/github"
                "inga/test/file")
