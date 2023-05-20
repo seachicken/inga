@@ -2,7 +2,6 @@
   (:use #:cl
         #:inga/git
         #:inga/github
-        #:inga/jsx
         #:inga/file
         #:inga/utils)
   (:import-from #:jsown)
@@ -287,21 +286,6 @@
 
 (defun key-downcase (obj)
   (mapcar (lambda (p) (cons (string-downcase (car p)) (cdr p))) obj))
-
-(defun inject-mark (project-path component-poss)
-  (loop for pos in component-poss collect
-        (let ((line-no 0))
-              (with-open-file (instream (uiop:merge-pathnames* (cdr (assoc :path pos)) project-path))
-                (with-open-file (outstream (uiop:merge-pathnames* (cdr (assoc :path pos)) project-path)
-                                           :direction :output
-                                           :if-exists :overwrite)
-                  (loop for line = (read-line instream nil) while line collect
-                        (progn
-                          (setq line-no (+ line-no 1))
-                          (if (= line-no (cdr (assoc :line pos)))
-                              (format outstream "~a~%"
-                                      (inject-mark-on-line line (cdr (assoc :offset pos)) 1))
-                              (write-line line outstream)))))))))
 
 (defstruct context
   project-path

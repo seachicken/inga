@@ -2,7 +2,6 @@
   (:nicknames #:inga)
   (:use-reexport
     #:inga/main
-    #:inga/jsx
     #:inga/git
     #:inga/file
     #:inga/errors
