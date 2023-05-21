@@ -79,16 +79,16 @@
                   with ast
                   with target-ast-analyzer
                   with cache
-                  do (progn
-                       (setf target-ast-analyzer (find-ast-analyzer ast-analyzer (namestring path)))
-                       (setf ast (cdr (jsown:parse (uiop:read-file-string path))))
-                       (let ((callers (find-references-by-file target-ast-analyzer path ast pos)))
-                         (when callers
-                           (setf results (append results callers)))))
-                  finally (progn
-                            (put-value (ast-analyzer-cache (first ast-analyzer)) (get-references-key pos)
-                                       (if results results 'empty))
-                            (return (values results nil))))
+                  do
+                  (setf target-ast-analyzer (find-ast-analyzer ast-analyzer (namestring path)))
+                  (setf ast (cdr (jsown:parse (uiop:read-file-string path))))
+                  (let ((callers (find-references-by-file target-ast-analyzer path ast pos)))
+                    (when callers
+                      (setf results (append results callers))))
+                  finally
+                  (put-value (ast-analyzer-cache (first ast-analyzer)) (get-references-key pos)
+                             (if results results 'empty))
+                  (return (values results nil)))
             (if (eq cache 'empty) nil cache))
         (when cache t)))))
 
