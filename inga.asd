@@ -19,12 +19,12 @@
   :class :package-inferred-system
   :depends-on ("fiveam"
                "inga/test/main"
-               "inga/test/parser/typescript"))
+               "inga/test/ast-analyzer/typescript"))
 
 (defsystem "inga/test-java"
   :class :package-inferred-system
   :depends-on ("fiveam"
                "inga/test/main"
-               "inga/test/parser/java"
-               "inga/test/parser/kotlin"))
+               "inga/test/ast-analyzer/java"
+               "inga/test/ast-analyzer/kotlin"))
 

@@ -17,8 +17,6 @@
                 #:make-ast-analyzer
                 #:start-ast-analyzer
                 #:stop-ast-analyzer
-                #:parse
-                #:exec-ast-analyzer
                 #:find-affected-poss
                 #:find-entrypoint
                 #:find-references)

@@ -153,7 +153,7 @@
     (is (equal
           "jvm.java.Class.method2"
           (inga/ast-analyzer/java::get-fq-name-of-declaration
-            (exec-ast-analyzer ast-analyzer "java/Class.java")
+            (cdr (jsown:parse (uiop:read-file-string (get-index-path "java/Class.java"))))
             *jvm-path* "method2"
             (convert-to-top-offset
               *jvm-path* "java/Class.java"

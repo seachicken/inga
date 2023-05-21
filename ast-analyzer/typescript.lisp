@@ -152,18 +152,18 @@
     results))
 
 (defmethod find-entrypoint ((ast-analyzer ast-analyzer-typescript) pos)
-  (let ((top-offset (cdr (assoc :top-offset pos))))
-    (let ((ast (exec-ast-analyzer ast-analyzer (namestring (cdr (assoc :path pos))))))
-      (setf (ast-analyzer-nearest-ast-pos ast-analyzer) nil)
-      (let ((component-pos (find-component ast-analyzer ast top-offset)))
-        (when component-pos
-          (let ((result (list
-                       (cons :path (cdr (assoc :path pos)))
-                       (cons :name (cdr (assoc :name component-pos)))
-                       (cons :top-offset (cdr (assoc :pos component-pos))))))
-            (when (assoc :origin pos)
-              (push (cons :origin (cdr (assoc :origin pos))) result))
-            result))))))
+  (let ((top-offset (cdr (assoc :top-offset pos)))
+        (ast (cdr (jsown:parse (uiop:read-file-string (get-index-path (cdr (assoc :path pos))))))))
+    (setf (ast-analyzer-nearest-ast-pos ast-analyzer) nil)
+    (let ((component-pos (find-component ast-analyzer ast top-offset)))
+      (when component-pos
+        (let ((result (list
+                     (cons :path (cdr (assoc :path pos)))
+                     (cons :name (cdr (assoc :name component-pos)))
+                     (cons :top-offset (cdr (assoc :pos component-pos))))))
+          (when (assoc :origin pos)
+            (push (cons :origin (cdr (assoc :origin pos))) result))
+          result)))))
 
 (defmethod find-references ((ast-analyzer ast-analyzer-typescript) pos))
 

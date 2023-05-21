@@ -17,8 +17,6 @@
            #:ast-analyzer-cache
            #:start-ast-analyzer
            #:stop-ast-analyzer
-           #:parse
-           #:exec-ast-analyzer
            #:find-affected-poss
            #:find-entrypoint
            #:find-caller
@@ -28,7 +26,6 @@
            #:convert-to-top-offset
            #:convert-to-pos
            #:exec-command
-           #:get-parse-key
            #:create-indexes
            #:clean-indexes
            #:get-index-path
@@ -59,23 +56,6 @@
 (defmethod stop-ast-analyzer ((ast-analyzer list))
   (loop for a in ast-analyzer
         do (stop-ast-analyzer a)))
-
-(defgeneric parse (ast-analyzer path)
-  (:method (ast-analyzer path)
-    (exec-command ast-analyzer path)))
-(defmethod parse ((ast-analyzer list) path)
-  (loop for a in ast-analyzer
-    do (let ((a (find-ast-analyzer ast-analyzer path)))
-         (when a
-           (return (parse a path))))))
-
-(defgeneric exec-ast-analyzer (ast-analyzer file-path)
-  (:method (ast-analyzer file-path)
-    (cdr (jsown:parse (uiop:read-file-string (get-index-path file-path))))))
-(defmethod exec-ast-analyzer ((ast-analyzer list) file-path)
-  (let ((a (find-ast-analyzer ast-analyzer file-path)))
-    (when a
-      (exec-ast-analyzer a file-path))))
 
 (defgeneric find-affected-poss (ast-analyzer range))
 (defmethod find-affected-poss ((ast-analyzer list) range)
@@ -175,9 +155,6 @@
   (force-output (uiop:process-info-input (ast-analyzer-process ast-analyzer)))
   (read-line (uiop:process-info-output (ast-analyzer-process ast-analyzer))))
 
-(defun get-parse-key (path)
-  (intern (format nil "parse-~a" path)))
-
 (defun get-references-key (pos)
   (intern (format nil "refs-~a-~a-~a" (cdr (assoc :path pos)) (cdr (assoc :line pos)) (cdr (assoc :offset pos)))))
 
@@ -203,7 +180,7 @@
              (when (is-analysis-target relative-path include exclude)
                (handler-case
                  (alexandria:write-string-into-file
-                   (format nil "~a" (parse ast-analyzer (namestring path)))
+                   (format nil "~a" (exec-command ast-analyzer (namestring path)))
                    (get-index-path relative-path))
                  (error (e)
                         (format t "error: ~a, path: ~a~%" e path)
