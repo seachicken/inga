@@ -39,9 +39,9 @@ jobs:
                                                  (uiop:find-symbol* '#:java
                                                                     :inga/test/main)
                                                  (uiop:find-symbol* '#:java
-                                                                    :inga/test/parser/java)
+                                                                    :inga/test/ast-analyzer/java)
                                                  (uiop:find-symbol* '#:kotlin
-                                                                    :inga/test/parser/kotlin)))
+                                                                    :inga/test/ast-analyzer/kotlin)))
                             (uiop:quit 1))"
 
   test-typescript:
@@ -77,6 +77,6 @@ jobs:
                                                  (uiop:find-symbol* '#:typescript
                                                                     :inga/test/main)
                                                  (uiop:find-symbol* '#:typescript
-                                                                    :inga/test/parser/typescript)))
+                                                                    :inga/test/ast-analyzer/typescript)))
                             (uiop:quit 1))"
 
