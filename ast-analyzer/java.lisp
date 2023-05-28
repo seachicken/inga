@@ -61,7 +61,10 @@
                   (jsown:keyp ast "parent")
                   (equal (cdar (jsown:val ast "parent")) "CLASS") 
                   (equal (cdar ast) "VARIABLE"))
-                (equal (cdar ast) "METHOD"))
+                (and
+                  (equal (cdar ast) "METHOD")
+                  ;; TODO: support constructor reference
+                  (not (equal (jsown:val ast "name") "<init>"))))
               (contains-offset (jsown:val ast "startPos") (jsown:val ast "endPos")
                                start-offset end-offset))
         (when (jsown:keyp ast "name")
