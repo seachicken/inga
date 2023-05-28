@@ -147,6 +147,22 @@
                 (:start . 65) (:end . 65)))))
         (stop-ast-analyzer ast-analyzer))))
 
+(test find-references-to-private-method
+  (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
+    (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
+    (is (equal
+          `(((:path . "java/Class.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *jvm-path* "java/Class.java"
+                      '((:line . 11) (:offset . 9))))))
+          (find-references ast-analyzer
+                           '((:path . "java/Class.java")
+                             (:name . "method2")
+                             (:fq-name . "jvm.java.Class.method2")
+                             (:line . 14) (:offset . 17)))))
+    (stop-ast-analyzer ast-analyzer)))
+
 (test get-fq-name-of-declaration
   (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
     (start-ast-analyzer ast-analyzer nil nil)

@@ -150,32 +150,53 @@
 (defmethod find-reference-pos ((ast-analyzer ast-analyzer-java) index-path root-ast ast target-pos)
   (let ((q (make-queue))
         (target-name (cdr (assoc :name target-pos)))
+        target-obj
         (reference-ast ast)
+        result-pos
         result)
     (enqueue q ast)
     (loop
       (let ((ast (dequeue q)))
         (if (null ast) (return))
 
+        (when (equal (cdar ast) "IDENTIFIER")
+          (setf result target-name) 
+          (setf result-pos (jsown:val ast "pos")))
+
         (when (equal (cdar ast) "MEMBER_SELECT")
           (loop for child in (jsown:val ast "children")
                 do
                 (when (equal (jsown:val child "type") "IDENTIFIER")
                   (setf result target-name)
-                  (setf target-name (jsown:val child "name")))))
+                  (setf target-obj (jsown:val child "name")))))
 
         (when (equal (cdar ast) "CLASS")
           (loop for child in (jsown:val ast "children")
                 do
                 (when (and
                         (equal (jsown:val child "type") "VARIABLE")
-                        (equal (jsown:val child "name") target-name))
+                        (equal (jsown:val child "name") target-obj))
                   (loop for child in (jsown:val child "children")
                         do 
                         (when (equal (jsown:val child "type") "IDENTIFIER")
                           (let ((class-name (jsown:val child "name")))
                             (setf result (format nil "~{~a~^.~}"
-                                                 (remove nil (list class-name result))))))))))
+                                                 (remove nil (list class-name result))))))))
+                (when (and
+                        result-pos
+                        (null target-obj)
+                        (equal (jsown:val child "type") "METHOD")
+                        (equal (jsown:val child "name") target-name))
+                  (let ((fq-name (get-fq-name-of-declaration root-ast
+                                                             (get-original-path index-path)
+                                                             target-name
+                                                             result-pos)))
+                    (when (equal fq-name (cdr (assoc :fq-name target-pos)))
+                      (return-from
+                        find-reference-pos
+                        (list
+                          (cons :path (get-original-path index-path))
+                          (cons :top-offset result-pos))))))))
 
         (when (equal (cdar ast) "COMPILATION_UNIT")
           (loop for child in (jsown:val ast "children")

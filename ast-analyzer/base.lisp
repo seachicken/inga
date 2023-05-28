@@ -82,9 +82,9 @@
                   do
                   (setf target-ast-analyzer (find-ast-analyzer ast-analyzer (namestring path)))
                   (setf ast (cdr (jsown:parse (uiop:read-file-string path))))
-                  (let ((callers (find-references-by-file target-ast-analyzer path ast pos)))
-                    (when callers
-                      (setf results (append results callers))))
+                  (let ((references (find-references-by-file target-ast-analyzer path ast pos)))
+                    (when references
+                      (setf results (append results references))))
                   finally
                   (put-value (ast-analyzer-cache (first ast-analyzer)) (get-references-key pos)
                              (if results results 'empty))
@@ -104,7 +104,7 @@
     (enqueue q ast)
     (loop
       (let ((ast (dequeue q)))
-        (if (null ast) (return))
+        (when (null ast) (return))
 
         (when (matches-reference-name ast-analyzer ast target-name)
           (let ((found-reference-pos (find-reference-pos ast-analyzer index-path root-ast ast target-pos)))
@@ -156,7 +156,7 @@
   (read-line (uiop:process-info-output (ast-analyzer-process ast-analyzer))))
 
 (defun get-references-key (pos)
-  (intern (format nil "refs-~a-~a-~a" (cdr (assoc :path pos)) (cdr (assoc :line pos)) (cdr (assoc :offset pos)))))
+  (intern (format nil "refs-~a-~a" (cdr (assoc :path pos)) (cdr (assoc :top-offset pos)))))
 
 (defmethod find-ast-analyzer (ast-analyzer file-path)
   ast-analyzer)
