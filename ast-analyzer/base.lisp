@@ -17,7 +17,7 @@
            #:ast-analyzer-cache
            #:start-ast-analyzer
            #:stop-ast-analyzer
-           #:find-affected-poss
+           #:find-definitions
            #:find-entrypoint
            #:find-caller
            #:find-references
@@ -57,11 +57,11 @@
   (loop for a in ast-analyzer
         do (stop-ast-analyzer a)))
 
-(defgeneric find-affected-poss (ast-analyzer range))
-(defmethod find-affected-poss ((ast-analyzer list) range)
+(defgeneric find-definitions (ast-analyzer range))
+(defmethod find-definitions ((ast-analyzer list) range)
   (let ((a (find-ast-analyzer ast-analyzer (cdr (assoc :path range)))))
     (when a
-      (find-affected-poss a range))))
+      (find-definitions a range))))
 
 (defgeneric find-entrypoint (ast-analyzer pos))
 (defmethod find-entrypoint ((ast-analyzer list) pos))

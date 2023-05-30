@@ -25,7 +25,7 @@
   (clean-indexes)
   (uiop:close-streams (ast-analyzer-process ast-analyzer)))
 
-(defmethod find-affected-poss ((ast-analyzer ast-analyzer-typescript) range)
+(defmethod find-definitions ((ast-analyzer ast-analyzer-typescript) range)
   (let ((q (make-queue))
         (src-path (cdr (assoc :path range)))
         (index-path (get-index-path (cdr (assoc :path range))))

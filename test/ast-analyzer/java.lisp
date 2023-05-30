@@ -18,7 +18,7 @@
 ;;     ArticleData articleData = articleReadService.findById(id); ←[in]
 ;;   }
 ;; }
-(test find-affected-poss-for-method
+(test find-definitions-for-method
   (let ((ast-analyzer (make-ast-analyzer :java *spring-boot-path* *cache*)))
     (start-ast-analyzer ast-analyzer nil nil)
     (is (equal
@@ -30,7 +30,7 @@
                       *spring-boot-path*
                       "src/main/java/io/spring/application/ArticleQueryService.java"
                       '((:line . 30) (:offset . 32))))))
-          (find-affected-poss
+          (find-definitions
             ast-analyzer
             `((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
               ,(cons :start-offset
@@ -49,7 +49,7 @@
 ;;        ↓[out]
 ;;   void save(Article article); ←[in]
 ;; }
-(test find-affected-poss-for-interface
+(test find-definitions-for-interface
   (let ((ast-analyzer (make-ast-analyzer :java *spring-boot-path* *cache*)))
     (start-ast-analyzer ast-analyzer nil nil)
     (is (equal
@@ -61,7 +61,7 @@
                       *spring-boot-path*
                       "src/main/java/io/spring/core/article/ArticleRepository.java"
                       '((:line . 7) (:offset . 8))))))
-          (find-affected-poss
+          (find-definitions
             ast-analyzer
             `((:path . "src/main/java/io/spring/core/article/ArticleRepository.java")
               ,(cons :start-offset
@@ -81,7 +81,7 @@
 ;;                  ↓[out]
 ;;   private String title;
 ;; }
-(test find-affected-poss-for-field-annotation
+(test find-definitions-for-field-annotation
   (let ((ast-analyzer (make-ast-analyzer :java *spring-boot-path* *cache*)))
     (start-ast-analyzer ast-analyzer nil nil)
     (is (equal
@@ -93,7 +93,7 @@
                       *spring-boot-path*
                       "src/main/java/io/spring/application/article/NewArticleParam.java"
                       '((:line . 19) (:offset . 18))))))
-          (find-affected-poss
+          (find-definitions
             ast-analyzer
             `((:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
               ,(cons :start-offset
@@ -116,7 +116,7 @@
 ;;     return true; ←[in]
 ;;   }
 ;; }
-(test find-affected-poss-for-constraint-validator
+(test find-definitions-for-constraint-validator
   (if t
       (skip "TODO: implement")
       (let ((ast-analyzer (make-ast-analyzer :java *spring-boot-path* *cache*)))
@@ -124,7 +124,7 @@
         (is (equal
               '(((:path . "src/main/java/io/spring/application/article/DuplicatedArticleValidator.java")
                  (:name . "DuplicatedArticleConstraint") (:line . 10) (:offset . 36)))
-              (find-affected-poss
+              (find-definitions
                 ast-analyzer
                 '((:path . "src/main/java/io/spring/application/article/DuplicatedArticleValidator.java")
                   (:start . 16) (:end . 16)))))
@@ -141,7 +141,7 @@
         (start-ast-analyzer ast-analyzer nil nil)
         (is (equal
               nil
-              (find-affected-poss
+              (find-definitions
                 ast-analyzer
                 '((:path . "src/main/java/io/spring/core/article/Article.java")
                 (:start . 65) (:end . 65)))))

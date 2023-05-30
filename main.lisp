@@ -17,7 +17,7 @@
                 #:make-ast-analyzer
                 #:start-ast-analyzer
                 #:stop-ast-analyzer
-                #:find-affected-poss
+                #:find-definitions
                 #:find-entrypoint
                 #:find-references)
   (:import-from #:inga/cache
@@ -42,8 +42,8 @@
 (defparameter *cache* (make-cache *cache-max-size*))
 
 (defparameter *debug-parse* (inga/utils::make-measuring-time))
-(defparameter *debug-find-affected-poss* (inga/utils::make-measuring-time))
-(defparameter *debug-find-refs* (inga/utils::make-measuring-time))
+(defparameter *debug-find-definitions* (inga/utils::make-measuring-time))
+(defparameter *debug-find-references* (inga/utils::make-measuring-time))
 
 (define-condition inga-error-option-not-found (inga-error) ())
 
@@ -76,12 +76,12 @@
                                 exclude))))
           (let ((results (time (analyze ctx diffs))))
             (log-debug (format nil "cache size: ~a/~a" (size *cache*) *cache-max-size*))
-            (log-debug (format nil "measuring time:~%  find-affected-poss: [times: ~a, avg-sec: ~f]~%  find-refs: [times: ~a, avg-sec: ~f, cache-hit: ~a]"
-                               (inga/utils::measuring-time-times *debug-find-affected-poss*)
-                               (inga/utils::avg-sec *debug-find-affected-poss*)
-                               (inga/utils::measuring-time-times *debug-find-refs*)
-                               (inga/utils::avg-sec *debug-find-refs*)
-                               (inga/utils::measuring-time-cache-hit *debug-find-refs*)))
+            (log-debug (format nil "measuring time:~%  find-definitions: [times: ~a, avg-sec: ~f]~%  find-references: [times: ~a, avg-sec: ~f, cache-hit: ~a]"
+                               (inga/utils::measuring-time-times *debug-find-definitions*)
+                               (inga/utils::avg-sec *debug-find-definitions*)
+                               (inga/utils::measuring-time-times *debug-find-references*)
+                               (inga/utils::avg-sec *debug-find-references*)
+                               (inga/utils::measuring-time-cache-hit *debug-find-references*)))
             (ensure-directories-exist "reports/")
             (with-open-file (out "reports/report.json"
                                  :direction :output
@@ -216,17 +216,17 @@
                                 (push (cons :origin pos) pos))
                               (find-entrypoints ctx pos q))
                             (inga/utils::measure
-                              *debug-find-affected-poss*
-                              (lambda () (find-affected-poss (context-ast-analyzer ctx) range)))))))))
+                              *debug-find-definitions*
+                              (lambda () (find-definitions (context-ast-analyzer ctx) range)))))))))
 
 (defun find-entrypoints (ctx pos q)
   (let ((refs (inga/utils::measure
-                *debug-find-refs*
+                *debug-find-references*
                 (lambda () (find-references (context-ast-analyzer ctx) pos))))
         results)
     (unless refs
       (setf refs (inga/utils::measure
-                   *debug-find-refs*
+                   *debug-find-references*
                    (lambda () (references-client (context-lc ctx) pos)))))
 
     (setf refs (remove nil (mapcar (lambda (ref)

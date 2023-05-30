@@ -19,7 +19,7 @@
 ;;       return 0 ←[in]
 ;;     }
 ;; }
-(test find-affected-poss-for-method
+(test find-definitions-for-method
   (let ((ast-analyzer (make-ast-analyzer :java *fixtures-path* *cache*)))
     (start-ast-analyzer ast-analyzer '("*.kt") nil)
     (is (equal
@@ -30,7 +30,7 @@
                     (convert-to-top-offset
                       *fixtures-path* "declaration.kt"
                       '((:line . 6) (:offset . 5)))))) ;; FIXME: actual offset is 9
-          (find-affected-poss
+          (find-definitions
             ast-analyzer
             `((:path . "declaration.kt")
               ,(cons :start-offset

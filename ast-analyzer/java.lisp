@@ -37,7 +37,7 @@
   (clean-indexes)
   (uiop:close-streams (ast-analyzer-process ast-analyzer)))
 
-(defmethod find-affected-poss ((ast-analyzer ast-analyzer-java) range)
+(defmethod find-definitions ((ast-analyzer ast-analyzer-java) range)
   (let ((q (make-queue))
         (src-path (cdr (assoc :path range)))
         (index-path (get-index-path (cdr (assoc :path range))))

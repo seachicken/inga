@@ -16,7 +16,7 @@
 ;; const article = {
 ;;   title: "Hello" ←[in]
 ;; };
-(test find-affected-poss-for-variable-object-literal-expression
+(test find-definitions-for-variable-object-literal-expression
   (let ((ast-analyzer (make-ast-analyzer :typescript *nestjs-path* *cache*)))
     (start-ast-analyzer ast-analyzer inga/main::*include-typescript* nil)
     (is (equal
@@ -27,7 +27,7 @@
                       *nestjs-path*
                       "src/article/article.service.ts"
                       '((:line . 7) (:offset . 7))))))
-          (find-affected-poss
+          (find-definitions
             ast-analyzer
             `((:path . "src/article/article.service.ts")
               ,(cons :start-offset
@@ -48,7 +48,7 @@
 ;;     if (textInput.current === null) return ←[in]
 ;;   }
 ;; }
-(test find-affected-poss-for-function
+(test find-definitions-for-function
   (let ((ast-analyzer (make-ast-analyzer :typescript *react-path* *cache*)))
     (start-ast-analyzer ast-analyzer inga/main::*include-typescript* nil)
     (is (equal
@@ -59,7 +59,7 @@
                       *react-path*
                       "src/App/NewTodoInput/index.tsx"
                       '((:line . 12) (:offset . 12))))))
-          (find-affected-poss
+          (find-definitions
             ast-analyzer
             `((:path . "src/App/NewTodoInput/index.tsx")
               ,(cons :start-offset
@@ -78,7 +78,7 @@
 ;; export const User = createParamDecorator((data: any) => {
 ;;   const a = 0; ←[in]
 ;; });
-(test find-affected-poss-for-variable-call-expression
+(test find-definitions-for-variable-call-expression
   (let ((ast-analyzer (make-ast-analyzer :typescript *nestjs-path* *cache*)))
     (start-ast-analyzer ast-analyzer inga/main::*include-typescript* nil)
     (is (equal
@@ -89,7 +89,7 @@
                       *nestjs-path*
                       "src/user/user.decorator.ts"
                       '((:line . 5) (:offset . 14))))))
-          (find-affected-poss
+          (find-definitions
             ast-analyzer
             `((:path . "src/user/user.decorator.ts")
               ,(cons :start-offset
@@ -108,7 +108,7 @@
 ;; const [a, b] = f(
 ;;   list.forEach((a) => a) ←[in]
 ;; );
-(test find-affected-poss-for-variable-call-expression-array
+(test find-definitions-for-variable-call-expression-array
   (let ((ast-analyzer (make-ast-analyzer :typescript *fixtures-path* *cache*)))
     (start-ast-analyzer ast-analyzer inga/main::*include-typescript* nil)
     (is (equal
@@ -119,7 +119,7 @@
                       *fixtures-path*
                       "declaration.ts"
                       '((:line . 4) (:offset . 8))))))
-          (find-affected-poss
+          (find-definitions
             ast-analyzer
             `((:path . "declaration.ts")
               ,(cons :start-offset
@@ -140,7 +140,7 @@
 ;;     return t ←[in]
 ;;   })
 ;; }
-(test find-affected-poss-for-variable-arrow-function
+(test find-definitions-for-variable-arrow-function
   (let ((ast-analyzer (make-ast-analyzer :typescript *react-path* *cache*)))
     (start-ast-analyzer ast-analyzer inga/main::*include-typescript* nil)
     (is (equal
@@ -151,7 +151,7 @@
                       *react-path*
                       "src/App/TodoList/Item/index.tsx"
                       '((:line . 62) (:offset . 9))))))
-          (find-affected-poss
+          (find-definitions
             ast-analyzer
             `((:path . "src/App/TodoList/Item/index.tsx")
               ,(cons :start-offset
@@ -170,7 +170,7 @@
 ;; const f2 = () => {
 ;;   return; ←[in]
 ;; };
-(test find-affected-poss-for-variable-arrow-function-return-undefined
+(test find-definitions-for-variable-arrow-function-return-undefined
   (let ((ast-analyzer (make-ast-analyzer :typescript *fixtures-path* *cache*)))
     (start-ast-analyzer ast-analyzer inga/main::*include-typescript* nil)
     (is (equal
@@ -181,7 +181,7 @@
                       *fixtures-path*
                       "declaration.ts"
                       '((:line . 8) (:offset . 7))))))
-          (find-affected-poss
+          (find-definitions
             ast-analyzer
             `((:path . "declaration.ts")
               ,(cons :start-offset
@@ -202,7 +202,7 @@
 ;;     const andQueries = this.buildFindAllQuery(query); ←[in]
 ;;   }
 ;; }
-(test find-affected-poss-for-method
+(test find-definitions-for-method
   (let ((ast-analyzer (make-ast-analyzer :typescript *nestjs-path* *cache*)))
     (start-ast-analyzer ast-analyzer inga/main::*include-typescript* nil)
     (is (equal
@@ -213,7 +213,7 @@
                       *nestjs-path*
                       "src/article/article.service.ts"
                       '((:line . 45) (:offset . 9))))))
-          (find-affected-poss
+          (find-definitions
             ast-analyzer
             `((:path . "src/article/article.service.ts")
               ,(cons :start-offset
