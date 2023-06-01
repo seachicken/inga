@@ -14,4 +14,9 @@ public class Class {
     public void method2() {
         new Class().method();
     }
+
+    public Class variable() {
+        Class variable = new Class();
+        return variable;
+    }
 }

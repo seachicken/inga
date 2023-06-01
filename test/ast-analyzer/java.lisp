@@ -163,6 +163,18 @@
                              (:line . 14) (:offset . 17)))))
     (stop-ast-analyzer ast-analyzer)))
 
+(test the-return-name-is-not-included-in-references
+  (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
+    (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
+    (is (equal
+          nil 
+          (find-references ast-analyzer
+                           '((:path . "java/Class.java")
+                             (:name . "variable")
+                             (:fq-name . "jvm.java.Class.variable")
+                             (:line . 18) (:offset . 18)))))
+    (stop-ast-analyzer ast-analyzer)))
+
 (test get-fq-name-of-declaration
   (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
     (start-ast-analyzer ast-analyzer nil nil)

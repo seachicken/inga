@@ -173,6 +173,18 @@
                   (setf result target-name)
                   (setf target-obj (jsown:val child "name")))))
 
+        (when (equal (cdar ast) "METHOD")
+          (loop for child in (jsown:val ast "children")
+                do
+                (when (and
+                        (equal (jsown:val child "type") "VARIABLE")
+                        (equal (jsown:val child "name") target-name))
+                  (return-from find-reference-pos))
+                (when (and
+                        (equal (jsown:val child "type") "RETURN")
+                        (find target-name (jsown:val child "children")))
+                  (return-from find-reference-pos))))
+
         (when (equal (cdar ast) "CLASS")
           (loop for child in (jsown:val ast "children")
                 do
