@@ -157,10 +157,13 @@
                       *jvm-path* "java/Class.java"
                       '((:line . 11) (:offset . 9))))))
           (find-references ast-analyzer
-                           '((:path . "java/Class.java")
+                           `((:path . "java/Class.java")
                              (:name . "method2")
                              (:fq-name . "jvm.java.Class.method2")
-                             (:line . 14) (:offset . 17)))))
+                             (:top-offset ,(convert-to-top-offset
+                                             *jvm-path*
+                                             "java/Class.java"
+                                             '((:line . 14) (:offset . 17))))))))
     (stop-ast-analyzer ast-analyzer)))
 
 (test the-return-name-is-not-included-in-references
@@ -169,10 +172,13 @@
     (is (equal
           nil 
           (find-references ast-analyzer
-                           '((:path . "java/Class.java")
+                           `((:path . "java/Class.java")
                              (:name . "variable")
                              (:fq-name . "jvm.java.Class.variable")
-                             (:line . 18) (:offset . 18)))))
+                             (:top-offset ,(convert-to-top-offset
+                                             *jvm-path*
+                                             "java/Class.java"
+                                             '((:line . 18) (:offset . 18))))))))
     (stop-ast-analyzer ast-analyzer)))
 
 (test get-fq-name-of-declaration
