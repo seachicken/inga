@@ -75,8 +75,8 @@
                                        (cons :path src-path)
                                        (cons :name (jsown:val ast "name"))
                                        (cons :fq-name (get-fq-name-of-declaration
-                                                        root-ast (ast-analyzer-path ast-analyzer)
-                                                        (jsown:val ast "name") (jsown:val ast "pos")))
+                                                        root-ast
+                                                        (jsown:val ast "pos")))
                                        (cons :top-offset (jsown:val ast "pos")))))
                             (when (assoc :origin range)
                               (push (cons :origin (cdr (assoc :origin range))) pos))
@@ -144,69 +144,115 @@
 (defmethod find-entrypoint ((ast-analyzer ast-analyzer-java) pos))
 
 (defmethod matches-reference-name ((ast-analyzer ast-analyzer-java) ast target-name)
-  (and
-    (or
-      (equal (cdar ast) "MEMBER_SELECT") 
-      (equal (cdar ast) "IDENTIFIER"))
-    (equal (jsown:val ast "name") target-name)))
+  (when (equal (cdar ast) "METHOD_INVOCATION")
+    (loop for child in (jsown:val ast "children")
+          do
+          (when (equal (jsown:val child "type") "IDENTIFIER")
+            (return (equal (jsown:val child "name") target-name)))  
+          (when (equal (jsown:val child "type") "MEMBER_SELECT")
+            (return (equal (jsown:val child "name") target-name))))))
 
 (defmethod find-reference-pos ((ast-analyzer ast-analyzer-java) index-path root-ast ast target-pos)
   (let ((q (make-queue))
         (target-name (cdr (assoc :name target-pos)))
         target-obj
         (reference-ast ast)
-        result-pos
-        result)
+        class-name
+        params
+        name-with-params
+        result-pos)
     (enqueue q ast)
     (loop
       (let ((ast (dequeue q)))
         (if (null ast) (return))
 
-        (when (equal (cdar ast) "IDENTIFIER")
-          (setf result target-name) 
-          (setf result-pos (jsown:val ast "pos")))
-
-        (when (equal (cdar ast) "MEMBER_SELECT")
+        (when (equal (cdar ast) "METHOD_INVOCATION")
           (loop for child in (jsown:val ast "children")
+                with has-set-name
+                with placeholder-i = 0
                 do
+                (let ((name (if (equal (jsown:val child "type") "STRING_LITERAL")
+                                "String"
+                                (and (jsown:keyp child "name") (jsown:val child "name")))))
+                  (when (equal (jsown:val child "type") "IDENTIFIER")
+                      (setf params (append params (list name)))
+                      (when has-set-name
+                        (setf name (format nil "%~a" placeholder-i))
+                        (setf placeholder-i (1+ placeholder-i))))
+                  (setf name-with-params (format nil "~{~a~^-~}"
+                                                 (remove nil (list name-with-params name)))))
+                (setf has-set-name t)
                 (when (equal (jsown:val child "type") "IDENTIFIER")
-                  (setf result target-name)
-                  (setf target-obj (jsown:val child "name")))))
+                  (setf result-pos (jsown:val child "pos")))
+                (when (equal (jsown:val child "type") "MEMBER_SELECT")
+                  (setf result-pos (jsown:val child "pos")) 
+                  (loop for child in (jsown:val child "children")
+                        do
+                        (when (equal (jsown:val child "type") "IDENTIFIER")
+                          (setf result-pos (jsown:val child "pos")) 
+                          (setf target-obj (jsown:val child "name")))
+                        (when (equal (jsown:val child "type") "NEW_CLASS")
+                          (setf class-name (jsown:val child "name")))))))
 
         (when (equal (cdar ast) "METHOD")
           (loop for child in (jsown:val ast "children")
                 do
-                (when (and
-                        (equal (jsown:val child "type") "VARIABLE")
-                        (equal (jsown:val child "name") target-name))
-                  (return-from find-reference-pos))
-                (when (and
-                        (equal (jsown:val child "type") "RETURN")
-                        (find target-name (jsown:val child "children")))
-                  (return-from find-reference-pos))))
+                (when (equal (jsown:val child "type") "VARIABLE")
+                  (let ((found-param-i
+                          (position (jsown:val child "name") params :test #'equal)))
+                    (when found-param-i
+                      (loop for child in (jsown:val child "children")
+                            do
+                            (setf name-with-params
+                                  (ppcre:regex-replace-all
+                                    (format nil "%~a" found-param-i)
+                                    name-with-params
+                                    (jsown:val child "name")))))))
+                (when (equal (jsown:val child "type") "BLOCK")
+                  (loop for child in (jsown:val child "children")
+                        do
+                        (when (equal (jsown:val child "type") "VARIABLE")
+                          (let ((found-param-i
+                                  (position (jsown:val child "name") params :test #'equal)))
+                            (when found-param-i
+                              (loop for child in (jsown:val child "children")
+                                    do
+                                    (when (equal (jsown:val child "type") "IDENTIFIER")
+                                      (setf name-with-params
+                                            (ppcre:regex-replace-all
+                                              (format nil "%~a" found-param-i)
+                                              name-with-params
+                                              (jsown:val child "name"))))))))
+                        (when (and
+                                (equal (jsown:val child "type") "VARIABLE")
+                                (equal (jsown:val child "name") target-name))
+                          (return-from find-reference-pos))
+                        (when (and
+                                (equal (jsown:val child "type") "RETURN")
+                                (find target-name (jsown:val child "children")))
+                          (return-from find-reference-pos))))))
 
         (when (equal (cdar ast) "CLASS")
           (loop for child in (jsown:val ast "children")
                 do
                 (when (and
                         (equal (jsown:val child "type") "VARIABLE")
-                        (equal (jsown:val child "name") target-obj))
+                        (or
+                          (equal (jsown:val child "name") target-obj)
+                          (find (jsown:val child "name") params)))
                   (loop for child in (jsown:val child "children")
                         do 
                         (when (equal (jsown:val child "type") "IDENTIFIER")
-                          (let ((class-name (jsown:val child "name")))
-                            (setf result (format nil "~{~a~^.~}"
-                                                 (remove nil (list class-name result))))))))
+                          (setf class-name (jsown:val child "name")))))
                 (when (and
                         result-pos
                         (null target-obj)
-                        (equal (jsown:val child "type") "METHOD")
-                        (equal (jsown:val child "name") target-name))
+                        (equal (jsown:val child "type") "METHOD"))
                   (let ((fq-name (get-fq-name-of-declaration root-ast
-                                                             (get-original-path index-path)
-                                                             target-name
-                                                             result-pos)))
-                    (when (equal fq-name (cdr (assoc :fq-name target-pos)))
+                                                             (jsown:val child "pos"))))
+                    (when (and
+                            (equal (car (last (split #\. fq-name))) name-with-params)
+                            (equal fq-name (cdr (assoc :fq-name target-pos))))
                       (return-from
                         find-reference-pos
                         (list
@@ -215,31 +261,33 @@
 
         (when (equal (cdar ast) "COMPILATION_UNIT")
           (loop for child in (jsown:val ast "children")
-                with class-name = (first (split #\. result))
                 do
                 (when (and
                         (equal (jsown:val child "type") "IMPORT")
                         (equal (car (last (split #\. (jsown:val child "fqName")))) class-name))
                   (let ((split-import-names (split #\. (jsown:val child "fqName")))
-                        fq-name)
+                        fq-name
+                        params)
                     (setf fq-name 
-                          (format nil "~{~a~^.~}"
-                                  (append (subseq split-import-names
-                                                  0 
-                                                  (1- (length split-import-names)))
-                                          (list result))))
+                          (concatenate
+                            'string
+                            (format nil "~{~a~^.~}"
+                                    (append (subseq split-import-names
+                                                    0 
+                                                    (1- (length split-import-names)))
+                                            (list class-name name-with-params)))))
                     (when (equal fq-name (cdr (assoc :fq-name target-pos)))
                       (return-from
                         find-reference-pos
                         (list
                           (cons :path (get-original-path index-path))
-                          (cons :top-offset (jsown:val reference-ast "pos")))))))))
+                          (cons :top-offset result-pos))))))))
 
         (when (jsown:keyp ast "parent")
           (enqueue q (jsown:val ast "parent")))))))
 
-(defun get-fq-name-of-declaration (ast root-path name top-offset)
-  (let ((stack (list ast))
+(defun get-fq-name-of-declaration (root-ast top-offset)
+  (let ((stack (list root-ast))
         result)
     (loop
       (let ((ast (pop stack)))
@@ -254,10 +302,16 @@
 
         (when (and
                 (jsown:keyp ast "name")
-                (equal (jsown:val ast "name") name)
-                (<= (jsown:val ast "startPos") top-offset)
-                (>= (jsown:val ast "endPos") top-offset))
+                (= (jsown:val ast "pos") top-offset))
           (setf result (format nil "~{~a~^.~}" (remove nil (list result (jsown:val ast "name"))))) 
+          (when (equal (cdar ast) "METHOD")
+            (loop for child in (jsown:val ast "children")
+                  do
+                  (when (equal (jsown:val child "type") "VARIABLE")
+                    (loop for child in (jsown:val child "children")
+                          do
+                          (when (jsown:keyp child "name")
+                            (setf result (concatenate 'string result "-" (jsown:val child "name"))))))))
           (return-from get-fq-name-of-declaration result))
 
         (loop for child in (jsown:val ast "children")

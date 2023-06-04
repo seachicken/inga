@@ -1,5 +1,6 @@
 package jvm.java;
 
+import jvm.java.Overload;
 import jvm.kotlin.a.Class;
 
 public class Class {
@@ -8,6 +9,7 @@ public class Class {
     public void method() {
         classA.method();
         new Class().method();
+        new Overload().method(0);
         method2();
     }
 

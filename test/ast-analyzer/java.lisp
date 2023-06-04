@@ -24,7 +24,7 @@
     (is (equal
           `(((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
              (:name . "findById")
-             (:fq-name . "io.spring.application.ArticleQueryService.findById")
+             (:fq-name . "io.spring.application.ArticleQueryService.findById-String-User")
              ,(cons :top-offset
                     (convert-to-top-offset
                       *spring-boot-path*
@@ -55,7 +55,7 @@
     (is (equal
           `(((:path . "src/main/java/io/spring/core/article/ArticleRepository.java")
              (:name . "save")
-             (:fq-name . "io.spring.core.article.ArticleRepository.save")
+             (:fq-name . "io.spring.core.article.ArticleRepository.save-Article")
              ,(cons :top-offset
                     (convert-to-top-offset
                       *spring-boot-path*
@@ -108,6 +108,33 @@
                        '((:line . 18) (:offset . -1))))))))
     (stop-ast-analyzer ast-analyzer)))
 
+(test find-definitions-for-overload
+  (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
+    (start-ast-analyzer ast-analyzer nil nil)
+    (is (equal
+          `(((:path . "java/Overload.java")
+             (:name . "method")
+             (:fq-name . "jvm.java.Overload.method-INT")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *jvm-path*
+                      "java/Overload.java"
+                      '((:line . 4) (:offset . 19))))))
+          (find-definitions
+            ast-analyzer
+            `((:path . "java/Overload.java")
+              ,(cons :start-offset
+                     (convert-to-top-offset
+                       *jvm-path*
+                       "java/Overload.java"
+                       '((:line . 5) (:offset . 0))))
+              ,(cons :end-offset
+                     (convert-to-top-offset
+                       *jvm-path*
+                       "java/Overload.java"
+                       '((:line . 5) (:offset . -1))))))))
+    (stop-ast-analyzer ast-analyzer)))
+
 ;; class DuplicatedArticleValidator
 ;;                                    ↓[out]
 ;;     implements ConstraintValidator<DuplicatedArticleConstraint, String> {
@@ -147,6 +174,25 @@
                 (:start . 65) (:end . 65)))))
         (stop-ast-analyzer ast-analyzer))))
 
+(test find-references-to-imported-method
+  (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
+    (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
+    (is (equal
+          `(((:path . "java/Class.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *jvm-path* "java/Class.java"
+                      '((:line . 12) (:offset . 23))))))
+          (find-references ast-analyzer
+                           `((:path . "java/Overload.java")
+                             (:name . "method")
+                             (:fq-name . "jvm.java.Overload.method-INT")
+                             (:top-offset ,(convert-to-top-offset
+                                             *jvm-path*
+                                             "java/Overload.java"
+                                             '((:line . 4) (:offset . 19))))))))
+    (stop-ast-analyzer ast-analyzer)))
+
 (test find-references-to-private-method
   (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
     (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
@@ -155,7 +201,7 @@
              ,(cons :top-offset
                     (convert-to-top-offset
                       *jvm-path* "java/Class.java"
-                      '((:line . 11) (:offset . 9))))))
+                      '((:line . 13) (:offset . 9))))))
           (find-references ast-analyzer
                            `((:path . "java/Class.java")
                              (:name . "method2")
@@ -163,7 +209,7 @@
                              (:top-offset ,(convert-to-top-offset
                                              *jvm-path*
                                              "java/Class.java"
-                                             '((:line . 14) (:offset . 17))))))))
+                                             '((:line . 16) (:offset . 17))))))))
     (stop-ast-analyzer ast-analyzer)))
 
 (test the-return-name-is-not-included-in-references
@@ -181,6 +227,25 @@
                                              '((:line . 18) (:offset . 18))))))))
     (stop-ast-analyzer ast-analyzer)))
 
+(test find-references-to-overload-method
+  (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
+    (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
+    (is (equal
+          `(((:path . "java/Overload.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *jvm-path* "java/Overload.java"
+                      '((:line . 5) (:offset . 16))))))
+          (find-references ast-analyzer
+                           `((:path . "java/Overload.java")
+                             (:name . "method")
+                             (:fq-name . "jvm.java.Overload.method-String")
+                             (:top-offset ,(convert-to-top-offset
+                                             *jvm-path*
+                                             "java/Overload.java"
+                                             '((:line . 8) (:offset . 19))))))))
+    (stop-ast-analyzer ast-analyzer)))
+
 (test get-fq-name-of-declaration
   (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
     (start-ast-analyzer ast-analyzer nil nil)
@@ -188,9 +253,20 @@
           "jvm.java.Class.method2"
           (inga/ast-analyzer/java::get-fq-name-of-declaration
             (cdr (jsown:parse (uiop:read-file-string (get-index-path "java/Class.java"))))
-            *jvm-path* "method2"
             (convert-to-top-offset
               *jvm-path* "java/Class.java"
-              '((:line . 13) (:offset . 17))))))
+              '((:line . 16) (:offset . 17))))))
+    (stop-ast-analyzer ast-analyzer)))
+
+(test get-fq-name-of-declaration-with-params
+  (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
+    (start-ast-analyzer ast-analyzer nil nil)
+    (is (equal
+          "jvm.java.Overload.method-INT"
+          (inga/ast-analyzer/java::get-fq-name-of-declaration
+            (cdr (jsown:parse (uiop:read-file-string (get-index-path "java/Overload.java"))))
+            (convert-to-top-offset
+              *jvm-path* "java/Overload.java"
+              '((:line . 4) (:offset . 19))))))
     (stop-ast-analyzer ast-analyzer)))
 
