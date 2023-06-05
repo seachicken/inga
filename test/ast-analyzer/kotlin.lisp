@@ -56,7 +56,17 @@
              ,(cons :top-offset
                     (convert-to-top-offset
                       *jvm-path* "java/Class.java"
-                      '((:line . 9) (:offset . 15))))) ;; FIXME: should be 9, 16
+                      '((:line . 10) (:offset . 15)))))
+            ((:path . "java/Class.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *jvm-path* "java/Class.java"
+                      '((:line . 11) (:offset . 20)))))
+            ((:path . "java/Class.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *jvm-path* "java/Class.java"
+                      '((:line . 17) (:offset . 20)))))
             ((:path . "kotlin/a/PrimaryConstructor.kt")
              ,(cons :top-offset
                     (convert-to-top-offset

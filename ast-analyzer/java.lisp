@@ -189,7 +189,6 @@
                   (loop for child in (jsown:val child "children")
                         do
                         (when (equal (jsown:val child "type") "IDENTIFIER")
-                          (setf result-pos (jsown:val child "pos")) 
                           (setf target-obj (jsown:val child "name")))
                         (when (equal (jsown:val child "type") "NEW_CLASS")
                           (setf class-name (jsown:val child "name")))))))
