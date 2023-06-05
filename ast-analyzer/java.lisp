@@ -166,7 +166,7 @@
       (let ((ast (dequeue q)))
         (if (null ast) (return))
 
-        (when (equal (cdar ast) "METHOD_INVOCATION")
+        (when (eq (jsown:val ast "pos") (jsown:val reference-ast "pos"))
           (loop for child in (jsown:val ast "children")
                 with has-set-name
                 with placeholder-i = 0
