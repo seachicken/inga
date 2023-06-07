@@ -47,7 +47,11 @@
         root-ast
         annotation-pos
         results)
-    (setf ast (cdr (jsown:parse (uiop:read-file-string index-path))))
+    (handler-case
+      (setf ast (cdr (jsown:parse (uiop:read-file-string index-path))))
+      (error (e)
+             (format t "~a~%" e)
+             (return-from find-definitions)))
     (setf root-ast ast)
     (enqueue q ast)
     (loop

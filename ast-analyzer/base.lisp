@@ -81,7 +81,12 @@
                   with cache
                   do
                   (setf target-ast-analyzer (find-ast-analyzer ast-analyzer (namestring path)))
-                  (setf ast (cdr (jsown:parse (uiop:read-file-string path))))
+                  (handler-case
+                    (setf ast (cdr (jsown:parse (alexandria:read-file-into-string path))))
+                    (error (e)
+                           (format t "~a~%" e)
+                           (return (values results nil))))
+
                   (let ((references (find-references-by-file target-ast-analyzer path ast pos)))
                     (when references
                       (setf results (append results references))))

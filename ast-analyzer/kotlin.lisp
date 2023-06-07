@@ -31,7 +31,11 @@
         (end-offset (cdr (assoc :end-offset range)))
         ast
         results)
-    (setf ast (cdr (jsown:parse (uiop:read-file-string index-path))))
+    (handler-case
+      (setf ast (cdr (jsown:parse (uiop:read-file-string index-path))))
+      (error (e)
+             (format t "~a~%" e)
+             (return-from find-definitions)))
     (enqueue q ast)
     (loop
       (setf ast (dequeue q))
