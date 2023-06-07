@@ -216,30 +216,7 @@
                                     (ppcre:regex-replace-all
                                       (format nil "%~a" found-param-i)
                                       name-with-params
-                                      (jsown:val child "name"))))))))
-                (when (equal (jsown:val child "type") "BLOCK")
-                  (loop for child in (jsown:val child "children")
-                        do
-                        (when (equal (jsown:val child "type") "VARIABLE")
-                          (let ((found-param-i
-                                  (position (jsown:val child "name") params :test #'equal)))
-                            (when found-param-i
-                              (loop for child in (jsown:val child "children")
-                                    do
-                                    (when (jsown:keyp child "name")
-                                      (setf name-with-params
-                                            (ppcre:regex-replace-all
-                                              (format nil "%~a" found-param-i)
-                                              name-with-params
-                                              (jsown:val child "name"))))))))
-                        (when (and
-                                (equal (jsown:val child "type") "VARIABLE")
-                                (equal (jsown:val child "name") target-name))
-                          (return-from find-reference-pos))
-                        (when (and
-                                (equal (jsown:val child "type") "RETURN")
-                                (find target-name (jsown:val child "children")))
-                          (return-from find-reference-pos))))))
+                                      (jsown:val child "name"))))))))))
 
         (when (equal (cdar ast) "CLASS")
           (loop for child in (jsown:val ast "children")
