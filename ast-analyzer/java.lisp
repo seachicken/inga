@@ -171,17 +171,23 @@
                 with has-set-name
                 with placeholder-i = 0
                 do
-                (let ((name (if (equal (jsown:val child "type") "STRING_LITERAL")
-                                "String"
-                                (and (jsown:keyp child "name") (jsown:val child "name")))))
-                  (when (equal (jsown:val child "type") "IDENTIFIER")
-                      (setf params (append params (list name)))
-                      (when has-set-name
-                        (setf name (format nil "%~a" placeholder-i))
-                        (setf placeholder-i (1+ placeholder-i))))
-                  (setf name-with-params (format nil "~{~a~^-~}"
-                                                 (remove nil (list name-with-params name)))))
-                (setf has-set-name t)
+                (when (jsown:keyp child "name")
+                  (if has-set-name
+                      (if (or
+                            (uiop:string-suffix-p (jsown:val child "type") "_LITERAL")
+                            (equal (jsown:val child "type") "NEW_CLASS"))
+                          (setf name-with-params
+                                (concatenate 'string name-with-params "-"
+                                             (if (equal (jsown:val child "type") "STRING_LITERAL")
+                                                 "String"
+                                                 (jsown:val child "name"))))
+                          (progn
+                            (setf params (append params (list (jsown:val child "name"))))
+                            (setf name-with-params (format nil "~{~a~^-%~}"
+                                                           (remove nil (list name-with-params placeholder-i))))  
+                            (setf placeholder-i (1+ placeholder-i))))
+                      (setf name-with-params (jsown:val child "name")))
+                  (setf has-set-name t))
                 (when (equal (jsown:val child "type") "IDENTIFIER")
                   (setf result-pos (jsown:val child "pos")))
                 (when (equal (jsown:val child "type") "MEMBER_SELECT")
@@ -193,7 +199,10 @@
                         (when (equal (jsown:val child "type") "NEW_CLASS")
                           (setf class-name (jsown:val child "name")))))))
 
-        (when (equal (cdar ast) "METHOD")
+        (when (or
+                (equal (cdar ast) "METHOD")
+                (equal (cdar ast) "BLOCK")
+                (equal (cdar ast) "TRY"))
           (loop for child in (jsown:val ast "children")
                 do
                 (when (equal (jsown:val child "type") "VARIABLE")
@@ -202,11 +211,12 @@
                     (when found-param-i
                       (loop for child in (jsown:val child "children")
                             do
-                            (setf name-with-params
-                                  (ppcre:regex-replace-all
-                                    (format nil "%~a" found-param-i)
-                                    name-with-params
-                                    (jsown:val child "name")))))))
+                            (when (jsown:keyp child "name")
+                              (setf name-with-params
+                                    (ppcre:regex-replace-all
+                                      (format nil "%~a" found-param-i)
+                                      name-with-params
+                                      (jsown:val child "name"))))))))
                 (when (equal (jsown:val child "type") "BLOCK")
                   (loop for child in (jsown:val child "children")
                         do
@@ -216,7 +226,7 @@
                             (when found-param-i
                               (loop for child in (jsown:val child "children")
                                     do
-                                    (when (equal (jsown:val child "type") "IDENTIFIER")
+                                    (when (jsown:keyp child "name")
                                       (setf name-with-params
                                             (ppcre:regex-replace-all
                                               (format nil "%~a" found-param-i)
