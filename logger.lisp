@@ -5,6 +5,7 @@
 (in-package #:inga/logger)
 
 (defun log-debug (content)
-  (when (uiop:getenv "INGA_DEBUG")
-    (format t "~&~a ~a~%" (local-time:now) content)))
+  (let ((debug (uiop:getenv "INGA_DEBUG")))
+    (when (not (equal debug "0"))
+      (format t "~&~a ~a~%" (local-time:now) content))))
 

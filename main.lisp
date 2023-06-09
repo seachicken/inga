@@ -71,10 +71,10 @@
               (setf base-commit base-ref-name))))
         (setf diffs (get-diff root-path base-commit))
 
-        (let ((ctx (time (start root-path
-                                (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
-                                exclude))))
-          (let ((results (time (analyze ctx diffs))))
+        (let ((ctx (start root-path
+                          (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
+                          exclude)))
+          (let ((results (analyze ctx diffs)))
             (log-debug (format nil "cache size: ~a/~a" (size *cache*) *cache-max-size*))
             (log-debug (format nil "measuring time:~%  find-definitions: [times: ~a, avg-sec: ~f]~%  find-references: [times: ~a, avg-sec: ~f, cache-hit: ~a]"
                                (inga/utils::measuring-time-times *debug-find-definitions*)
