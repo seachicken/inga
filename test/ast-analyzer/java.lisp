@@ -12,6 +12,33 @@
   (truename (uiop:merge-pathnames* "test/fixtures/spring-boot-realworld-example-app/")))
 (defparameter *cache* (inga/cache:make-cache 100))
 
+(test find-definitions-for-constructor
+  (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
+    (start-ast-analyzer ast-analyzer nil nil)
+    (is (equal
+          `(((:path . "java/ConstructorClass.java")
+             (:name . "ConstructorClass")
+             (:fq-name . "jvm.java.ConstructorClass.ConstructorClass")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *jvm-path*
+                      "java/ConstructorClass.java"
+                      '((:line . 4) (:offset . 10))))))
+          (find-definitions
+            ast-analyzer
+            `((:path . "java/ConstructorClass.java")
+              ,(cons :start-offset
+                     (convert-to-top-offset
+                       *jvm-path*
+                       "java/ConstructorClass.java"
+                       '((:line . 4) (:offset . 0))))
+              ,(cons :end-offset
+                     (convert-to-top-offset
+                       *jvm-path*
+                       "java/ConstructorClass.java"
+                       '((:line . 4) (:offset . -1))))))))
+    (stop-ast-analyzer ast-analyzer)))
+
 ;; public class ArticleQueryService {
 ;;                                ↓[out]
 ;;   public Optional<ArticleData> findById(String id, User user) {
@@ -191,6 +218,25 @@
                                              *jvm-path*
                                              "java/Overload.java"
                                              '((:line . 4) (:offset . 19))))))))
+    (stop-ast-analyzer ast-analyzer)))
+
+(test find-references-to-constructor
+  (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
+    (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
+    (is (equal
+          `(((:path . "java/NewClass.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *jvm-path* "java/NewClass.java"
+                      '((:line . 7) (:offset . 9))))))
+          (find-references ast-analyzer
+                           `((:path . "java/ConstructorClass.java")
+                             (:name . "ConstructorClass")
+                             (:fq-name . "jvm.java.ConstructorClass.ConstructorClass-INT")
+                             (:top-offset ,(convert-to-top-offset
+                                             *jvm-path*
+                                             "java/ConstructorClass.java"
+                                             '((:line . 7) (:offset . 10))))))))
     (stop-ast-analyzer ast-analyzer)))
 
 (test find-references-to-private-method
