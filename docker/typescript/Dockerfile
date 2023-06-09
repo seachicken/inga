@@ -43,7 +43,6 @@ RUN npm install -g typescript @seachicken/tsparser
 
 ENV INGA_HOME /
 ENV INGA_CONTEXT typescript
-ENV INGA_DEBUG 1
 
 ENTRYPOINT ["inga"]
 

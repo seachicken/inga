@@ -41,7 +41,6 @@ RUN echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/g
 
 ENV INGA_HOME /
 ENV INGA_CONTEXT java
-ENV INGA_DEBUG 1
 
 ENTRYPOINT ["inga"]
 
