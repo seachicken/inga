@@ -6,11 +6,12 @@
            #:track-branch))
 (in-package #:inga/git)
 
-(defun get-diff (project-path base-commit)
-  (let ((diff (uiop:run-program
-                (format nil "(cd ~a && git diff ~a --unified=0 --)" project-path base-commit)
-                :output :string)))
-
+(defun get-diff (stream)
+  (let ((diff
+          (with-output-to-string (out)
+            (loop for line = (read-line stream nil :eof)
+                  until (eq line :eof)
+                  do (write-line line out)))))
     (let ((ranges (make-array 10 :fill-pointer 0 :adjustable t)) to-path)
       (with-input-from-string (in diff)
         (loop :for line := (read-line in nil nil) :while line

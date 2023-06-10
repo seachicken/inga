@@ -69,7 +69,7 @@
             (unless base-commit
               (inga/git:track-branch base-ref-name root-path)
               (setf base-commit base-ref-name))))
-        (setf diffs (get-diff root-path base-commit))
+        (setf diffs (get-diff *standard-input*))
 
         (let ((ctx (start root-path
                           (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
