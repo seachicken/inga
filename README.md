@@ -20,13 +20,13 @@ Run in the Docker container:
 ### Java / Kotlin
 
 ```sh
-docker run --rm -v $PWD:/work ghcr.io/seachicken/inga:latest-java --root-path /work --base-commit main
+git diff main --unified=0 -- | docker run -i --rm -v $PWD:/work ghcr.io/seachicken/inga:latest-java --root-path /work
 ```
 
 ### JavaScript / TypeScript
 
 ```sh
-docker run --rm -v $PWD:/work ghcr.io/seachicken/inga:latest-typescript --root-path /work --base-commit main
+git diff main --unified=0 -- | docker run -i --rm -v $PWD:/work ghcr.io/seachicken/inga:latest-typescript --root-path /work
 ```
 
 ## Usage
