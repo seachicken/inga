@@ -49,7 +49,6 @@
 (define-condition inga-error-context-not-found (inga-error) ())
 
 (defun command (&rest argv)
-  (format t "start!!?~%")
   (handler-case
     (destructuring-bind (&key root-path exclude github-token base-commit) (parse-argv argv)
       (let ((diffs (get-diff *standard-input*)))
