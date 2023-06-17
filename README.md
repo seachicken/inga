@@ -20,19 +20,19 @@ Run in the Docker container:
 ### Java / Kotlin
 
 ```sh
-git diff main --unified=0 -- | docker run -i --rm -v $PWD:/work ghcr.io/seachicken/inga:latest-java --root-path /work
+docker run --rm -v $PWD:/work ghcr.io/seachicken/inga:latest-java --root-path /work --base-commit main
 ```
 
 ### JavaScript / TypeScript
 
 ```sh
-git diff main --unified=0 -- | docker run -i --rm -v $PWD:/work ghcr.io/seachicken/inga:latest-typescript --root-path /work
+docker run --rm -v $PWD:/work ghcr.io/seachicken/inga:latest-typescript --root-path /work --base-commit main
 ```
 
 ## Usage
 
 ```sh
-git diff <branchname> --unified=0 -- | inga [options]
+inga [options]
 ```
 
 ### Options
