@@ -20,13 +20,13 @@ Run in the Docker container:
 ### Java / Kotlin
 
 ```sh
-docker run --rm -v $PWD:/work ghcr.io/seachicken/inga:latest-java --root-path /work --base-commit main
+docker run --rm -v $PWD:/work ghcr.io/seachicken/inga:latest-java --base-commit main --root-path /work
 ```
 
 ### JavaScript / TypeScript
 
 ```sh
-docker run --rm -v $PWD:/work ghcr.io/seachicken/inga:latest-typescript --root-path /work --base-commit main
+docker run --rm -v $PWD:/work ghcr.io/seachicken/inga:latest-typescript --base-commit main --root-path /work
 ```
 
 ## Usage
@@ -37,6 +37,10 @@ inga [options]
 
 ### Options
 
+`--base-commit <string>`
+
+Analyze the difference between the --base-commit and the checked-out commit. Set refname or SHA.
+
 `--root-path <string>`
 
 Relative path of the project to be analyzed, so if you do not give this option, it defaults to the command execute path.
@@ -44,14 +48,6 @@ Relative path of the project to be analyzed, so if you do not give this option, 
 `--exclude <string>`
 
 Filenames of glob pattern matching to exclude from analysis. (e.g. "**/*.test.(ts|tsx)")
-
-`--github-token <string>`
-
-If GitHub token is set, send the analysis report to comments in pull requests. Analyze with diffs of base and head branch of pull requests.
-
-`--base-commit <string>`
-
-Analyze the difference between the --base-commit and the checked-out commit. Set refname or SHA. If the --github-token option is used, this option will be ignored and set automatically.
 
 ### Run on GitHub Actions
 

@@ -1,11 +1,11 @@
 (defpackage #:inga/main
   (:use #:cl
-        #:inga/git
-        #:inga/github
         #:inga/file
         #:inga/utils)
   (:import-from #:jsown)
   (:import-from #:alexandria)
+  (:import-from #:inga/git
+                #:get-diff)
   (:import-from #:inga/language-client
                 #:make-client
                 #:start-client
@@ -46,31 +46,12 @@
 (defparameter *debug-find-references* (inga/utils::make-measuring-time))
 
 (define-condition inga-error-option-not-found (inga-error) ())
-
 (define-condition inga-error-context-not-found (inga-error) ())
 
 (defun command (&rest argv)
   (handler-case
     (destructuring-bind (&key root-path exclude github-token base-commit) (parse-argv argv)
-      (let (diffs pr hostname)
-        (when github-token
-          (setf hostname (inga/git:get-hostname root-path))
-          (inga/github:login hostname github-token)
-          (setf pr (inga/github:get-pr root-path))
-          (log-debug (format nil "pr: ~a" pr))
-          (destructuring-bind (&key base-url owner-repo number merge-state-status base-ref-name head-sha) pr
-            ;; https://docs.github.com/en/graphql/reference/enums#mergestatestatus
-            (when (or
-                    (string= merge-state-status "BEHIND")
-                    (string= merge-state-status "DIRTY"))
-              (log-debug (format nil "can't diff when merge state is not clean"))
-              (return-from command))
-
-            (unless base-commit
-              (inga/git:track-branch base-ref-name root-path)
-              (setf base-commit base-ref-name))))
-        (setf diffs (get-diff root-path base-commit))
-
+      (let ((diffs (get-diff root-path base-commit)))
         (let ((ctx (start root-path
                           (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
                           exclude)))
@@ -88,17 +69,15 @@
                                  :if-exists :supersede
                                  :if-does-not-exist :create)
               (format out "~a" (to-json results)))
-            (format t "~%~a~%" (to-json results))
-            (when (and pr results)
-              (inga/github:send-pr-comment hostname pr results root-path)))
+            (format t "~%~a~%" (to-json results)))
           (stop ctx))))
     (inga-error (e) (format t "~a~%" e))))
 
 (defun parse-argv (argv)
   (loop with root-path = "."
-        with exclude = '()
-        with github-token = nil
-        with base-commit = nil
+        with exclude
+        with github-token
+        with base-commit
         for option = (pop argv)
         while option
         do (alexandria:switch (option :test #'equal)
