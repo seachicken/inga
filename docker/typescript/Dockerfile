@@ -20,5 +20,5 @@ RUN npm install -g typescript @seachicken/tsparser
 ENV INGA_HOME /
 ENV INGA_CONTEXT typescript
 
-CMD ["inga"]
+ENTRYPOINT ["inga"]
 

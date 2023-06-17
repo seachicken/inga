@@ -24,5 +24,5 @@ RUN apt-get update && \
 ENV INGA_HOME /
 ENV INGA_CONTEXT java
 
-CMD ["inga"]
+ENTRYPOINT ["inga"]
 
