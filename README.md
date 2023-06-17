@@ -45,6 +45,10 @@ Relative path of the project to be analyzed, so if you do not give this option, 
 
 Filenames of glob pattern matching to exclude from analysis. (e.g. "**/*.test.(ts|tsx)")
 
+`--base-commit <string>`
+
+Analyze the difference between the --base-commit and the checked-out commit. Set refname or SHA. If the --github-token option is used, this option will be ignored and set automatically.
+
 ### Run on GitHub Actions
 
 [Inga Action](https://github.com/seachicken/inga-action)

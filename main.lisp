@@ -51,7 +51,7 @@
 (defun command (&rest argv)
   (handler-case
     (destructuring-bind (&key root-path exclude github-token base-commit) (parse-argv argv)
-      (let ((diffs (get-diff *standard-input*)))
+      (let ((diffs (get-diff root-path base-commit)))
         (let ((ctx (start root-path
                           (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
                           exclude)))
@@ -75,9 +75,9 @@
 
 (defun parse-argv (argv)
   (loop with root-path = "."
-        with exclude = '()
-        with github-token = nil
-        with base-commit = nil
+        with exclude
+        with github-token
+        with base-commit
         for option = (pop argv)
         while option
         do (alexandria:switch (option :test #'equal)
