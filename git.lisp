@@ -10,7 +10,6 @@
   (let ((diff (uiop:run-program
                 (format nil "(cd ~a && git diff ~a --unified=0 --)" project-path base-commit)
                 :output :string)))
-
     (let ((ranges (make-array 10 :fill-pointer 0 :adjustable t)) to-path)
       (with-input-from-string (in diff)
         (loop for line = (read-line in nil nil)
