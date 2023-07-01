@@ -9,7 +9,6 @@
   :class :package-inferred-system
   :depends-on ("fiveam"
                "inga/test/git"
-               "inga/test/github"
                "inga/test/file")
   :perform (test-op (o c)
     (unless (symbol-call :fiveam '#:run-all-tests)
