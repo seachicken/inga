@@ -6,7 +6,7 @@ RUN ros && \
   ros build /inga/roswell/inga.ros
 
 
-FROM eclipse-temurin:17-jre-jammy
+FROM eclipse-temurin:17-jdk-jammy
 
 ENV JAVAPARSER 0.1.6
 ENV KTPARSRER 0.1.3
