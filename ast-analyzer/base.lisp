@@ -205,11 +205,10 @@
 
 (defun get-original-path (index-path)
   (format nil "~{~a~^/~}"
-          (subseq (split #\/ (ppcre:regex-replace-all
-                               "--"
-                               (enough-namestring index-path)
-                               "/"))
-                  1)))  
+          (split #\/ (ppcre:regex-replace-all
+                       "--"
+                       (enough-namestring index-path *index-path*)
+                       "/"))))
 
 (defun contains-offset (a-start a-end b-start b-end)
   (and (<= a-start b-end) (>= a-end b-start)))
