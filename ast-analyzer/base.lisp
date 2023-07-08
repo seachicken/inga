@@ -33,7 +33,7 @@
            #:contains-offset))
 (in-package #:inga/ast-analyzer/base)
 
-(defparameter *index-path* #p"inga_temp/")
+(defparameter *index-path* (uiop:merge-pathnames* #p"inga_temp/" uiop:*temporary-directory*))
 
 (defclass ast-analyzer ()
   ((process :initform nil
@@ -181,15 +181,17 @@
 (defun create-indexes (ast-analyzer include exclude)
   (ensure-directories-exist *index-path*) 
   (loop for path in (uiop:directory-files (format nil "~a/**/*" (ast-analyzer-path ast-analyzer)))
-        do (let ((relative-path (enough-namestring path (ast-analyzer-path ast-analyzer))))
-             (when (is-analysis-target relative-path include exclude)
-               (handler-case
-                 (alexandria:write-string-into-file
-                   (format nil "~a" (exec-command ast-analyzer (namestring path)))
-                   (get-index-path relative-path))
-                 (error (e)
-                        (format t "error: ~a, path: ~a~%" e path)
-                        (error 'inga-error)))))))
+        do
+        (let ((relative-path (enough-namestring path (ast-analyzer-path ast-analyzer))))
+          (when (is-analysis-target relative-path include exclude)
+            (handler-case
+              (alexandria:write-string-into-file 
+                (format nil "~a" (exec-command ast-analyzer (namestring path)))
+                (get-index-path relative-path))
+              (error (e)
+                     (format t "AST parsing error. src: ~a, dst: ~a, error: ~a~%"
+                             path (get-index-path relative-path) e)
+                     (error 'inga-error)))))))
 
 (defun clean-indexes ()
   (uiop:delete-directory-tree *index-path*
