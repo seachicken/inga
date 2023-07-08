@@ -33,7 +33,7 @@
            #:contains-offset))
 (in-package #:inga/ast-analyzer/base)
 
-(defparameter *index-path* #p"inga_temp/")
+(defparameter *index-path* (uiop:merge-pathnames* #p"inga_temp/"))
 
 (defclass ast-analyzer ()
   ((process :initform nil
