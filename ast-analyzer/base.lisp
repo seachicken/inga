@@ -31,7 +31,8 @@
            #:get-index-path
            #:get-original-path
            #:contains-offset
-           #:ast-get))
+           #:ast-get
+           #:ast-find-name))
 (in-package #:inga/ast-analyzer/base)
 
 (defparameter *index-path* (uiop:merge-pathnames* #p"inga_temp/"))
@@ -223,5 +224,13 @@
                     (when (equal path (jsown:val child key-type))
                       (setf children (append children (list child))))
                     finally (return children)))
+        finally (return results)))
+
+(defun ast-find-name (name nodes &optional (key-name "name"))
+  (loop for node in nodes
+        with results
+        do
+        (when (equal (jsown:val node key-name) name)
+          (setf results (append results (list node))))
         finally (return results)))
 

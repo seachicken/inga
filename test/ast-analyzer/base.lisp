@@ -36,3 +36,24 @@
               ("children" . nil)))
           (ast-get ast '("B" "C"))))))
 
+(test find-name
+  (let ((nodes '((:obj
+                   ("type" . "A")
+                   ("name" . "a")
+                   ("children" . nil)))))
+    (is (equal
+          '((:obj
+              ("type" . "A")
+              ("name" . "a")
+              ("children" . nil)))
+          (ast-find-name "a" nodes)))))
+
+(test does-not-find-a-name
+  (let ((nodes '((:obj
+                   ("type" . "A")
+                   ("name" . "a")
+                   ("children" . nil)))))
+    (is (equal
+          nil
+          (ast-find-name "b" nodes)))))
+
