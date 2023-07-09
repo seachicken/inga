@@ -30,7 +30,8 @@
            #:clean-indexes
            #:get-index-path
            #:get-original-path
-           #:contains-offset))
+           #:contains-offset
+           #:ast-get))
 (in-package #:inga/ast-analyzer/base)
 
 (defparameter *index-path* (uiop:merge-pathnames* #p"inga_temp/"))
@@ -210,4 +211,17 @@
 
 (defun contains-offset (a-start a-end b-start b-end)
   (and (<= a-start b-end) (>= a-end b-start)))
+
+(defun ast-get (ast info-path &optional (key-type "type") (key-children "children"))
+  (loop for path in info-path
+        with results = (list ast)
+        do
+        (setf results
+              (loop for child in (mapcan (lambda (r) (jsown:val r key-children)) results)
+                    with children
+                    do
+                    (when (equal path (jsown:val child key-type))
+                      (setf children (append children (list child))))
+                    finally (return children)))
+        finally (return results)))
 
