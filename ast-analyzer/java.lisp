@@ -198,7 +198,10 @@
                                   (concatenate 'string name-with-params "-"
                                                (if (equal (jsown:val child "type") "STRING_LITERAL")
                                                    "String"
-                                                   (jsown:val child "name"))))
+                                                   (ppcre:regex-replace-all
+                                                     "_LITERAL"
+                                                     (jsown:val child "type")
+                                                     ""))))
                             (progn
                               (setf params (append params (list (jsown:val child "name"))))
                               (setf name-with-params (format nil "~{~a~^-%~}"
