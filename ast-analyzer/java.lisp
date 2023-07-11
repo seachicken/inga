@@ -191,22 +191,24 @@
                   do
                   (when (jsown:keyp child "name")
                     (if has-set-name
-                        (if (or
-                              (uiop:string-suffix-p (jsown:val child "type") "_LITERAL")
-                              (equal (jsown:val child "type") "NEW_CLASS"))
-                            (setf name-with-params
-                                  (concatenate 'string name-with-params "-"
-                                               (if (equal (jsown:val child "type") "STRING_LITERAL")
-                                                   "String"
-                                                   (ppcre:regex-replace-all
-                                                     "_LITERAL"
-                                                     (jsown:val child "type")
-                                                     ""))))
-                            (progn
-                              (setf params (append params (list (jsown:val child "name"))))
-                              (setf name-with-params (format nil "~{~a~^-%~}"
-                                                             (remove nil (list name-with-params placeholder-i))))  
-                              (setf placeholder-i (1+ placeholder-i))))
+                        (cond ((uiop:string-suffix-p (jsown:val child "type") "_LITERAL")
+                               (setf name-with-params
+                                     (concatenate 'string name-with-params "-"
+                                                  (if (equal (jsown:val child "type") "STRING_LITERAL")
+                                                      "String"
+                                                      (ppcre:regex-replace-all
+                                                        "_LITERAL"
+                                                        (jsown:val child "type")
+                                                        "")))))
+                              ((equal (jsown:val child "type") "NEW_CLASS")
+                               (setf name-with-params
+                                     (concatenate 'string name-with-params "-"
+                                                  (jsown:val child "name"))))
+                              (t
+                               (setf params (append params (list (jsown:val child "name"))))
+                               (setf name-with-params (format nil "~{~a~^-%~}"
+                                                              (remove nil (list name-with-params placeholder-i))))
+                               (setf placeholder-i (1+ placeholder-i))))
                         (setf name-with-params (jsown:val child "name")))
                     (setf has-set-name t))
                   (when (equal (jsown:val child "type") "IDENTIFIER")

@@ -44,7 +44,7 @@
 (defparameter *back-path*
   (truename (uiop:merge-pathnames* "test/fixtures/spring-boot-realworld-example-app/")))
 
-(test analyze-by-range-for-entorypoints
+(test analyze-by-range-for-entry-points
   (let ((ctx (inga/main::start *back-path* '(:java) '("src/test/**"))))
     (is (equal
           '(((:path . "src/main/java/io/spring/api/ArticlesApi.java")
