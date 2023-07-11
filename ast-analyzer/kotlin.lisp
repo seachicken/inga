@@ -67,10 +67,11 @@
 
 (defmethod find-entrypoint ((ast-analyzer ast-analyzer-kotlin) pos))
 
-(defmethod matches-reference-name ((ast-analyzer ast-analyzer-kotlin) ast target-name)
-  (and
-    (equal (cdar ast) "REFERENCE_EXPRESSION")
-    (equal (jsown:val ast "name") target-name)))
+(defmethod matches-reference-name ((ast-analyzer ast-analyzer-kotlin) ast target-pos)
+  (let ((target-name (cdr (assoc :name target-pos))))
+    (and
+      (equal (cdar ast) "REFERENCE_EXPRESSION")
+      (equal (jsown:val ast "name") target-name))))
 
 (defmethod find-reference-pos ((ast-analyzer ast-analyzer-kotlin) index-path root-ast ast target-pos)
   (let ((q (make-queue))

@@ -232,7 +232,7 @@
                 (:start . 65) (:end . 65)))))
         (stop-ast-analyzer ast-analyzer))))
 
-(test find-references-to-imported-method
+(test find-references-to-imported-method-with-new
   (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
     (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
     (is (equal
@@ -240,7 +240,7 @@
              ,(cons :top-offset
                     (convert-to-top-offset
                       *jvm-path* "java/Class.java"
-                      '((:line . 12) (:offset . 23))))))
+                      '((:line . 12) (:offset . 9))))))
           (find-references ast-analyzer
                            `((:path . "java/Overload.java")
                              (:name . "method")
@@ -321,6 +321,21 @@
                                              *jvm-path*
                                              "java/Overload.java"
                                              '((:line . 8) (:offset . 19))))))))
+    (stop-ast-analyzer ast-analyzer)))
+
+(test find-references-to-rest-client
+  (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
+    (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
+    (is (equal
+          `(((:path . "java/client/ClientRestTemplate.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *jvm-path* "java/client/ClientRestTemplate.java"
+                      '((:line . 13) (:offset . 16))))))
+          (find-references ast-analyzer
+                           `((:type . :rest-server)
+                             (:path . "/path")
+                             (:name . "GET")))))
     (stop-ast-analyzer ast-analyzer)))
 
 (test get-fq-name-of-declaration

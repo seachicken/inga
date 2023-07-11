@@ -99,13 +99,12 @@
             (if (eq cache 'empty) nil cache))
         (when cache t)))))
 
-(defgeneric matches-reference-name (ast-analyzer ast target-name))
+(defgeneric matches-reference-name (ast-analyzer ast target-pos))
 
 (defgeneric find-reference-pos (ast-analyzer index-path root-ast ast target-pos))
 
 (defun find-references-by-file (ast-analyzer index-path ast target-pos)
   (let ((q (make-queue))
-        (target-name (cdr (assoc :name target-pos)))
         (root-ast ast)
         results)
     (enqueue q ast)
@@ -113,7 +112,7 @@
       (let ((ast (dequeue q)))
         (when (null ast) (return))
 
-        (when (matches-reference-name ast-analyzer ast target-name)
+        (when (matches-reference-name ast-analyzer ast target-pos)
           (let ((found-reference-pos (find-reference-pos ast-analyzer index-path root-ast ast target-pos)))
             (when found-reference-pos
               (setf results (append results (list found-reference-pos))))))

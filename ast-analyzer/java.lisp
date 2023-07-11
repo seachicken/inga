@@ -168,27 +168,42 @@
 
 (defmethod find-entrypoint ((ast-analyzer ast-analyzer-java) pos))
 
-(defmethod matches-reference-name ((ast-analyzer ast-analyzer-java) ast target-name)
-  (alexandria:switch ((cdar ast) :test #'equal)
-    ("NEW_CLASS"
-      (equal (jsown:val ast "name") target-name))
-    ("METHOD_INVOCATION"
-      (loop for child in (jsown:val ast "children")
-            do
-            (when (equal (jsown:val child "type") "IDENTIFIER")
-              (return (equal (jsown:val child "name") target-name)))  
-            (when (equal (jsown:val child "type") "MEMBER_SELECT")
-              (return (equal (jsown:val child "name") target-name)))))))
+(defmethod matches-reference-name ((ast-analyzer ast-analyzer-java) ast target-pos)
+  (let ((target-type (cdr (assoc :type target-pos)))
+        (target-path (cdr (assoc :path target-pos)))
+        (target-name (cdr (assoc :name target-pos)))) 
+    (cond ((eq target-type :rest-server)
+           (cond ((equal target-name "GET")
+                  (and
+                    (ast-find-name "getForObject"
+                                   (ast-get ast '("MEMBER_SELECT")))
+                    (equal
+                      (let ((ast-path (first (ast-get ast '("STRING_LITERAL")))))
+                        (when ast-path
+                          (concatenate 'string "/"
+                                       (car (last (uiop:split-string (jsown:val ast-path "name") :separator "/"))))))
+                      target-path)))))
+          (t
+           (alexandria:switch ((cdar ast) :test #'equal)
+             ("NEW_CLASS"
+              (equal (jsown:val ast "name") target-name))
+             ("METHOD_INVOCATION"
+              (loop for child in (jsown:val ast "children")
+                    do
+                    (when (equal (jsown:val child "type") "IDENTIFIER")
+                      (return (equal (jsown:val child "name") target-name)))  
+                    (when (equal (jsown:val child "type") "MEMBER_SELECT")
+                      (return (equal (jsown:val child "name") target-name))))))))))
 
 (defmethod find-reference-pos ((ast-analyzer ast-analyzer-java) index-path root-ast ast target-pos)
   (let ((q (make-queue))
-        (target-name (cdr (assoc :name target-pos)))
-        target-obj
         (reference-ast ast)
+        (target-type (cdr (assoc :type target-pos)))
+        (result-pos (jsown:val ast "startPos")) 
+        target-obj
         class-name
         params
-        name-with-params
-        result-pos)
+        name-with-params)
     (enqueue q ast)
     (loop
       (let ((ast (dequeue q)))
@@ -196,12 +211,12 @@
 
         (when (and
                 (eq (jsown:val ast "pos") (jsown:val reference-ast "pos"))
-                (or (equal (cdar ast) "NEW_CLASS")
+                (or (eq target-type :rest-server)
+                    (equal (cdar ast) "NEW_CLASS")
                     (equal (cdar ast) "METHOD_INVOCATION")))
           (let (has-set-name)
             (when (equal (cdar ast) "NEW_CLASS")
               (setf class-name (jsown:val ast "name"))
-              (setf result-pos (jsown:val ast "pos")) 
               (setf name-with-params (jsown:val ast "name"))
               (setf has-set-name t))
             (loop for child in (jsown:val ast "children")
@@ -229,13 +244,10 @@
                                (setf placeholder-i (1+ placeholder-i))))
                         (setf name-with-params (jsown:val child "name")))
                     (setf has-set-name t))
-                  (when (equal (jsown:val child "type") "IDENTIFIER")
-                    (setf result-pos (jsown:val child "pos")))
                   (when (equal (jsown:val child "type") "MEMBER_SELECT")
-                    (setf result-pos (jsown:val child "pos")) 
                     (loop for child in (jsown:val child "children")
                           do
-                          (when (equal (jsown:val child "type") "IDENTIFIER")
+                          (when (and (null target-obj) (equal (jsown:val child "type") "IDENTIFIER"))
                             (setf target-obj (jsown:val child "name")))
                           (when (equal (jsown:val child "type") "NEW_CLASS")
                             (setf class-name (jsown:val child "name"))))))))
@@ -303,7 +315,13 @@
                                                     0 
                                                     (1- (length split-import-names)))
                                             (list class-name name-with-params)))))
-                    (when (equal fq-name (cdr (assoc :fq-name target-pos)))
+                    (when (or
+                            (equal fq-name (cdr (assoc :fq-name target-pos)))
+                            ;; TODO: support other methods
+                            (and
+                              (eq target-type :rest-server)
+                              (equal (cdr (assoc :name target-pos)) "GET")
+                              (uiop:string-prefix-p "org.springframework.web.client.RestTemplate.getForObject" fq-name)))
                       (return-from
                         find-reference-pos
                         (list
