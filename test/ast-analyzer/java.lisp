@@ -188,9 +188,18 @@
   (let ((ast-analyzer (make-ast-analyzer :java *spring-boot-path* *cache*)))
     (start-ast-analyzer ast-analyzer nil nil)
     (is (equal
-          '(((:type . :rest)
+          `(((:type . :rest-server)
              (:path . "/articles")
-             (:name . "GET")))
+             (:name . "GET")
+             (:file-pos .
+              ((:path . "src/main/java/io/spring/api/ArticlesApi.java")
+               (:name . "getArticles")
+               (:fq-name . "io.spring.api.ArticlesApi.getArticles-INT-INT-String-String-String-User")
+               ,(cons :top-offset
+                    (convert-to-top-offset
+                      *spring-boot-path*
+                      "src/main/java/io/spring/api/ArticlesApi.java"
+                      '((:line . 49) (:offset . 25))))))))
           (find-definitions
             ast-analyzer
             `((:path . "src/main/java/io/spring/api/ArticlesApi.java")

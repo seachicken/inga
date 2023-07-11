@@ -82,34 +82,30 @@
                   (equal (cdar ast) "VARIABLE"))
                   (equal (cdar ast) "METHOD"))
               (contains-offset (jsown:val ast "startPos") (jsown:val ast "endPos")
-                               start-offset end-offset))
-        (if is-entrypoint-file
+                               start-offset end-offset)
+              (jsown:keyp ast "name"))
+        (let ((pos (list
+                     (cons :path src-path)
+                     (if (equal (jsown:val ast "name") "<init>")
+                         (cons :name class-name)
+                         (cons :name (jsown:val ast "name")))
+                     (cons :fq-name (get-fq-name-of-declaration
+                                      root-ast
+                                      (jsown:val ast "pos")))
+                     (cons :top-offset (jsown:val ast "pos")))))
+          (when (assoc :origin range)
+            (push (cons :origin (cdr (assoc :origin range))) pos))
+          (when is-entrypoint-file
             (let ((annotations (ast-get ast '("MODIFIERS" "ANNOTATION"))))
               ;; TODO: imprements other methods
               (when (ast-find-name "GetMapping" annotations)
-                (setf results
-                      (append results
-                              (list
-                                (list
-                                  (cons :type :rest)
-                                  (cons :path entrypoint-name)
-                                  (cons :name "GET")))))))
-            (when (jsown:keyp ast "name")
-              (setf results
-                    (append results
-                            (list
-                              (let ((pos (list
-                                           (cons :path src-path)
-                                           (if (equal (jsown:val ast "name") "<init>")
-                                               (cons :name class-name)
-                                               (cons :name (jsown:val ast "name")))
-                                           (cons :fq-name (get-fq-name-of-declaration
-                                                            root-ast
-                                                            (jsown:val ast "pos")))
-                                           (cons :top-offset (jsown:val ast "pos")))))
-                                (when (assoc :origin range)
-                                  (push (cons :origin (cdr (assoc :origin range))) pos))
-                                pos)))))))
+                (setf pos
+                      (list
+                        (cons :type :rest-server)
+                        (cons :path entrypoint-name)
+                        (cons :name "GET")
+                        (cons :file-pos pos))))))
+          (setf results (append results (list pos)))))
 
       (when (and
               (string= (cdar ast) "com.github.javaparser.ast.body.ClassOrInterfaceDeclaration")
