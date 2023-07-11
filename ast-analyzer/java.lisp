@@ -56,12 +56,23 @@
     (enqueue q ast)
     (loop
       with class-name
+      with is-entrypoint-file
+      with entrypoint-name
       do
       (setf ast (dequeue q))
       (if (null ast) (return))
 
       (when (equal (cdar ast) "CLASS")
-        (setf class-name (jsown:val ast "name")))
+        (setf class-name (jsown:val ast "name"))
+        (let ((annotations (ast-get ast '("MODIFIERS" "ANNOTATION"))))
+          (when (ast-find-name "RestController" annotations)
+            (setf is-entrypoint-file t))
+          (let ((request-mapping (first (ast-find-name "RequestMapping" annotations))))
+            (when request-mapping
+              (setf entrypoint-name 
+                    (jsown:val
+                      (first (ast-get request-mapping '("ASSIGNMENT" "STRING_LITERAL")))
+                      "name"))))))
       (when (and
               (or
                 ;; field reference
@@ -72,22 +83,33 @@
                   (equal (cdar ast) "METHOD"))
               (contains-offset (jsown:val ast "startPos") (jsown:val ast "endPos")
                                start-offset end-offset))
-        (when (jsown:keyp ast "name")
-          (setf results
-                (append results
-                        (list
-                          (let ((pos (list
-                                       (cons :path src-path)
-                                       (if (equal (jsown:val ast "name") "<init>")
-                                           (cons :name class-name)
-                                           (cons :name (jsown:val ast "name")))
-                                       (cons :fq-name (get-fq-name-of-declaration
-                                                        root-ast
-                                                        (jsown:val ast "pos")))
-                                       (cons :top-offset (jsown:val ast "pos")))))
-                            (when (assoc :origin range)
-                              (push (cons :origin (cdr (assoc :origin range))) pos))
-                            pos))))))
+        (if is-entrypoint-file
+            (let ((annotations (ast-get ast '("MODIFIERS" "ANNOTATION"))))
+              ;; TODO: imprements other methods
+              (when (ast-find-name "GetMapping" annotations)
+                (setf results
+                      (append results
+                              (list
+                                (list
+                                  (cons :type :rest)
+                                  (cons :path entrypoint-name)
+                                  (cons :name "GET")))))))
+            (when (jsown:keyp ast "name")
+              (setf results
+                    (append results
+                            (list
+                              (let ((pos (list
+                                           (cons :path src-path)
+                                           (if (equal (jsown:val ast "name") "<init>")
+                                               (cons :name class-name)
+                                               (cons :name (jsown:val ast "name")))
+                                           (cons :fq-name (get-fq-name-of-declaration
+                                                            root-ast
+                                                            (jsown:val ast "pos")))
+                                           (cons :top-offset (jsown:val ast "pos")))))
+                                (when (assoc :origin range)
+                                  (push (cons :origin (cdr (assoc :origin range))) pos))
+                                pos)))))))
 
       (when (and
               (string= (cdar ast) "com.github.javaparser.ast.body.ClassOrInterfaceDeclaration")

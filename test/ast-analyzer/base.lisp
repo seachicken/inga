@@ -57,3 +57,11 @@
           nil
           (ast-find-name "b" nodes)))))
 
+(test does-not-contains-a-name
+  (let ((nodes '((:obj
+                   ("type" . "A")
+                   ("children" . nil)))))
+    (is (equal
+          nil
+          (ast-find-name "a" nodes)))))
+

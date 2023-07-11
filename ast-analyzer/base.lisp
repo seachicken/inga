@@ -230,7 +230,9 @@
   (loop for node in nodes
         with results
         do
-        (when (equal (jsown:val node key-name) name)
+        (when (and
+                (jsown:keyp node key-name)
+                (equal (jsown:val node key-name) name))
           (setf results (append results (list node))))
         finally (return results)))
 

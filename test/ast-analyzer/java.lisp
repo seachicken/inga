@@ -184,6 +184,28 @@
                   (:start . 16) (:end . 16)))))
         (stop-ast-analyzer ast-analyzer))))
 
+(test find-definitions-for-spring-rest-controller
+  (let ((ast-analyzer (make-ast-analyzer :java *spring-boot-path* *cache*)))
+    (start-ast-analyzer ast-analyzer nil nil)
+    (is (equal
+          '(((:type . :rest)
+             (:path . "/articles")
+             (:name . "GET")))
+          (find-definitions
+            ast-analyzer
+            `((:path . "src/main/java/io/spring/api/ArticlesApi.java")
+              ,(cons :start-offset
+                     (convert-to-top-offset
+                       *spring-boot-path*
+                       "src/main/java/io/spring/api/ArticlesApi.java"
+                       '((:line . 56) (:offset . 0))))
+              ,(cons :end-offset
+                     (convert-to-top-offset
+                       *spring-boot-path*
+                       "src/main/java/io/spring/api/ArticlesApi.java"
+                       '((:line . 56) (:offset . -1))))))))
+    (stop-ast-analyzer ast-analyzer)))
+
 ;; public class Article {
 ;;   public void update(String title, String description, String body) {
 ;;   } ←[in]
