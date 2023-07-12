@@ -19,7 +19,6 @@
            #:stop-ast-analyzer
            #:find-definitions
            #:find-entrypoint
-           #:find-caller
            #:find-references
            #:matches-reference-name
            #:find-reference-pos
@@ -67,9 +66,6 @@
 
 (defgeneric find-entrypoint (ast-analyzer pos))
 (defmethod find-entrypoint ((ast-analyzer list) pos))
-
-(defgeneric find-caller (ast-analyzer index-path ast pos)
-  (:method (ast-analyzer index-path ast pos)))
 
 (defgeneric find-references (ast-analyzer pos)
   (:method (ast-analyzer pos)
