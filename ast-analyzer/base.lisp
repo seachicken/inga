@@ -216,7 +216,9 @@
               (loop for child in (mapcan (lambda (r) (jsown:val r key-children)) results)
                     with children
                     do
-                    (when (equal path (jsown:val child key-type))
+                    (when (or
+                            (equal path "*")
+                            (equal path (jsown:val child key-type)))
                       (setf children (append children (list child))))
                     finally (return children)))
         finally (return results)))

@@ -36,6 +36,24 @@
               ("children" . nil)))
           (ast-get ast '("B" "C"))))))
 
+(test get-nodes-by-wild-card
+  (let ((ast '(:obj
+                ("type" . "A")
+                ("children" . ((:obj
+                                 ("type" . "B")
+                                 ("children" . nil))
+                               (:obj
+                                 ("type" . "C")
+                                 ("children" . nil)))))))
+    (is (equal
+          '((:obj
+              ("type" . "B")
+              ("children" . nil))
+            (:obj
+              ("type" . "C")
+              ("children" . nil)))
+          (ast-get ast '("*"))))))
+
 (test find-name
   (let ((nodes '((:obj
                    ("type" . "A")
