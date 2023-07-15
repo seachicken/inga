@@ -83,3 +83,24 @@
           nil
           (ast-find-name "a" nodes)))))
 
+(test find-suffix
+  (let ((nodes '((:obj
+                   ("type" . "A")
+                   ("name" . "a.b")
+                   ("children" . nil)))))
+    (is (equal
+          '((:obj
+              ("type" . "A")
+              ("name" . "a.b")
+              ("children" . nil)))
+          (ast-find-suffix "b" nodes :key-name "fq")))))
+
+(test does-not-find-a-suffix
+  (let ((nodes '((:obj
+                   ("type" . "A")
+                   ("name" . "a.b")
+                   ("children" . nil)))))
+    (is (equal
+          nil
+          (ast-find-suffix "c" nodes)))))
+

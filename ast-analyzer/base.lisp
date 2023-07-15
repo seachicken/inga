@@ -31,7 +31,8 @@
            #:get-original-path
            #:contains-offset
            #:ast-get
-           #:ast-find-name))
+           #:ast-find-name
+           #:ast-find-suffix))
 (in-package #:inga/ast-analyzer/base)
 
 (defparameter *index-path* (uiop:merge-pathnames* #p"inga_temp/"))
@@ -208,7 +209,7 @@
 (defun contains-offset (a-start a-end b-start b-end)
   (and (<= a-start b-end) (>= a-end b-start)))
 
-(defun ast-get (ast info-path &optional (key-type "type") (key-children "children"))
+(defun ast-get (ast info-path &key (key-type "type") (key-children "children"))
   (loop for path in info-path
         with results = (list ast)
         do
@@ -223,13 +224,23 @@
                     finally (return children)))
         finally (return results)))
 
-(defun ast-find-name (name nodes &optional (key-name "name"))
+(defun ast-find-name (name nodes &key (key-name "name"))
   (loop for node in nodes
         with results
         do
         (when (and
                 (jsown:keyp node key-name)
                 (equal (jsown:val node key-name) name))
+          (setf results (append results (list node))))
+        finally (return results)))
+
+(defun ast-find-suffix (suffix nodes &key (key-name "name"))
+  (loop for node in nodes
+        with results
+        do
+        (when (and
+                (jsown:keyp node key-name)
+                (uiop:string-suffix-p (jsown:val node key-name) suffix))
           (setf results (append results (list node))))
         finally (return results)))
 
