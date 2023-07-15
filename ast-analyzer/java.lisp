@@ -331,6 +331,50 @@
         (when (jsown:keyp ast "parent")
           (enqueue q (jsown:val ast "parent")))))))
 
+(defmethod get-fq-name ((ast-analyzer ast-analyzer-java) ast)
+  (let ((object-name (ast-value (first (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))) "name"))
+        (method-name (ast-value (first (ast-get ast '("*"))) "name"))
+        (args (nthcdr 1 (ast-get ast '("*"))))
+        method-args)
+    (setf method-args method-name)
+    (loop for arg in args
+         do
+         (setf method-args
+               (concatenate
+                 'string method-args "-"
+                 (alexandria:switch ((jsown:val arg "type") :test #'equal)
+                   ("STRING_LITERAL"
+                    "String")
+                   ("MEMBER_SELECT"
+                    (when (ast-find-name "class" (list arg))
+                      "Class"))
+                   (t
+                    "?")))))
+    (concatenate 'string (get-fq-name-without-args object-name ast) "." method-args)))
+
+(defun get-fq-name-without-args (target-name ast)
+    (loop
+      with q = (make-queue)
+      with class-name
+      with fq-names
+      initially (enqueue q ast)
+      do
+      (setf ast (dequeue q))
+      (when (null ast) (return (format nil "~{~a~^.~}" fq-names)))
+
+      (when (ast-find-name target-name (ast-get ast '("VARIABLE")))
+        (setf class-name (ast-value (first (ast-get ast '("VARIABLE" "IDENTIFIER"))) "name")))
+      (when (equal (cdar ast) "COMPILATION_UNIT")
+        (let ((import (first (ast-find-suffix
+                               (concatenate 'string "." class-name)
+                               (ast-get ast '("IMPORT"))
+                               :key-name "fqName"))))
+          (when import
+            (setf fq-names (append fq-names (list (ast-value import "fqName")))))))
+
+      (when (jsown:keyp ast "parent")
+        (enqueue q (jsown:val ast "parent")))))
+
 (defun get-fq-name-of-declaration (root-ast top-offset)
   (let ((stack (list root-ast))
         result)

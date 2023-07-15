@@ -22,6 +22,7 @@
            #:find-references
            #:matches-reference-name
            #:find-reference-pos
+           #:get-fq-name
            #:convert-to-top-offset
            #:convert-to-pos
            #:exec-command
@@ -30,6 +31,7 @@
            #:get-index-path
            #:get-original-path
            #:contains-offset
+           #:ast-value
            #:ast-get
            #:ast-find-name
            #:ast-find-suffix))
@@ -99,6 +101,8 @@
 (defgeneric matches-reference-name (ast-analyzer ast target-pos))
 
 (defgeneric find-reference-pos (ast-analyzer index-path root-ast ast target-pos))
+
+(defgeneric get-fq-name (ast-analyzer ast))
 
 (defun find-references-by-file (ast-analyzer index-path ast target-pos)
   (let ((q (make-queue))
@@ -208,6 +212,10 @@
 
 (defun contains-offset (a-start a-end b-start b-end)
   (and (<= a-start b-end) (>= a-end b-start)))
+
+(defun ast-value (ast key)
+  (and (jsown:keyp ast key)
+       (jsown:val ast key)))
 
 (defun ast-get (ast info-path &key (key-type "type") (key-children "children"))
   (loop for path in info-path

@@ -4,6 +4,15 @@
         #:inga/ast-analyzer))
 (in-package #:inga/test/ast-analyzer/base)
 
+(test get-value
+  (let ((ast '(:obj
+                ("type" . "A")
+                ("name" . "a")
+                ("children" . nil))))
+    (is (equal
+          "a"
+          (ast-value ast "name")))))
+
 (test get-nodes
   (let ((ast '(:obj
                 ("type" . "A")

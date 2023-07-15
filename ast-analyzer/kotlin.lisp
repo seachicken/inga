@@ -138,6 +138,10 @@
         (when (jsown:keyp ast "parent")
           (enqueue q (jsown:val ast "parent")))))))
 
+(defmethod get-fq-name ((ast-analyzer ast-analyzer-kotlin) ast)
+  ;; TODO: implements
+  )
+
 (defun get-dot-expressions (ast)
   (multiple-value-bind (results calls)
     (get-dot-expressions-recursive ast)
