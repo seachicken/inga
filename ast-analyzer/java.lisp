@@ -2,6 +2,7 @@
   (:use #:cl
         #:inga/ast-analyzer/base
         #:inga/utils)
+  (:import-from #:quri)
   (:import-from #:inga/cache
                 #:put-value
                 #:get-value)
@@ -173,16 +174,9 @@
         (target-path (cdr (assoc :path target-pos)))
         (target-name (cdr (assoc :name target-pos)))) 
     (cond ((eq target-type :rest-server)
-           (cond ((equal target-name "GET")
-                  (and
-                    (ast-find-name "getForObject"
-                                   (ast-get ast '("MEMBER_SELECT")))
-                    (equal
-                      (let ((ast-path (first (ast-get ast '("STRING_LITERAL")))))
-                        (when ast-path
-                          (concatenate 'string "/"
-                                       (car (last (uiop:split-string (jsown:val ast-path "name") :separator "/"))))))
-                      target-path)))))
+           (when (equal (cdar ast) "METHOD_INVOCATION")
+             (let ((rest-client (find-rest-client (get-fq-name ast-analyzer ast) ast)))
+               (equal (cdr (assoc :path rest-client)) target-path))))
           (t
            (alexandria:switch ((cdar ast) :test #'equal)
              ("NEW_CLASS"
@@ -342,14 +336,17 @@
          (setf method-args
                (concatenate
                  'string method-args "-"
-                 (alexandria:switch ((jsown:val arg "type") :test #'equal)
-                   ("STRING_LITERAL"
-                    "String")
-                   ("MEMBER_SELECT"
-                    (when (ast-find-name "class" (list arg))
-                      "Class"))
-                   (t
-                    "?")))))
+                 (if (uiop:string-suffix-p (ast-value arg "type") "_LITERAL")
+                     (if (equal (ast-value arg "type") "STRING_LITERAL")
+                         "String"
+                         (ppcre:regex-replace-all "_LITERAL" (ast-value arg "type") ""))
+                     (alexandria:switch ((jsown:val arg "type") :test #'equal)
+                       ("MEMBER_SELECT"
+                        (if (ast-find-name "class" (list arg))
+                            "Class"
+                            (ast-value (first (ast-get arg '("IDENTIFIER"))) "name")))
+                       (t
+                        "?"))))))
     (concatenate 'string (get-fq-name-without-args object-name ast) "." method-args)))
 
 (defun get-fq-name-without-args (target-name ast)
@@ -374,6 +371,24 @@
 
       (when (jsown:keyp ast "parent")
         (enqueue q (jsown:val ast "parent")))))
+
+(defun find-rest-client (fq-name ast)
+  (alexandria:switch (fq-name :test #'equal)
+    ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/client/RestTemplate.html
+    ("org.springframework.web.client.RestTemplate.exchange-String-HttpMethod-NULL-Class"
+     `((:name . ,(find-api-method-from-http-method (nth 2 (ast-get ast '("*")))))
+       (:path . ,(find-api-path 0 ast))))
+    ("org.springframework.web.client.RestTemplate.getForObject-String-Class"
+     `((:name . "GET")
+       (:path . ,(find-api-path 0 ast))))))
+
+(defun find-api-method-from-http-method (http-method)
+  (ast-value http-method "name"))
+
+(defun find-api-path (arg-i ast)
+  (let ((url (nth (1+ arg-i) (ast-get ast '("*")))))
+    (when (equal (ast-value url "type") "STRING_LITERAL")
+      (quri:uri-path (quri:uri (ast-value url "name"))))))
 
 (defun get-fq-name-of-declaration (root-ast top-offset)
   (let ((stack (list root-ast))

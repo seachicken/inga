@@ -1,5 +1,7 @@
 package jvm.java.client;
 
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 public class ClientRestTemplate {
@@ -15,5 +17,9 @@ public class ClientRestTemplate {
 
     public String get2() {
         return restTemplate.getForObject("http://localhost:8080/path2", String.class);
+    }
+
+    public ResponseEntity<String> exchangeGet() {
+        return restTemplate.exchange("http://localhost:8080/path", HttpMethod.GET, null, String.class);
     }
 }
