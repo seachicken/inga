@@ -233,7 +233,7 @@
                     finally (return children)))
         finally (return results)))
 
-(defun ast-find-name (name nodes &key (key-name "name"))
+(defun ast-find-name (nodes name &key (key-name "name"))
   (loop for node in nodes
         with results
         do
@@ -241,7 +241,7 @@
           (setf results (append results (list node))))
         finally (return results)))
 
-(defun ast-find-suffix (suffix nodes &key (key-name "name"))
+(defun ast-find-suffix (nodes suffix &key (key-name "name"))
   (loop for node in nodes
         with results
         do

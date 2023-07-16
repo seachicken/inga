@@ -66,9 +66,9 @@
       (when (equal (ast-value ast "type") "CLASS")
         (setf class-name (jsown:val ast "name"))
         (let ((annotations (ast-get ast '("MODIFIERS" "ANNOTATION"))))
-          (when (ast-find-name "RestController" annotations)
+          (when (ast-find-name annotations "RestController")
             (setf is-entrypoint-file t))
-          (let ((request-mapping (first (ast-find-name "RequestMapping" annotations))))
+          (let ((request-mapping (first (ast-find-name annotations "RequestMapping"))))
             (when request-mapping
               (setf entrypoint-name 
                     (jsown:val
@@ -99,7 +99,7 @@
           (when is-entrypoint-file
             (let ((annotations (ast-get ast '("MODIFIERS" "ANNOTATION"))))
               ;; TODO: imprements other methods
-              (when (ast-find-name "GetMapping" annotations)
+              (when (ast-find-name annotations "GetMapping")
                 (setf pos
                       (list
                         (cons :type :rest-server)
@@ -345,7 +345,7 @@
                          (ppcre:regex-replace-all "_LITERAL" (ast-value arg "type") ""))
                      (alexandria:switch ((jsown:val arg "type") :test #'equal)
                        ("MEMBER_SELECT"
-                        (if (ast-find-name "class" (list arg))
+                        (if (ast-find-name (list arg) "class")
                             "Class"
                             (ast-value (first (ast-get arg '("IDENTIFIER"))) "name")))
                        (t
@@ -362,12 +362,12 @@
       (setf ast (dequeue q))
       (when (null ast) (return (format nil "~{~a~^.~}" fq-names)))
 
-      (when (ast-find-name target-name (ast-get ast '("VARIABLE")))
+      (when (ast-find-name (ast-get ast '("VARIABLE")) target-name)
         (setf class-name (ast-value (first (ast-get ast '("VARIABLE" "IDENTIFIER"))) "name")))
       (when (equal (ast-value ast "type") "COMPILATION_UNIT")
         (let ((import (first (ast-find-suffix
-                               (concatenate 'string "." class-name)
                                (ast-get ast '("IMPORT"))
+                               (concatenate 'string "." class-name)
                                :key-name "fqName"))))
           (when import
             (setf fq-names (append fq-names (list (ast-value import "fqName")))))))

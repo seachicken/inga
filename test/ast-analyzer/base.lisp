@@ -73,7 +73,7 @@
               ("type" . "A")
               ("name" . "a")
               ("children" . nil)))
-          (ast-find-name "a" nodes)))))
+          (ast-find-name nodes "a")))))
 
 (test does-not-find-a-name
   (let ((nodes '((:obj
@@ -82,7 +82,7 @@
                    ("children" . nil)))))
     (is (equal
           nil
-          (ast-find-name "b" nodes)))))
+          (ast-find-name nodes "b")))))
 
 (test does-not-contains-a-name
   (let ((nodes '((:obj
@@ -90,7 +90,7 @@
                    ("children" . nil)))))
     (is (equal
           nil
-          (ast-find-name "a" nodes)))))
+          (ast-find-name nodes "a")))))
 
 (test find-suffix
   (let ((nodes '((:obj
@@ -102,7 +102,7 @@
               ("type" . "A")
               ("name" . "a.b")
               ("children" . nil)))
-          (ast-find-suffix "b" nodes :key-name "fq")))))
+          (ast-find-suffix nodes "b")))))
 
 (test does-not-find-a-suffix
   (let ((nodes '((:obj
@@ -111,5 +111,5 @@
                    ("children" . nil)))))
     (is (equal
           nil
-          (ast-find-suffix "c" nodes)))))
+          (ast-find-suffix nodes "c")))))
 
