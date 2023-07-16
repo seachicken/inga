@@ -83,7 +83,7 @@
                   do
                   (setf target-ast-analyzer (find-ast-analyzer ast-analyzer (namestring path)))
                   (handler-case
-                    (setf ast (cdr (jsown:parse (alexandria:read-file-into-string path))))
+                    (setf ast (jsown:parse (alexandria:read-file-into-string path)))
                     (error (e)
                            (format t "~a~%" e)
                            (return (values results nil))))
@@ -123,7 +123,7 @@
                 do
                 (let ((body (cdr child)))
                   (setf (jsown:val child "parent") ast)
-                  (enqueue q (cdr child)))))))
+                  (enqueue q child))))))
     results))
 
 (defun convert-to-top-offset (root-path path pos)
@@ -222,12 +222,13 @@
         with results = (list ast)
         do
         (setf results
-              (loop for child in (mapcan (lambda (r) (jsown:val r key-children)) results)
+              (loop for child in (apply #'append
+                                        (mapcar (lambda (r) (ast-value r key-children)) results))
                     with children
                     do
                     (when (or
                             (equal path "*")
-                            (equal path (jsown:val child key-type)))
+                            (equal path (ast-value child key-type)))
                       (setf children (append children (list child))))
                     finally (return children)))
         finally (return results)))
@@ -236,9 +237,7 @@
   (loop for node in nodes
         with results
         do
-        (when (and
-                (jsown:keyp node key-name)
-                (equal (jsown:val node key-name) name))
+        (when (equal (ast-value node key-name) name)
           (setf results (append results (list node))))
         finally (return results)))
 

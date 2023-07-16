@@ -63,7 +63,7 @@
       (setf ast (dequeue q))
       (if (null ast) (return))
 
-      (when (equal (cdar ast) "CLASS")
+      (when (equal (ast-value ast "type") "CLASS")
         (setf class-name (jsown:val ast "name"))
         (let ((annotations (ast-get ast '("MODIFIERS" "ANNOTATION"))))
           (when (ast-find-name "RestController" annotations)
@@ -79,9 +79,9 @@
                 ;; field reference
                 (and
                   (jsown:keyp ast "parent")
-                  (equal (cdar (jsown:val ast "parent")) "CLASS") 
-                  (equal (cdar ast) "VARIABLE"))
-                  (equal (cdar ast) "METHOD"))
+                  (equal (ast-value (jsown:val ast "parent") "type") "CLASS") 
+                  (equal (ast-value ast "type") "VARIABLE"))
+                  (equal (ast-value ast "type") "METHOD"))
               (contains-offset (jsown:val ast "startPos") (jsown:val ast "endPos")
                                start-offset end-offset)
               (jsown:keyp ast "name"))
@@ -109,7 +109,8 @@
           (setf results (append results (list pos)))))
 
       (when (and
-              (string= (cdar ast) "com.github.javaparser.ast.body.ClassOrInterfaceDeclaration")
+              (string= (ast-value ast "type")
+                       "com.github.javaparser.ast.body.ClassOrInterfaceDeclaration")
               (jsown:keyp ast "implementedTypes"))
         (let ((implementedTypes (jsown:val ast "implementedTypes")))
           (loop
@@ -132,9 +133,12 @@
 
       (when (and
               (or
-                (string= (cdr (car ast)) "com.github.javaparser.ast.body.FieldDeclaration")
-                (string= (cdr (car ast)) "com.github.javaparser.ast.body.ConstructorDeclaration")
-                (string= (cdr (car ast)) "com.github.javaparser.ast.body.MethodDeclaration"))
+                (string= (ast-value ast "type")
+                         "com.github.javaparser.ast.body.FieldDeclaration")
+                (string= (ast-value ast "type")
+                         "com.github.javaparser.ast.body.ConstructorDeclaration")
+                (string= (ast-value ast "type")
+                         "com.github.javaparser.ast.body.MethodDeclaration"))
               (<= (jsown:val (jsown:val ast "range") "beginLine") line-no)
               (>= (jsown:val (jsown:val ast "range") "endLine") line-no))
         (unless (and
@@ -162,9 +166,8 @@
 
       (loop for child in (jsown:val ast "children")
             do
-            (let ((body (cdr child)))
-              (setf (jsown:val child "parent") ast)
-              (enqueue q (cdr child)))))
+            (setf (jsown:val child "parent") ast)
+            (enqueue q child)))
     results))
 
 (defmethod find-entrypoint ((ast-analyzer ast-analyzer-java) pos))
@@ -174,11 +177,11 @@
         (target-path (cdr (assoc :path target-pos)))
         (target-name (cdr (assoc :name target-pos)))) 
     (cond ((eq target-type :rest-server)
-           (when (equal (cdar ast) "METHOD_INVOCATION")
+           (when (equal (ast-value ast "type") "METHOD_INVOCATION")
              (let ((rest-client (find-rest-client (get-fq-name ast-analyzer ast) ast)))
                (equal (cdr (assoc :path rest-client)) target-path))))
           (t
-           (alexandria:switch ((cdar ast) :test #'equal)
+           (alexandria:switch ((ast-value ast "type") :test #'equal)
              ("NEW_CLASS"
               (equal (jsown:val ast "name") target-name))
              ("METHOD_INVOCATION"
@@ -206,10 +209,10 @@
         (when (and
                 (eq (jsown:val ast "pos") (jsown:val reference-ast "pos"))
                 (or (eq target-type :rest-server)
-                    (equal (cdar ast) "NEW_CLASS")
-                    (equal (cdar ast) "METHOD_INVOCATION")))
+                    (equal (ast-value ast "type") "NEW_CLASS")
+                    (equal (ast-value ast "type") "METHOD_INVOCATION")))
           (let (has-set-name)
-            (when (equal (cdar ast) "NEW_CLASS")
+            (when (equal (ast-value ast "type") "NEW_CLASS")
               (setf class-name (jsown:val ast "name"))
               (setf name-with-params (jsown:val ast "name"))
               (setf has-set-name t))
@@ -247,9 +250,9 @@
                             (setf class-name (jsown:val child "name"))))))))
 
         (when (or
-                (equal (cdar ast) "METHOD")
-                (equal (cdar ast) "BLOCK")
-                (equal (cdar ast) "TRY"))
+                (equal (ast-value ast "type") "METHOD")
+                (equal (ast-value ast "type") "BLOCK")
+                (equal (ast-value ast "type") "TRY"))
           (loop for child in (jsown:val ast "children")
                 do
                 (when (equal (jsown:val child "type") "VARIABLE")
@@ -265,7 +268,7 @@
                                       name-with-params
                                       (jsown:val child "name"))))))))))
 
-        (when (equal (cdar ast) "CLASS")
+        (when (equal (ast-value ast "type") "CLASS")
           (loop for child in (jsown:val ast "children")
                 do
                 (when (and
@@ -292,7 +295,7 @@
                           (cons :path (get-original-path index-path))
                           (cons :top-offset result-pos))))))))
 
-        (when (equal (cdar ast) "COMPILATION_UNIT")
+        (when (equal (ast-value ast "type") "COMPILATION_UNIT")
           (loop for child in (jsown:val ast "children")
                 do
                 (when (and
@@ -361,7 +364,7 @@
 
       (when (ast-find-name target-name (ast-get ast '("VARIABLE")))
         (setf class-name (ast-value (first (ast-get ast '("VARIABLE" "IDENTIFIER"))) "name")))
-      (when (equal (cdar ast) "COMPILATION_UNIT")
+      (when (equal (ast-value ast "type") "COMPILATION_UNIT")
         (let ((import (first (ast-find-suffix
                                (concatenate 'string "." class-name)
                                (ast-get ast '("IMPORT"))
@@ -399,11 +402,11 @@
       (let ((ast (pop stack)))
         (if (null ast) (return))
 
-        (when (equal (cdar ast) "PACKAGE")
+        (when (equal (ast-value ast "type") "PACKAGE")
           (setf result (format nil "~{~a~^.~}" (remove nil (list result (jsown:val ast "packageName"))))))
         (when (or
-                (equal (cdar ast) "CLASS")
-                (equal (cdar ast) "INTERFACE"))
+                (equal (ast-value ast "type") "CLASS")
+                (equal (ast-value ast "type") "INTERFACE"))
           (setf class-name (jsown:val ast "name"))
           (setf result (format nil "~{~a~^.~}" (remove nil (list result (jsown:val ast "name"))))))
 
@@ -415,7 +418,7 @@
                                                  (if (equal (jsown:val ast "name") "<init>")
                                                      class-name
                                                      (jsown:val ast "name"))))))
-          (when (equal (cdar ast) "METHOD")
+          (when (equal (ast-value ast "type") "METHOD")
             (loop for child in (jsown:val ast "children")
                   do
                   (when (equal (jsown:val child "type") "VARIABLE")
@@ -426,5 +429,5 @@
           (return-from get-fq-name-of-declaration result))
 
         (loop for child in (jsown:val ast "children")
-              do (setf stack (append stack (list (cdr child)))))))))
+              do (setf stack (append stack (list child))))))))
 

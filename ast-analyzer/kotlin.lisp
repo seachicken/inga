@@ -70,7 +70,7 @@
 (defmethod matches-reference-name ((ast-analyzer ast-analyzer-kotlin) ast target-pos)
   (let ((target-name (cdr (assoc :name target-pos))))
     (and
-      (equal (cdar ast) "REFERENCE_EXPRESSION")
+      (equal (ast-value ast "type") "REFERENCE_EXPRESSION")
       (equal (jsown:val ast "name") target-name))))
 
 (defmethod find-reference-pos ((ast-analyzer ast-analyzer-kotlin) index-path root-ast ast target-pos)
@@ -83,7 +83,7 @@
       (let ((ast (dequeue q)))
         (if (null ast) (return))
 
-        (when (equal (cdar ast) "DOT_QUALIFIED_EXPRESSION")
+        (when (equal (ast-value ast "type") "DOT_QUALIFIED_EXPRESSION")
           (let ((dot-expressions (get-dot-expressions ast)))
             (when (equal (car (last dot-expressions)) target-name)
               (setf result target-name)
@@ -100,7 +100,7 @@
                 (when (equal (jsown:val child "type") "REFERENCE_EXPRESSION")
                   (setf target-name (jsown:val child "name")))))
 
-        (when (equal (cdar ast) "CLASS")
+        (when (equal (ast-value ast "type") "CLASS")
           (loop for child in (jsown:val ast "children")
                 do
                 (when (equal (jsown:val child "type") "PRIMARY_CONSTRUCTOR")
@@ -109,7 +109,7 @@
                       (setf result (format nil "~{~a~^.~}"
                                            (remove nil (list found-type result)))))))))
 
-        (when (equal (cdar ast) "kotlin.FILE")
+        (when (equal (ast-value ast "type") "kotlin.FILE")
           (loop for child in (jsown:val ast "children")
                 with class-name = (first (split #\. result))
                 do
@@ -150,19 +150,19 @@
         results)))
 
 (defun get-dot-expressions-recursive (ast &optional calls results)
-  (when (equal (cdar ast) "VALUE_ARGUMENT_LIST")
+  (when (equal (ast-value ast "type") "VALUE_ARGUMENT_LIST")
     (return-from get-dot-expressions-recursive (values results calls)))
 
-  (when (equal (cdar ast) "CALL_EXPRESSION")
+  (when (equal (ast-value ast "type") "CALL_EXPRESSION")
     (push ast calls))
 
-  (when (equal (cdar ast) "REFERENCE_EXPRESSION")
+  (when (equal (ast-value ast "type") "REFERENCE_EXPRESSION")
     (setf results (append results (list (jsown:val ast "name")))))
 
   (loop for child in (jsown:val ast "children")
         do
         (multiple-value-bind (ret-results ret-calls)
-          (get-dot-expressions-recursive (cdr child) calls results)
+          (get-dot-expressions-recursive child calls results)
           (progn
             (setf results ret-results)
             (setf calls ret-calls))))
