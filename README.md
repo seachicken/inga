@@ -13,21 +13,12 @@ Code changes daily, and it is always important to check the impact of changes.
 In many cases, checking the impact of a change depends on how vigilant the author is in writing the code, making it difficult to detect unintended effects during the code review and QA phases.
 This tool improves software quality by detecting unintended changes at an early phase.
 
-## Quick Start
+## Supported Languages
 
-Run in the Docker container:
-
-### Java / Kotlin
-
-```sh
-docker run --rm -v $PWD:/work ghcr.io/seachicken/inga:latest-java --base-commit main --root-path /work
-```
-
-### JavaScript / TypeScript
-
-```sh
-docker run --rm -v $PWD:/work ghcr.io/seachicken/inga:latest-typescript --base-commit main --root-path /work
-```
+- Java
+- JavaScript
+- Kotlin
+- TypeScript
 
 ## Usage
 
