@@ -217,20 +217,25 @@
   (and (jsown:keyp ast key)
        (jsown:val ast key)))
 
-(defun ast-get (ast info-path &key (key-type "type") (key-children "children"))
+(defun ast-get (ast info-path
+                    &key (direction :downward)
+                    (key-type "type") (key-downward "children") (key-upward "parent"))
   (loop for path in info-path
+        with key-direction = (if (eq direction :downward) key-downward key-upward)
         with results = (list ast)
         do
         (setf results
-              (loop for child in (apply #'append
-                                        (mapcar (lambda (r) (ast-value r key-children)) results))
-                    with children
+              (loop for node in (if (eq direction :downward)
+                                    (apply #'append
+                                           (mapcar (lambda (r) (ast-value r key-direction)) results))
+                                    (list (ast-value (first results) key-direction)))
+                    with nodes
                     do
                     (when (or
                             (equal path "*")
-                            (equal path (ast-value child key-type)))
-                      (setf children (append children (list child))))
-                    finally (return children)))
+                            (equal path (ast-value node key-type)))
+                      (setf nodes (append nodes (list node))))
+                    finally (return nodes)))
         finally (return results)))
 
 (defun ast-find-name (nodes name &key (key-name "name"))

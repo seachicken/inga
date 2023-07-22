@@ -13,7 +13,7 @@
           "a"
           (ast-value ast "name")))))
 
-(test get-nodes
+(test get-nodes-in-downward-direction
   (let ((ast '(:obj
                 ("type" . "A")
                 ("children" . ((:obj
@@ -30,6 +30,29 @@
               ("type" . "B")
               ("children" . nil)))
           (ast-get ast '("B"))))))
+
+(test get-nodes-in-upward-direction
+  (let ((ast '(:obj
+                ("type" . "A")
+                ("children" . ((:obj
+                                 ("type" . "B")
+                                 ("children" . nil))
+                               (:obj
+                                 ("type" . "B")
+                                 ("children" . nil)))))))
+    (labels ((f (ast)
+               (loop for node in (ast-value ast "children")
+                     do
+                     (setf (jsown:val node "parent") ast)
+                     (f node))))
+      (f ast))
+    (setf ast (first (ast-get ast '("B"))))
+    (let ((actual (ast-get ast '("A") :direction :upward)))
+      (is (and
+            (eq 1 (length actual))
+            (equal
+              "A"
+              (ast-value (first actual) "type")))))))
 
 (test get-nested-nodes
   (let ((ast '(:obj
