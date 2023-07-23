@@ -172,208 +172,135 @@
 
 (defmethod find-entrypoint ((ast-analyzer ast-analyzer-java) pos))
 
-(defmethod matches-reference-name ((ast-analyzer ast-analyzer-java) ast target-pos)
-  (let ((target-type (cdr (assoc :type target-pos)))
-        (target-path (cdr (assoc :path target-pos)))
-        (target-name (cdr (assoc :name target-pos)))) 
-    (cond ((eq target-type :rest-server)
-           (when (equal (ast-value ast "type") "METHOD_INVOCATION")
-             (let ((rest-client (find-rest-client (get-fq-name ast-analyzer ast) ast)))
-               (equal (cdr (assoc :path rest-client)) target-path))))
-          (t
-           (alexandria:switch ((ast-value ast "type") :test #'equal)
-             ("NEW_CLASS"
-              (equal (jsown:val ast "name") target-name))
-             ("METHOD_INVOCATION"
-              (loop for child in (jsown:val ast "children")
-                    do
-                    (when (equal (jsown:val child "type") "IDENTIFIER")
-                      (return (equal (jsown:val child "name") target-name)))  
-                    (when (equal (jsown:val child "type") "MEMBER_SELECT")
-                      (return (equal (jsown:val child "name") target-name))))))))))
+(defmethod find-reference ((ast-analyzer ast-analyzer-java) target-pos ast index-path)
+  (let ((fq-name (get-fq-name ast-analyzer ast)))
+    (unless fq-name (return-from find-reference))
 
-(defmethod find-reference-pos ((ast-analyzer ast-analyzer-java) index-path root-ast ast target-pos)
-  (let ((q (make-queue))
-        (reference-ast ast)
-        (target-type (cdr (assoc :type target-pos)))
-        (result-pos (jsown:val ast "startPos")) 
-        target-obj
-        class-name
-        params
-        name-with-params)
-    (enqueue q ast)
-    (loop
-      (let ((ast (dequeue q)))
-        (if (null ast) (return))
-
-        (when (and
-                (eq (jsown:val ast "pos") (jsown:val reference-ast "pos"))
-                (or (eq target-type :rest-server)
-                    (equal (ast-value ast "type") "NEW_CLASS")
-                    (equal (ast-value ast "type") "METHOD_INVOCATION")))
-          (let (has-set-name)
-            (when (equal (ast-value ast "type") "NEW_CLASS")
-              (setf class-name (jsown:val ast "name"))
-              (setf name-with-params (jsown:val ast "name"))
-              (setf has-set-name t))
-            (loop for child in (jsown:val ast "children")
-                  with placeholder-i = 0
-                  do
-                  (when (jsown:keyp child "name")
-                    (if has-set-name
-                        (cond ((uiop:string-suffix-p (jsown:val child "type") "_LITERAL")
-                               (setf name-with-params
-                                     (concatenate 'string name-with-params "-"
-                                                  (if (equal (jsown:val child "type") "STRING_LITERAL")
-                                                      "String"
-                                                      (ppcre:regex-replace-all
-                                                        "_LITERAL"
-                                                        (jsown:val child "type")
-                                                        "")))))
-                              ((equal (jsown:val child "type") "NEW_CLASS")
-                               (setf name-with-params
-                                     (concatenate 'string name-with-params "-"
-                                                  (jsown:val child "name"))))
-                              (t
-                               (setf params (append params (list (jsown:val child "name"))))
-                               (setf name-with-params (format nil "~{~a~^-%~}"
-                                                              (remove nil (list name-with-params placeholder-i))))
-                               (setf placeholder-i (1+ placeholder-i))))
-                        (setf name-with-params (jsown:val child "name")))
-                    (setf has-set-name t))
-                  (when (equal (jsown:val child "type") "MEMBER_SELECT")
-                    (loop for child in (jsown:val child "children")
-                          do
-                          (when (and (null target-obj) (equal (jsown:val child "type") "IDENTIFIER"))
-                            (setf target-obj (jsown:val child "name")))
-                          (when (equal (jsown:val child "type") "NEW_CLASS")
-                            (setf class-name (jsown:val child "name"))))))))
-
-        (when (or
-                (equal (ast-value ast "type") "METHOD")
-                (equal (ast-value ast "type") "BLOCK")
-                (equal (ast-value ast "type") "TRY"))
-          (loop for child in (jsown:val ast "children")
-                do
-                (when (equal (jsown:val child "type") "VARIABLE")
-                  (let ((found-param-i
-                          (position (jsown:val child "name") params :test #'equal)))
-                    (when found-param-i
-                      (loop for child in (jsown:val child "children")
-                            do
-                            (when (jsown:keyp child "name")
-                              (setf name-with-params
-                                    (ppcre:regex-replace-all
-                                      (format nil "%~a" found-param-i)
-                                      name-with-params
-                                      (jsown:val child "name"))))))))))
-
-        (when (equal (ast-value ast "type") "CLASS")
-          (loop for child in (jsown:val ast "children")
-                do
-                (when (and
-                        (equal (jsown:val child "type") "VARIABLE")
-                        (or
-                          (equal (jsown:val child "name") target-obj)
-                          (find (jsown:val child "name") params)))
-                  (loop for child in (jsown:val child "children")
-                        do 
-                        (when (equal (jsown:val child "type") "IDENTIFIER")
-                          (setf class-name (jsown:val child "name")))))
-                (when (and
-                        result-pos
-                        (null target-obj)
-                        (equal (jsown:val child "type") "METHOD"))
-                  (let ((fq-name (get-fq-name-of-declaration root-ast
-                                                             (jsown:val child "pos"))))
-                    (when (and
-                            (equal (car (last (split #\. fq-name))) name-with-params)
-                            (equal fq-name (cdr (assoc :fq-name target-pos))))
-                      (return-from
-                        find-reference-pos
-                        (list
-                          (cons :path (get-original-path index-path))
-                          (cons :top-offset result-pos))))))))
-
-        (when (equal (ast-value ast "type") "COMPILATION_UNIT")
-          (loop for child in (jsown:val ast "children")
-                do
-                (when (and
-                        (equal (jsown:val child "type") "IMPORT")
-                        (equal (car (last (split #\. (jsown:val child "fqName")))) class-name))
-                  (let ((split-import-names (split #\. (jsown:val child "fqName")))
-                        fq-name
-                        params)
-                    (setf fq-name 
-                          (concatenate
-                            'string
-                            (format nil "~{~a~^.~}"
-                                    (append (subseq split-import-names
-                                                    0 
-                                                    (1- (length split-import-names)))
-                                            (list class-name name-with-params)))))
-                    (when (or
-                            (equal fq-name (cdr (assoc :fq-name target-pos)))
-                            ;; TODO: support other methods
-                            (and
-                              (eq target-type :rest-server)
-                              (equal (cdr (assoc :name target-pos)) "GET")
-                              (uiop:string-prefix-p "org.springframework.web.client.RestTemplate.getForObject" fq-name)))
-                      (return-from
-                        find-reference-pos
-                        (list
-                          (cons :path (get-original-path index-path))
-                          (cons :top-offset result-pos))))))))
-
-        (when (jsown:keyp ast "parent")
-          (enqueue q (jsown:val ast "parent")))))))
+    (alexandria:switch ((cdr (assoc :type target-pos)))
+      (:rest-server
+        (let ((rest-client (find-rest-client fq-name ast)))
+          (when (and
+                  (equal (cdr (assoc :path rest-client)) (cdr (assoc :path target-pos)))
+                  (equal (cdr (assoc :name rest-client)) (cdr (assoc :name target-pos))))
+            (list
+              (cons :path (get-original-path index-path))
+              (cons :top-offset (ast-value ast "startPos"))))))
+      (t
+        (when (equal fq-name (cdr (assoc :fq-name target-pos)))
+          (list
+            (cons :path (get-original-path index-path))
+            (cons :top-offset (ast-value ast "startPos"))))))))
 
 (defmethod get-fq-name ((ast-analyzer ast-analyzer-java) ast)
-  (let ((object-name (ast-value (first (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))) "name"))
-        (method-name (ast-value (first (ast-get ast '("*"))) "name"))
-        (args (nthcdr 1 (ast-get ast '("*"))))
-        method-args)
-    (setf method-args method-name)
-    (loop for arg in args
-         do
-         (setf method-args
-               (concatenate
-                 'string method-args "-"
-                 (if (uiop:string-suffix-p (ast-value arg "type") "_LITERAL")
-                     (if (equal (ast-value arg "type") "STRING_LITERAL")
-                         "String"
-                         (ppcre:regex-replace-all "_LITERAL" (ast-value arg "type") ""))
-                     (alexandria:switch ((jsown:val arg "type") :test #'equal)
-                       ("MEMBER_SELECT"
-                        (if (ast-find-name (list arg) "class")
-                            "Class"
-                            (ast-value (first (ast-get arg '("IDENTIFIER"))) "name")))
-                       (t
-                        "?"))))))
-    (concatenate 'string (get-fq-name-without-args object-name ast) "." method-args)))
+  (alexandria:switch ((ast-value ast "type") :test #'equal)
+    ("NEW_CLASS"
+     (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
+             (get-fq-name-without-args (ast-value ast "name") ast)
+             (ast-value ast "name")
+             (find-method-args (ast-get ast '("*")))))
+    ("METHOD_INVOCATION"
+     (if (ast-get ast '("MEMBER_SELECT"))
+         (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
+                 (get-fq-name-without-args
+                   (if (ast-get ast '("MEMBER_SELECT" "NEW_CLASS"))
+                       (ast-value (first (ast-get ast '("MEMBER_SELECT" "NEW_CLASS"))) "name")
+                       (find-variable-name
+                         (ast-value (first (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))) "name")
+                         ast))
+                   ast)
+                 (ast-value (first (ast-get ast '("*"))) "name")
+                 (find-method-args (nthcdr 1 (ast-get ast '("*")))))
+         (format nil "~a~:[~;-~]~:*~{~a~^-~}"
+                 (get-fq-name-for-definitions
+                   (ast-value (first (ast-get ast '("IDENTIFIER"))) "name")
+                   ast)
+                 (find-method-args (nthcdr 1 (ast-get ast '("*")))))))))
 
-(defun get-fq-name-without-args (target-name ast)
-    (loop
-      with q = (make-queue)
-      with class-name
-      with fq-names
-      initially (enqueue q ast)
-      do
-      (setf ast (dequeue q))
-      (when (null ast) (return (format nil "~{~a~^.~}" fq-names)))
+(defun get-fq-name-without-args (class-name ast)
+  (loop
+    with q = (make-queue)
+    with fq-names
+    initially (enqueue q ast)
+    do
+    (setf ast (dequeue q))
+    (when (null ast) (return (format nil "~{~a~^.~}" fq-names)))
 
-      (when (ast-find-name (ast-get ast '("VARIABLE")) target-name)
-        (setf class-name (ast-value (first (ast-get ast '("VARIABLE" "IDENTIFIER"))) "name")))
-      (when (equal (ast-value ast "type") "COMPILATION_UNIT")
-        (let ((import (first (ast-find-suffix
-                               (ast-get ast '("IMPORT"))
-                               (concatenate 'string "." class-name)
-                               :key-name "fqName"))))
-          (when import
-            (setf fq-names (append fq-names (list (ast-value import "fqName")))))))
+    (when (equal (ast-value ast "type") "COMPILATION_UNIT")
+      (let ((import (first (ast-find-suffix
+                             (ast-get ast '("IMPORT"))
+                             (concatenate 'string "." class-name)
+                             :key-name "fqName"))))
+        (when import
+          (setf fq-names (append fq-names (list (ast-value import "fqName")))))))
 
-      (when (jsown:keyp ast "parent")
-        (enqueue q (jsown:val ast "parent")))))
+    (when (jsown:keyp ast "parent")
+      (enqueue q (jsown:val ast "parent")))))
+
+(defun find-variable-name (object-name ast)
+  (unless object-name
+    (return-from find-variable-name))
+
+  (loop
+    with q = (make-queue)
+    initially (enqueue q ast)
+    do
+    (setf ast (dequeue q))
+    (when (null ast) (return))
+
+    (let ((variable (first (ast-find-name (ast-get ast '("VARIABLE")) object-name))))
+      (when variable
+        (return (ast-value (first (ast-get variable '("IDENTIFIER"))) "name"))))
+
+    (enqueue q (ast-value ast "parent"))))
+
+(defun find-method-args (ast)
+  (loop for arg in ast
+        with results
+        do
+        (setf results
+              (append results
+                      (list
+                        (if (uiop:string-suffix-p (ast-value arg "type") "_LITERAL")
+                            (if (equal (ast-value arg "type") "STRING_LITERAL")
+                                "String"
+                                (ppcre:regex-replace-all "_LITERAL" (ast-value arg "type") ""))
+                            (alexandria:switch ((jsown:val arg "type") :test #'equal)
+                              ("MEMBER_SELECT"
+                               (if (ast-find-name (list arg) "class")
+                                   "Class"
+                                   (ast-value (first (ast-get arg '("IDENTIFIER"))) "name")))
+                              ("NEW_CLASS"
+                               (ast-value arg "name"))
+                              ("IDENTIFIER"
+                               (find-variable-name (ast-value arg "name") arg))
+                              (t
+                               "?"))))))
+        finally (return results)))
+
+(defun get-fq-name-for-definitions (method-name ast)
+  (loop
+    with q = (make-queue)
+    with fq-names
+    initially (enqueue q ast)
+    do
+    (setf ast (dequeue q))
+    (when (null ast) (return (format nil "~{~a~^.~}" fq-names)))
+
+    (when (ast-find-name (ast-get ast '("METHOD")) method-name)
+      (setf fq-names (append fq-names (list method-name))))
+    (when (and
+            fq-names
+            (equal (ast-value ast "type") "CLASS"))
+      (setf fq-names (append (list (ast-value ast "name")) fq-names)))
+    (when (and
+            fq-names
+            (equal (ast-value ast "type") "COMPILATION_UNIT"))
+      (setf fq-names (append 
+                       (list (ast-value (first (ast-get ast '("PACKAGE"))) "packageName"))
+                       fq-names)))
+
+    (when (jsown:keyp ast "parent")
+      (enqueue q (jsown:val ast "parent")))))
 
 (defun find-rest-client (fq-name ast)
   (alexandria:switch (fq-name :test #'equal)
@@ -409,7 +336,6 @@
                 (equal (ast-value ast "type") "INTERFACE"))
           (setf class-name (jsown:val ast "name"))
           (setf result (format nil "~{~a~^.~}" (remove nil (list result (jsown:val ast "name"))))))
-
         (when (and
                 (jsown:keyp ast "name")
                 (= (jsown:val ast "pos") top-offset))

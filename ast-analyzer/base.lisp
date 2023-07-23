@@ -20,6 +20,7 @@
            #:find-definitions
            #:find-entrypoint
            #:find-references
+           #:find-reference
            #:matches-reference-name
            #:find-reference-pos
            #:get-fq-name
@@ -98,6 +99,8 @@
             (if (eq cache 'empty) nil cache))
         (when cache t)))))
 
+(defgeneric find-reference (ast-analyzer target-pos ast index-path))
+
 (defgeneric matches-reference-name (ast-analyzer ast target-pos))
 
 (defgeneric find-reference-pos (ast-analyzer index-path root-ast ast target-pos))
@@ -105,25 +108,31 @@
 (defgeneric get-fq-name (ast-analyzer ast))
 
 (defun find-references-by-file (ast-analyzer index-path ast target-pos)
+  (let ((q (make-queue)))
+    (enqueue q ast)
+    (loop
+      (let ((ast (dequeue q)))
+        (when (null ast) (return))
+
+        (when (jsown:keyp ast "children")
+          (loop for child in (jsown:val ast "children")
+                do
+                (setf (jsown:val child "parent") ast)
+                (enqueue q child))))))
   (let ((q (make-queue))
-        (root-ast ast)
         results)
     (enqueue q ast)
     (loop
       (let ((ast (dequeue q)))
         (when (null ast) (return))
 
-        (when (matches-reference-name ast-analyzer ast target-pos)
-          (let ((found-reference-pos (find-reference-pos ast-analyzer index-path root-ast ast target-pos)))
-            (when found-reference-pos
-              (setf results (append results (list found-reference-pos))))))
+        (let ((ref (find-reference ast-analyzer target-pos ast index-path)))
+          (when ref
+            (setf results (append results (list ref)))))
 
         (when (jsown:keyp ast "children")
           (loop for child in (jsown:val ast "children")
-                do
-                (let ((body (cdr child)))
-                  (setf (jsown:val child "parent") ast)
-                  (enqueue q child))))))
+                do (enqueue q child)))))
     results))
 
 (defun convert-to-top-offset (root-path path pos)

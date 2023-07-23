@@ -331,7 +331,12 @@
              ,(cons :top-offset
                     (convert-to-top-offset
                       *jvm-path* "java/client/ClientRestTemplate.java"
-                      '((:line . 15) (:offset . 16))))))
+                      '((:line . 15) (:offset . 16)))))
+            ((:path . "java/client/ClientRestTemplate.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *jvm-path* "java/client/ClientRestTemplate.java"
+                      '((:line . 23) (:offset . 16))))))
           (find-references ast-analyzer
                            `((:type . :rest-server)
                              (:path . "/path")

@@ -67,120 +67,96 @@
 
 (defmethod find-entrypoint ((ast-analyzer ast-analyzer-kotlin) pos))
 
-(defmethod matches-reference-name ((ast-analyzer ast-analyzer-kotlin) ast target-pos)
-  (let ((target-name (cdr (assoc :name target-pos))))
-    (and
-      (equal (ast-value ast "type") "REFERENCE_EXPRESSION")
-      (equal (jsown:val ast "name") target-name))))
+(defmethod find-reference ((ast-analyzer ast-analyzer-kotlin) target-pos ast index-path)
+  (let ((fq-name (get-fq-name ast-analyzer ast)))
+    (unless fq-name (return-from find-reference))
 
-(defmethod find-reference-pos ((ast-analyzer ast-analyzer-kotlin) index-path root-ast ast target-pos)
-  (let ((q (make-queue))
-        (target-name (cdr (assoc :name target-pos)))
-        (found-ast ast)
-        result)
-    (enqueue q ast)
-    (loop
-      (let ((ast (dequeue q)))
-        (if (null ast) (return))
-
-        (when (equal (ast-value ast "type") "DOT_QUALIFIED_EXPRESSION")
-          (let ((dot-expressions (get-dot-expressions ast)))
-            (when (equal (car (last dot-expressions)) target-name)
-              (setf result target-name)
-              (let ((dot-expressions-name (format nil "~{~a~^.~}" dot-expressions)))
-                (when (equal dot-expressions-name (cdr (assoc :fq-name target-pos)))
-                  (return-from
-                    find-reference-pos
-                    (list
-                      (cons :path (get-original-path index-path))
-                      (cons :top-offset (jsown:val found-ast "textOffset")))))
-                (setf result dot-expressions-name))))
-          (loop for child in (jsown:val ast "children")
-                do
-                (when (equal (jsown:val child "type") "REFERENCE_EXPRESSION")
-                  (setf target-name (jsown:val child "name")))))
-
-        (when (equal (ast-value ast "type") "CLASS")
-          (loop for child in (jsown:val ast "children")
-                do
-                (when (equal (jsown:val child "type") "PRIMARY_CONSTRUCTOR")
-                  (let ((found-type (find-type child target-name)))
-                    (when found-type
-                      (setf result (format nil "~{~a~^.~}"
-                                           (remove nil (list found-type result)))))))))
-
-        (when (equal (ast-value ast "type") "kotlin.FILE")
-          (loop for child in (jsown:val ast "children")
-                with class-name = (first (split #\. result))
-                do
-                (when (equal (jsown:val child "type") "IMPORT_LIST")
-                  (loop for child in (jsown:val child "children")
-                        do
-                        (when (and
-                                (equal (jsown:val child "type") "IMPORT_DIRECTIVE")
-                                (equal (car (last (split #\. (jsown:val child "fqName")))) class-name))
-                          (let ((split-import-names (split #\. (jsown:val child "fqName")))
-                                (target-fq-name (cdr (assoc :fq-name target-pos)))
-                                fq-name)
-                            (setf fq-name 
-                                  (format nil "~{~a~^.~}"
-                                          (append (subseq split-import-names
-                                                          0 
-                                                          (1- (length split-import-names)))
-                                                  (list result))))
-                            (when (equal fq-name target-fq-name)
-                              (return-from
-                                find-reference-pos
-                                (list
-                                  (cons :path (get-original-path index-path))
-                                  (cons :top-offset (jsown:val found-ast "textOffset")))))))))))
-
-        (when (jsown:keyp ast "parent")
-          (enqueue q (jsown:val ast "parent")))))))
+    (alexandria:switch ((cdr (assoc :type target-pos)))
+      (:rest-server
+        ;; TODO: implementes
+        nil)
+      (t
+        (when (equal fq-name (cdr (assoc :fq-name target-pos)))
+          (list
+            (cons :path (get-original-path index-path))
+            (cons :top-offset (ast-value ast "textOffset"))))))))
 
 (defmethod get-fq-name ((ast-analyzer ast-analyzer-kotlin) ast)
-  ;; TODO: implements
-  )
+  (alexandria:switch ((ast-value ast "type") :test #'equal)
+    ("CALL_EXPRESSION"
+     (let ((root (first (ast-get ast '("DOT_QUALIFIED_EXPRESSION") :direction :upward))))
+       (format nil "~a.~a"
+               (if (ast-get root '("DOT_QUALIFIED_EXPRESSION"))
+                   (let (fq-class-names)
+                     (push (ast-value (first (ast-get root '("DOT_QUALIFIED_EXPRESSION"
+                                                             "CALL_EXPRESSION"
+                                                             "REFERENCE_EXPRESSION")))
+                                      "name")
+                           fq-class-names)
+                     (push (ast-value (first (ast-get root '("DOT_QUALIFIED_EXPRESSION"
+                                                             "DOT_QUALIFIED_EXPRESSION"
+                                                             "REFERENCE_EXPRESSION")))
+                                      "name")
+                           fq-class-names)
+                     (setf fq-class-names
+                           (append 
+                             (mapcar (lambda (ast) (ast-value ast "name"))
+                                     (ast-get root '("DOT_QUALIFIED_EXPRESSION"
+                                                     "DOT_QUALIFIED_EXPRESSION"
+                                                     "DOT_QUALIFIED_EXPRESSION"
+                                                     "REFERENCE_EXPRESSION")))
+                             fq-class-names))
+                     (format nil "~{~a~^.~}" fq-class-names))
+                   (get-fq-name-without-args
+                     (if (> (length (ast-get root '("CALL_EXPRESSION"))) 1)
+                         (ast-value
+                           (first (ast-get root '("CALL_EXPRESSION" "REFERENCE_EXPRESSION")))
+                           "name") 
+                         (find-variable-name
+                           (ast-value (first (ast-get root '("REFERENCE_EXPRESSION"))) "name")
+                           ast))
+                     ast))
+               (ast-value (first (ast-get ast '("REFERENCE_EXPRESSION"))) "name"))))))
 
-(defun get-dot-expressions (ast)
-  (multiple-value-bind (results calls)
-    (get-dot-expressions-recursive ast)
-    (if (eq (length calls) 1)
-        (last results)
-        results)))
+(defun get-fq-name-without-args (class-name ast)
+  (loop
+    with q = (make-queue)
+    initially (enqueue q ast)
+    do
+    (setf ast (dequeue q))
+    (when (null ast) (return))
 
-(defun get-dot-expressions-recursive (ast &optional calls results)
-  (when (equal (ast-value ast "type") "VALUE_ARGUMENT_LIST")
-    (return-from get-dot-expressions-recursive (values results calls)))
+    (when (equal (ast-value ast "type") "kotlin.FILE")
+      (let ((import (first (ast-find-suffix
+                             (ast-get ast '("IMPORT_LIST" "IMPORT_DIRECTIVE"))
+                             (concatenate 'string "." class-name)
+                             :key-name "fqName"))))
+        (when import
+          (return (ast-value import "fqName")))))
 
-  (when (equal (ast-value ast "type") "CALL_EXPRESSION")
-    (push ast calls))
+    (enqueue q (ast-value ast "parent"))))
 
-  (when (equal (ast-value ast "type") "REFERENCE_EXPRESSION")
-    (setf results (append results (list (jsown:val ast "name")))))
+(defun find-variable-name (object-name ast)
+  (unless object-name
+    (return-from find-variable-name))
 
-  (loop for child in (jsown:val ast "children")
-        do
-        (multiple-value-bind (ret-results ret-calls)
-          (get-dot-expressions-recursive child calls results)
-          (progn
-            (setf results ret-results)
-            (setf calls ret-calls))))
-  (values results calls))
+  (loop
+    with q = (make-queue)
+    initially (enqueue q ast)
+    do
+    (setf ast (dequeue q))
+    (when (null ast) (return))
 
-(defun find-type (ast target-variable &optional found-target result)
-  (when (and
-          (equal (jsown:val ast "type") "VALUE_PARAMETER")
-          (equal (jsown:val ast "name") target-variable))
-    (setf found-target t))
+    (when (equal (ast-value ast "type") "CLASS")
+      (let ((variable (first (ast-find-name (ast-get ast '("PRIMARY_CONSTRUCTOR"
+                                                           "VALUE_PARAMETER_LIST"
+                                                           "VALUE_PARAMETER"))
+                                            object-name))))
+        (return-from find-variable-name
+                     (ast-value (first (ast-get variable '("TYPE_REFERENCE"
+                                                           "USER_TYPE"
+                                                           "REFERENCE_EXPRESSION")))
+                                "name"))))
 
-  (when (and
-          found-target
-          (equal (jsown:val ast "type") "REFERENCE_EXPRESSION"))
-    (setf result (jsown:val ast "name")))
-
-  (loop for child in (jsown:val ast "children")
-        do
-        (setf result (find-type child target-variable found-target result)))
-  result)
+    (enqueue q (ast-value ast "parent"))))
 
