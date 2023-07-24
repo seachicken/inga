@@ -68,7 +68,7 @@
 (defmethod find-entrypoint ((ast-analyzer ast-analyzer-kotlin) pos))
 
 (defmethod find-reference ((ast-analyzer ast-analyzer-kotlin) target-pos ast index-path)
-  (let ((fq-name (get-fq-name ast-analyzer ast)))
+  (let ((fq-name (find-fq-name-for-reference ast-analyzer ast)))
     (unless fq-name (return-from find-reference))
 
     (alexandria:switch ((cdr (assoc :type target-pos)))
@@ -81,7 +81,7 @@
             (cons :path (get-original-path index-path))
             (cons :top-offset (ast-value ast "textOffset"))))))))
 
-(defmethod get-fq-name ((ast-analyzer ast-analyzer-kotlin) ast)
+(defmethod find-fq-name-for-reference ((ast-analyzer ast-analyzer-kotlin) ast)
   (alexandria:switch ((ast-value ast "type") :test #'equal)
     ("CALL_EXPRESSION"
      (let ((root (first (ast-get ast '("DOT_QUALIFIED_EXPRESSION") :direction :upward))))
@@ -107,7 +107,7 @@
                                                      "REFERENCE_EXPRESSION")))
                              fq-class-names))
                      (format nil "~{~a~^.~}" fq-class-names))
-                   (get-fq-name-without-args
+                   (find-fq-class-name
                      (if (> (length (ast-get root '("CALL_EXPRESSION"))) 1)
                          (ast-value
                            (first (ast-get root '("CALL_EXPRESSION" "REFERENCE_EXPRESSION")))
@@ -118,7 +118,7 @@
                      ast))
                (ast-value (first (ast-get ast '("REFERENCE_EXPRESSION"))) "name"))))))
 
-(defun get-fq-name-without-args (class-name ast)
+(defun find-fq-class-name (class-name ast)
   (loop
     with q = (make-queue)
     initially (enqueue q ast)

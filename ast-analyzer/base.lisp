@@ -23,7 +23,7 @@
            #:find-reference
            #:matches-reference-name
            #:find-reference-pos
-           #:get-fq-name
+           #:find-fq-name-for-reference
            #:convert-to-top-offset
            #:convert-to-pos
            #:exec-command
@@ -105,7 +105,7 @@
 
 (defgeneric find-reference-pos (ast-analyzer index-path root-ast ast target-pos))
 
-(defgeneric get-fq-name (ast-analyzer ast))
+(defgeneric find-fq-name-for-reference (ast-analyzer ast))
 
 (defun find-references-by-file (ast-analyzer index-path ast target-pos)
   (let ((q (make-queue)))

@@ -173,7 +173,7 @@
 (defmethod find-entrypoint ((ast-analyzer ast-analyzer-java) pos))
 
 (defmethod find-reference ((ast-analyzer ast-analyzer-java) target-pos ast index-path)
-  (let ((fq-name (get-fq-name ast-analyzer ast)))
+  (let ((fq-name (find-fq-name-for-reference ast-analyzer ast)))
     (unless fq-name (return-from find-reference))
 
     (alexandria:switch ((cdr (assoc :type target-pos)))
@@ -191,17 +191,17 @@
             (cons :path (get-original-path index-path))
             (cons :top-offset (ast-value ast "startPos"))))))))
 
-(defmethod get-fq-name ((ast-analyzer ast-analyzer-java) ast)
+(defmethod find-fq-name-for-reference ((ast-analyzer ast-analyzer-java) ast)
   (alexandria:switch ((ast-value ast "type") :test #'equal)
     ("NEW_CLASS"
      (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
-             (get-fq-name-without-args (ast-value ast "name") ast)
+             (find-fq-class-name (ast-value ast "name") ast)
              (ast-value ast "name")
              (find-method-args (ast-get ast '("*")))))
     ("METHOD_INVOCATION"
      (if (ast-get ast '("MEMBER_SELECT"))
          (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
-                 (get-fq-name-without-args
+                 (find-fq-class-name
                    (if (ast-get ast '("MEMBER_SELECT" "NEW_CLASS"))
                        (ast-value (first (ast-get ast '("MEMBER_SELECT" "NEW_CLASS"))) "name")
                        (find-variable-name
@@ -211,12 +211,12 @@
                  (ast-value (first (ast-get ast '("*"))) "name")
                  (find-method-args (nthcdr 1 (ast-get ast '("*")))))
          (format nil "~a~:[~;-~]~:*~{~a~^-~}"
-                 (get-fq-name-for-definitions
+                 (find-fq-name-for-definition
                    (ast-value (first (ast-get ast '("IDENTIFIER"))) "name")
                    ast)
                  (find-method-args (nthcdr 1 (ast-get ast '("*")))))))))
 
-(defun get-fq-name-without-args (class-name ast)
+(defun find-fq-class-name (class-name ast)
   (loop
     with q = (make-queue)
     with fq-names
@@ -277,7 +277,7 @@
                                "?"))))))
         finally (return results)))
 
-(defun get-fq-name-for-definitions (method-name ast)
+(defun find-fq-name-for-definition (method-name ast)
   (loop
     with q = (make-queue)
     with fq-names
