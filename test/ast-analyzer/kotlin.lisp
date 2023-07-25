@@ -7,6 +7,7 @@
 (def-suite kotlin)
 (in-suite kotlin)
 
+(defparameter *test-path* (merge-pathnames #p"test/"))
 (defparameter *fixtures-path* (merge-pathnames #p"test/fixtures/"))
 (defparameter *jvm-path* (merge-pathnames #p"test/fixtures/jvm/"))
 (defparameter *cache* (inga/cache:make-cache 100))
@@ -43,6 +44,22 @@
                        '((:line . 7) (:offset . -1))))))))
     (stop-ast-analyzer ast-analyzer)))
 
+(test find-references-to-primary-constructor
+  (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
+    (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
+    (is (equal
+          `(((:path . "fixtures/kotlin/PrimaryConstructorReference.kt")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *test-path* "fixtures/kotlin/PrimaryConstructorReference.kt"
+                      '((:line . 7) (:offset . 11))))))
+          (find-references ast-analyzer
+                           '((:path . "fixtures/kotlin/PrimaryConstructorHelper.kt")
+                             (:name . "method")
+                             (:line . 4) (:offset . 9)
+                             (:fq-name . "fixtures.kotlin.PrimaryConstructorHelper.method")))))
+    (stop-ast-analyzer ast-analyzer)))
+
 (test find-references-to-imported-class
   (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
     (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
@@ -66,12 +83,7 @@
              ,(cons :top-offset
                     (convert-to-top-offset
                       *jvm-path* "java/Class.java"
-                      '((:line . 17) (:offset . 9)))))
-            ((:path . "kotlin/a/PrimaryConstructor.kt")
-             ,(cons :top-offset
-                    (convert-to-top-offset
-                      *jvm-path* "kotlin/a/PrimaryConstructor.kt"
-                      '((:line . 7) (:offset . 9))))))
+                      '((:line . 17) (:offset . 9))))))
           (find-references ast-analyzer
                            '((:path . "kotlin/a/Class.kt")
                              (:name . "method")
