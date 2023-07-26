@@ -60,35 +60,36 @@
                              (:fq-name . "fixtures.kotlin.PrimaryConstructorHelper.method")))))
     (stop-ast-analyzer ast-analyzer)))
 
-(test find-references-to-imported-class
-  (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
+(test find-references-to-fq-method
+  (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
     (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
     (is (equal
-          `(((:path . "Main.kt")
+          `(((:path . "fixtures/kotlin/FqMethodReference.kt")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *jvm-path* "Main.kt"
-                      '((:line . 7) (:offset . 17)))))
-            ((:path . "java/Class.java")
-             ,(cons :top-offset
-                    (convert-to-top-offset
-                      *jvm-path* "java/Class.java"
-                      '((:line . 10) (:offset . 9)))))
-            ((:path . "java/Class.java")
-             ,(cons :top-offset
-                    (convert-to-top-offset
-                      *jvm-path* "java/Class.java"
-                      '((:line . 11) (:offset . 9)))))
-            ((:path . "java/Class.java")
-             ,(cons :top-offset
-                    (convert-to-top-offset
-                      *jvm-path* "java/Class.java"
-                      '((:line . 17) (:offset . 9))))))
+                      *test-path* "fixtures/kotlin/FqMethodReference.kt"
+                      '((:line . 5) (:offset . 42))))))
           (find-references ast-analyzer
-                           '((:path . "kotlin/a/Class.kt")
+                           '((:path . "fixtures/kotlin/FqMethodHelper.kt")
                              (:name . "method")
                              (:line . 4) (:offset . 9)
-                             (:fq-name . "jvm.kotlin.a.Class.method")))))
+                             (:fq-name . "fixtures.kotlin.FqMethodHelper.method")))))
+    (stop-ast-analyzer ast-analyzer)))
+
+(test find-references-to-java-class
+  (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
+    (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
+    (is (equal
+          `(((:path . "fixtures/kotlin/JavaReference.kt")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *test-path* "fixtures/kotlin/JavaReference.kt"
+                      '((:line . 7) (:offset . 11))))))
+          (find-references ast-analyzer
+                           '((:path . "fixtures/java/KotlinReference.java")
+                             (:name . "method")
+                             (:line . 8) (:offset . 17)
+                             (:fq-name . "fixtures.java.KotlinReference.method")))))
     (stop-ast-analyzer ast-analyzer)))
 
 (test find-references-to-fq-class

@@ -88,24 +88,26 @@
        (format nil "~a.~a"
                (if (ast-get root '("DOT_QUALIFIED_EXPRESSION"))
                    (let (fq-class-names)
+                     ;; get class name
                      (push (ast-value (first (ast-get root '("DOT_QUALIFIED_EXPRESSION"
                                                              "CALL_EXPRESSION"
                                                              "REFERENCE_EXPRESSION")))
                                       "name")
                            fq-class-names)
-                     (push (ast-value (first (ast-get root '("DOT_QUALIFIED_EXPRESSION"
-                                                             "DOT_QUALIFIED_EXPRESSION"
-                                                             "REFERENCE_EXPRESSION")))
-                                      "name")
-                           fq-class-names)
-                     (setf fq-class-names
-                           (append 
-                             (mapcar (lambda (ast) (ast-value ast "name"))
-                                     (ast-get root '("DOT_QUALIFIED_EXPRESSION"
-                                                     "DOT_QUALIFIED_EXPRESSION"
-                                                     "DOT_QUALIFIED_EXPRESSION"
-                                                     "REFERENCE_EXPRESSION")))
-                             fq-class-names))
+                     ;; get package name
+                     (labels ((get-names (nodes)
+                                (mapcar (lambda (ast) (ast-value ast "name")) nodes))
+                              (get-package-names (ast)
+                                (loop for child in (ast-get ast '("DOT_QUALIFIED_EXPRESSION"))
+                                      with names
+                                      do
+                                      (setf names (append names (get-package-names child)))
+                                      (setf names (append names (get-names
+                                                                  (ast-get
+                                                                    child
+                                                                    '("REFERENCE_EXPRESSION")))))
+                                      finally (return names))))
+                       (setf fq-class-names (append (get-package-names root) fq-class-names)))
                      (format nil "~{~a~^.~}" fq-class-names))
                    (find-fq-class-name
                      (if (> (length (ast-get root '("CALL_EXPRESSION"))) 1)
