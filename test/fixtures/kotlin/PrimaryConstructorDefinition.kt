@@ -1,6 +1,6 @@
 package fixtures.kotlin
 
-class PrimaryConstructorHelper {
+class PrimaryConstructorDefinition {
     fun method() {
     }
 }

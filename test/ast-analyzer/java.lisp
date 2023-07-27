@@ -7,6 +7,7 @@
 (def-suite java)
 (in-suite java)
 
+(defparameter *test-path* (merge-pathnames #p"test/"))
 (defparameter *jvm-path* (merge-pathnames #p"test/fixtures/jvm/"))
 (defparameter *spring-boot-path*
   (truename (uiop:merge-pathnames* "test/fixtures/spring-boot-realworld-example-app/")))

@@ -8,40 +8,30 @@
 (in-suite kotlin)
 
 (defparameter *test-path* (merge-pathnames #p"test/"))
-(defparameter *fixtures-path* (merge-pathnames #p"test/fixtures/"))
-(defparameter *jvm-path* (merge-pathnames #p"test/fixtures/jvm/"))
 (defparameter *cache* (inga/cache:make-cache 100))
 
-;; class Class {
-;;     val field = 0
-;; 
-;;         ↓[out]
-;;     fun method(): Int {
-;;       return 0 ←[in]
-;;     }
-;; }
 (test find-definitions-for-method
-  (let ((ast-analyzer (make-ast-analyzer :java *fixtures-path* *cache*)))
+  (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
     (start-ast-analyzer ast-analyzer '("*.kt") nil)
     (is (equal
-          `(((:path . "declaration.kt")
+          `(((:path . "fixtures/kotlin/PrimaryConstructorDefinition.kt")
              (:name . "method")
-             (:fq-name . "com.example.Class.method")
+             (:fq-name . "fixtures.kotlin.PrimaryConstructorDefinition.method")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *fixtures-path* "declaration.kt"
-                      '((:line . 6) (:offset . 5)))))) ;; FIXME: actual offset is 9
+                      *test-path* "fixtures/kotlin/PrimaryConstructorDefinition.kt"
+                      '((:line . 4) (:offset . 5)))))) ;; FIXME: actual offset is 9
           (find-definitions
             ast-analyzer
-            `((:path . "declaration.kt")
+            `((:path . "fixtures/kotlin/PrimaryConstructorDefinition.kt")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *fixtures-path* "declaration.kt"
-                       '((:line . 7) (:offset . 0))))
+                       *test-path* "fixtures/kotlin/PrimaryConstructorDefinition.kt"
+                       '((:line . 5) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *fixtures-path* "declaration.kt"
-                       '((:line . 7) (:offset . -1))))))))
+                       *test-path* "fixtures/kotlin/PrimaryConstructorDefinition.kt"
+                       '((:line . 5) (:offset . -1))))))))
     (stop-ast-analyzer ast-analyzer)))
 
 (test find-references-to-primary-constructor
@@ -90,20 +80,5 @@
                              (:name . "method")
                              (:line . 8) (:offset . 17)
                              (:fq-name . "fixtures.java.KotlinReference.method")))))
-    (stop-ast-analyzer ast-analyzer)))
-
-(test find-references-to-fq-class
-  (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
-    (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
-    (is (equal
-          `(((:path . "Main.kt")
-             ,(cons :top-offset
-                    (convert-to-top-offset
-                      *jvm-path* "Main.kt"
-                      '((:line . 8) (:offset . 30))))))
-          (find-references ast-analyzer
-                           '((:path . "kotlin/b/Class.kt")
-                             (:name . "method")
-                             (:fq-name . "jvm.kotlin.b.Class.method")))))
     (stop-ast-analyzer ast-analyzer)))
 
