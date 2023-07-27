@@ -27,11 +27,11 @@
               ,(cons :start-offset
                      (convert-to-top-offset
                        *test-path* "fixtures/kotlin/PrimaryConstructorDefinition.kt"
-                       '((:line . 5) (:offset . 0))))
+                       '((:line . 4) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
                        *test-path* "fixtures/kotlin/PrimaryConstructorDefinition.kt"
-                       '((:line . 5) (:offset . -1))))))))
+                       '((:line . 4) (:offset . -1))))))))
     (stop-ast-analyzer ast-analyzer)))
 
 (test find-references-to-primary-constructor

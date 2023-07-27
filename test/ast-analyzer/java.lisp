@@ -13,64 +13,58 @@
   (truename (uiop:merge-pathnames* "test/fixtures/spring-boot-realworld-example-app/")))
 (defparameter *cache* (inga/cache:make-cache 100))
 
-(test find-definitions-for-constructor
-  (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
+(test find-definitions-to-constructor
+  (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
     (start-ast-analyzer ast-analyzer nil nil)
     (is (equal
-          `(((:path . "java/ConstructorClass.java")
-             (:name . "ConstructorClass")
-             (:fq-name . "jvm.java.ConstructorClass.ConstructorClass")
+          `(((:path . "fixtures/java/ConstructorDefinition.java")
+             (:name . "ConstructorDefinition")
+             (:fq-name . "fixtures.java.ConstructorDefinition.ConstructorDefinition")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *jvm-path*
-                      "java/ConstructorClass.java"
-                      '((:line . 4) (:offset . 10))))))
+                      *test-path*
+                       "fixtures/java/ConstructorDefinition.java"
+                      '((:line . 4) (:offset . 12))))))
           (find-definitions
             ast-analyzer
-            `((:path . "java/ConstructorClass.java")
+            `((:path . "fixtures/java/ConstructorDefinition.java")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *jvm-path*
-                       "java/ConstructorClass.java"
+                       *test-path*
+                       "fixtures/java/ConstructorDefinition.java"
                        '((:line . 4) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *jvm-path*
-                       "java/ConstructorClass.java"
+                       *test-path*
+                       "fixtures/java/ConstructorDefinition.java"
                        '((:line . 4) (:offset . -1))))))))
     (stop-ast-analyzer ast-analyzer)))
 
-;; public class ArticleQueryService {
-;;                                ↓[out]
-;;   public Optional<ArticleData> findById(String id, User user) {
-;;     ArticleData articleData = articleReadService.findById(id); ←[in]
-;;   }
-;; }
-(test find-definitions-for-method
-  (let ((ast-analyzer (make-ast-analyzer :java *spring-boot-path* *cache*)))
+(test find-definitions-to-method
+  (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
     (start-ast-analyzer ast-analyzer nil nil)
     (is (equal
-          `(((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
-             (:name . "findById")
-             (:fq-name . "io.spring.application.ArticleQueryService.findById-String-User")
+          `(((:path . "fixtures/java/MethodDefinition.java")
+             (:name . "method")
+             (:fq-name . "fixtures.java.MethodDefinition.method-INT")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *spring-boot-path*
-                      "src/main/java/io/spring/application/ArticleQueryService.java"
-                      '((:line . 30) (:offset . 32))))))
+                       *test-path*
+                       "fixtures/java/MethodDefinition.java"
+                      '((:line . 7) (:offset . 17))))))
           (find-definitions
             ast-analyzer
-            `((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
+            `((:path . "fixtures/java/MethodDefinition.java")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *spring-boot-path*
-                       "src/main/java/io/spring/application/ArticleQueryService.java"
-                       '((:line . 31) (:offset . 0))))
+                       *test-path*
+                       "fixtures/java/MethodDefinition.java"
+                       '((:line . 7) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *spring-boot-path*
-                       "src/main/java/io/spring/application/ArticleQueryService.java"
-                       '((:line . 31) (:offset . -1))))))))
+                       *test-path*
+                       "fixtures/java/MethodDefinition.java"
+                       '((:line . 7) (:offset . -1))))))))
     (stop-ast-analyzer ast-analyzer)))
 
 ;; public interface ArticleRepository {
