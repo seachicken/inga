@@ -1,4 +1,4 @@
-package jvm.java.client;
+package fixtures.java.client;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;

@@ -8,12 +8,11 @@
 (in-suite java)
 
 (defparameter *test-path* (merge-pathnames #p"test/"))
-(defparameter *jvm-path* (merge-pathnames #p"test/fixtures/jvm/"))
 (defparameter *spring-boot-path*
   (truename (uiop:merge-pathnames* "test/fixtures/spring-boot-realworld-example-app/")))
 (defparameter *cache* (inga/cache:make-cache 100))
 
-(test find-definitions-to-constructor
+(test find-definitions-for-constructor
   (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
     (start-ast-analyzer ast-analyzer nil nil)
     (is (equal
@@ -22,25 +21,22 @@
              (:fq-name . "fixtures.java.ConstructorDefinition.ConstructorDefinition")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *test-path*
-                       "fixtures/java/ConstructorDefinition.java"
+                      *test-path* "fixtures/java/ConstructorDefinition.java"
                       '((:line . 4) (:offset . 12))))))
           (find-definitions
             ast-analyzer
             `((:path . "fixtures/java/ConstructorDefinition.java")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *test-path*
-                       "fixtures/java/ConstructorDefinition.java"
+                       *test-path* "fixtures/java/ConstructorDefinition.java"
                        '((:line . 4) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *test-path*
-                       "fixtures/java/ConstructorDefinition.java"
+                       *test-path* "fixtures/java/ConstructorDefinition.java"
                        '((:line . 4) (:offset . -1))))))))
     (stop-ast-analyzer ast-analyzer)))
 
-(test find-definitions-to-method
+(test find-definitions-for-method
   (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
     (start-ast-analyzer ast-analyzer nil nil)
     (is (equal
@@ -49,112 +45,67 @@
              (:fq-name . "fixtures.java.MethodDefinition.method-INT")
              ,(cons :top-offset
                     (convert-to-top-offset
-                       *test-path*
-                       "fixtures/java/MethodDefinition.java"
+                       *test-path* "fixtures/java/MethodDefinition.java"
                       '((:line . 7) (:offset . 17))))))
           (find-definitions
             ast-analyzer
             `((:path . "fixtures/java/MethodDefinition.java")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *test-path*
-                       "fixtures/java/MethodDefinition.java"
+                       *test-path* "fixtures/java/MethodDefinition.java"
                        '((:line . 7) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *test-path*
-                       "fixtures/java/MethodDefinition.java"
+                       *test-path* "fixtures/java/MethodDefinition.java"
                        '((:line . 7) (:offset . -1))))))))
     (stop-ast-analyzer ast-analyzer)))
 
-;; public interface ArticleRepository {
-;;        ↓[out]
-;;   void save(Article article); ←[in]
-;; }
 (test find-definitions-for-interface
-  (let ((ast-analyzer (make-ast-analyzer :java *spring-boot-path* *cache*)))
+  (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
     (start-ast-analyzer ast-analyzer nil nil)
     (is (equal
-          `(((:path . "src/main/java/io/spring/core/article/ArticleRepository.java")
-             (:name . "save")
-             (:fq-name . "io.spring.core.article.ArticleRepository.save-Article")
-             ,(cons :top-offset
-                    (convert-to-top-offset
-                      *spring-boot-path*
-                      "src/main/java/io/spring/core/article/ArticleRepository.java"
-                      '((:line . 7) (:offset . 8))))))
-          (find-definitions
-            ast-analyzer
-            `((:path . "src/main/java/io/spring/core/article/ArticleRepository.java")
-              ,(cons :start-offset
-                     (convert-to-top-offset
-                       *spring-boot-path*
-                       "src/main/java/io/spring/core/article/ArticleRepository.java"
-                       '((:line . 7) (:offset . 0))))
-              ,(cons :end-offset
-                     (convert-to-top-offset
-                       *spring-boot-path*
-                       "src/main/java/io/spring/core/article/ArticleRepository.java"
-                       '((:line . 7) (:offset . -1))))))))
-    (stop-ast-analyzer ast-analyzer)))
-
-;; public class NewArticleParam {
-;;   @DuplicatedArticleConstraint ←[in]
-;;                  ↓[out]
-;;   private String title;
-;; }
-(test find-definitions-for-field-annotation
-  (let ((ast-analyzer (make-ast-analyzer :java *spring-boot-path* *cache*)))
-    (start-ast-analyzer ast-analyzer nil nil)
-    (is (equal
-          `(((:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
-             (:name . "title")
-             (:fq-name . "io.spring.application.article.NewArticleParam.title")
-             ,(cons :top-offset
-                    (convert-to-top-offset
-                      *spring-boot-path*
-                      "src/main/java/io/spring/application/article/NewArticleParam.java"
-                      '((:line . 19) (:offset . 18))))))
-          (find-definitions
-            ast-analyzer
-            `((:path . "src/main/java/io/spring/application/article/NewArticleParam.java")
-              ,(cons :start-offset
-                     (convert-to-top-offset
-                       *spring-boot-path*
-                       "src/main/java/io/spring/application/article/NewArticleParam.java"
-                       '((:line . 18) (:offset . 0))))
-              ,(cons :end-offset
-                     (convert-to-top-offset
-                       *spring-boot-path*
-                       "src/main/java/io/spring/application/article/NewArticleParam.java"
-                       '((:line . 18) (:offset . -1))))))))
-    (stop-ast-analyzer ast-analyzer)))
-
-(test find-definitions-for-overload
-  (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
-    (start-ast-analyzer ast-analyzer nil nil)
-    (is (equal
-          `(((:path . "java/Overload.java")
+          `(((:path . "fixtures/java/InterfaceDefinition.java")
              (:name . "method")
-             (:fq-name . "jvm.java.Overload.method-INT")
+             (:fq-name . "fixtures.java.InterfaceDefinition.method-INT")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *jvm-path*
-                      "java/Overload.java"
-                      '((:line . 4) (:offset . 19))))))
+                      *test-path* "fixtures/java/InterfaceDefinition.java"
+                      '((:line . 6) (:offset . 10))))))
           (find-definitions
             ast-analyzer
-            `((:path . "java/Overload.java")
+            `((:path . "fixtures/java/InterfaceDefinition.java")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *jvm-path*
-                       "java/Overload.java"
-                       '((:line . 5) (:offset . 0))))
+                       *test-path* "fixtures/java/InterfaceDefinition.java"
+                       '((:line . 6) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *jvm-path*
-                       "java/Overload.java"
-                       '((:line . 5) (:offset . -1))))))))
+                       *test-path* "fixtures/java/InterfaceDefinition.java"
+                       '((:line . 6) (:offset . -1))))))))
+    (stop-ast-analyzer ast-analyzer)))
+
+(test find-definitions-for-instance-variable-annotation
+  (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
+    (start-ast-analyzer ast-analyzer nil nil)
+    (is (equal
+          `(((:path . "fixtures/java/InstanceVariableAnnotationDefinition.java")
+             (:name . "variable")
+             (:fq-name . "fixtures.java.InstanceVariableAnnotationDefinition.variable")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *test-path* "fixtures/java/InstanceVariableAnnotationDefinition.java"
+                      '((:line . 7) (:offset . 19))))))
+          (find-definitions
+            ast-analyzer
+            `((:path . "fixtures/java/InstanceVariableAnnotationDefinition.java")
+              ,(cons :start-offset
+                     (convert-to-top-offset
+                       *test-path* "fixtures/java/InstanceVariableAnnotationDefinition.java"
+                       '((:line . 6) (:offset . 0))))
+              ,(cons :end-offset
+                     (convert-to-top-offset
+                       *test-path* "fixtures/java/InstanceVariableAnnotationDefinition.java"
+                       '((:line . 6) (:offset . -1))))))))
     (stop-ast-analyzer ast-analyzer)))
 
 ;; class DuplicatedArticleValidator
@@ -227,110 +178,64 @@
                 (:start . 65) (:end . 65)))))
         (stop-ast-analyzer ast-analyzer))))
 
-(test find-references-to-imported-method-with-new
-  (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
+(test find-references-for-new-class
+  (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
     (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
     (is (equal
-          `(((:path . "java/Class.java")
+          `(((:path . "fixtures/java/NewClassReference.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *jvm-path* "java/Class.java"
-                      '((:line . 12) (:offset . 9))))))
-          (find-references ast-analyzer
-                           `((:path . "java/Overload.java")
-                             (:name . "method")
-                             (:fq-name . "jvm.java.Overload.method-INT")
-                             (:top-offset ,(convert-to-top-offset
-                                             *jvm-path*
-                                             "java/Overload.java"
-                                             '((:line . 4) (:offset . 19))))))))
-    (stop-ast-analyzer ast-analyzer)))
-
-(test find-references-to-constructor
-  (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
-    (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
-    (is (equal
-          `(((:path . "java/NewClass.java")
-             ,(cons :top-offset
-                    (convert-to-top-offset
-                      *jvm-path* "java/NewClass.java"
+                      *test-path* "fixtures/java/NewClassReference.java"
                       '((:line . 7) (:offset . 9))))))
           (find-references ast-analyzer
-                           `((:path . "java/ConstructorClass.java")
-                             (:name . "ConstructorClass")
-                             (:fq-name . "jvm.java.ConstructorClass.ConstructorClass-INT")
-                             (:top-offset ,(convert-to-top-offset
-                                             *jvm-path*
-                                             "java/ConstructorClass.java"
-                                             '((:line . 7) (:offset . 10))))))))
-    (stop-ast-analyzer ast-analyzer)))
-
-(test find-references-to-private-method
-  (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
-    (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
-    (is (equal
-          `(((:path . "java/Class.java")
-             ,(cons :top-offset
-                    (convert-to-top-offset
-                      *jvm-path* "java/Class.java"
-                      '((:line . 13) (:offset . 9))))))
-          (find-references ast-analyzer
-                           `((:path . "java/Class.java")
-                             (:name . "method2")
-                             (:fq-name . "jvm.java.Class.method2")
-                             (:top-offset ,(convert-to-top-offset
-                                             *jvm-path*
-                                             "java/Class.java"
-                                             '((:line . 16) (:offset . 17))))))))
-    (stop-ast-analyzer ast-analyzer)))
-
-(test the-return-name-is-not-included-in-references
-  (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
-    (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
-    (is (equal
-          nil 
-          (find-references ast-analyzer
-                           `((:path . "java/Class.java")
-                             (:name . "variable")
-                             (:fq-name . "jvm.java.Class.variable")
-                             (:top-offset ,(convert-to-top-offset
-                                             *jvm-path*
-                                             "java/Class.java"
-                                             '((:line . 18) (:offset . 18))))))))
-    (stop-ast-analyzer ast-analyzer)))
-
-(test find-references-to-overload-method
-  (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
-    (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
-    (is (equal
-          `(((:path . "java/Overload.java")
-             ,(cons :top-offset
-                    (convert-to-top-offset
-                      *jvm-path* "java/Overload.java"
-                      '((:line . 5) (:offset . 16))))))
-          (find-references ast-analyzer
-                           `((:path . "java/Overload.java")
+                           `((:path . "fixtures/java/NewClassHelper.java")
                              (:name . "method")
-                             (:fq-name . "jvm.java.Overload.method-String")
-                             (:top-offset ,(convert-to-top-offset
-                                             *jvm-path*
-                                             "java/Overload.java"
-                                             '((:line . 8) (:offset . 19))))))))
+                             (:fq-name . "fixtures.java.NewClassHelper.method")))))
     (stop-ast-analyzer ast-analyzer)))
 
-(test find-references-to-rest-client
-  (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
+(test find-references-for-constructor
+  (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
     (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
     (is (equal
-          `(((:path . "java/client/ClientRestTemplate.java")
+          `(((:path . "fixtures/java/ConstructorReference.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *jvm-path* "java/client/ClientRestTemplate.java"
+                      *test-path* "fixtures/java/ConstructorReference.java"
+                      '((:line . 7) (:offset . 9))))))
+          (find-references ast-analyzer
+                           `((:path . "fixtures/java/ConstructorHelper.java")
+                             (:name . "ConstructorHelper")
+                             (:fq-name . "fixtures.java.ConstructorHelper.ConstructorHelper-INT")))))
+    (stop-ast-analyzer ast-analyzer)))
+
+(test find-references-for-private-method
+  (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
+    (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
+    (is (equal
+          `(((:path . "fixtures/java/PrivateMethodReference.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *test-path* "fixtures/java/PrivateMethodReference.java"
+                      '((:line . 5) (:offset . 9))))))
+          (find-references ast-analyzer
+                           `((:path . "fixtures/java/PrivateMethodReference.java")
+                             (:name . "method2")
+                             (:fq-name . "fixtures.java.PrivateMethodReference.method2")))))
+    (stop-ast-analyzer ast-analyzer)))
+
+(test find-references-for-rest-client
+  (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
+    (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
+    (is (equal
+          `(((:path . "fixtures/java/client/ClientRestTemplate.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *test-path* "fixtures/java/client/ClientRestTemplate.java"
                       '((:line . 15) (:offset . 16)))))
-            ((:path . "java/client/ClientRestTemplate.java")
+            ((:path . "fixtures/java/client/ClientRestTemplate.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *jvm-path* "java/client/ClientRestTemplate.java"
+                      *test-path* "fixtures/java/client/ClientRestTemplate.java"
                       '((:line . 23) (:offset . 16))))))
           (find-references ast-analyzer
                            `((:type . :rest-server)
@@ -338,27 +243,18 @@
                              (:name . "GET")))))
     (stop-ast-analyzer ast-analyzer)))
 
-(test get-fq-name-of-declaration
-  (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
-    (start-ast-analyzer ast-analyzer nil nil)
+(test find-references-for-kotlin-class
+  (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
+    (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
     (is (equal
-          "jvm.java.Class.method2"
-          (inga/ast-analyzer/java::get-fq-name-of-declaration
-            (cdr (jsown:parse (uiop:read-file-string (get-index-path "java/Class.java"))))
-            (convert-to-top-offset
-              *jvm-path* "java/Class.java"
-              '((:line . 16) (:offset . 17))))))
-    (stop-ast-analyzer ast-analyzer)))
-
-(test get-fq-name-of-declaration-with-params
-  (let ((ast-analyzer (make-ast-analyzer :java *jvm-path* *cache*)))
-    (start-ast-analyzer ast-analyzer nil nil)
-    (is (equal
-          "jvm.java.Overload.method-INT"
-          (inga/ast-analyzer/java::get-fq-name-of-declaration
-            (cdr (jsown:parse (uiop:read-file-string (get-index-path "java/Overload.java"))))
-            (convert-to-top-offset
-              *jvm-path* "java/Overload.java"
-              '((:line . 4) (:offset . 19))))))
+          `(((:path . "fixtures/java/KotlinReference.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *test-path* "fixtures/java/KotlinReference.java"
+                      '((:line . 9) (:offset . 9))))))
+          (find-references ast-analyzer
+                           '((:path . "fixtures/kotlin/JavaReference.kt")
+                             (:name . "method")
+                             (:fq-name . "fixtures.kotlin.JavaReference.method")))))
     (stop-ast-analyzer ast-analyzer)))
 

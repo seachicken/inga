@@ -34,7 +34,7 @@
                        '((:line . 4) (:offset . -1))))))))
     (stop-ast-analyzer ast-analyzer)))
 
-(test find-references-to-primary-constructor
+(test find-references-for-primary-constructor
   (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
     (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
     (is (equal
@@ -46,11 +46,10 @@
           (find-references ast-analyzer
                            '((:path . "fixtures/kotlin/PrimaryConstructorHelper.kt")
                              (:name . "method")
-                             (:line . 4) (:offset . 9)
                              (:fq-name . "fixtures.kotlin.PrimaryConstructorHelper.method")))))
     (stop-ast-analyzer ast-analyzer)))
 
-(test find-references-to-fq-method
+(test find-references-for-fq-method
   (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
     (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
     (is (equal
@@ -62,11 +61,10 @@
           (find-references ast-analyzer
                            '((:path . "fixtures/kotlin/FqMethodHelper.kt")
                              (:name . "method")
-                             (:line . 4) (:offset . 9)
                              (:fq-name . "fixtures.kotlin.FqMethodHelper.method")))))
     (stop-ast-analyzer ast-analyzer)))
 
-(test find-references-to-java-class
+(test find-references-for-java-class
   (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
     (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
     (is (equal
@@ -78,7 +76,6 @@
           (find-references ast-analyzer
                            '((:path . "fixtures/java/KotlinReference.java")
                              (:name . "method")
-                             (:line . 8) (:offset . 17)
                              (:fq-name . "fixtures.java.KotlinReference.method")))))
     (stop-ast-analyzer ast-analyzer)))
 
