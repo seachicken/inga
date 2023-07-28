@@ -6,7 +6,7 @@ RUN ros && \
   ros build /inga/roswell/inga.ros
 
 
-FROM node:20-slim
+FROM node:18-slim
 
 COPY --from=build /inga/roswell/inga /usr/local/bin/
 
