@@ -25,5 +25,6 @@
   :depends-on ("fiveam"
                "inga/test/main"
                "inga/test/ast-analyzer/java"
-               "inga/test/ast-analyzer/kotlin"))
+               "inga/test/ast-analyzer/kotlin"
+               "inga/test/plugin/spring-property"))
 

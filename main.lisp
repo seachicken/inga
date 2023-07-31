@@ -23,6 +23,7 @@
   (:import-from #:inga/cache
                 #:make-cache
                 #:size)
+  (:import-from #:inga/plugin/spring-property)
   (:import-from #:inga/utils
                 #:split-trim-comma)
   (:import-from #:inga/errors
@@ -117,13 +118,15 @@
                    :project-path root-path
                    :include *include-java*
                    :exclude exclude
-                   :ast-analyzer (make-ast-analyzer :java root-path *cache*)))
+                   :ast-analyzer (make-ast-analyzer :java root-path *cache*)
+                   :processes (list (inga/plugin/spring-property:start))))
                (t (error 'inga-error-context-not-found)))))
     (start-client (context-lc ctx))
     (start-ast-analyzer (context-ast-analyzer ctx) (context-include ctx) (context-exclude ctx))
     ctx))
 
 (defun stop (ctx)
+  (loop for p in (context-processes ctx) do (inga/plugin/spring-property:stop p)) 
   (stop-ast-analyzer (context-ast-analyzer ctx)) 
   (stop-client (context-lc ctx)))
 
@@ -271,5 +274,6 @@
   include
   exclude
   lc
-  ast-analyzer)
+  ast-analyzer
+  processes)
 
