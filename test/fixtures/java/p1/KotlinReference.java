@@ -1,6 +1,6 @@
-package fixtures.java;
+package p1;
 
-import fixtures.kotlin.JavaReference;
+import p1.JavaReference;
 
 public class KotlinReference {
     private JavaReference v = new JavaReference();

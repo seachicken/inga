@@ -1,6 +1,6 @@
-package fixtures.java;
+package p1;
 
-import fixtures.java.ConstructorHelper;
+import p1.ConstructorHelper;
 
 public class ConstructorReference {
     public void method() {

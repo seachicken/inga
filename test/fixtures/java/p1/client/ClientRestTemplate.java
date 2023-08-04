@@ -1,4 +1,4 @@
-package fixtures.java.client;
+package p1.client;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;

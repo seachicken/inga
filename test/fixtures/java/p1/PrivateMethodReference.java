@@ -1,4 +1,4 @@
-package fixtures.java;
+package p1;
 
 public class PrivateMethodReference {
     public void method() {

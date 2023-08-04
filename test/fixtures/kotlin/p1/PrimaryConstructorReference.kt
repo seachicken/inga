@@ -1,6 +1,6 @@
-package fixtures.kotlin
+package p1
 
-import fixtures.kotlin.PrimaryConstructorHelper
+import p1.PrimaryConstructorHelper
 
 class PrimaryConstructorReference(val v: PrimaryConstructorHelper) {
     fun method() {

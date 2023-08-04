@@ -1,6 +1,6 @@
-package fixtures.java;
+package p1;
 
-import fixtures.java.NewClassHelper;
+import p1.NewClassHelper;
 
 public class NewClassReference {
     public void method() {

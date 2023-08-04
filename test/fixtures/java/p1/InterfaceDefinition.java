@@ -1,4 +1,4 @@
-package fixtures.java;
+package p1;
 
 public interface InterfaceDefinition {
     void method();

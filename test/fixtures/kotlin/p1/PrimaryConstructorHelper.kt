@@ -1,4 +1,4 @@
-package fixtures.kotlin
+package p1
 
 class PrimaryConstructorHelper {
     fun method() {

@@ -1,6 +1,6 @@
-package fixtures.kotlin
+package p1
 
-import fixtures.java.KotlinReference
+import p1.KotlinReference
 
 class JavaReference(val v: KotlinReference) {
     fun method() {

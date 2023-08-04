@@ -1,4 +1,4 @@
-package fixtures.java;
+package p1;
 
 import lib.Annotation;
 

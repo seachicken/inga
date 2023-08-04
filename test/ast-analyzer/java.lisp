@@ -7,104 +7,104 @@
 (def-suite java)
 (in-suite java)
 
-(defparameter *test-path* (merge-pathnames #p"test/"))
+(defparameter *java-path* (merge-pathnames #p"test/fixtures/java/"))
 (defparameter *spring-boot-path*
   (truename (uiop:merge-pathnames* "test/fixtures/spring-boot-realworld-example-app/")))
 (defparameter *cache* (inga/cache:make-cache 100))
 
 (test find-definitions-for-constructor
-  (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
+  (let ((ast-analyzer (make-ast-analyzer :java *java-path* *cache*)))
     (start-ast-analyzer ast-analyzer nil nil)
     (is (equal
-          `(((:path . "fixtures/java/ConstructorDefinition.java")
+          `(((:path . "p1/ConstructorDefinition.java")
              (:name . "ConstructorDefinition")
-             (:fq-name . "fixtures.java.ConstructorDefinition.ConstructorDefinition")
+             (:fq-name . "p1.ConstructorDefinition.ConstructorDefinition")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *test-path* "fixtures/java/ConstructorDefinition.java"
+                      *java-path* "p1/ConstructorDefinition.java"
                       '((:line . 4) (:offset . 12))))))
           (find-definitions
             ast-analyzer
-            `((:path . "fixtures/java/ConstructorDefinition.java")
+            `((:path . "p1/ConstructorDefinition.java")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *test-path* "fixtures/java/ConstructorDefinition.java"
+                       *java-path* "p1/ConstructorDefinition.java"
                        '((:line . 4) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *test-path* "fixtures/java/ConstructorDefinition.java"
+                       *java-path* "p1/ConstructorDefinition.java"
                        '((:line . 4) (:offset . -1))))))))
     (stop-ast-analyzer ast-analyzer)))
 
 (test find-definitions-for-method
-  (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
+  (let ((ast-analyzer (make-ast-analyzer :java *java-path* *cache*)))
     (start-ast-analyzer ast-analyzer nil nil)
     (is (equal
-          `(((:path . "fixtures/java/MethodDefinition.java")
+          `(((:path . "p1/MethodDefinition.java")
              (:name . "method")
-             (:fq-name . "fixtures.java.MethodDefinition.method-INT")
+             (:fq-name . "p1.MethodDefinition.method-INT")
              ,(cons :top-offset
                     (convert-to-top-offset
-                       *test-path* "fixtures/java/MethodDefinition.java"
+                       *java-path* "p1/MethodDefinition.java"
                       '((:line . 7) (:offset . 17))))))
           (find-definitions
             ast-analyzer
-            `((:path . "fixtures/java/MethodDefinition.java")
+            `((:path . "p1/MethodDefinition.java")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *test-path* "fixtures/java/MethodDefinition.java"
+                       *java-path* "p1/MethodDefinition.java"
                        '((:line . 7) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *test-path* "fixtures/java/MethodDefinition.java"
+                       *java-path* "p1/MethodDefinition.java"
                        '((:line . 7) (:offset . -1))))))))
     (stop-ast-analyzer ast-analyzer)))
 
 (test find-definitions-for-interface
-  (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
+  (let ((ast-analyzer (make-ast-analyzer :java *java-path* *cache*)))
     (start-ast-analyzer ast-analyzer nil nil)
     (is (equal
-          `(((:path . "fixtures/java/InterfaceDefinition.java")
+          `(((:path . "p1/InterfaceDefinition.java")
              (:name . "method")
-             (:fq-name . "fixtures.java.InterfaceDefinition.method-INT")
+             (:fq-name . "p1.InterfaceDefinition.method-INT")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *test-path* "fixtures/java/InterfaceDefinition.java"
+                      *java-path* "p1/InterfaceDefinition.java"
                       '((:line . 6) (:offset . 10))))))
           (find-definitions
             ast-analyzer
-            `((:path . "fixtures/java/InterfaceDefinition.java")
+            `((:path . "p1/InterfaceDefinition.java")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *test-path* "fixtures/java/InterfaceDefinition.java"
+                       *java-path* "p1/InterfaceDefinition.java"
                        '((:line . 6) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *test-path* "fixtures/java/InterfaceDefinition.java"
+                       *java-path* "p1/InterfaceDefinition.java"
                        '((:line . 6) (:offset . -1))))))))
     (stop-ast-analyzer ast-analyzer)))
 
 (test find-definitions-for-instance-variable-annotation
-  (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
+  (let ((ast-analyzer (make-ast-analyzer :java *java-path* *cache*)))
     (start-ast-analyzer ast-analyzer nil nil)
     (is (equal
-          `(((:path . "fixtures/java/InstanceVariableAnnotationDefinition.java")
+          `(((:path . "p1/InstanceVariableAnnotationDefinition.java")
              (:name . "variable")
-             (:fq-name . "fixtures.java.InstanceVariableAnnotationDefinition.variable")
+             (:fq-name . "p1.InstanceVariableAnnotationDefinition.variable")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *test-path* "fixtures/java/InstanceVariableAnnotationDefinition.java"
+                      *java-path* "p1/InstanceVariableAnnotationDefinition.java"
                       '((:line . 7) (:offset . 19))))))
           (find-definitions
             ast-analyzer
-            `((:path . "fixtures/java/InstanceVariableAnnotationDefinition.java")
+            `((:path . "p1/InstanceVariableAnnotationDefinition.java")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *test-path* "fixtures/java/InstanceVariableAnnotationDefinition.java"
+                       *java-path* "p1/InstanceVariableAnnotationDefinition.java"
                        '((:line . 6) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *test-path* "fixtures/java/InstanceVariableAnnotationDefinition.java"
+                       *java-path* "p1/InstanceVariableAnnotationDefinition.java"
                        '((:line . 6) (:offset . -1))))))))
     (stop-ast-analyzer ast-analyzer)))
 
@@ -179,63 +179,63 @@
         (stop-ast-analyzer ast-analyzer))))
 
 (test find-references-for-new-class
-  (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
+  (let ((ast-analyzer (make-ast-analyzer :java *java-path* *cache*)))
     (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
     (is (equal
-          `(((:path . "fixtures/java/NewClassReference.java")
+          `(((:path . "p1/NewClassReference.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *test-path* "fixtures/java/NewClassReference.java"
+                      *java-path* "p1/NewClassReference.java"
                       '((:line . 7) (:offset . 9))))))
           (find-references ast-analyzer
-                           `((:path . "fixtures/java/NewClassHelper.java")
+                           `((:path . "p1/NewClassHelper.java")
                              (:name . "method")
-                             (:fq-name . "fixtures.java.NewClassHelper.method")))))
+                             (:fq-name . "p1.NewClassHelper.method")))))
     (stop-ast-analyzer ast-analyzer)))
 
 (test find-references-for-constructor
-  (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
+  (let ((ast-analyzer (make-ast-analyzer :java *java-path* *cache*)))
     (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
     (is (equal
-          `(((:path . "fixtures/java/ConstructorReference.java")
+          `(((:path . "p1/ConstructorReference.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *test-path* "fixtures/java/ConstructorReference.java"
+                      *java-path* "p1/ConstructorReference.java"
                       '((:line . 7) (:offset . 9))))))
           (find-references ast-analyzer
-                           `((:path . "fixtures/java/ConstructorHelper.java")
+                           `((:path . "p1/ConstructorHelper.java")
                              (:name . "ConstructorHelper")
-                             (:fq-name . "fixtures.java.ConstructorHelper.ConstructorHelper-INT")))))
+                             (:fq-name . "p1.ConstructorHelper.ConstructorHelper-INT")))))
     (stop-ast-analyzer ast-analyzer)))
 
 (test find-references-for-private-method
-  (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
+  (let ((ast-analyzer (make-ast-analyzer :java *java-path* *cache*)))
     (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
     (is (equal
-          `(((:path . "fixtures/java/PrivateMethodReference.java")
+          `(((:path . "p1/PrivateMethodReference.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *test-path* "fixtures/java/PrivateMethodReference.java"
+                      *java-path* "p1/PrivateMethodReference.java"
                       '((:line . 5) (:offset . 9))))))
           (find-references ast-analyzer
-                           `((:path . "fixtures/java/PrivateMethodReference.java")
+                           `((:path . "p1/PrivateMethodReference.java")
                              (:name . "method2")
-                             (:fq-name . "fixtures.java.PrivateMethodReference.method2")))))
+                             (:fq-name . "p1.PrivateMethodReference.method2")))))
     (stop-ast-analyzer ast-analyzer)))
 
 (test find-references-for-rest-client
-  (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
+  (let ((ast-analyzer (make-ast-analyzer :java *java-path* *cache*)))
     (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
     (is (equal
-          `(((:path . "fixtures/java/client/ClientRestTemplate.java")
+          `(((:path . "p1/client/ClientRestTemplate.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *test-path* "fixtures/java/client/ClientRestTemplate.java"
+                      *java-path* "p1/client/ClientRestTemplate.java"
                       '((:line . 15) (:offset . 16)))))
-            ((:path . "fixtures/java/client/ClientRestTemplate.java")
+            ((:path . "p1/client/ClientRestTemplate.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *test-path* "fixtures/java/client/ClientRestTemplate.java"
+                      *java-path* "p1/client/ClientRestTemplate.java"
                       '((:line . 23) (:offset . 16))))))
           (find-references ast-analyzer
                            `((:type . :rest-server)
@@ -244,17 +244,17 @@
     (stop-ast-analyzer ast-analyzer)))
 
 (test find-references-for-kotlin-class
-  (let ((ast-analyzer (make-ast-analyzer :java *test-path* *cache*)))
+  (let ((ast-analyzer (make-ast-analyzer :java *java-path* *cache*)))
     (start-ast-analyzer ast-analyzer inga/main::*include-java* nil)
     (is (equal
-          `(((:path . "fixtures/java/KotlinReference.java")
+          `(((:path . "p1/KotlinReference.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *test-path* "fixtures/java/KotlinReference.java"
+                      *java-path* "p1/KotlinReference.java"
                       '((:line . 9) (:offset . 9))))))
           (find-references ast-analyzer
-                           '((:path . "fixtures/kotlin/JavaReference.kt")
+                           '((:path . "p1/JavaReference.kt")
                              (:name . "method")
-                             (:fq-name . "fixtures.kotlin.JavaReference.method")))))
+                             (:fq-name . "p1.JavaReference.method")))))
     (stop-ast-analyzer ast-analyzer)))
 
