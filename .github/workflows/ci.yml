@@ -41,7 +41,9 @@ jobs:
                                                  (uiop:find-symbol* '#:java
                                                                     :inga/test/ast-analyzer/java)
                                                  (uiop:find-symbol* '#:kotlin
-                                                                    :inga/test/ast-analyzer/kotlin)))
+                                                                    :inga/test/ast-analyzer/kotlin)
+                                                 (uiop:find-symbol* '#:java
+                                                                    :inga/test/plugin/spring-property)))
                             (uiop:quit 1))"
 
   test-typescript:

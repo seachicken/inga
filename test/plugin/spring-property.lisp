@@ -4,10 +4,20 @@
         #:inga/plugin/spring-property))
 (in-package #:inga/test/plugin/spring-property)
 
-(def-suite spring-property)
-(in-suite spring-property)
+(def-suite java)
+(in-suite java)
 
-(test find-property
+(test find-property-from-properties
+  (let ((process (start)))
+    (is (equal
+          "file:extra.properties"
+          (find-property
+            process
+            "spring.config.location"
+            "test/fixtures/spring-tutorials/spring-boot-modules/spring-boot-properties/src/main/resources/application.properties")))
+    (stop process)))
+
+(test find-property-from-yaml
   (let ((process (start)))
     (is (equal
           "production"
