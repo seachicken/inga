@@ -262,7 +262,7 @@
                       (list
                         (if (uiop:string-suffix-p (ast-value arg "type") "_LITERAL")
                             (if (equal (ast-value arg "type") "STRING_LITERAL")
-                                "String"
+                                "java.lang.String"
                                 (ppcre:regex-replace-all "_LITERAL" (ast-value arg "type") ""))
                             (alexandria:switch ((jsown:val arg "type") :test #'equal)
                               ("MEMBER_SELECT"
@@ -305,10 +305,10 @@
 (defun find-rest-client (fq-name ast)
   (alexandria:switch (fq-name :test #'equal)
     ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/client/RestTemplate.html
-    ("org.springframework.web.client.RestTemplate.exchange-String-HttpMethod-NULL-Class"
+    ("org.springframework.web.client.RestTemplate.exchange-java.lang.String-HttpMethod-NULL-Class"
      `((:name . ,(find-api-method-from-http-method (nth 2 (ast-get ast '("*")))))
        (:path . ,(find-api-path 0 ast))))
-    ("org.springframework.web.client.RestTemplate.getForObject-String-Class"
+    ("org.springframework.web.client.RestTemplate.getForObject-java.lang.String-Class"
      `((:name . "GET")
        (:path . ,(find-api-path 0 ast))))))
 
@@ -351,7 +351,15 @@
                     (loop for child in (jsown:val child "children")
                           do
                           (when (jsown:keyp child "name")
-                            (setf result (concatenate 'string result "-" (jsown:val child "name"))))))))
+                            (setf result (concatenate
+                                           'string
+                                           result
+                                           "-"
+                                           (when (find (ast-value child "name")
+                                                       '("String")
+                                                       :test 'equal)
+                                             "java.lang.")
+                                           (jsown:val child "name"))))))))
           (return-from get-fq-name-of-declaration result))
 
         (loop for child in (jsown:val ast "children")

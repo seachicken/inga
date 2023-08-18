@@ -140,7 +140,7 @@
              (:file-pos .
               ((:path . "src/main/java/io/spring/api/ArticlesApi.java")
                (:name . "getArticles")
-               (:fq-name . "io.spring.api.ArticlesApi.getArticles-INT-INT-String-String-String-User")
+               (:fq-name . "io.spring.api.ArticlesApi.getArticles-INT-INT-java.lang.String-java.lang.String-java.lang.String-User")
                ,(cons :top-offset
                     (convert-to-top-offset
                       *spring-boot-path*
