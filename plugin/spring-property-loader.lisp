@@ -1,10 +1,10 @@
-(defpackage #:inga/plugin/spring-property
+(defpackage #:inga/plugin/spring-property-loader
   (:use #:cl)
   (:import-from #:jsown)
   (:export #:start
            #:stop
            #:find-property))
-(in-package #:inga/plugin/spring-property)
+(in-package #:inga/plugin/spring-property-loader)
 
 (defun start ()
   (uiop:launch-program
