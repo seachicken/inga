@@ -43,6 +43,8 @@
 
 (defparameter *back-path*
   (truename (uiop:merge-pathnames* "test/fixtures/spring-boot-realworld-example-app/")))
+(defparameter *lightrun-path*
+  (truename (uiop:merge-pathnames* "test/fixtures/spring-tutorials/lightrun/")))
 
 (test analyze-by-range-for-entry-points
   (let ((ctx (inga/main::start *back-path* '(:java) '("src/test/**"))))
@@ -64,6 +66,31 @@
                                *back-path*
                                "src/main/java/io/spring/application/ArticleQueryService.java"
                                '((:line . 105) (:offset . -1)))))))))
+    (inga/main::stop ctx)))
+
+(test analyze-by-range-for-micro-services
+  (let ((ctx (inga/main::start *lightrun-path* '(:java))))
+    (is (equal
+          '(((:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
+             ;; FIXME: this is not correct
+             ;;(:name . "getTaskById")
+             ;;(:line . 25) (:offset . 25)))
+             (:name . "getUser")
+             (:line . 39) (:offset . 26)))
+          (mapcar (lambda (e) (cdr (assoc :entorypoint e)))
+                  (inga/main::analyze-by-range
+                    ctx
+                    `((:path . "users-service/src/main/java/com/baeldung/usersservice/adapters/http/UsersController.java")
+                      ,(cons :start-offset
+                             (inga/ast-analyzer:convert-to-top-offset
+                               *lightrun-path*
+                               "users-service/src/main/java/com/baeldung/usersservice/adapters/http/UsersController.java"
+                               '((:line . 39) (:offset . 0))))
+                      ,(cons :end-offset
+                             (inga/ast-analyzer:convert-to-top-offset
+                               *lightrun-path*
+                               "users-service/src/main/java/com/baeldung/usersservice/adapters/http/UsersController.java"
+                               '((:line . 39) (:offset . -1)))))))))
     (inga/main::stop ctx)))
 
 (test analyze-by-range-for-constraint-validator

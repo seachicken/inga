@@ -6,20 +6,27 @@
            #:find-property))
 (in-package #:inga/plugin/spring-property-loader)
 
-(defun start ()
-  (uiop:launch-program
-    (format nil "~{~a~^ ~}"
-            `("java" "-cp"
-              ,(format nil "~a/libs/spring-property-loader.jar" (uiop:getenv "INGA_HOME"))
-              "inga.springpropertyloader.Main"))
-    :input :stream :output :stream))
+(defvar *spring-property-loader*)
+(defvar *root-path*)
 
-(defun stop (process)
-  (uiop:close-streams process))
+(defun start (root-path)
+  (setf *spring-property-loader*
+        (uiop:launch-program
+          (format nil "~{~a~^ ~}"
+                  `("java" "-cp"
+                    ,(format nil "~a/libs/spring-property-loader.jar" (uiop:getenv "INGA_HOME"))
+                    "inga.springpropertyloader.Main"))
+          :input :stream :output :stream))
+  (setf *root-path* root-path)
+  *spring-property-loader*)
 
-(defun find-property (process key path)
+(defun stop ()
+  (uiop:close-streams *spring-property-loader*))
+
+(defun find-property (key from)
   (let ((prod-profile-candidates '("production" "prod" "release")))
-    (loop for property in (jsown:parse (exec-command process path))
+    (loop for property in (jsown:parse (exec-command *spring-property-loader*
+                                                     (namestring (merge-pathnames from *root-path*))))
           with result
           do
           (when (and

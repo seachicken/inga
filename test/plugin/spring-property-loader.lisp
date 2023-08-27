@@ -7,23 +7,24 @@
 (def-suite java)
 (in-suite java)
 
+(defparameter *spring-path*
+  (truename (uiop:merge-pathnames* "test/fixtures/spring-tutorials/spring-boot-modules/spring-boot-properties/")))
+
 (test find-property-from-properties
-  (let ((process (start)))
-    (is (equal
-          "file:extra.properties"
-          (find-property
-            process
-            "spring.config.location"
-            "test/fixtures/spring-tutorials/spring-boot-modules/spring-boot-properties/src/main/resources/application.properties")))
-    (stop process)))
+  (start *spring-path*)
+  (is (equal
+        "file:extra.properties"
+        (find-property
+          "spring.config.location"
+          "src/main/java/com/baeldung/buildproperties/Application.java")))
+  (stop))
 
 (test find-property-from-yaml
-  (let ((process (start)))
-    (is (equal
-          "production"
-          (find-property
-            process
-            "environment"
-            "test/fixtures/spring-tutorials/spring-boot-modules/spring-boot-properties/src/main/resources/application.yml")))
-    (stop process)))
+  (start *spring-path*)
+  (is (equal
+        "production"
+        (find-property
+          "environment"
+          "src/main/java/com/baeldung/buildproperties/Application.java")))
+  (stop))
 

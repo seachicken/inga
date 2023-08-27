@@ -23,6 +23,7 @@
   (:import-from #:inga/cache
                 #:make-cache
                 #:size)
+  (:import-from #:inga/plugin/jvm-dependency-loader)
   (:import-from #:inga/plugin/spring-property-loader)
   (:import-from #:inga/utils
                 #:split-trim-comma)
@@ -119,14 +120,16 @@
                    :include *include-java*
                    :exclude exclude
                    :ast-analyzer (make-ast-analyzer :java root-path *cache*)
-                   :processes (list (inga/plugin/spring-property-loader:start))))
+                   :processes (list
+                                (inga/plugin/spring-property-loader:start root-path)
+                                (inga/plugin/jvm-dependency-loader:start root-path))))
                (t (error 'inga-error-context-not-found)))))
     (start-client (context-lc ctx))
     (start-ast-analyzer (context-ast-analyzer ctx) (context-include ctx) (context-exclude ctx))
     ctx))
 
 (defun stop (ctx)
-  (loop for p in (context-processes ctx) do (inga/plugin/spring-property-loader:stop p))
+  (loop for p in (context-processes ctx) do (uiop:close-streams p)) 
   (stop-ast-analyzer (context-ast-analyzer ctx)) 
   (stop-client (context-lc ctx)))
 
@@ -230,11 +233,13 @@
                                                                        (cdr (assoc :origin pos))))
                                           (cons :entorypoint
                                                 (convert-to-output-pos (context-project-path ctx) entrypoint))))))
-                    (enqueue q (list
-                                 (cons :path (cdr (assoc :path ref)))
-                                 (cons :origin (cdr (assoc :origin pos)))
-                                 (cons :start-offset (cdr (assoc :top-offset ref)))
-                                 (cons :end-offset (cdr (assoc :top-offset ref))))))))
+                    (progn
+                      ;; add connection type to resutls
+                      (enqueue q (list
+                                   (cons :path (cdr (assoc :path ref)))
+                                   (cons :origin (cdr (assoc :origin pos)))
+                                   (cons :start-offset (cdr (assoc :top-offset ref)))
+                                   (cons :end-offset (cdr (assoc :top-offset ref)))))))))
         (setf results
               (list
                 (list

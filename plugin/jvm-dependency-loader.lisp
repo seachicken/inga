@@ -4,40 +4,53 @@
   (:import-from #:jsown)
   (:export #:start
            #:stop
-           #:load-project
            #:read-method))
 (in-package #:inga/plugin/jvm-dependency-loader)
 
-(defun start ()
-  (uiop:launch-program
-    (format nil "~{~a~^ ~}"
-            `("java" "-cp"
-              ,(format nil "~a/libs/jvm-dependency-loader.jar" (uiop:getenv "INGA_HOME"))
-              "inga.jvmdependencyloader.Main"))
-    :input :stream :output :stream))
+(defvar *jvm-dependency-loader*)
+(defvar *root-path*)
 
-(defun stop (process)
-  (uiop:close-streams process))
+(defun start (root-path)
+  (setf *jvm-dependency-loader*
+        (uiop:launch-program
+          (format nil "~{~a~^ ~}"
+                  `("java" "-cp"
+                    ,(format nil "~a/libs/jvm-dependency-loader.jar" (uiop:getenv "INGA_HOME"))
+                    "inga.jvmdependencyloader.Main"))
+          :input :stream :output :stream))
+  (setf *root-path* root-path)
+  *jvm-dependency-loader*)
 
-(defun load-project (process path)
-  (exec-command
-    process
-    (format nil "{\"command\":\"load\",\"path\":\"~a\"}" path)))
+(defun stop ()
+  (uiop:close-streams *jvm-dependency-loader*))
 
-(defun read-method (process fqn)
+(defun read-method (fq-name from)
   (let ((fqcn (format nil "~{~a~^.~}"
-                      (butlast (split #\. (first (butlast (split #\- fqn))))))))
+                      (butlast (split #\.
+                                      (if (>= (length (split #\- fq-name)) 2)
+                                          (first (butlast (split #\- fq-name)))
+                                          fq-name))))))
     (loop for method in (jsown:parse
                           (exec-command
-                            process
-                            (format nil "{\"command\":\"read\",\"path\":\"~a\"}" fqcn)))
-          with target-name = (subseq (ppcre:regex-replace-all fqcn fqn "") 1)
+                            *jvm-dependency-loader*
+                            (format nil "{\"fqcn\":\"~a\",\"from\":\"~a\"}"
+                                    fqcn
+                                    (merge-pathnames from *root-path*))))
+          with target-name = (subseq (ppcre:regex-replace-all fqcn fq-name "") 1)
+          with matched-methods
           do
           (let ((name (format nil "~a~:[~;-~]~:*~{~a~^-~}"
                               (jsown:val method "name")
-                              (jsown:val method "parameterTypes"))))
+                              (mapcar (lambda (type) (jsown:val type "name"))
+                                      (jsown:val method "parameterTypes")))))
             (when (equal name target-name)
-              (return method))))))
+              (push method matched-methods)))
+          finally
+          (return (if (> (length matched-methods) 1)
+                      (loop for method in matched-methods
+                            do (unless (jsown:val (jsown:val method "returnType") "isInterface")
+                                 (return method)))
+                      (first matched-methods))))))
 
 (defun exec-command (process path)
   (write-line path (uiop:process-info-input process))

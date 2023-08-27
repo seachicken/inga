@@ -68,7 +68,7 @@
 (defmethod find-entrypoint ((ast-analyzer ast-analyzer-kotlin) pos))
 
 (defmethod find-reference ((ast-analyzer ast-analyzer-kotlin) target-pos ast index-path)
-  (let ((fq-name (find-fq-name-for-reference ast-analyzer ast)))
+  (let ((fq-name (find-fq-name-for-reference ast)))
     (unless fq-name (return-from find-reference))
 
     (alexandria:switch ((cdr (assoc :type target-pos)))
@@ -81,7 +81,7 @@
             (cons :path (get-original-path index-path))
             (cons :top-offset (ast-value ast "textOffset"))))))))
 
-(defmethod find-fq-name-for-reference ((ast-analyzer ast-analyzer-kotlin) ast)
+(defun find-fq-name-for-reference (ast)
   (alexandria:switch ((ast-value ast "type") :test #'equal)
     ("CALL_EXPRESSION"
      (let ((root (first (ast-get ast '("DOT_QUALIFIED_EXPRESSION") :direction :upward))))

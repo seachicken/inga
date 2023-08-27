@@ -10,6 +10,8 @@
 (defparameter *java-path* (merge-pathnames #p"test/fixtures/java/"))
 (defparameter *spring-boot-path*
   (truename (uiop:merge-pathnames* "test/fixtures/spring-boot-realworld-example-app/")))
+(defparameter *lightrun-path*
+  (truename (uiop:merge-pathnames* "test/fixtures/spring-tutorials/lightrun/")))
 (defparameter *cache* (inga/cache:make-cache 100))
 
 (test find-definitions-for-constructor
@@ -131,21 +133,19 @@
         (stop-ast-analyzer ast-analyzer))))
 
 (test find-definitions-for-spring-rest-controller
+  (inga/plugin/jvm-dependency-loader:start *spring-boot-path*)
+  (inga/plugin/spring-property-loader:start *spring-boot-path*)
   (let ((ast-analyzer (make-ast-analyzer :java *spring-boot-path* *cache*)))
     (start-ast-analyzer ast-analyzer nil nil)
     (is (equal
-          `(((:type . :rest-server)
-             (:path . "/articles")
-             (:name . "GET")
-             (:file-pos .
-              ((:path . "src/main/java/io/spring/api/ArticlesApi.java")
-               (:name . "getArticles")
-               (:fq-name . "io.spring.api.ArticlesApi.getArticles-INT-INT-java.lang.String-java.lang.String-java.lang.String-User")
-               ,(cons :top-offset
-                    (convert-to-top-offset
-                      *spring-boot-path*
-                      "src/main/java/io/spring/api/ArticlesApi.java"
-                      '((:line . 49) (:offset . 25))))))))
+          `(((:path . "src/main/java/io/spring/api/ArticlesApi.java")
+             (:name . "getArticles")
+             (:fq-name . "io.spring.api.ArticlesApi.getArticles-INT-INT-java.lang.String-java.lang.String-java.lang.String-User")
+             ,(cons :top-offset
+                  (convert-to-top-offset
+                    *spring-boot-path*
+                    "src/main/java/io/spring/api/ArticlesApi.java"
+                    '((:line . 49) (:offset . 25))))))
           (find-definitions
             ast-analyzer
             `((:path . "src/main/java/io/spring/api/ArticlesApi.java")
@@ -159,7 +159,9 @@
                        *spring-boot-path*
                        "src/main/java/io/spring/api/ArticlesApi.java"
                        '((:line . 56) (:offset . -1))))))))
-    (stop-ast-analyzer ast-analyzer)))
+    (stop-ast-analyzer ast-analyzer)
+    (inga/plugin/spring-property-loader:stop)  
+    (inga/plugin/jvm-dependency-loader:stop)))
 
 ;; public class Article {
 ;;   public void update(String title, String description, String body) {
