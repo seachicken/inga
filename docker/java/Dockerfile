@@ -22,6 +22,7 @@ ADD https://github.com/seachicken/spring-property-loader/releases/download/sprin
 
 RUN apt-get update && \
   apt-get install -y git && \
+  apt-get install -y maven && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
