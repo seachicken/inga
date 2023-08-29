@@ -1,5 +1,7 @@
 (defpackage #:inga/utils
   (:use #:cl)
+  (:import-from #:inga/logger
+                #:log-debug)
   (:export #:make-queue
            #:enqueue
            #:dequeue
@@ -46,6 +48,15 @@
                   (setf result (format nil "~a~a~%" result line))
                   (when (= line-no limit)
                     (return-from top result)))))))
+
+(defun funtime (label func)
+  (log-debug (format nil "begin ~a call...~%" label))
+  (let ((start-time (get-internal-real-time))
+        (result (funcall func)))
+    (log-debug (format nil "end ~a. time: ~,5f seconds~%"
+                       label
+                       (/ (- (get-internal-real-time) start-time) internal-time-units-per-second)))
+    result))
 
 (defun measure (target func)
   (let ((start-time (get-internal-real-time)))

@@ -25,8 +25,12 @@
 
 (defun find-property (key from)
   (let ((prod-profile-candidates '("production" "prod" "release")))
-    (loop for property in (jsown:parse (exec-command *spring-property-loader*
-                                                     (namestring (merge-pathnames from *root-path*))))
+    (loop for property in (jsown:parse
+                            (inga/utils::funtime
+                              "spring-property-loader"
+                              (lambda ()
+                                (exec-command *spring-property-loader*
+                                              (namestring (merge-pathnames from *root-path*))))))
           with result
           do
           (when (and

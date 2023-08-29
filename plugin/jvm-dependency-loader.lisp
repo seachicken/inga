@@ -25,17 +25,22 @@
   (uiop:close-streams *jvm-dependency-loader*))
 
 (defun read-method (fq-name from)
+  (when (or (null fq-name) (equal fq-name ""))
+    (return-from read-method))
   (let ((fqcn (format nil "~{~a~^.~}"
                       (butlast (split #\.
                                       (if (>= (length (split #\- fq-name)) 2)
                                           (first (butlast (split #\- fq-name)))
                                           fq-name))))))
     (loop for method in (jsown:parse
-                          (exec-command
-                            *jvm-dependency-loader*
-                            (format nil "{\"fqcn\":\"~a\",\"from\":\"~a\"}"
-                                    fqcn
-                                    (merge-pathnames from *root-path*))))
+                          (inga/utils::funtime
+                            "jvm-dependency-loader"
+                            (lambda ()
+                              (exec-command
+                                *jvm-dependency-loader*
+                                (format nil "{\"fqcn\":\"~a\",\"from\":\"~a\"}"
+                                        fqcn
+                                        (merge-pathnames from *root-path*))))))
           with target-name = (subseq (ppcre:regex-replace-all fqcn fq-name "") 1)
           with matched-methods
           do
