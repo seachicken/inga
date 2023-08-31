@@ -49,8 +49,8 @@
                   (when (= line-no limit)
                     (return-from top result)))))))
 
-(defun funtime (label func)
-  (log-debug (format nil "begin ~a call...~%" label))
+(defun funtime (func &key label args)
+  (log-debug (format nil "begin ~a args: ~a~%" label args))
   (let ((start-time (get-internal-real-time))
         (result (funcall func)))
     (log-debug (format nil "end ~a. time: ~,5f seconds~%"

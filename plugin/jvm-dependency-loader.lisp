@@ -33,14 +33,10 @@
                                           (first (butlast (split #\- fq-name)))
                                           fq-name))))))
     (loop for method in (jsown:parse
-                          (inga/utils::funtime
-                            "jvm-dependency-loader"
-                            (lambda ()
-                              (exec-command
-                                *jvm-dependency-loader*
-                                (format nil "{\"fqcn\":\"~a\",\"from\":\"~a\"}"
-                                        fqcn
-                                        (merge-pathnames from *root-path*))))))
+                          (exec-command *jvm-dependency-loader*
+                                        (format nil "{\"fqcn\":\"~a\",\"from\":\"~a\"}"
+                                                fqcn
+                                                (merge-pathnames from *root-path*))))
           with target-name = (subseq (ppcre:regex-replace-all fqcn fq-name "") 1)
           with matched-methods
           do
@@ -57,8 +53,12 @@
                                  (return method)))
                       (first matched-methods))))))
 
-(defun exec-command (process path)
-  (write-line path (uiop:process-info-input process))
-  (force-output (uiop:process-info-input process))
-  (read-line (uiop:process-info-output process)))
+(defun exec-command (process cmd)
+  (inga/utils::funtime
+    (lambda ()
+      (write-line cmd (uiop:process-info-input process))
+      (force-output (uiop:process-info-input process))
+      (read-line (uiop:process-info-output process)))
+    :label "jvm-dependency-loader"
+    :args cmd))
 

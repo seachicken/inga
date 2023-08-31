@@ -26,11 +26,8 @@
 (defun find-property (key from)
   (let ((prod-profile-candidates '("production" "prod" "release")))
     (loop for property in (jsown:parse
-                            (inga/utils::funtime
-                              "spring-property-loader"
-                              (lambda ()
-                                (exec-command *spring-property-loader*
-                                              (namestring (merge-pathnames from *root-path*))))))
+                            (exec-command *spring-property-loader*
+                                          (namestring (merge-pathnames from *root-path*))))
           with result
           do
           (when (and
@@ -42,8 +39,12 @@
             (setf result (jsown:val property key)))
           finally (return result))))
 
-(defun exec-command (process path)
-  (write-line path (uiop:process-info-input process))
-  (force-output (uiop:process-info-input process))
-  (read-line (uiop:process-info-output process)))
+(defun exec-command (process cmd)
+  (inga/utils::funtime
+    (lambda ()
+      (write-line cmd (uiop:process-info-input process))
+      (force-output (uiop:process-info-input process))
+      (read-line (uiop:process-info-output process)))
+    :label "spring-property-loader"
+    :args cmd))
 
