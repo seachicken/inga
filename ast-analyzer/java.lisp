@@ -3,9 +3,6 @@
         #:inga/ast-analyzer/base
         #:inga/utils)
   (:import-from #:quri)
-  (:import-from #:inga/cache
-                #:put-value
-                #:get-value)
   (:import-from #:inga/path
                 #:merge-paths
                 #:get-variable-names
@@ -25,28 +22,31 @@
 (defclass ast-analyzer-java (ast-analyzer)
   ())
 
-(defmethod make-ast-analyzer ((kind (eql :java)) path cache)
-  (list (make-instance 'ast-analyzer-java :path path :cache cache)
-        (make-instance 'ast-analyzer-kotlin :path path :cache cache)))
-
-(defmethod start-ast-analyzer ((ast-analyzer ast-analyzer-java) include exclude)
-  (setf (ast-analyzer-process ast-analyzer)
-        (uiop:launch-program
-          (format nil "~{~a~^ ~}"
-                  (list "java" "-cp"
-                        (format nil "~a/libs/javaparser.jar" (uiop:getenv "INGA_HOME"))
-                        "--add-opens" "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
-                        "--add-opens" "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED"
-                        "--add-opens" "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"
-                        "inga.Main"))
-          :input :stream :output :stream))
-  (create-indexes ast-analyzer '("*.java") exclude))
+(defmethod start-ast-analyzer ((kind (eql :java)) exclude path)
+  (setf *ast-analyzers*
+        (acons :java
+               (make-instance
+                 'ast-analyzer-java
+                 :process
+                 (uiop:launch-program
+                   (format nil "~{~a~^ ~}"
+                           (list "java" "-cp"
+                                 (format nil "~a/libs/javaparser.jar" (uiop:getenv "INGA_HOME"))
+                                 "--add-opens" "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
+                                 "--add-opens" "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED"
+                                 "--add-opens" "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"
+                                 "inga.Main"))
+                   :input :stream :output :stream)
+                 :path path) 
+               *ast-analyzers*))
+  (create-indexes (cdr (assoc :java *ast-analyzers*)) '("*.java") exclude)
+  (cdr (assoc :java *ast-analyzers*)))
 
 (defmethod stop-ast-analyzer ((ast-analyzer ast-analyzer-java))
   (clean-indexes)
   (uiop:close-streams (ast-analyzer-process ast-analyzer)))
 
-(defmethod find-definitions ((ast-analyzer ast-analyzer-java) range)
+(defmethod find-definitions-generic ((ast-analyzer ast-analyzer-java) range)
   (let ((q (make-queue))
         (src-path (cdr (assoc :path range)))
         (index-path (get-index-path (cdr (assoc :path range))))
@@ -60,7 +60,7 @@
       (setf ast (cdr (jsown:parse (uiop:read-file-string index-path))))
       (error (e)
              (format t "~a~%" e)
-             (return-from find-definitions)))
+             (return-from find-definitions-generic)))
     (setf root-ast ast)
     (enqueue q ast)
     (loop
@@ -203,8 +203,6 @@
             (setf (jsown:val child "parent") ast)
             (enqueue q child)))
     results))
-
-(defmethod find-entrypoint ((ast-analyzer ast-analyzer-java) pos))
 
 (defmethod find-reference ((ast-analyzer ast-analyzer-java) target-pos ast index-path)
   (let ((fq-name (find-fq-name-for-reference ast index-path)))

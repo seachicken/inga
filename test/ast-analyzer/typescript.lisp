@@ -17,8 +17,8 @@
 ;;   title: "Hello" ←[in]
 ;; };
 (test find-definitions-for-variable-object-literal-expression
-  (let ((ast-analyzer (make-ast-analyzer :typescript *nestjs-path* *cache*)))
-    (start-ast-analyzer ast-analyzer inga/main::*include-typescript* nil)
+  (setf inga/ast-analyzer/base::*cache* *cache*)
+  (let ((ast-analyzer (start-ast-analyzer :typescript nil *nestjs-path*)))
     (is (equal
           `(((:path . "src/article/article.service.ts")
               (:name . "articleAuthorSelect")
@@ -28,7 +28,6 @@
                       "src/article/article.service.ts"
                       '((:line . 7) (:offset . 7))))))
           (find-definitions
-            ast-analyzer
             `((:path . "src/article/article.service.ts")
               ,(cons :start-offset
                      (convert-to-top-offset
@@ -49,8 +48,8 @@
 ;;   }
 ;; }
 (test find-definitions-for-function
-  (let ((ast-analyzer (make-ast-analyzer :typescript *react-path* *cache*)))
-    (start-ast-analyzer ast-analyzer inga/main::*include-typescript* nil)
+  (setf inga/ast-analyzer/base::*cache* *cache*)
+  (let ((ast-analyzer (start-ast-analyzer :typescript nil *react-path*)))
     (is (equal
           `(((:path . "src/App/NewTodoInput/index.tsx")
               (:name . "addTodo")
@@ -60,7 +59,6 @@
                       "src/App/NewTodoInput/index.tsx"
                       '((:line . 12) (:offset . 12))))))
           (find-definitions
-            ast-analyzer
             `((:path . "src/App/NewTodoInput/index.tsx")
               ,(cons :start-offset
                      (convert-to-top-offset
@@ -79,8 +77,8 @@
 ;;   const a = 0; ←[in]
 ;; });
 (test find-definitions-for-variable-call-expression
-  (let ((ast-analyzer (make-ast-analyzer :typescript *nestjs-path* *cache*)))
-    (start-ast-analyzer ast-analyzer inga/main::*include-typescript* nil)
+  (setf inga/ast-analyzer/base::*cache* *cache*)
+  (let ((ast-analyzer (start-ast-analyzer :typescript nil *nestjs-path*)))
     (is (equal
           `(((:path . "src/user/user.decorator.ts")
               (:name . "User")  
@@ -90,7 +88,6 @@
                       "src/user/user.decorator.ts"
                       '((:line . 5) (:offset . 14))))))
           (find-definitions
-            ast-analyzer
             `((:path . "src/user/user.decorator.ts")
               ,(cons :start-offset
                      (convert-to-top-offset
@@ -109,8 +106,8 @@
 ;;   list.forEach((a) => a) ←[in]
 ;; );
 (test find-definitions-for-variable-call-expression-array
-  (let ((ast-analyzer (make-ast-analyzer :typescript *fixtures-path* *cache*)))
-    (start-ast-analyzer ast-analyzer inga/main::*include-typescript* nil)
+  (setf inga/ast-analyzer/base::*cache* *cache*)
+  (let ((ast-analyzer (start-ast-analyzer :typescript nil *fixtures-path*)))
     (is (equal
           `(((:path . "declaration.ts")
               (:name . "a, b")
@@ -120,7 +117,6 @@
                       "declaration.ts"
                       '((:line . 4) (:offset . 8))))))
           (find-definitions
-            ast-analyzer
             `((:path . "declaration.ts")
               ,(cons :start-offset
                      (convert-to-top-offset
@@ -141,8 +137,8 @@
 ;;   })
 ;; }
 (test find-definitions-for-variable-arrow-function
-  (let ((ast-analyzer (make-ast-analyzer :typescript *react-path* *cache*)))
-    (start-ast-analyzer ast-analyzer inga/main::*include-typescript* nil)
+  (setf inga/ast-analyzer/base::*cache* *cache*)
+  (let ((ast-analyzer (start-ast-analyzer :typescript nil *react-path*)))
     (is (equal
           `(((:path . "src/App/TodoList/Item/index.tsx")
               (:name . "reverseCompleted")
@@ -152,7 +148,6 @@
                       "src/App/TodoList/Item/index.tsx"
                       '((:line . 62) (:offset . 9))))))
           (find-definitions
-            ast-analyzer
             `((:path . "src/App/TodoList/Item/index.tsx")
               ,(cons :start-offset
                      (convert-to-top-offset
@@ -171,8 +166,8 @@
 ;;   return; ←[in]
 ;; };
 (test find-definitions-for-variable-arrow-function-return-undefined
-  (let ((ast-analyzer (make-ast-analyzer :typescript *fixtures-path* *cache*)))
-    (start-ast-analyzer ast-analyzer inga/main::*include-typescript* nil)
+  (setf inga/ast-analyzer/base::*cache* *cache*)
+  (let ((ast-analyzer (start-ast-analyzer :typescript nil *fixtures-path*)))
     (is (equal
           `(((:path . "declaration.ts")
               (:name . "f2")
@@ -182,7 +177,6 @@
                       "declaration.ts"
                       '((:line . 8) (:offset . 7))))))
           (find-definitions
-            ast-analyzer
             `((:path . "declaration.ts")
               ,(cons :start-offset
                      (convert-to-top-offset
@@ -203,8 +197,8 @@
 ;;   }
 ;; }
 (test find-definitions-for-method
-  (let ((ast-analyzer (make-ast-analyzer :typescript *nestjs-path* *cache*)))
-    (start-ast-analyzer ast-analyzer inga/main::*include-typescript* nil)
+  (setf inga/ast-analyzer/base::*cache* *cache*)
+  (let ((ast-analyzer (start-ast-analyzer :typescript nil *nestjs-path*)))
     (is (equal
           `(((:path . "src/article/article.service.ts")
               (:name . "findAll")
@@ -214,7 +208,6 @@
                       "src/article/article.service.ts"
                       '((:line . 45) (:offset . 9))))))
           (find-definitions
-            ast-analyzer
             `((:path . "src/article/article.service.ts")
               ,(cons :start-offset
                      (convert-to-top-offset
@@ -229,8 +222,8 @@
     (stop-ast-analyzer ast-analyzer)))
 
 (test find-entrypoint
-  (let ((ast-analyzer (make-ast-analyzer :typescript *react-path* *cache*)))
-    (start-ast-analyzer ast-analyzer inga/main::*include-typescript* nil)
+  (setf inga/ast-analyzer/base::*cache* *cache*)
+  (let ((ast-analyzer (start-ast-analyzer :typescript nil *react-path*)))
     (is (equal
           `((:path . "src/App/TodoList/Item/index.tsx")
             (:name . "input")
@@ -240,7 +233,6 @@
                      "src/App/TodoList/Item/index.tsx"
                      '((:line . 107) (:offset . 12)))))
           (inga/ast-analyzer/typescript::find-entrypoint
-            ast-analyzer
             `((:path . "src/App/TodoList/Item/index.tsx")
               ,(cons :top-offset
                      (convert-to-top-offset

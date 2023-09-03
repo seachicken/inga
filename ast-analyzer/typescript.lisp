@@ -2,9 +2,6 @@
   (:use #:cl
         #:inga/ast-analyzer/base
         #:inga/utils)
-  (:import-from #:inga/cache
-                #:put-value
-                #:get-value)
   (:export #:ast-analyzer-typescript))
 (in-package #:inga/ast-analyzer/typescript)
 
@@ -12,20 +9,23 @@
   ((nearest-ast-pos :initform nil
                     :accessor ast-analyzer-nearest-ast-pos)))
 
-(defmethod make-ast-analyzer ((kind (eql :typescript)) path cache)
-  (make-instance 'ast-analyzer-typescript :path path :cache cache))
-
-(defmethod start-ast-analyzer ((ast-analyzer ast-analyzer-typescript) include exclude)
-  (setf (ast-analyzer-process ast-analyzer)
-        (uiop:launch-program "tsparser"
-                             :input :stream :output :stream))
-  (create-indexes ast-analyzer include exclude))
+(defmethod start-ast-analyzer ((kind (eql :typescript)) exclude path)
+  (setf *ast-analyzers*
+        (acons :typescript
+               (make-instance 'ast-analyzer-typescript
+                              :process
+                              (uiop:launch-program "tsparser"
+                                                   :input :stream :output :stream)
+                              :path path)
+               *ast-analyzers*))
+  (create-indexes (cdr (assoc :typescript *ast-analyzers*)) '("*.(js|jsx)" "*.(ts|tsx)") exclude)
+  (cdr (assoc :typescript *ast-analyzers*)))
 
 (defmethod stop-ast-analyzer ((ast-analyzer ast-analyzer-typescript))
   (clean-indexes)
   (uiop:close-streams (ast-analyzer-process ast-analyzer)))
 
-(defmethod find-definitions ((ast-analyzer ast-analyzer-typescript) range)
+(defmethod find-definitions-generic ((ast-analyzer ast-analyzer-typescript) range)
   (let ((q (make-queue))
         (src-path (cdr (assoc :path range)))
         (index-path (get-index-path (cdr (assoc :path range))))
@@ -151,7 +151,7 @@
                 do (enqueue q (cdr s)))))
     results))
 
-(defmethod find-entrypoint ((ast-analyzer ast-analyzer-typescript) pos)
+(defmethod find-entrypoint-generic ((ast-analyzer ast-analyzer-typescript) pos)
   (let ((top-offset (cdr (assoc :top-offset pos)))
         (ast (cdr (jsown:parse (uiop:read-file-string (get-index-path (cdr (assoc :path pos))))))))
     (setf (ast-analyzer-nearest-ast-pos ast-analyzer) nil)
@@ -165,7 +165,7 @@
             (push (cons :origin (cdr (assoc :origin pos))) result))
           result)))))
 
-(defmethod find-references ((ast-analyzer ast-analyzer-typescript) pos))
+(defmethod find-reference ((ast-analyzer ast-analyzer-typescript) target-pos ast index-path))
 
 (defun find-component (ast-analyzer ast pos)
   (when (and (jsown:keyp ast "kindName")

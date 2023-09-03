@@ -10,19 +10,18 @@
   (:import-from #:inga/errors
                 #:inga-error)
   (:export #:ast-analyzer
-           #:*index-path*
-           #:make-ast-analyzer
+           #:*ast-analyzers*
            #:ast-analyzer-process
            #:ast-analyzer-path
            #:ast-analyzer-cache
            #:start-ast-analyzer
            #:stop-ast-analyzer
            #:find-definitions
+           #:find-definitions-generic
            #:find-entrypoint
+           #:find-entrypoint-generic
            #:find-references
            #:find-reference
-           #:matches-reference-name
-           #:find-reference-pos
            #:convert-to-top-offset
            #:convert-to-pos
            #:exec-command
@@ -38,71 +37,59 @@
 (in-package #:inga/ast-analyzer/base)
 
 (defparameter *index-path* (uiop:merge-pathnames* #p"inga_temp/"))
+(defparameter *ast-analyzers* nil)
+(defvar *cache*)
 
 (defclass ast-analyzer ()
-  ((process :initform nil
-            :accessor ast-analyzer-process)
-   (path :initarg :path
-         :accessor ast-analyzer-path)
-   (cache :initarg :cache
-          :accessor ast-analyzer-cache)))
+  ((process
+     :initarg :process
+     :accessor ast-analyzer-process)
+   (path
+     :initarg :path
+     :accessor ast-analyzer-path)))
 
-(defgeneric make-ast-analyzer (kind path cache)
-  (:method (kind path cache)
+(defgeneric start-ast-analyzer (kind exclude path)
+  (:method (kind exclude path)
     (error 'unknown-ast-analyzer :name kind)))
 
-(defgeneric start-ast-analyzer (ast-analyzer include exclude))
-(defmethod start-ast-analyzer ((ast-analyzer list) include exclude)
-  (loop for a in ast-analyzer
-        do (start-ast-analyzer a include exclude)))
-
 (defgeneric stop-ast-analyzer (ast-analyzer))
-(defmethod stop-ast-analyzer ((ast-analyzer list))
-  (loop for a in ast-analyzer
-        do (stop-ast-analyzer a)))
 
-(defgeneric find-definitions (ast-analyzer range))
-(defmethod find-definitions ((ast-analyzer list) range)
-  (let ((a (find-ast-analyzer ast-analyzer (cdr (assoc :path range)))))
-    (when a
-      (find-definitions a range))))
+(defun find-definitions (range)
+  (let ((ast-analyzer (get-ast-analyzer (cdr (assoc :path range)))))
+    (find-definitions-generic ast-analyzer range)))
+(defgeneric find-definitions-generic (ast-analyzer range))
 
-(defgeneric find-entrypoint (ast-analyzer pos))
-(defmethod find-entrypoint ((ast-analyzer list) pos))
+(defun find-entrypoint (pos)
+  (find-entrypoint-generic (cdr (assoc :typescript *ast-analyzers*)) pos))
+(defgeneric find-entrypoint-generic (ast-analyzer pos)
+  (:method (ast-analyzer pos)))
 
-(defgeneric find-references (ast-analyzer pos)
-  (:method (ast-analyzer pos)
-    (let ((cache (get-value (ast-analyzer-cache (first ast-analyzer)) (get-references-key pos))))
-      (values
-        (if (null cache)
-            (loop for path in (uiop:directory-files *index-path*)
-                  with results
-                  with ast
-                  with target-ast-analyzer
-                  with cache
-                  do
-                  (setf target-ast-analyzer (find-ast-analyzer ast-analyzer (namestring path)))
+(defun find-references (pos)
+  (let ((cached-value (get-value *cache* (get-references-key pos))))
+    (values
+      (if (null cached-value)
+          (loop for path in (uiop:directory-files *index-path*)
+                with results
+                with ast
+                do
+                (let ((ast-analyzer (get-ast-analyzer (namestring path))))
                   (handler-case
                     (setf ast (jsown:parse (alexandria:read-file-into-string path)))
                     (error (e)
                            (format t "~a~%" e)
                            (return (values results nil))))
 
-                  (let ((references (find-references-by-file target-ast-analyzer path ast pos)))
+                  (let ((references (find-references-by-file ast-analyzer path ast pos)))
                     (when references
-                      (setf results (append results references))))
-                  finally
-                  (put-value (ast-analyzer-cache (first ast-analyzer)) (get-references-key pos)
-                             (if results results 'empty))
-                  (return (values results nil)))
-            (if (eq cache 'empty) nil cache))
-        (when cache t)))))
+                      (setf results (append results references)))))
+                finally
+                (put-value *cache* (get-references-key pos)
+                           (if results results 'empty))
+                (return (values results nil)))
+          (if (eq cached-value 'empty) nil cached-value))
+      (when cached-value t))))
 
 (defgeneric find-reference (ast-analyzer target-pos ast index-path))
-
-(defgeneric matches-reference-name (ast-analyzer ast target-pos))
-
-(defgeneric find-reference-pos (ast-analyzer index-path root-ast ast target-pos))
 
 (defun find-references-by-file (ast-analyzer index-path ast target-pos)
   (let ((q (make-queue)))
@@ -171,20 +158,17 @@
 (defun get-references-key (pos)
   (intern (format nil "refs-~a-~a" (cdr (assoc :path pos)) (cdr (assoc :top-offset pos)))))
 
-(defmethod find-ast-analyzer (ast-analyzer file-path)
-  ast-analyzer)
-(defmethod find-ast-analyzer ((ast-analyzers list) file-path)
-  (loop for a in ast-analyzers
-        with type = (get-file-type file-path)
-        do (when (or (and (string= (string (type-of a)) "AST-ANALYZER-JAVA") (eq type 'java))
-                     (and (string= (string (type-of a)) "AST-ANALYZER-KOTLIN") (eq type 'kotlin)))
-             (return a))))
+(defun get-ast-analyzer (path)
+  (cdr (assoc (get-file-type path) *ast-analyzers*)))
 
 (defun get-file-type (path)
-  (if (is-match path '("*.java"))
-      'java
-      (when (is-match path '("*.kt"))
-        'kotlin)))
+  (cond
+    ((is-match path '("*.java"))
+      :java)
+    ((is-match path '("*.kt"))
+     :kotlin)
+    ((is-match path '("*.(js|jsx)" "*.(ts|tsx)"))
+     :typescript)))
 
 (defun create-indexes (ast-analyzer include exclude)
   (ensure-directories-exist *index-path*) 

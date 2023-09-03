@@ -14,7 +14,6 @@
   (:import-from #:inga/ast-analyzer
                 #:convert-to-pos
                 #:convert-to-top-offset
-                #:make-ast-analyzer
                 #:start-ast-analyzer
                 #:stop-ast-analyzer
                 #:find-definitions
@@ -106,6 +105,7 @@
                       (list :base-commit base-commit))))))
 
 (defun start (root-path context-kinds &optional (exclude '()))
+  (setf inga/ast-analyzer/base::*cache* *cache*)
   (let ((ctx (alexandria:switch ((when (> (length context-kinds) 0) (first context-kinds)))
                (:typescript
                  (make-context
@@ -113,24 +113,26 @@
                    :include *include-typescript*
                    :exclude exclude
                    :lc (make-client :typescript root-path *cache*)
-                   :ast-analyzer (make-ast-analyzer :typescript root-path *cache*)))
+                   :ast-analyzers (list
+                                    (start-ast-analyzer :typescript exclude root-path))))
                (:java
                  (make-context
                    :project-path root-path
                    :include *include-java*
                    :exclude exclude
-                   :ast-analyzer (make-ast-analyzer :java root-path *cache*)
+                   :ast-analyzers (list
+                                    (start-ast-analyzer :java exclude root-path)
+                                    (start-ast-analyzer :kotlin exclude root-path))
                    :processes (list
                                 (inga/plugin/spring-property-loader:start root-path)
                                 (inga/plugin/jvm-dependency-loader:start root-path))))
                (t (error 'inga-error-context-not-found)))))
     (start-client (context-lc ctx))
-    (start-ast-analyzer (context-ast-analyzer ctx) (context-include ctx) (context-exclude ctx))
     ctx))
 
 (defun stop (ctx)
   (loop for p in (context-processes ctx) do (uiop:close-streams p)) 
-  (stop-ast-analyzer (context-ast-analyzer ctx)) 
+  (loop for a in (context-ast-analyzers ctx) do (stop-ast-analyzer a))
   (stop-client (context-lc ctx)))
 
 (defun get-analysis-kinds (diffs)
@@ -202,18 +204,18 @@
                               (find-entrypoints ctx pos q))
                             (inga/utils::measure
                               *debug-find-definitions*
-                              (lambda () (find-definitions (context-ast-analyzer ctx) range)))))))))
+                              (lambda () (find-definitions range)))))))))
 
 (defun find-entrypoints (ctx pos q)
-  (let ((refs (inga/utils::measure
+  (let ((refs
+          (if (context-lc ctx)
+              (inga/utils::measure
                 *debug-find-references*
-                (lambda () (find-references (context-ast-analyzer ctx) pos))))
+                (lambda () (references-client (context-lc ctx) pos))) 
+              (inga/utils::measure
+                *debug-find-references*
+                (lambda () (find-references pos)))))
         results)
-    (unless refs
-      (setf refs (inga/utils::measure
-                   *debug-find-references*
-                   (lambda () (references-client (context-lc ctx) pos)))))
-
     (setf refs (remove nil (mapcar (lambda (ref)
                                      (when (is-analysis-target (cdr (assoc :path ref))
                                                                (context-include ctx)
@@ -223,7 +225,7 @@
     (if refs
         (loop for ref in refs
               do
-              (let ((entrypoint (find-entrypoint (context-ast-analyzer ctx) ref)))
+              (let ((entrypoint (find-entrypoint ref)))
                 (if entrypoint
                     (setf results
                           (append results
@@ -279,6 +281,6 @@
   include
   exclude
   lc
-  ast-analyzer
+  ast-analyzers
   processes)
 

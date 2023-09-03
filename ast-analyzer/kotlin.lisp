@@ -2,28 +2,32 @@
   (:use #:cl
         #:inga/ast-analyzer/base
         #:inga/utils)
-  (:import-from #:inga/cache
-                #:put-value
-                #:get-value)
   (:export #:ast-analyzer-kotlin))
 (in-package #:inga/ast-analyzer/kotlin)
 
 (defclass ast-analyzer-kotlin (ast-analyzer)
   ())
 
-(defmethod start-ast-analyzer ((ast-analyzer ast-analyzer-kotlin) include exclude)
-  (setf (ast-analyzer-process ast-analyzer)
-        (uiop:launch-program
-          (format nil "java -cp ~a/libs/ktparser.jar inga.Main"
-                  (uiop:getenv "INGA_HOME"))
-          :input :stream :output :stream))
-  (create-indexes ast-analyzer '("*.kt") exclude))
+(defmethod start-ast-analyzer ((kind (eql :kotlin)) exclude path)
+  (setf *ast-analyzers*
+        (acons :kotlin
+               (make-instance
+                 'ast-analyzer-kotlin
+                 :process
+                 (uiop:launch-program
+                   (format nil "java -cp ~a/libs/ktparser.jar inga.Main"
+                           (uiop:getenv "INGA_HOME"))
+                   :input :stream :output :stream)
+                 :path path) 
+               *ast-analyzers*))
+  (create-indexes (cdr (assoc :kotlin *ast-analyzers*)) '("*.kt") exclude)
+  (cdr (assoc :kotlin *ast-analyzers*)))
 
 (defmethod stop-ast-analyzer ((ast-analyzer ast-analyzer-kotlin))
   (clean-indexes)
   (uiop:close-streams (ast-analyzer-process ast-analyzer)))
 
-(defmethod find-definitions ((ast-analyzer ast-analyzer-kotlin) range)
+(defmethod find-definitions-generic ((ast-analyzer ast-analyzer-kotlin) range)
   (let ((q (make-queue))
         (src-path (cdr (assoc :path range)))
         (index-path (get-index-path (cdr (assoc :path range))))
@@ -35,7 +39,7 @@
       (setf ast (cdr (jsown:parse (uiop:read-file-string index-path))))
       (error (e)
              (format t "~a~%" e)
-             (return-from find-definitions)))
+             (return-from find-definitions-generic)))
     (enqueue q ast)
     (loop
       (setf ast (dequeue q))
@@ -64,8 +68,6 @@
         (loop for child in (jsown:val ast "children")
               do (enqueue q (cdr child)))))
     results))
-
-(defmethod find-entrypoint ((ast-analyzer ast-analyzer-kotlin) pos))
 
 (defmethod find-reference ((ast-analyzer ast-analyzer-kotlin) target-pos ast index-path)
   (let ((fq-name (find-fq-name-for-reference ast)))
