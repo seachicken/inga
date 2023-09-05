@@ -207,7 +207,6 @@
 (defmethod find-reference ((ast-analyzer ast-analyzer-java) target-pos ast index-path)
   (let ((fq-name (find-fq-name-for-reference ast index-path)))
     (unless fq-name (return-from find-reference))
-    (format t "find-reference. fq-name: ~a~%" fq-name)
 
     (alexandria:switch ((cdr (assoc :type target-pos)))
       (:rest-server
