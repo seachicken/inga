@@ -26,6 +26,5 @@
                "inga/test/main"
                "inga/test/ast-analyzer/java"
                "inga/test/ast-analyzer/kotlin"
-               "inga/test/plugin/jvm-dependency-loader"
                "inga/test/plugin/spring-property-loader"))
 

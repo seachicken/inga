@@ -72,11 +72,11 @@
   (let ((ctx (inga/main::start *lightrun-path* '(:java))))
     (is (equal
           '(((:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
-             ;; FIXME: this is not correct
-             ;;(:name . "getTaskById")
-             ;;(:line . 25) (:offset . 25)))
-             (:name . "getUser")
-             (:line . 39) (:offset . 26)))
+             (:name . "getTaskById")
+             (:line . 25) (:offset . 25))
+            ((:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
+             (:name . "getTaskById")
+             (:line . 25) (:offset . 25)))
           (mapcar (lambda (e) (cdr (assoc :entorypoint e)))
                   (inga/main::analyze-by-range
                     ctx

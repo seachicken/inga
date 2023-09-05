@@ -47,8 +47,6 @@ jobs:
                                                  (uiop:find-symbol* '#:kotlin
                                                                     :inga/test/ast-analyzer/kotlin)
                                                  (uiop:find-symbol* '#:java
-                                                                    :inga/test/plugin/jvm-dependency-loader)
-                                                 (uiop:find-symbol* '#:java
                                                                     :inga/test/plugin/spring-property-loader)))
                             (uiop:quit 1))"
 

@@ -255,3 +255,14 @@
               (:fq-name . "p1.JavaReference.method")))))
     (stop-ast-analyzer ast-analyzer)))
 
+(test get-signatures-for-record
+  (setf inga/ast-analyzer/base::*cache* *cache*)
+  (let ((ast-analyzer (start-ast-analyzer :java nil *java-path*)))
+    (is (equal
+          '((:obj
+              ("kind" . "variable")
+              ("name" . "s")
+              ("type" . "java.lang.String")))
+          (get-signatures "p1.RecordDefinition")))
+    (stop-ast-analyzer ast-analyzer)))
+

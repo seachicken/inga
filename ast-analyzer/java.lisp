@@ -10,7 +10,7 @@
   (:import-from #:inga/ast-analyzer/kotlin
                 #:ast-analyzer-kotlin)
   (:import-from #:inga/plugin/jvm-dependency-loader
-                #:read-method)
+                #:load-signatures)
   (:import-from #:inga/plugin/spring-property-loader
                 #:find-property)
   (:export #:ast-analyzer-java))
@@ -207,6 +207,7 @@
 (defmethod find-reference ((ast-analyzer ast-analyzer-java) target-pos ast index-path)
   (let ((fq-name (find-fq-name-for-reference ast index-path)))
     (unless fq-name (return-from find-reference))
+    (format t "find-reference. fq-name: ~a~%" fq-name)
 
     (alexandria:switch ((cdr (assoc :type target-pos)))
       (:rest-server
@@ -224,6 +225,41 @@
             (cons :path (get-original-path index-path))
             (cons :top-offset (ast-value ast "startPos"))))))))
 
+(defmethod find-signatures-generic ((ast-analyzer ast-analyzer-java) fq-class-name root-ast)
+  (loop
+    with stack = (list root-ast)
+    with ast
+    with target-package-name = (format nil "~{~a~^.~}" (butlast (split #\. fq-class-name)))
+    with target-class-name = (first (last (split #\. fq-class-name)))
+    with package-name
+    with class-name
+    with results
+    do
+    (setf ast (pop stack))
+    (if (null ast) (return results))
+
+    (when (equal (ast-value ast "type") "PACKAGE")
+      (unless (equal (ast-value ast "packageName") target-package-name)
+        (return-from find-signatures-generic))
+      (setf package-name (ast-value ast "packageName")))
+    (when (or
+            (equal (ast-value ast "type") "CLASS")
+            (equal (ast-value ast "type") "RECORD")
+            (equal (ast-value ast "type") "INTERFACE"))
+      (unless (equal (ast-value ast "name") target-class-name)
+        (return-from find-signatures-generic))
+      (setf class-name (ast-value ast "name")))
+    (when (equal (ast-value ast "type") "VARIABLE")
+      (setf results (append results (list
+                                      `(:obj
+                                         ("kind" . "variable")
+                                         ("name" . ,(ast-value ast "name"))
+                                         ("type" . ,(get-fq-class-name
+                                                      (first (ast-get ast '("IDENTIFIER"))))))))))
+
+    (loop for child in (jsown:val ast "children")
+          do (setf stack (append stack (list child))))))
+
 (defun find-fq-name-for-reference (ast index-path)
   (alexandria:switch ((ast-value ast "type") :test #'equal)
     ("NEW_CLASS"
@@ -240,7 +276,8 @@
                                       (first (ast-get ast '("MEMBER_SELECT" "METHOD_INVOCATION")))
                                       index-path)))
                        (when fq-name
-                         (let ((method (read-method fq-name (get-original-path index-path))))
+                         (let ((method (find-signature fq-name
+                                                       #'load-signatures (get-original-path index-path))))
                            (when method
                              (jsown:val (jsown:val method "returnType") "name")))))
                      (find-fq-class-name-by-name
@@ -273,7 +310,8 @@
      (get-fq-class-name (first (ast-get ast '("IDENTIFIER")))))
     ((ast-get ast '("METHOD_INVOCATION"))
      (let ((fq-name (find-fq-name-for-reference (first (ast-get ast '("METHOD_INVOCATION"))) index-path)))
-       (let ((method (read-method fq-name (get-original-path index-path))))
+       (let ((method (find-signature fq-name
+                                     #'load-signatures (get-original-path index-path))))
          (when method
            (jsown:val (jsown:val method "returnType") "name")))))))
 
@@ -339,6 +377,11 @@
                                (ast-value arg "name"))
                               ("IDENTIFIER"
                                (find-variable-name (ast-value arg "name") arg index-path))
+                              ("METHOD_INVOCATION"
+                               (let ((fq-name (find-fq-name-for-reference arg index-path)))
+                                 (ast-value
+                                   (find-signature fq-name #'find-signatures)
+                                   "type")))
                               (t
                                 "?"))))))
         finally (return results)))

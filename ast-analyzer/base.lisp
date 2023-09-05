@@ -22,6 +22,9 @@
            #:find-entrypoint-generic
            #:find-references
            #:find-reference
+           #:find-signature
+           #:find-signatures
+           #:find-signatures-generic
            #:convert-to-top-offset
            #:convert-to-pos
            #:exec-command
@@ -118,6 +121,47 @@
           (loop for child in (jsown:val ast "children")
                 do (enqueue q child)))))
     results))
+
+(defun find-signature (fq-name find-signatures &optional from)
+  (when (or (null fq-name) (equal fq-name ""))
+    (return-from find-signature))
+
+  (let ((fq-class-name
+          (format nil "~{~a~^.~}"
+                  (butlast (split #\.
+                                  (if (>= (length (split #\- fq-name)) 2)
+                                      (first (butlast (split #\- fq-name)))
+                                      fq-name))))))
+    (loop for method in (funcall find-signatures fq-class-name from)
+          with target-name = (subseq (ppcre:regex-replace-all fq-class-name fq-name "") 1)
+          with matched-methods
+          do
+          (let ((name (format nil "~a~:[~;-~]~:*~{~a~^-~}"
+                              (jsown:val method "name")
+                              (if (equal (ast-value method "kind") "variable")
+                                  nil
+                                  (mapcar (lambda (type) (jsown:val type "name"))
+                                          (jsown:val method "parameterTypes"))))))
+            (when (equal name target-name)
+              (push method matched-methods)))
+          finally
+          (return (if (> (length matched-methods) 1)
+                      (loop for method in matched-methods
+                            do (unless (jsown:val (jsown:val method "returnType") "isInterface")
+                                 (return method)))
+                      (first matched-methods))))))
+
+(defun find-signatures (fq-class-name &optional from)
+  (loop for path in (uiop:directory-files *index-path*)
+      do
+      (let ((ast-analyzer (get-ast-analyzer (namestring path)))
+            (ast (jsown:parse (alexandria:read-file-into-string path))))
+        (let ((signatures (find-signatures-generic ast-analyzer fq-class-name ast)))
+          (when signatures
+            (return-from find-signatures signatures))))))
+
+(defgeneric find-signatures-generic (ast-analyzer fq-class-name root-ast)
+  (:method (ast-analyzer fq-class-name root-ast)))
 
 (defun convert-to-top-offset (root-path path pos)
   (with-open-file (stream (uiop:merge-pathnames* path root-path))
