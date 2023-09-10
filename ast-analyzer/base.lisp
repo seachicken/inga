@@ -214,7 +214,8 @@
     ((is-match path '("*.(js|jsx)" "*.(ts|tsx)"))
      :typescript)))
 
-(defun create-indexes (root-path include exclude)
+(defun create-indexes (root-path &key include exclude)
+  (clean-indexes)
   (ensure-directories-exist *index-path*) 
   (loop for path in (uiop:directory-files (format nil "~a/**/*" root-path))
         do (let ((relative-path (enough-namestring path root-path)))

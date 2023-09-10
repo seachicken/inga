@@ -1,7 +1,9 @@
 (defpackage #:inga/test/ast-analyzer/java
   (:use #:cl
         #:fiveam
-        #:inga/ast-analyzer))
+        #:inga/ast-analyzer)
+  (:import-from #:inga/cache
+                #:make-cache))
 (in-package #:inga/test/ast-analyzer/java)
 
 (def-suite java)
@@ -12,11 +14,14 @@
   (truename (uiop:merge-pathnames* "test/fixtures/spring-boot-realworld-example-app/")))
 (defparameter *lightrun-path*
   (truename (uiop:merge-pathnames* "test/fixtures/spring-tutorials/lightrun/")))
-(defparameter *cache* (inga/cache:make-cache 100))
 
 (test find-definitions-for-constructor
-  (setf inga/ast-analyzer/base::*cache* *cache*)
-  (let ((ast-analyzer (start-ast-analyzer :java nil *java-path*)))
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (let ((ast-analyzers
+          (list
+            (start-ast-analyzer :java nil *java-path*)
+            (start-ast-analyzer :kotlin nil *java-path*))))
+    (create-indexes *java-path* :include inga/main::*include-java*)
     (is (equal
           `(((:path . "p1/ConstructorDefinition.java")
              (:name . "ConstructorDefinition")
@@ -35,11 +40,16 @@
                      (convert-to-top-offset
                        *java-path* "p1/ConstructorDefinition.java"
                        '((:line . 4) (:offset . -1))))))))
-    (stop-ast-analyzer ast-analyzer)))
+    (clean-indexes)
+    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-definitions-for-method
-  (setf inga/ast-analyzer/base::*cache* *cache*)
-  (let ((ast-analyzer (start-ast-analyzer :java nil *java-path*)))
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (let ((ast-analyzers
+          (list
+            (start-ast-analyzer :java nil *java-path*)
+            (start-ast-analyzer :kotlin nil *java-path*))))
+    (create-indexes *java-path* :include inga/main::*include-java*)
     (is (equal
           `(((:path . "p1/MethodDefinition.java")
              (:name . "method")
@@ -58,11 +68,16 @@
                      (convert-to-top-offset
                        *java-path* "p1/MethodDefinition.java"
                        '((:line . 7) (:offset . -1))))))))
-    (stop-ast-analyzer ast-analyzer)))
+    (clean-indexes)
+    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-definitions-for-interface
-  (setf inga/ast-analyzer/base::*cache* *cache*)
-  (let ((ast-analyzer (start-ast-analyzer :java nil *java-path*)))
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (let ((ast-analyzers
+          (list
+            (start-ast-analyzer :java nil *java-path*)
+            (start-ast-analyzer :kotlin nil *java-path*))))
+    (create-indexes *java-path* :include inga/main::*include-java*)
     (is (equal
           `(((:path . "p1/InterfaceDefinition.java")
              (:name . "method")
@@ -81,11 +96,16 @@
                      (convert-to-top-offset
                        *java-path* "p1/InterfaceDefinition.java"
                        '((:line . 6) (:offset . -1))))))))
-    (stop-ast-analyzer ast-analyzer)))
+    (clean-indexes)
+    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-definitions-for-instance-variable-annotation
-  (setf inga/ast-analyzer/base::*cache* *cache*)
-  (let ((ast-analyzer (start-ast-analyzer :java nil *java-path*)))
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (let ((ast-analyzers
+          (list
+            (start-ast-analyzer :java nil *java-path*)
+            (start-ast-analyzer :kotlin nil *java-path*))))
+    (create-indexes *java-path* :include inga/main::*include-java*)
     (is (equal
           `(((:path . "p1/InstanceVariableAnnotationDefinition.java")
              (:name . "variable")
@@ -104,7 +124,8 @@
                      (convert-to-top-offset
                        *java-path* "p1/InstanceVariableAnnotationDefinition.java"
                        '((:line . 6) (:offset . -1))))))))
-    (stop-ast-analyzer ast-analyzer)))
+    (clean-indexes)
+    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 ;; class DuplicatedArticleValidator
 ;;                                    ↓[out]
@@ -129,10 +150,14 @@
         (stop-ast-analyzer ast-analyzer))))
 
 (test find-definitions-for-spring-rest-controller
-  (setf inga/ast-analyzer/base::*cache* *cache*)
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (inga/plugin/jvm-dependency-loader:start *spring-boot-path*)
   (inga/plugin/spring-property-loader:start *spring-boot-path*)
-  (let ((ast-analyzer (start-ast-analyzer :java nil *spring-boot-path*)))
+  (let ((ast-analyzers
+          (list
+            (start-ast-analyzer :java nil *spring-boot-path*)
+            (start-ast-analyzer :kotlin nil *spring-boot-path*))))
+    (create-indexes *spring-boot-path* :include inga/main::*include-java*)
     (is (equal
           `(((:path . "src/main/java/io/spring/api/ArticlesApi.java")
              (:name . "getArticles")
@@ -154,8 +179,9 @@
                        *spring-boot-path*
                        "src/main/java/io/spring/api/ArticlesApi.java"
                        '((:line . 56) (:offset . -1))))))))
-    (stop-ast-analyzer ast-analyzer)
-    (inga/plugin/spring-property-loader:stop)  
+    (clean-indexes)
+    (loop for a in ast-analyzers do (stop-ast-analyzer a))
+    (inga/plugin/spring-property-loader:stop)
     (inga/plugin/jvm-dependency-loader:stop)))
 
 ;; public class Article {
@@ -176,8 +202,12 @@
         (stop-ast-analyzer ast-analyzer))))
 
 (test find-references-for-new-class
-  (setf inga/ast-analyzer/base::*cache* *cache*)
-  (let ((ast-analyzer (start-ast-analyzer :java nil *java-path*)))
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (let ((ast-analyzers
+          (list
+            (start-ast-analyzer :java nil *java-path*)
+            (start-ast-analyzer :kotlin nil *java-path*))))
+    (create-indexes *java-path* :include inga/main::*include-java*)
     (is (equal
           `(((:path . "p1/NewClassReference.java")
              ,(cons :top-offset
@@ -188,11 +218,16 @@
             `((:path . "p1/NewClassHelper.java")
               (:name . "method")
               (:fq-name . "p1.NewClassHelper.method")))))
-    (stop-ast-analyzer ast-analyzer)))
+    (clean-indexes)
+    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-references-for-constructor
-  (setf inga/ast-analyzer/base::*cache* *cache*)
-  (let ((ast-analyzer (start-ast-analyzer :java nil *java-path*)))
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (let ((ast-analyzers
+          (list
+            (start-ast-analyzer :java nil *java-path*)
+            (start-ast-analyzer :kotlin nil *java-path*))))
+    (create-indexes *java-path* :include inga/main::*include-java*)
     (is (equal
           `(((:path . "p1/ConstructorReference.java")
              ,(cons :top-offset
@@ -203,11 +238,16 @@
             `((:path . "p1/ConstructorHelper.java")
               (:name . "ConstructorHelper")
               (:fq-name . "p1.ConstructorHelper.ConstructorHelper-INT")))))
-    (stop-ast-analyzer ast-analyzer)))
+    (clean-indexes)
+    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-references-for-private-method
-  (setf inga/ast-analyzer/base::*cache* *cache*)
-  (let ((ast-analyzer (start-ast-analyzer :java nil *java-path*)))
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (let ((ast-analyzers
+          (list
+            (start-ast-analyzer :java nil *java-path*)
+            (start-ast-analyzer :kotlin nil *java-path*))))
+    (create-indexes *java-path* :include inga/main::*include-java*)
     (is (equal
           `(((:path . "p1/PrivateMethodReference.java")
              ,(cons :top-offset
@@ -218,11 +258,16 @@
             `((:path . "p1/PrivateMethodReference.java")
               (:name . "method2")
               (:fq-name . "p1.PrivateMethodReference.method2")))))
-    (stop-ast-analyzer ast-analyzer)))
+    (clean-indexes)
+    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-references-for-rest-client
-  (setf inga/ast-analyzer/base::*cache* *cache*)
-  (let ((ast-analyzer (start-ast-analyzer :java nil *java-path*)))
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (let ((ast-analyzers
+          (list
+            (start-ast-analyzer :java nil *java-path*)
+            (start-ast-analyzer :kotlin nil *java-path*))))
+    (create-indexes *java-path* :include inga/main::*include-java*)
     (is (equal
           `(((:path . "p1/client/ClientRestTemplate.java")
              ,(cons :top-offset
@@ -238,11 +283,16 @@
             `((:type . :rest-server)
               (:path . "/path")
               (:name . "GET")))))
-    (stop-ast-analyzer ast-analyzer)))
+    (clean-indexes)
+    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-references-for-kotlin-class
-  (setf inga/ast-analyzer/base::*cache* *cache*)
-  (let ((ast-analyzer (start-ast-analyzer :java nil *java-path*)))
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (let ((ast-analyzers
+          (list
+            (start-ast-analyzer :java nil *java-path*)
+            (start-ast-analyzer :kotlin nil *java-path*))))
+    (create-indexes *java-path* :include inga/main::*include-java*)
     (is (equal
           `(((:path . "p1/KotlinReference.java")
              ,(cons :top-offset
@@ -253,16 +303,22 @@
             '((:path . "p1/JavaReference.kt")
               (:name . "method")
               (:fq-name . "p1.JavaReference.method")))))
-    (stop-ast-analyzer ast-analyzer)))
+    (clean-indexes)
+    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-signatures-for-record
-  (setf inga/ast-analyzer/base::*cache* *cache*)
-  (let ((ast-analyzer (start-ast-analyzer :java nil *java-path*)))
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (let ((ast-analyzers
+          (list
+            (start-ast-analyzer :java nil *java-path*)
+            (start-ast-analyzer :kotlin nil *java-path*))))
+    (create-indexes *java-path* :include inga/main::*include-java*)
     (is (equal
           '((:obj
               ("kind" . "variable")
               ("name" . "s")
               ("type" . "java.lang.String")))
           (find-signatures "p1.RecordDefinition")))
-    (stop-ast-analyzer ast-analyzer)))
+    (clean-indexes)
+    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 

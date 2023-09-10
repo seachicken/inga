@@ -57,7 +57,7 @@
       (let ((diffs (get-diff root-path base-commit)))
         (let ((ctx (start root-path
                           (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
-                          include exclude)))
+                          :include include :exclude exclude)))
           (let ((results (analyze ctx diffs)))
             (log-debug (format nil "cache size: ~a/~a" (size *cache*) *cache-max-size*))
             (log-debug (format nil "measuring time:~%  find-definitions: [times: ~a, avg-sec: ~f]~%  find-references: [times: ~a, avg-sec: ~f, cache-hit: ~a]"
@@ -110,7 +110,7 @@
                     (when base-commit
                       (list :base-commit base-commit))))))
 
-(defun start (root-path context-kinds &optional include exclude)
+(defun start (root-path context-kinds &key include exclude)
   (setf inga/ast-analyzer/base::*cache* *cache*)
   (let ((ctx (alexandria:switch ((when (> (length context-kinds) 0) (first context-kinds)))
                (:typescript
@@ -133,7 +133,7 @@
                                 (inga/plugin/spring-property-loader:start root-path)
                                 (inga/plugin/jvm-dependency-loader:start root-path))))
                (t (error 'inga-error-context-not-found)))))
-    (create-indexes root-path (context-include ctx) (context-exclude ctx))
+    (create-indexes root-path :include (context-include ctx) :exclude (context-exclude ctx))
     (start-client (context-lc ctx))
     ctx))
 

@@ -1,7 +1,9 @@
 (defpackage #:inga/test/ast-analyzer/typescript
   (:use #:cl
         #:fiveam
-        #:inga/ast-analyzer))
+        #:inga/ast-analyzer)
+  (:import-from #:inga/cache
+                #:make-cache))
 (in-package #:inga/test/ast-analyzer/typescript)
 
 (def-suite typescript)
@@ -10,15 +12,15 @@
 (defparameter *fixtures-path* (uiop:merge-pathnames* "test/fixtures/"))
 (defparameter *react-path* (uiop:merge-pathnames* "test/fixtures/react-typescript-todo/"))
 (defparameter *nestjs-path* (uiop:merge-pathnames* "test/fixtures/nestjs-realworld-example-app-prisma/"))
-(defparameter *cache* (inga/cache:make-cache 100))
 
 ;;       ↓[out]
 ;; const article = {
 ;;   title: "Hello" ←[in]
 ;; };
 (test find-definitions-for-variable-object-literal-expression
-  (setf inga/ast-analyzer/base::*cache* *cache*)
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzer (start-ast-analyzer :typescript nil *nestjs-path*)))
+    (create-indexes *nestjs-path* :include inga/main::*include-typescript*)
     (is (equal
           `(((:path . "src/article/article.service.ts")
               (:name . "articleAuthorSelect")
@@ -39,6 +41,7 @@
                        *nestjs-path*
                        "src/article/article.service.ts"
                        '((:line . 8) (:offset . -1))))))))
+    (clean-indexes)
     (stop-ast-analyzer ast-analyzer)))
 
 ;; const NewTodoTextInput: React.FC = () => {
@@ -48,8 +51,9 @@
 ;;   }
 ;; }
 (test find-definitions-for-function
-  (setf inga/ast-analyzer/base::*cache* *cache*)
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzer (start-ast-analyzer :typescript nil *react-path*)))
+    (create-indexes *react-path* :include inga/main::*include-typescript*)
     (is (equal
           `(((:path . "src/App/NewTodoInput/index.tsx")
               (:name . "addTodo")
@@ -70,6 +74,7 @@
                        *react-path*
                        "src/App/NewTodoInput/index.tsx"
                        '((:line . 13) (:offset . -1))))))))
+    (clean-indexes)
     (stop-ast-analyzer ast-analyzer)))
 
 ;;              ↓[out]
@@ -77,8 +82,9 @@
 ;;   const a = 0; ←[in]
 ;; });
 (test find-definitions-for-variable-call-expression
-  (setf inga/ast-analyzer/base::*cache* *cache*)
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzer (start-ast-analyzer :typescript nil *nestjs-path*)))
+    (create-indexes *nestjs-path* :include inga/main::*include-typescript*)
     (is (equal
           `(((:path . "src/user/user.decorator.ts")
               (:name . "User")  
@@ -99,6 +105,7 @@
                        *nestjs-path*
                        "src/user/user.decorator.ts"
                        '((:line . 9) (:offset . -1))))))))
+    (clean-indexes)
     (stop-ast-analyzer ast-analyzer)))
 
 ;;        ↓[out]
@@ -106,8 +113,9 @@
 ;;   list.forEach((a) => a) ←[in]
 ;; );
 (test find-definitions-for-variable-call-expression-array
-  (setf inga/ast-analyzer/base::*cache* *cache*)
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzer (start-ast-analyzer :typescript nil *fixtures-path*)))
+    (create-indexes *fixtures-path* :include inga/main::*include-typescript*)
     (is (equal
           `(((:path . "declaration.ts")
               (:name . "a, b")
@@ -128,6 +136,7 @@
                        *fixtures-path*
                        "declaration.ts"
                        '((:line . 5) (:offset . -1))))))))
+    (clean-indexes)
     (stop-ast-analyzer ast-analyzer)))
 
 ;;       ↓[out]
@@ -137,8 +146,9 @@
 ;;   })
 ;; }
 (test find-definitions-for-variable-arrow-function
-  (setf inga/ast-analyzer/base::*cache* *cache*)
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzer (start-ast-analyzer :typescript nil *react-path*)))
+    (create-indexes *react-path* :include inga/main::*include-typescript*)
     (is (equal
           `(((:path . "src/App/TodoList/Item/index.tsx")
               (:name . "reverseCompleted")
@@ -159,6 +169,7 @@
                        *react-path*
                        "src/App/TodoList/Item/index.tsx"
                        '((:line . 65) (:offset . -1))))))))
+    (clean-indexes)
     (stop-ast-analyzer ast-analyzer)))
 
 ;;       ↓[out]
@@ -166,8 +177,9 @@
 ;;   return; ←[in]
 ;; };
 (test find-definitions-for-variable-arrow-function-return-undefined
-  (setf inga/ast-analyzer/base::*cache* *cache*)
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzer (start-ast-analyzer :typescript nil *fixtures-path*)))
+    (create-indexes *fixtures-path* :include inga/main::*include-typescript*)
     (is (equal
           `(((:path . "declaration.ts")
               (:name . "f2")
@@ -188,6 +200,7 @@
                        *fixtures-path*
                        "declaration.ts"
                        '((:line . 9) (:offset . -1))))))))
+    (clean-indexes)
     (stop-ast-analyzer ast-analyzer)))
 
 ;; class ArticleService {
@@ -197,8 +210,9 @@
 ;;   }
 ;; }
 (test find-definitions-for-method
-  (setf inga/ast-analyzer/base::*cache* *cache*)
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzer (start-ast-analyzer :typescript nil *nestjs-path*)))
+    (create-indexes *nestjs-path* :include inga/main::*include-typescript*)
     (is (equal
           `(((:path . "src/article/article.service.ts")
               (:name . "findAll")
@@ -219,11 +233,13 @@
                        *nestjs-path*
                        "src/article/article.service.ts"
                        '((:line . 46) (:offset . -1))))))))
+    (clean-indexes)
     (stop-ast-analyzer ast-analyzer)))
 
 (test find-entrypoint
-  (setf inga/ast-analyzer/base::*cache* *cache*)
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzer (start-ast-analyzer :typescript nil *react-path*)))
+    (create-indexes *react-path* :include inga/main::*include-typescript*)
     (is (equal
           `((:path . "src/App/TodoList/Item/index.tsx")
             (:name . "input")
@@ -239,6 +255,7 @@
                        *react-path*
                        "src/App/TodoList/Item/index.tsx"
                        '((:line . 111) (:offset . 29))))))))
+    (clean-indexes)
     (stop-ast-analyzer ast-analyzer)))
 
 (test convert-tsserver-pos-to-tsparser-pos

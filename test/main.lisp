@@ -17,7 +17,7 @@
   (truename (uiop:merge-pathnames* "test/fixtures/nestjs-realworld-example-app-prisma/")))
 
 (test analyze-by-range-for-react-components
-  (let ((ctx (inga/main::start *front-path* '(:typescript) '("**/*.test.(ts|tsx)"))))
+  (let ((ctx (inga/main::start *front-path* '(:typescript) :exclude '("**/*.test.(ts|tsx)"))))
     (is (equal
           '(((:path . "src/App/NewTodoInput/index.tsx")
              (:name . "input")
@@ -47,7 +47,7 @@
   (truename (uiop:merge-pathnames* "test/fixtures/spring-tutorials/lightrun/")))
 
 (test analyze-by-range-for-entry-points
-  (let ((ctx (inga/main::start *back-path* '(:java) '("src/test/**"))))
+  (let ((ctx (inga/main::start *back-path* '(:java) :exclude '("src/test/**"))))
     (is (equal
           '(((:path . "src/main/java/io/spring/api/ArticlesApi.java")
              (:name . "getArticles")
@@ -96,7 +96,7 @@
 (test analyze-by-range-for-constraint-validator
   (if t
       (skip "TODO: implement")
-      (let ((ctx (inga/main::start *back-path* '(:java) '("src/test/**"))))
+      (let ((ctx (inga/main::start *back-path* '(:java) :exclude '("src/test/**"))))
         (is (equal
               '(((:path . "src/main/java/io/spring/api/ArticlesApi.java")
                  (:name . "createArticle") (:line . 29) (:offset . 25))
