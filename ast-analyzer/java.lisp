@@ -39,11 +39,9 @@
                    :input :stream :output :stream)
                  :path path) 
                *ast-analyzers*))
-  (create-indexes (cdr (assoc :java *ast-analyzers*)) '("*.java") exclude)
   (cdr (assoc :java *ast-analyzers*)))
 
 (defmethod stop-ast-analyzer ((ast-analyzer ast-analyzer-java))
-  (clean-indexes)
   (uiop:close-streams (ast-analyzer-process ast-analyzer)))
 
 (defmethod find-definitions-generic ((ast-analyzer ast-analyzer-java) range)
@@ -275,8 +273,9 @@
                                       (first (ast-get ast '("MEMBER_SELECT" "METHOD_INVOCATION")))
                                       index-path)))
                        (when fq-name
-                         (let ((method (find-signature fq-name
-                                                       #'load-signatures (get-original-path index-path))))
+                         (let ((method (find-signature
+                                         fq-name
+                                         #'load-signatures (get-original-path index-path))))
                            (when method
                              (jsown:val (jsown:val method "returnType") "name")))))
                      (find-fq-class-name-by-name

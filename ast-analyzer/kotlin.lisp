@@ -20,11 +20,9 @@
                    :input :stream :output :stream)
                  :path path) 
                *ast-analyzers*))
-  (create-indexes (cdr (assoc :kotlin *ast-analyzers*)) '("*.kt") exclude)
   (cdr (assoc :kotlin *ast-analyzers*)))
 
 (defmethod stop-ast-analyzer ((ast-analyzer ast-analyzer-kotlin))
-  (clean-indexes)
   (uiop:close-streams (ast-analyzer-process ast-analyzer)))
 
 (defmethod find-definitions-generic ((ast-analyzer ast-analyzer-kotlin) range)

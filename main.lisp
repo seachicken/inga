@@ -18,7 +18,9 @@
                 #:stop-ast-analyzer
                 #:find-definitions
                 #:find-entrypoint
-                #:find-references)
+                #:find-references
+                #:create-indexes
+                #:clean-indexes)
   (:import-from #:inga/cache
                 #:make-cache
                 #:size)
@@ -51,11 +53,11 @@
 
 (defun command (&rest argv)
   (handler-case
-    (destructuring-bind (&key root-path exclude github-token base-commit) (parse-argv argv)
+    (destructuring-bind (&key root-path include exclude github-token base-commit) (parse-argv argv)
       (let ((diffs (get-diff root-path base-commit)))
         (let ((ctx (start root-path
                           (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
-                          exclude)))
+                          include exclude)))
           (let ((results (analyze ctx diffs)))
             (log-debug (format nil "cache size: ~a/~a" (size *cache*) *cache-max-size*))
             (log-debug (format nil "measuring time:~%  find-definitions: [times: ~a, avg-sec: ~f]~%  find-references: [times: ~a, avg-sec: ~f, cache-hit: ~a]"
@@ -76,6 +78,7 @@
 
 (defun parse-argv (argv)
   (loop with root-path = "."
+        with include
         with exclude
         with github-token
         with base-commit
@@ -88,6 +91,8 @@
               (setf root-path (pop argv)))
              ("--back-path"
               (setf root-path (pop argv)))
+             ("--include"
+              (setf include (split-trim-comma (pop argv))))
              ("--exclude"
               (setf exclude (split-trim-comma (pop argv))))
              ("--github-token"
@@ -98,19 +103,20 @@
         finally
           (return (append 
                     (list :root-path (truename (uiop:merge-pathnames* root-path)))
+                    (list :include include)
                     (list :exclude exclude)
                     (when github-token
                       (list :github-token github-token))
                     (when base-commit
                       (list :base-commit base-commit))))))
 
-(defun start (root-path context-kinds &optional (exclude '()))
+(defun start (root-path context-kinds &optional include exclude)
   (setf inga/ast-analyzer/base::*cache* *cache*)
   (let ((ctx (alexandria:switch ((when (> (length context-kinds) 0) (first context-kinds)))
                (:typescript
                  (make-context
                    :project-path root-path
-                   :include *include-typescript*
+                   :include (or include *include-typescript*)
                    :exclude exclude
                    :lc (make-client :typescript root-path *cache*)
                    :ast-analyzers (list
@@ -118,7 +124,7 @@
                (:java
                  (make-context
                    :project-path root-path
-                   :include *include-java*
+                   :include (or include *include-java*)
                    :exclude exclude
                    :ast-analyzers (list
                                     (start-ast-analyzer :java exclude root-path)
@@ -127,12 +133,14 @@
                                 (inga/plugin/spring-property-loader:start root-path)
                                 (inga/plugin/jvm-dependency-loader:start root-path))))
                (t (error 'inga-error-context-not-found)))))
+    (create-indexes root-path (context-include ctx) (context-exclude ctx))
     (start-client (context-lc ctx))
     ctx))
 
 (defun stop (ctx)
   (loop for p in (context-processes ctx) do (uiop:close-streams p)) 
   (loop for a in (context-ast-analyzers ctx) do (stop-ast-analyzer a))
+  (clean-indexes)
   (stop-client (context-lc ctx)))
 
 (defun get-analysis-kinds (diffs)

@@ -214,14 +214,14 @@
     ((is-match path '("*.(js|jsx)" "*.(ts|tsx)"))
      :typescript)))
 
-(defun create-indexes (ast-analyzer include exclude)
+(defun create-indexes (root-path include exclude)
   (ensure-directories-exist *index-path*) 
-  (loop for path in (uiop:directory-files (format nil "~a/**/*" (ast-analyzer-path ast-analyzer)))
-        do (let ((relative-path (enough-namestring path (ast-analyzer-path ast-analyzer))))
+  (loop for path in (uiop:directory-files (format nil "~a/**/*" root-path))
+        do (let ((relative-path (enough-namestring path root-path)))
              (when (is-analysis-target relative-path include exclude)
                (handler-case
                  (alexandria:write-string-into-file
-                   (format nil "~a" (exec-command ast-analyzer (namestring path)))
+                   (format nil "~a" (exec-command (get-ast-analyzer relative-path) (namestring path)))
                    (get-index-path relative-path))
                  (error (e)
                         (format t "error: ~a, path: ~a~%" e path)

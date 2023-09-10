@@ -36,6 +36,10 @@ Analyze the difference between the --base-commit and the checked-out commit. Set
 
 Relative path of the project to be analyzed, so if you do not give this option, it defaults to the command execute path.
 
+`--include <string>`
+
+Filenames of glob pattern matching to include from analysis. (e.g. "core/**/*.ts")
+
 `--exclude <string>`
 
 Filenames of glob pattern matching to exclude from analysis. (e.g. "**/*.test.(ts|tsx)")

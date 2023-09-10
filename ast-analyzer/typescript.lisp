@@ -18,11 +18,9 @@
                                                    :input :stream :output :stream)
                               :path path)
                *ast-analyzers*))
-  (create-indexes (cdr (assoc :typescript *ast-analyzers*)) '("*.(js|jsx)" "*.(ts|tsx)") exclude)
   (cdr (assoc :typescript *ast-analyzers*)))
 
 (defmethod stop-ast-analyzer ((ast-analyzer ast-analyzer-typescript))
-  (clean-indexes)
   (uiop:close-streams (ast-analyzer-process ast-analyzer)))
 
 (defmethod find-definitions-generic ((ast-analyzer ast-analyzer-typescript) range)
