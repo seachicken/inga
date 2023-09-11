@@ -247,7 +247,7 @@
                 (if entrypoint
                     (setf results
                           (append results
-                                  `(((:type . "server")
+                                  `(((:type . "entrypoint")
                                      (:origin .
                                       ,(convert-to-output-pos (context-project-path ctx)
                                                               (cdr (assoc :origin pos))))
@@ -280,7 +280,7 @@
                                    (cons :start-offset (cdr (assoc :top-offset ref)))
                                    (cons :end-offset (cdr (assoc :top-offset ref)))))))))
         (setf results
-              `(((:type . "server")
+              `(((:type . "entrypoint")
                  (:origin . ,(convert-to-output-pos (context-project-path ctx)
                                                     (cdr (assoc :origin pos))))
                  (:entorypoint . ,(convert-to-output-pos (context-project-path ctx) pos))))))
