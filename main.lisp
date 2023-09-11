@@ -180,14 +180,16 @@
                                       (cdr (assoc :path diff))
                                       (list
                                         (cons :line (cdr (assoc :start diff)))
-                                        (cons :offset 0)))) diff)
+                                        (cons :offset 0))))
+                              diff)
                         (push (cons :end-offset
                                     (convert-to-top-offset
                                       (context-project-path ctx)
                                       (cdr (assoc :path diff))
                                       (list
                                         (cons :line (cdr (assoc :end diff)))
-                                        (cons :offset -1)))) diff))
+                                        (cons :offset -1))))
+                              diff))
                       diffs))
   (remove-duplicates
     (mapcan (lambda (range)
@@ -209,7 +211,15 @@
                     (mapcan (lambda (pos)
                               (unless (assoc :origin pos)
                                 (push (cons :origin pos) pos))
-                              (find-entrypoints ctx pos q))
+                              (append (when (eq (cdr (assoc :type pos)) :rest-server)
+                                        `(((:type . "server")
+                                           (:origin .
+                                            ,(convert-to-output-pos (context-project-path ctx)
+                                                                    (cdr (assoc :origin pos))))
+                                           (:entorypoint .
+                                            ,(convert-to-output-pos (context-project-path ctx)
+                                                                    pos)))))  
+                                      (find-entrypoints ctx pos q)))
                             (inga/utils::measure
                               *debug-find-definitions*
                               (lambda () (find-definitions range)))))))))
@@ -237,28 +247,43 @@
                 (if entrypoint
                     (setf results
                           (append results
-                                  (list
-                                    (list (cons :origin
-                                                (convert-to-output-pos (context-project-path ctx)
-                                                                       (cdr (assoc :origin pos))))
-                                          (cons :entorypoint
-                                                (convert-to-output-pos (context-project-path ctx) entrypoint))))))
-                    (progn
-                      ;; add connection type to resutls
+                                  `(((:type . "server")
+                                     (:origin .
+                                      ,(convert-to-output-pos (context-project-path ctx)
+                                                              (cdr (assoc :origin pos))))
+                                     (:entorypoint .
+                                      ,(convert-to-output-pos (context-project-path ctx) entrypoint))))))
+                    (let ((origin
+                            (if (eq (cdr (assoc :type pos)) :rest-server)
+                                (let ((definition
+                                        (first
+                                          (find-definitions
+                                            `((:path . ,(cdr (assoc :path ref)))
+                                              (:start-offset . ,(cdr (assoc :top-offset ref)))
+                                              (:end-offset . ,(cdr (assoc :top-offset ref))))))))
+                                  (setf results
+                                        (append results
+                                                `(((:type . "connection")
+                                                   (:origin .
+                                                    ,(convert-to-output-pos
+                                                       (context-project-path ctx)
+                                                       (cdr (assoc :origin pos))))
+                                                   (:entorypoint .
+                                                    ,(convert-to-output-pos
+                                                       (context-project-path ctx)
+                                                       definition))))))
+                                  definition)
+                                (cdr (assoc :origin pos)))))
                       (enqueue q (list
                                    (cons :path (cdr (assoc :path ref)))
-                                   (cons :origin (cdr (assoc :origin pos)))
+                                   (cons :origin origin)
                                    (cons :start-offset (cdr (assoc :top-offset ref)))
                                    (cons :end-offset (cdr (assoc :top-offset ref)))))))))
         (setf results
-              (list
-                (list
-                  (cons :origin
-                        (convert-to-output-pos (context-project-path ctx)
-                                               (cdr (assoc :origin pos))))
-                  (cons :entorypoint
-                        (convert-to-output-pos (context-project-path ctx)
-                                               pos))))))
+              `(((:type . "server")
+                 (:origin . ,(convert-to-output-pos (context-project-path ctx)
+                                                    (cdr (assoc :origin pos))))
+                 (:entorypoint . ,(convert-to-output-pos (context-project-path ctx) pos))))))
     results))
 
 (defun convert-to-output-pos (root-path pos)
@@ -274,11 +299,10 @@
 (defun to-json (results)
   (jsown:to-json
     (mapcan (lambda (r)
-              (list (cons :obj (list
-                                 (cons "origin"
-                                       (cons :obj (key-downcase (cdr (assoc :origin r)))))
-                                 (cons "entorypoint"
-                                       (cons :obj (key-downcase (cdr (assoc :entorypoint r)))))))))
+              `((:obj
+                  ("type" . ,(cdr (assoc :type r)))
+                  ("origin" . ,(cons :obj (key-downcase (cdr (assoc :origin r)))))
+                  ("entorypoint" . ,(cons :obj (key-downcase (cdr (assoc :entorypoint r))))))))
             results)))
 
 (defun key-downcase (obj)
