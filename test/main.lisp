@@ -22,7 +22,7 @@
           '(((:path . "src/App/NewTodoInput/index.tsx")
              (:name . "input")
              (:line . 34) (:offset . 10)))
-          (mapcar (lambda (e) (cdr (assoc :entorypoint e)))
+          (mapcar (lambda (e) (cdr (assoc :entrypoint e)))
                   (inga/main::analyze-by-range
                     ctx
                     `((:path . "src/functions.ts")
@@ -52,7 +52,7 @@
           '(((:path . "src/main/java/io/spring/api/ArticlesApi.java")
              (:name . "getArticles")
              (:line . 49) (:offset . 25)))
-          (mapcar (lambda (e) (cdr (assoc :entorypoint e)))
+          (mapcar (lambda (e) (cdr (assoc :entrypoint e)))
                   (inga/main::analyze-by-range
                     ctx
                     `((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
@@ -77,7 +77,7 @@
             ((:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
              (:name . "getTaskById")
              (:line . 25) (:offset . 25)))
-          (mapcar (lambda (e) (cdr (assoc :entorypoint e)))
+          (mapcar (lambda (e) (cdr (assoc :entrypoint e)))
                   (inga/main::analyze-by-range
                     ctx
                     `((:path . "users-service/src/main/java/com/baeldung/usersservice/adapters/http/UsersController.java")
@@ -103,7 +103,7 @@
                 ((:path . "src/main/java/io/spring/graphql/ArticleMutation.java")
                  (:name . "createArticle") (:line . 36) (:offset . 44)))
               (remove-duplicates
-                (mapcar (lambda (e) (cdr (assoc :entorypoint e)))
+                (mapcar (lambda (e) (cdr (assoc :entrypoint e)))
                         (inga/main::analyze-by-range
                           ctx
                           '((:path . "src/main/java/io/spring/application/article/DuplicatedArticleValidator.java")

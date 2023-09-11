@@ -216,7 +216,7 @@
                                            (:origin .
                                             ,(convert-to-output-pos (context-project-path ctx)
                                                                     (cdr (assoc :origin pos))))
-                                           (:entorypoint .
+                                           (:entrypoint .
                                             ,(convert-to-output-pos (context-project-path ctx)
                                                                     pos)))))  
                                       (find-entrypoints ctx pos q)))
@@ -251,7 +251,7 @@
                                      (:origin .
                                       ,(convert-to-output-pos (context-project-path ctx)
                                                               (cdr (assoc :origin pos))))
-                                     (:entorypoint .
+                                     (:entrypoint .
                                       ,(convert-to-output-pos (context-project-path ctx) entrypoint))))))
                     (let ((origin
                             (if (eq (cdr (assoc :type pos)) :rest-server)
@@ -268,7 +268,7 @@
                                                     ,(convert-to-output-pos
                                                        (context-project-path ctx)
                                                        (cdr (assoc :origin pos))))
-                                                   (:entorypoint .
+                                                   (:entrypoint .
                                                     ,(convert-to-output-pos
                                                        (context-project-path ctx)
                                                        definition))))))
@@ -283,7 +283,7 @@
               `(((:type . "entrypoint")
                  (:origin . ,(convert-to-output-pos (context-project-path ctx)
                                                     (cdr (assoc :origin pos))))
-                 (:entorypoint . ,(convert-to-output-pos (context-project-path ctx) pos))))))
+                 (:entrypoint . ,(convert-to-output-pos (context-project-path ctx) pos))))))
     results))
 
 (defun convert-to-output-pos (root-path pos)
@@ -302,7 +302,7 @@
               `((:obj
                   ("type" . ,(cdr (assoc :type r)))
                   ("origin" . ,(cons :obj (key-downcase (cdr (assoc :origin r)))))
-                  ("entorypoint" . ,(cons :obj (key-downcase (cdr (assoc :entorypoint r))))))))
+                  ("entrypoint" . ,(cons :obj (key-downcase (cdr (assoc :entrypoint r))))))))
             results)))
 
 (defun key-downcase (obj)
