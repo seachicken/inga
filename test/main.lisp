@@ -71,7 +71,13 @@
 (test analyze-by-range-for-micro-services
   (let ((ctx (inga/main::start *lightrun-path* '(:java))))
     (is (equal
-          '(((:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
+          '(((:path . "users-service/src/main/java/com/baeldung/usersservice/adapters/http/UsersController.java")
+             (:name . "getUser")
+             (:line . 38) (:offset . 25)) 
+            ((:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/users/UserRepository.java")
+             (:name . "getUserById")
+             (:line . 18) (:offset . 17)) 
+            ((:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
              (:name . "getTaskById")
              (:line . 25) (:offset . 25))
             ((:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
