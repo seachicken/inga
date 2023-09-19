@@ -159,14 +159,19 @@
             (start-ast-analyzer :kotlin nil *spring-boot-path*))))
     (create-indexes *spring-boot-path* :include inga/main::*include-java*)
     (is (equal
-          `(((:path . "src/main/java/io/spring/api/ArticlesApi.java")
-             (:name . "getArticles")
-             (:fq-name . "io.spring.api.ArticlesApi.getArticles-INT-INT-java.lang.String-java.lang.String-java.lang.String-User")
-             ,(cons :top-offset
-                  (convert-to-top-offset
-                    *spring-boot-path*
-                    "src/main/java/io/spring/api/ArticlesApi.java"
-                    '((:line . 49) (:offset . 25))))))
+          `(((:type . :rest-server)
+             (:host . "8080")
+             (:name . "GET")
+             (:path . "/articles")
+             (:file-pos .
+              ((:path . "src/main/java/io/spring/api/ArticlesApi.java")
+               (:name . "getArticles")
+               (:fq-name . "io.spring.api.ArticlesApi.getArticles-INT-INT-java.lang.String-java.lang.String-java.lang.String-User")
+               ,(cons :top-offset
+                      (convert-to-top-offset
+                        *spring-boot-path*
+                        "src/main/java/io/spring/api/ArticlesApi.java"
+                        '((:line . 49) (:offset . 25))))))))
           (find-definitions
             `((:path . "src/main/java/io/spring/api/ArticlesApi.java")
               ,(cons :start-offset

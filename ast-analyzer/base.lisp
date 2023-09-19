@@ -200,7 +200,15 @@
   (read-line (uiop:process-info-output (ast-analyzer-process ast-analyzer))))
 
 (defun get-references-key (pos)
-  (intern (format nil "refs-~a-~a" (cdr (assoc :path pos)) (cdr (assoc :top-offset pos)))))
+  (if (eq (cdr (assoc :type pos)) :rest-server)
+      (intern (format nil "refs-~a-~a-~a-~a"
+                      (cdr (assoc :type pos))
+                      (cdr (assoc :host pos))
+                      (cdr (assoc :name pos))
+                      (cdr (assoc :path pos))))
+      (intern (format nil "refs-~a-~a"
+                      (cdr (assoc :path pos))
+                      (cdr (assoc :top-offset pos))))))
 
 (defun get-ast-analyzer (path)
   (cdr (assoc (get-file-type path) *ast-analyzers*)))

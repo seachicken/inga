@@ -82,6 +82,12 @@
              (:line . 25) (:offset . 25))
             ((:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
              (:name . "getTaskById")
+             (:line . 25) (:offset . 25))
+            ((:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
+             (:name . "getTaskById")
+             (:line . 25) (:offset . 25))
+            ((:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
+             (:name . "getTaskById")
              (:line . 25) (:offset . 25)))
           (mapcar (lambda (e) (cdr (assoc :entrypoint e)))
                   (inga/main::analyze-by-range

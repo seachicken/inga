@@ -37,7 +37,9 @@
                             prod-profile-candidates
                             :test #'equal)))
             (setf result (jsown:val property key)))
-          finally (return result))))
+          finally (return (if (and (equal key "server.port") (null result))
+                              "8080"
+                              result)))))
 
 (defun exec-command (process cmd)
   (inga/utils::funtime

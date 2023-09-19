@@ -28,3 +28,12 @@
           "src/main/java/com/baeldung/buildproperties/Application.java")))
   (stop))
 
+(test find-property-for-default-server-port
+  (start *spring-path*)
+  (is (equal
+        "8080"
+        (find-property
+          "server.port"
+          "src/main/java/com/baeldung/buildproperties/Application.java")))
+  (stop))
+

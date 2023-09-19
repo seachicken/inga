@@ -115,6 +115,7 @@
                       (list
                         (cons :type :rest-server)
                         (cons :host port)
+                        (cons :name "GET")
                         (let ((path (merge-paths 
                                       entrypoint-name
                                       (ast-value
@@ -134,7 +135,6 @@
                                                    path vn
                                                    (convert-to-json-type (find-variable-name vn v index-path))))))))
                           (cons :path path))
-                        (cons :name "GET")
                         (cons :file-pos pos))))))
           (when (assoc :origin range)
             (push (cons :origin (cdr (assoc :origin range))) pos))

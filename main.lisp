@@ -212,7 +212,7 @@
                               (unless (assoc :origin pos)
                                 (push (cons :origin pos) pos))
                               (append (when (eq (cdr (assoc :type pos)) :rest-server)
-                                        `(((:type . "server")
+                                        `(((:type . "entrypoint")
                                            (:origin .
                                             ,(convert-to-output-pos (context-project-path ctx)
                                                                     (cdr (assoc :origin pos))))
