@@ -1,6 +1,8 @@
 (defpackage #:inga/plugin/spring-property-loader
   (:use #:cl)
   (:import-from #:jsown)
+  (:import-from #:inga/errors
+                #:inga-error-process-not-running)
   (:export #:start
            #:stop
            #:find-property))
@@ -24,6 +26,9 @@
   (uiop:close-streams *spring-property-loader*))
 
 (defun find-property (key from)
+  (unless (uiop:process-alive-p *spring-property-loader*)
+    (error 'inga-error-process-not-running))
+
   (let ((prod-profile-candidates '("production" "prod" "release")))
     (loop for property in (jsown:parse
                             (exec-command *spring-property-loader*

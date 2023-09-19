@@ -189,6 +189,158 @@
     (inga/plugin/spring-property-loader:stop)
     (inga/plugin/jvm-dependency-loader:stop)))
 
+(test find-definitions-for-spring-rest-get-method
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (inga/plugin/spring-property-loader:start *java-path*)
+  (let ((ast-analyzers
+          (list
+            (start-ast-analyzer :java nil *java-path*)
+            (start-ast-analyzer :kotlin nil *java-path*))))
+    (create-indexes *java-path* :include inga/main::*include-java*)
+    (is (equal
+          `(((:type . :rest-server)
+             (:host . "8080")
+             (:name . "GET")
+             (:path . "/{string}")
+             (:file-pos .
+              ((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
+               (:name . "get")
+               (:fq-name . "p1.RestControllerDefinition.get-java.lang.String")
+               ,(cons :top-offset
+                      (convert-to-top-offset
+                        *java-path*
+                        "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                        '((:line . 15) (:offset . 17))))))))
+          (find-definitions
+            `((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
+              ,(cons :start-offset
+                     (convert-to-top-offset
+                       *java-path*
+                       "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                       '((:line . 15) (:offset . 0))))
+              ,(cons :end-offset
+                     (convert-to-top-offset
+                       *java-path*
+                       "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                       '((:line . 15) (:offset . -1))))))))
+    (clean-indexes)
+    (loop for a in ast-analyzers do (stop-ast-analyzer a)))
+    (inga/plugin/spring-property-loader:stop))
+
+(test find-definitions-for-spring-rest-post-method
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (inga/plugin/spring-property-loader:start *java-path*)
+  (let ((ast-analyzers
+          (list
+            (start-ast-analyzer :java nil *java-path*)
+            (start-ast-analyzer :kotlin nil *java-path*))))
+    (create-indexes *java-path* :include inga/main::*include-java*)
+    (is (equal
+          `(((:type . :rest-server)
+             (:host . "8080")
+             (:name . "POST")
+             (:path . "/")
+             (:file-pos .
+              ((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
+               (:name . "create")
+               (:fq-name . "p1.RestControllerDefinition.create")
+               ,(cons :top-offset
+                      (convert-to-top-offset
+                        *java-path*
+                        "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                        '((:line . 19) (:offset . 17))))))))
+          (find-definitions
+            `((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
+              ,(cons :start-offset
+                     (convert-to-top-offset
+                       *java-path*
+                       "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                       '((:line . 19) (:offset . 0))))
+              ,(cons :end-offset
+                     (convert-to-top-offset
+                       *java-path*
+                       "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                       '((:line . 19) (:offset . -1))))))))
+    (clean-indexes)
+    (loop for a in ast-analyzers do (stop-ast-analyzer a)))
+    (inga/plugin/spring-property-loader:stop))
+
+(test find-definitions-for-spring-rest-put-method
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (inga/plugin/spring-property-loader:start *java-path*)
+  (let ((ast-analyzers
+          (list
+            (start-ast-analyzer :java nil *java-path*)
+            (start-ast-analyzer :kotlin nil *java-path*))))
+    (create-indexes *java-path* :include inga/main::*include-java*)
+    (is (equal
+          `(((:type . :rest-server)
+             (:host . "8080")
+             (:name . "PUT")
+             (:path . "/{string}")
+             (:file-pos .
+              ((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
+               (:name . "update")
+               (:fq-name . "p1.RestControllerDefinition.update-java.lang.String")
+               ,(cons :top-offset
+                      (convert-to-top-offset
+                        *java-path*
+                        "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                        '((:line . 23) (:offset . 17))))))))
+          (find-definitions
+            `((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
+              ,(cons :start-offset
+                     (convert-to-top-offset
+                       *java-path*
+                       "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                       '((:line . 23) (:offset . 0))))
+              ,(cons :end-offset
+                     (convert-to-top-offset
+                       *java-path*
+                       "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                       '((:line . 23) (:offset . -1))))))))
+    (clean-indexes)
+    (loop for a in ast-analyzers do (stop-ast-analyzer a)))
+    (inga/plugin/spring-property-loader:stop))
+
+(test find-definitions-for-spring-rest-delete-method
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (inga/plugin/spring-property-loader:start *java-path*)
+  (let ((ast-analyzers
+          (list
+            (start-ast-analyzer :java nil *java-path*)
+            (start-ast-analyzer :kotlin nil *java-path*))))
+    (create-indexes *java-path* :include inga/main::*include-java*)
+    (is (equal
+          `(((:type . :rest-server)
+             (:host . "8080")
+             (:name . "DELETE")
+             (:path . "/{string}")
+             (:file-pos .
+              ((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
+               (:name . "delete")
+               (:fq-name . "p1.RestControllerDefinition.delete-java.lang.String")
+               ,(cons :top-offset
+                      (convert-to-top-offset
+                        *java-path*
+                        "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                        '((:line . 27) (:offset . 17))))))))
+          (find-definitions
+            `((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
+              ,(cons :start-offset
+                     (convert-to-top-offset
+                       *java-path*
+                       "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                       '((:line . 27) (:offset . 0))))
+              ,(cons :end-offset
+                     (convert-to-top-offset
+                       *java-path*
+                       "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                       '((:line . 27) (:offset . -1))))))))
+    (clean-indexes)
+    (loop for a in ast-analyzers do (stop-ast-analyzer a)))
+    (inga/plugin/spring-property-loader:stop))
+
 ;; public class Article {
 ;;   public void update(String title, String description, String body) {
 ;;   } ←[in]

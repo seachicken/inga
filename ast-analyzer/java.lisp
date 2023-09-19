@@ -13,6 +13,8 @@
                 #:load-signatures)
   (:import-from #:inga/plugin/spring-property-loader
                 #:find-property)
+  (:import-from #:inga/plugin/spring-utils
+                #:convert-to-http-method)
   (:export #:ast-analyzer-java))
 (in-package #:inga/ast-analyzer/java)
 
@@ -105,21 +107,20 @@
                                       (jsown:val ast "pos")))
                      (cons :top-offset (jsown:val ast "pos")))))
           (when is-entrypoint-file
-            (let ((get-mapping (first (ast-find-name
+            (let ((mapping (first (ast-find-names
                                         (ast-get ast '("MODIFIERS" "ANNOTATION"))
-                                        "GetMapping")))
+                                        '("GetMapping" "PostMapping" "PutMapping" "DeleteMapping"))))
                   (port (find-property "server.port" (get-original-path index-path))))
-              ;; TODO: imprements other methods
-              (when (and get-mapping port)
+              (when (and mapping port)
                 (setf pos
                       (list
                         (cons :type :rest-server)
                         (cons :host port)
-                        (cons :name "GET")
+                        (cons :name (convert-to-http-method (ast-value mapping "name")))
                         (let ((path (merge-paths 
                                       entrypoint-name
                                       (ast-value
-                                        (first (ast-get get-mapping '("STRING_LITERAL")))
+                                        (first (ast-get mapping '("STRING_LITERAL")))
                                         "name"))))
                           (loop for vn in (get-variable-names path)
                                 do

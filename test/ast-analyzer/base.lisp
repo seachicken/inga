@@ -115,6 +115,26 @@
           nil
           (ast-find-name nodes "a")))))
 
+(test find-names
+  (let ((nodes '((:obj
+                   ("type" . "A")
+                   ("name" . "a")
+                   ("children" . nil))
+                 (:obj
+                   ("type" . "B")
+                   ("name" . "b")
+                   ("children" . nil)))))
+    (is (equal
+          '((:obj
+              ("type" . "A")
+              ("name" . "a")
+              ("children" . nil))
+            (:obj
+              ("type" . "B")
+              ("name" . "b")
+              ("children" . nil)))
+          (ast-find-names nodes '("a" "b"))))))
+
 (test find-suffix
   (let ((nodes '((:obj
                    ("type" . "A")

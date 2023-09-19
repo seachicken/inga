@@ -36,6 +36,7 @@
            #:ast-value
            #:ast-get
            #:ast-find-name
+           #:ast-find-names
            #:ast-find-suffix))
 (in-package #:inga/ast-analyzer/base)
 
@@ -286,6 +287,14 @@
         with results
         do
         (when (equal (ast-value node key-name) name)
+          (setf results (append results (list node))))
+        finally (return results)))
+
+(defun ast-find-names (nodes names &key (key-name "name"))
+  (loop for node in nodes
+        with results
+        do
+        (when (find-if (lambda (n) (equal (ast-value node key-name) n)) names)
           (setf results (append results (list node))))
         finally (return results)))
 
