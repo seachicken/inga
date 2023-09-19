@@ -258,6 +258,34 @@
     (loop for child in (jsown:val ast "children")
           do (setf stack (append stack (list child))))))
 
+(defmethod find-class-hierarchy-generic ((ast-analyzer ast-analyzer-java) fq-class-name root-ast)
+  (loop
+    with stack = (list root-ast)
+    with ast
+    with target-package-name = (format nil "~{~a~^.~}" (butlast (split #\. fq-class-name)))
+    with target-class-name = (first (last (split #\. fq-class-name)))
+    do
+    (setf ast (pop stack))
+    (if (null ast) (return))
+
+    (when (equal (ast-value ast "type") "PACKAGE")
+      (unless (equal (ast-value ast "packageName") target-package-name)
+        (return-from find-class-hierarchy-generic)))
+    (when (equal (ast-value ast "type") "CLASS")
+      (unless (equal (ast-value ast "name") target-class-name)
+        (return-from find-class-hierarchy-generic))
+      (return-from find-class-hierarchy-generic
+        (let ((parent-class-name (ast-value (first (ast-get ast '("IDENTIFIER"))) "name")))
+          (if parent-class-name
+              (let ((parent-fq-class-name (find-fq-class-name-by-name parent-class-name ast)))
+                (when parent-fq-class-name
+                  (append (find-class-hierarchy parent-fq-class-name)
+                          (list parent-fq-class-name)
+                          (list fq-class-name))))
+              '("java.lang.Object")))))
+    (loop for child in (jsown:val ast "children")
+          do (setf stack (append stack (list child))))))
+
 (defun find-fq-name-for-reference (ast index-path)
   (alexandria:switch ((ast-value ast "type") :test #'equal)
     ("NEW_CLASS"
@@ -315,6 +343,9 @@
            (jsown:val (jsown:val method "returnType") "name")))))))
 
 (defun find-fq-class-name-by-name (class-name ast)
+  (unless class-name
+    (return-from find-fq-class-name-by-name))
+
   (loop
     with q = (make-queue)
     with fq-names
@@ -328,8 +359,12 @@
                              (ast-get ast '("IMPORT"))
                              (concatenate 'string "." class-name)
                              :key-name "fqName"))))
-        (when import
-          (setf fq-names (append fq-names (list (ast-value import "fqName")))))))
+        (setf fq-names
+              (if import
+                  (list (ast-value import "fqName"))
+                  (list
+                    (ast-value (first (ast-get ast '("PACKAGE"))) "packageName")
+                    class-name)))))
 
     (when (jsown:keyp ast "parent")
       (enqueue q (jsown:val ast "parent")))))

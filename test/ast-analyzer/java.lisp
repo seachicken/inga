@@ -430,12 +430,12 @@
              ,(cons :top-offset
                     (convert-to-top-offset
                       *java-path* "p1/client/ClientRestTemplate.java"
-                      '((:line . 15) (:offset . 16)))))
+                      '((:line . 16) (:offset . 16)))))
             ((:path . "p1/client/ClientRestTemplate.java")
              ,(cons :top-offset
                     (convert-to-top-offset
                       *java-path* "p1/client/ClientRestTemplate.java"
-                      '((:line . 23) (:offset . 16))))))
+                      '((:line . 24) (:offset . 16))))))
           (find-references
             `((:type . :rest-server)
               (:path . "/path")
@@ -476,6 +476,21 @@
               ("name" . "s")
               ("type" . "java.lang.String")))
           (find-signatures "p1.RecordDefinition")))
+    (clean-indexes)
+    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+
+(test find-class-hierarchy
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (let ((ast-analyzers
+          (list
+            (start-ast-analyzer :java nil *java-path*)
+            (start-ast-analyzer :kotlin nil *java-path*))))
+    (create-indexes *java-path* :include inga/main::*include-java*)
+    (is (equal
+          '("java.lang.Object"
+            "p2.ParentClass"
+            "p2.ChildClass")
+          (find-class-hierarchy "p2.ChildClass")))
     (clean-indexes)
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 

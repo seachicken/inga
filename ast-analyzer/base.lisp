@@ -25,6 +25,8 @@
            #:find-signature
            #:find-signatures
            #:find-signatures-generic
+           #:find-class-hierarchy
+           #:find-class-hierarchy-generic
            #:convert-to-top-offset
            #:convert-to-pos
            #:exec-command
@@ -77,11 +79,7 @@
                 with ast
                 do
                 (let ((ast-analyzer (get-ast-analyzer (namestring path))))
-                  (handler-case
-                    (setf ast (jsown:parse (alexandria:read-file-into-string path)))
-                    (error (e)
-                           (format t "~a~%" e)
-                           (return (values results nil))))
+                  (setf ast (parse-to-ast path))
 
                   (let ((references (find-references-by-file ast-analyzer path ast pos)))
                     (when references
@@ -96,17 +94,6 @@
 (defgeneric find-reference (ast-analyzer target-pos ast index-path))
 
 (defun find-references-by-file (ast-analyzer index-path ast target-pos)
-  (let ((q (make-queue)))
-    (enqueue q ast)
-    (loop
-      (let ((ast (dequeue q)))
-        (when (null ast) (return))
-
-        (when (jsown:keyp ast "children")
-          (loop for child in (jsown:val ast "children")
-                do
-                (setf (jsown:val child "parent") ast)
-                (enqueue q child))))))
   (let ((q (make-queue))
         results)
     (enqueue q ast)
@@ -156,12 +143,24 @@
   (loop for path in (uiop:directory-files *index-path*)
       do
       (let ((ast-analyzer (get-ast-analyzer (namestring path)))
-            (ast (jsown:parse (alexandria:read-file-into-string path))))
+            (ast (parse-to-ast path)))
         (let ((signatures (find-signatures-generic ast-analyzer fq-class-name ast)))
           (when signatures
             (return-from find-signatures signatures))))))
 
 (defgeneric find-signatures-generic (ast-analyzer fq-class-name root-ast)
+  (:method (ast-analyzer fq-class-name root-ast)))
+
+(defun find-class-hierarchy (fq-class-name)
+  (loop for path in (uiop:directory-files *index-path*)
+      do
+      (let ((ast-analyzer (get-ast-analyzer (namestring path)))
+            (ast (parse-to-ast path)))
+        (let ((class-hierarchy (find-class-hierarchy-generic ast-analyzer fq-class-name ast)))
+          (when class-hierarchy
+            (return-from find-class-hierarchy class-hierarchy))))))
+
+(defgeneric find-class-hierarchy-generic (ast-analyzer fq-class-name root-ast)
   (:method (ast-analyzer fq-class-name root-ast)))
 
 (defun convert-to-top-offset (root-path path pos)
@@ -256,6 +255,21 @@
 
 (defun contains-offset (a-start a-end b-start b-end)
   (and (<= a-start b-end) (>= a-end b-start)))
+
+(defun parse-to-ast (path)
+  (let ((ast (jsown:parse (alexandria:read-file-into-string path))))
+    (let ((q (make-queue)))
+      (enqueue q ast)
+      (loop
+        (let ((ast (dequeue q)))
+          (when (null ast) (return))
+
+          (when (jsown:keyp ast "children")
+            (loop for child in (jsown:val ast "children")
+                  do
+                  (setf (jsown:val child "parent") ast)
+                  (enqueue q child))))))
+    ast))
 
 (defun ast-value (ast key)
   (and (jsown:keyp ast key)
