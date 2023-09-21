@@ -25,6 +25,7 @@
            #:find-signature
            #:find-signatures
            #:find-signatures-generic
+           #:matches-signature
            #:find-class-hierarchy
            #:find-class-hierarchy-generic
            #:convert-to-top-offset
@@ -150,6 +151,22 @@
 
 (defgeneric find-signatures-generic (ast-analyzer fq-class-name root-ast)
   (:method (ast-analyzer fq-class-name root-ast)))
+
+(defun matches-signature (target-fq-name api-fq-name)
+  (unless (equal (first (butlast (split #\- target-fq-name)))
+                 (first (butlast (split #\- api-fq-name))))
+    (return-from matches-signature))
+
+  (let ((target-arg-names (cdr (split #\- target-fq-name)))
+        (api-arg-names (cdr (split #\- api-fq-name))))
+    (loop for target-arg-name in target-arg-names
+          for i below (length target-arg-names)
+          do
+          (unless (find-if (lambda (super-class-name)
+                             (equal super-class-name (nth i api-arg-names)))
+                           (find-class-hierarchy target-arg-name))
+            (return-from matches-signature))))
+  t)
 
 (defun find-class-hierarchy (fq-class-name)
   (loop for path in (uiop:directory-files *index-path*)
