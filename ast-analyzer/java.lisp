@@ -408,7 +408,7 @@
                                    "Class"
                                    (ast-value (first (ast-get arg '("IDENTIFIER"))) "name")))
                               ("NEW_CLASS"
-                               (ast-value arg "name"))
+                               (find-fq-class-name-by-name (ast-value arg "name") arg))
                               ("IDENTIFIER"
                                (find-variable-name (ast-value arg "name") arg index-path))
                               ("METHOD_INVOCATION"
@@ -447,21 +447,40 @@
 
 (defun find-rest-client (fq-name ast index-path)
   ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/client/RestTemplate.html
-  (alexandria:switch (fq-name :test #'equal)
-    ("org.springframework.web.client.RestTemplate.exchange-java.lang.String-HttpMethod-NULL-Class"
-     `((:name . ,(find-api-method-from-http-method (nth 2 (ast-get ast '("*")))))
+  (cond
+    ((matches-signature
+       fq-name
+       "org.springframework.web.client.RestTemplate.exchange-java.lang.String-HttpMethod-NULL-Class")
+     `((:host . ,(find-api-host 0 ast))
+       (:name . ,(find-api-method-from-http-method (nth 2 (ast-get ast '("*")))))
        (:path . ,(find-api-path 0 ast))))
-    ("org.springframework.web.client.RestTemplate.getForObject-java.lang.String-Class"
-     `((:name . "GET")
+    ((matches-signature
+       fq-name
+       "org.springframework.web.client.RestTemplate.getForObject-java.lang.String-Class")
+     `((:host . ,(find-api-host 0 ast))
+       (:name . "GET")
        (:path . ,(find-api-path 0 ast))))
-    ("org.springframework.web.client.RestTemplate.getForObject-java.net.URI-Class"
+    ((matches-signature
+       fq-name
+       "org.springframework.web.client.RestTemplate.getForObject-java.net.URI-Class")
      (let ((server (find-server-from-uri 0 ast index-path)))
-       `((:name . "GET")
-         (:host . ,(cdr (assoc :host server)))
-         (:path . ,(cdr (assoc :path server))))))))
+       `((:host . ,(cdr (assoc :host server)))
+         (:name . "GET")
+         (:path . ,(cdr (assoc :path server))))))
+    ((matches-signature
+       fq-name
+       "org.springframework.web.client.RestTemplate.postForObject-java.lang.String-java.lang.Object-Class")
+     `((:host . ,(find-api-host 0 ast))
+       (:name . "POST")
+       (:path . ,(find-api-path 0 ast))))))
 
 (defun find-api-method-from-http-method (http-method)
   (ast-value http-method "name"))
+
+(defun find-api-host (arg-i ast)
+  (let ((url (get-parameter arg-i ast)))
+    (when (equal (ast-value url "type") "STRING_LITERAL")
+      (format nil "~a" (quri:uri-port (quri:uri (ast-value url "name")))))))
 
 (defun find-api-path (arg-i ast)
   (let ((url (get-parameter arg-i ast)))

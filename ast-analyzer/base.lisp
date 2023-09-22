@@ -153,10 +153,6 @@
   (:method (ast-analyzer fq-class-name root-ast)))
 
 (defun matches-signature (target-fq-name api-fq-name)
-  (unless (equal (first (butlast (split #\- target-fq-name)))
-                 (first (butlast (split #\- api-fq-name))))
-    (return-from matches-signature))
-
   (let ((target-arg-names (cdr (split #\- target-fq-name)))
         (api-arg-names (cdr (split #\- api-fq-name))))
     (loop for target-arg-name in target-arg-names
@@ -175,7 +171,8 @@
             (ast (parse-to-ast path)))
         (let ((class-hierarchy (find-class-hierarchy-generic ast-analyzer fq-class-name ast)))
           (when class-hierarchy
-            (return-from find-class-hierarchy class-hierarchy))))))
+            (return-from find-class-hierarchy class-hierarchy)))))
+  (list fq-class-name))
 
 (defgeneric find-class-hierarchy-generic (ast-analyzer fq-class-name root-ast)
   (:method (ast-analyzer fq-class-name root-ast)))

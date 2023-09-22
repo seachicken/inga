@@ -418,7 +418,7 @@
     (clean-indexes)
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
-(test find-references-for-rest-client
+(test find-references-for-rest-client-get-method
   (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzers
           (list
@@ -438,8 +438,30 @@
                       '((:line . 24) (:offset . 16))))))
           (find-references
             `((:type . :rest-server)
+              (:host . "8080")
               (:path . "/path")
               (:name . "GET")))))
+    (clean-indexes)
+    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+
+(test find-references-for-rest-client-post-method
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (let ((ast-analyzers
+          (list
+            (start-ast-analyzer :java nil *java-path*)
+            (start-ast-analyzer :kotlin nil *java-path*))))
+    (create-indexes *java-path* :include inga/main::*include-java*)
+    (is (equal
+          `(((:path . "p1/client/ClientRestTemplate.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *java-path* "p1/client/ClientRestTemplate.java"
+                      '((:line . 28) (:offset . 16))))))
+          (find-references
+            `((:type . :rest-server)
+              (:host . "8080")
+              (:path . "/path")
+              (:name . "POST")))))
     (clean-indexes)
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
@@ -476,6 +498,19 @@
               ("name" . "s")
               ("type" . "java.lang.String")))
           (find-signatures "p1.RecordDefinition")))
+    (clean-indexes)
+    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+
+(test matches-signature
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (let ((ast-analyzers
+          (list
+            (start-ast-analyzer :java nil *java-path*)
+            (start-ast-analyzer :kotlin nil *java-path*))))
+    (create-indexes *java-path* :include inga/main::*include-java*)
+    (is (eq
+          t
+          (matches-signature "p2.ApiSignature-p2.ChildClass" "p2.ApiSignature-p2.ParentClass")))
     (clean-indexes)
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
