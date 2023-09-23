@@ -104,7 +104,8 @@
                          (cons :name (jsown:val ast "name")))
                      (cons :fq-name (get-fq-name-of-declaration
                                       root-ast
-                                      (jsown:val ast "pos")))
+                                      (jsown:val ast "pos")
+                                      index-path))
                      (cons :top-offset (jsown:val ast "pos")))))
           (when is-entrypoint-file
             (let ((mapping (first (ast-find-names
@@ -252,8 +253,9 @@
                                       `(:obj
                                          ("kind" . "variable")
                                          ("name" . ,(ast-value ast "name"))
-                                         ("type" . ,(get-fq-class-name
-                                                      (first (ast-get ast '("IDENTIFIER"))))))))))
+                                         ("type" . ,(find-fq-class-name-by-name
+                                                      (ast-value (first (ast-get ast '("IDENTIFIER"))) "name")
+                                                      ast)))))))
 
     (loop for child in (jsown:val ast "children")
           do (setf stack (append stack (list child))))))
@@ -307,18 +309,18 @@
                                          #'load-signatures (get-original-path index-path))))
                            (when method
                              (jsown:val (jsown:val method "returnType") "name")))))
-                     (find-fq-class-name-by-name
-                       (if (ast-get ast '("MEMBER_SELECT" "NEW_CLASS"))
+                     (if (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))
+                         (or (find-variable-name
+                               (ast-value (first (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))) "name")
+                               ast
+                               index-path)
+                             (find-fq-class-name-by-name
+                               ;; IDENTIFIER is class name
+                               (ast-value (first (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))) "name")
+                               ast))
+                         (find-fq-class-name-by-name
                            (ast-value (first (ast-get ast '("MEMBER_SELECT" "NEW_CLASS"))) "name")
-                           (if (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))
-                               (or
-                                 (find-variable-name
-                                   (ast-value (first (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))) "name")
-                                   ast
-                                   index-path)
-                                 ;; IDENTIFIER is class name
-                                 (ast-value (first (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))) "name"))))
-                       ast))
+                           ast)))
                  (ast-value (first (ast-get ast '("*"))) "name")
                  (find-method-args (nthcdr 1 (ast-get ast '("*"))) index-path))
          (format nil "~a~:[~;-~]~:*~{~a~^-~}"
@@ -333,8 +335,7 @@
 
   (cond
     ((ast-get ast '("IDENTIFIER"))
-     ;; TODO: add package name
-     (get-fq-class-name (first (ast-get ast '("IDENTIFIER")))))
+     (find-fq-class-name-by-name (ast-value (first (ast-get ast '("IDENTIFIER"))) "name") ast))
     ((ast-get ast '("METHOD_INVOCATION"))
      (let ((fq-name (find-fq-name-for-reference (first (ast-get ast '("METHOD_INVOCATION"))) index-path)))
        (let ((method (find-signature fq-name
@@ -346,28 +347,34 @@
   (unless class-name
     (return-from find-fq-class-name-by-name))
 
-  (loop
-    with q = (make-queue)
-    with fq-names
-    initially (enqueue q ast)
-    do
-    (setf ast (dequeue q))
-    (when (null ast) (return (format nil "~{~a~^.~}" fq-names)))
+  (cond
+    ((find class-name '("INT") :test 'equal)
+     class-name)
+    ((find class-name '("String") :test 'equal)
+     (concatenate 'string "java.lang." class-name))
+    (t
+     (loop
+       with q = (make-queue)
+       with fq-names
+       initially (enqueue q ast)
+       do
+       (setf ast (dequeue q))
+       (when (null ast) (return (format nil "~{~a~^.~}" fq-names)))
 
-    (when (equal (ast-value ast "type") "COMPILATION_UNIT")
-      (let ((import (first (ast-find-suffix
-                             (ast-get ast '("IMPORT"))
-                             (concatenate 'string "." class-name)
-                             :key-name "fqName"))))
-        (setf fq-names
-              (if import
-                  (list (ast-value import "fqName"))
-                  (list
-                    (ast-value (first (ast-get ast '("PACKAGE"))) "packageName")
-                    class-name)))))
+       (when (equal (ast-value ast "type") "COMPILATION_UNIT")
+         (let ((import (first (ast-find-suffix
+                                (ast-get ast '("IMPORT"))
+                                (concatenate 'string "." class-name)
+                                :key-name "fqName"))))
+           (setf fq-names
+                 (if import
+                     (list (ast-value import "fqName"))
+                     (list
+                       (ast-value (first (ast-get ast '("PACKAGE"))) "packageName")
+                       class-name)))))
 
-    (when (jsown:keyp ast "parent")
-      (enqueue q (jsown:val ast "parent")))))
+       (when (jsown:keyp ast "parent")
+         (enqueue q (jsown:val ast "parent")))))))
 
 (defun find-variable-name (object-name ast index-path)
   (find-fq-class-name (find-variable object-name ast index-path) index-path))
@@ -541,7 +548,7 @@
     ("java.lang.String" "string")
     ("INT" "number")))
 
-(defun get-fq-name-of-declaration (root-ast top-offset)
+(defun get-fq-name-of-declaration (root-ast top-offset index-path)
   (let ((stack (list root-ast))
         result)
     (loop
@@ -576,18 +583,9 @@
                                            'string
                                            result
                                            "-"
-                                           (get-fq-class-name child))))))))
+                                           (find-fq-class-name-by-name (ast-value child "name") ast))))))))
           (return-from get-fq-name-of-declaration result))
 
         (loop for child in (jsown:val ast "children")
               do (setf stack (append stack (list child))))))))
-
-(defun get-fq-class-name (ast)
-  (concatenate
-    'string
-    (when (find (ast-value ast "name")
-                '("String")
-                :test 'equal)
-      "java.lang.")
-    (ast-value ast "name")))
 

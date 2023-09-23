@@ -1,7 +1,9 @@
 (defpackage #:inga/test/main
   (:use #:cl
         #:fiveam
-        #:inga/main))
+        #:inga/main)
+  (:import-from #:inga/cache
+                #:make-cache)) 
 (in-package #:inga/test/main)
 
 ;; NOTE: To run this test file, execute `(asdf:test-system :inga)' in your Lisp.
@@ -17,6 +19,7 @@
   (truename (uiop:merge-pathnames* "test/fixtures/nestjs-realworld-example-app-prisma/")))
 
 (test analyze-by-range-for-react-components
+  (setf inga/main::*cache* (make-cache 0))
   (let ((ctx (inga/main::start *front-path* '(:typescript) :exclude '("**/*.test.(ts|tsx)"))))
     (is (equal
           '(((:path . "src/App/NewTodoInput/index.tsx")
@@ -49,6 +52,7 @@
   (truename (uiop:merge-pathnames* "test/fixtures/spring-tutorials/lightrun/")))
 
 (test analyze-by-range-for-entry-points
+  (setf inga/main::*cache* (make-cache 0))
   (let ((ctx (inga/main::start *back-path* '(:java) :exclude '("src/test/**"))))
     (is (equal
           '(((:path . "src/main/java/io/spring/api/ArticlesApi.java")
@@ -73,6 +77,7 @@
     (inga/main::stop ctx)))
 
 (test analyze-by-range-for-micro-services
+  (setf inga/main::*cache* (make-cache 0))
   (let ((ctx (inga/main::start *lightrun-path* '(:java))))
     (is (equal
           '(((:path . "users-service/src/main/java/com/baeldung/usersservice/adapters/http/UsersController.java")
