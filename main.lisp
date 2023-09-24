@@ -25,6 +25,8 @@
                 #:make-cache
                 #:size)
   (:import-from #:inga/plugin/jvm-dependency-loader)
+  (:import-from #:inga/plugin/jvm-helper
+                #:find-base-path)
   (:import-from #:inga/plugin/spring-property-loader)
   (:import-from #:inga/utils
                 #:split-trim-comma)
@@ -71,8 +73,8 @@
                                  :direction :output
                                  :if-exists :supersede
                                  :if-does-not-exist :create)
-              (format out "~a" (to-json results)))
-            (format t "~%~a~%" (to-json results)))
+              (format out "~a" (to-json results root-path)))
+            (format t "~%~a~%" (to-json results root-path)))
           (stop ctx))))
     (inga-error (e) (format t "~a~%" e))))
 
@@ -296,13 +298,23 @@
       (cons :line (cdr (assoc :line text-pos)))
       (cons :offset (cdr (assoc :offset text-pos))))))
 
-(defun to-json (results)
+(defun to-json (results root-path)
   (jsown:to-json
     (mapcan (lambda (r)
-              `((:obj
-                  ("type" . ,(cdr (assoc :type r)))
-                  ("origin" . ,(cons :obj (key-downcase (cdr (assoc :origin r)))))
-                  ("entrypoint" . ,(cons :obj (key-downcase (cdr (assoc :entrypoint r))))))))
+              (let ((obj
+                      `((:obj
+                          ("type" . ,(cdr (assoc :type r)))
+                          ("origin" . ,(cons :obj (key-downcase (cdr (assoc :origin r)))))
+                          ("entrypoint" . ,(cons :obj (key-downcase (cdr (assoc :entrypoint r)))))))))
+                (when (equal (cdr (assoc :type r)) "entrypoint")
+                  (push (cons "service" (first (last (pathname-directory
+                                                       (find-base-path
+                                                         (merge-pathnames
+                                                           (cdr (assoc :path
+                                                                       (cdr (assoc :entrypoint r))))
+                                                           root-path))))))
+                        (cdr (assoc :obj obj))))
+                obj))
             results)))
 
 (defun key-downcase (obj)
