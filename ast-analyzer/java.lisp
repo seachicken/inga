@@ -13,7 +13,7 @@
                 #:load-signatures)
   (:import-from #:inga/plugin/spring-property-loader
                 #:find-property)
-  (:import-from #:inga/plugin/spring-utils
+  (:import-from #:inga/plugin/spring-helper
                 #:convert-to-http-method)
   (:export #:ast-analyzer-java))
 (in-package #:inga/ast-analyzer/java)

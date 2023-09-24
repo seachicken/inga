@@ -1,7 +1,7 @@
-(defpackage #:inga/plugin/spring-utils
+(defpackage #:inga/plugin/spring-helper
   (:use #:cl)
   (:export #:convert-to-http-method))
-(in-package #:inga/plugin/spring-utils)
+(in-package #:inga/plugin/spring-helper)
 
 (defun convert-to-http-method (type)
   (alexandria:switch (type :test #'equal)
