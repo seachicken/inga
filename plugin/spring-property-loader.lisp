@@ -3,6 +3,8 @@
   (:import-from #:jsown)
   (:import-from #:inga/errors
                 #:inga-error-process-not-running)
+  (:import-from #:inga/plugin/jvm-helper
+                #:find-base-path)
   (:export #:start
            #:stop
            #:find-property))
@@ -32,7 +34,9 @@
   (let ((prod-profile-candidates '("production" "prod" "release")))
     (loop for property in (jsown:parse
                             (exec-command *spring-property-loader*
-                                          (namestring (merge-pathnames from *root-path*))))
+                                          (namestring
+                                            (find-base-path
+                                              (merge-pathnames from *root-path*)))))
           with result
           do
           (when (and

@@ -2,6 +2,8 @@
   (:use #:cl
         #:inga/utils)
   (:import-from #:jsown)
+  (:import-from #:inga/plugin/jvm-helper
+                #:find-base-path)
   (:export #:start
            #:stop
            #:load-signatures))
@@ -29,7 +31,8 @@
     (exec-command *jvm-dependency-loader*
                   (format nil "{\"fqcn\":\"~a\",\"from\":\"~a\"}"
                           fq-class-name
-                          (merge-pathnames from *root-path*)))))
+                          (find-base-path
+                            (merge-pathnames from *root-path*))))))
 
 (defun exec-command (process cmd)
   (inga/utils::funtime
