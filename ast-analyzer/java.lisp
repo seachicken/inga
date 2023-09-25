@@ -253,7 +253,7 @@
                                       `(:obj
                                          ("kind" . "variable")
                                          ("name" . ,(ast-value ast "name"))
-                                         ("type" . ,(find-fq-class-name-by-name
+                                         ("type" . ,(find-fq-class-name
                                                       (ast-value (first (ast-get ast '("IDENTIFIER"))) "name")
                                                       ast)))))))
 
@@ -279,7 +279,7 @@
       (return-from find-class-hierarchy-generic
         (let ((parent-class-name (ast-value (first (ast-get ast '("IDENTIFIER"))) "name")))
           (if parent-class-name
-              (let ((parent-fq-class-name (find-fq-class-name-by-name parent-class-name ast)))
+              (let ((parent-fq-class-name (find-fq-class-name parent-class-name ast)))
                 (when parent-fq-class-name
                   (append (find-class-hierarchy parent-fq-class-name)
                           (list parent-fq-class-name)
@@ -292,7 +292,7 @@
   (alexandria:switch ((ast-value ast "type") :test #'equal)
     ("NEW_CLASS"
      (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
-             (find-fq-class-name-by-name (ast-value ast "name") ast)
+             (find-fq-class-name (ast-value ast "name") ast)
              (ast-value ast "name")
              (find-method-args (ast-get ast '("*")) index-path)))
     ("METHOD_INVOCATION"
@@ -314,11 +314,11 @@
                                (ast-value (first (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))) "name")
                                ast
                                index-path)
-                             (find-fq-class-name-by-name
+                             (find-fq-class-name
                                ;; IDENTIFIER is class name
                                (ast-value (first (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))) "name")
                                ast))
-                         (find-fq-class-name-by-name
+                         (find-fq-class-name
                            (ast-value (first (ast-get ast '("MEMBER_SELECT" "NEW_CLASS"))) "name")
                            ast)))
                  (ast-value (first (ast-get ast '("*"))) "name")
@@ -329,23 +329,9 @@
                    ast)
                  (find-method-args (nthcdr 1 (ast-get ast '("*"))) index-path))))))
 
-(defun find-fq-class-name (ast index-path)
-  (unless (equal (ast-value ast "type") "VARIABLE")
-    (return-from find-fq-class-name))
-
-  (cond
-    ((ast-get ast '("IDENTIFIER"))
-     (find-fq-class-name-by-name (ast-value (first (ast-get ast '("IDENTIFIER"))) "name") ast))
-    ((ast-get ast '("METHOD_INVOCATION"))
-     (let ((fq-name (find-fq-name-for-reference (first (ast-get ast '("METHOD_INVOCATION"))) index-path)))
-       (let ((method (find-signature fq-name
-                                     #'load-signatures (get-original-path index-path))))
-         (when method
-           (jsown:val (jsown:val method "returnType") "name")))))))
-
-(defun find-fq-class-name-by-name (class-name ast)
+(defun find-fq-class-name (class-name ast)
   (unless class-name
-    (return-from find-fq-class-name-by-name))
+    (return-from find-fq-class-name))
 
   (cond
     ((find class-name '("INT") :test 'equal)
@@ -377,7 +363,16 @@
          (enqueue q (jsown:val ast "parent")))))))
 
 (defun find-variable-name (object-name ast index-path)
-  (find-fq-class-name (find-variable object-name ast index-path) index-path))
+  (let ((variable (find-variable object-name ast index-path)))
+    (cond
+      ((ast-get variable '("IDENTIFIER"))
+       (find-fq-class-name (ast-value (first (ast-get variable '("IDENTIFIER"))) "name") variable))
+      ((ast-get variable '("METHOD_INVOCATION"))
+       (let ((fq-name (find-fq-name-for-reference (first (ast-get variable '("METHOD_INVOCATION"))) index-path)))
+         (let ((method (find-signature fq-name
+                                       #'load-signatures (get-original-path index-path))))
+           (when method
+             (jsown:val (jsown:val method "returnType") "name"))))))))
 
 (defun find-variable (object-name ast index-path)
   (unless object-name
@@ -415,7 +410,7 @@
                                    "Class"
                                    (ast-value (first (ast-get arg '("IDENTIFIER"))) "name")))
                               ("NEW_CLASS"
-                               (find-fq-class-name-by-name (ast-value arg "name") arg))
+                               (find-fq-class-name (ast-value arg "name") arg))
                               ("IDENTIFIER"
                                (find-variable-name (ast-value arg "name") arg index-path))
                               ("METHOD_INVOCATION"
@@ -583,7 +578,7 @@
                                            'string
                                            result
                                            "-"
-                                           (find-fq-class-name-by-name (ast-value child "name") ast))))))))
+                                           (find-fq-class-name (ast-value child "name") ast))))))))
           (return-from get-fq-name-of-declaration result))
 
         (loop for child in (jsown:val ast "children")

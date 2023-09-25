@@ -27,12 +27,15 @@
   (uiop:close-streams *jvm-dependency-loader*))
 
 (defun load-signatures (fq-class-name from)
-  (jsown:parse
-    (exec-command *jvm-dependency-loader*
-                  (format nil "{\"fqcn\":\"~a\",\"from\":\"~a\"}"
-                          fq-class-name
-                          (find-base-path
-                            (merge-pathnames from *root-path*))))))
+  (let ((base-path (find-base-path (merge-pathnames from *root-path*))))
+    (unless base-path
+      (return-from load-signatures))
+
+    (jsown:parse
+      (exec-command *jvm-dependency-loader*
+                    (format nil "{\"fqcn\":\"~a\",\"from\":\"~a\"}"
+                            fq-class-name
+                            base-path)))))
 
 (defun exec-command (process cmd)
   (inga/utils::funtime

@@ -31,12 +31,13 @@
   (unless (uiop:process-alive-p *spring-property-loader*)
     (error 'inga-error-process-not-running))
 
-  (let ((prod-profile-candidates '("production" "prod" "release")))
+  (let ((prod-profile-candidates '("production" "prod" "release"))
+        (base-path (find-base-path (merge-pathnames from *root-path*))))
+    (unless base-path
+      (return-from find-property))
+
     (loop for property in (jsown:parse
-                            (exec-command *spring-property-loader*
-                                          (namestring
-                                            (find-base-path
-                                              (merge-pathnames from *root-path*)))))
+                            (exec-command *spring-property-loader* (namestring base-path)))
           with result
           do
           (when (and
