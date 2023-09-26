@@ -50,10 +50,10 @@
                     (return-from top result)))))))
 
 (defun funtime (func &key label args)
-  (log-debug (format nil "begin ~a args: ~a~%" label args))
+  (log-debug (format nil "begin ~a args: ~a" label args))
   (let ((start-time (get-internal-real-time))
         (result (funcall func)))
-    (log-debug (format nil "end ~a. time: ~,5f seconds~%"
+    (log-debug (format nil "end ~a. time: ~,5f seconds"
                        label
                        (/ (- (get-internal-real-time) start-time) internal-time-units-per-second)))
     result))
