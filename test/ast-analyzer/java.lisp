@@ -12,8 +12,6 @@
 (defparameter *java-path* (merge-pathnames #p"test/fixtures/java/"))
 (defparameter *spring-boot-path*
   (truename (uiop:merge-pathnames* "test/fixtures/spring-boot-realworld-example-app/")))
-(defparameter *lightrun-path*
-  (truename (uiop:merge-pathnames* "test/fixtures/spring-tutorials/lightrun/")))
 
 (test find-definitions-for-constructor
   (setf inga/ast-analyzer/base::*cache* (make-cache 0))
