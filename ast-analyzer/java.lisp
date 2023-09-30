@@ -98,6 +98,7 @@
                                start-offset end-offset)
               (jsown:keyp ast "name"))
         (let ((pos (list
+                     (cons :type (get-scope ast))
                      (cons :path src-path)
                      (if (equal (jsown:val ast "name") "<init>")
                          (cons :name class-name)
@@ -204,6 +205,14 @@
             (enqueue q child)))
     results))
 
+(defun get-scope (ast)
+  (let ((modifier (ast-value (first (ast-get ast '("MODIFIERS"))) "name")))
+    (cond
+      ((equal modifier "PUBLIC") :module-public)
+      ((equal modifier "PROTECTED") :module-protected)
+      ((equal modifier "PRIVATE") :module-private)
+      (t :module-default))))
+
 (defmethod find-reference ((ast-analyzer ast-analyzer-java) target-pos ast index-path)
   (let ((fq-name (find-fq-name-for-reference ast index-path)))
     (unless fq-name (return-from find-reference))
@@ -215,14 +224,12 @@
                   (equal (cdr (assoc :host rest-client)) (cdr (assoc :host target-pos)))
                   (equal (cdr (assoc :path rest-client)) (cdr (assoc :path target-pos)))
                   (equal (cdr (assoc :name rest-client)) (cdr (assoc :name target-pos))))
-            (list
-              (cons :path (get-original-path index-path))
-              (cons :top-offset (ast-value ast "startPos"))))))
+            `((:path . ,(get-original-path index-path))
+              (:top-offset . ,(ast-value ast "startPos"))))))
       (t
         (when (equal fq-name (cdr (assoc :fq-name target-pos)))
-          (list
-            (cons :path (get-original-path index-path))
-            (cons :top-offset (ast-value ast "startPos"))))))))
+          `((:path . ,(get-original-path index-path))
+            (:top-offset . ,(ast-value ast "startPos"))))))))
 
 (defmethod find-signatures-generic ((ast-analyzer ast-analyzer-java) fq-class-name root-ast)
   (loop
@@ -285,6 +292,19 @@
                           (list parent-fq-class-name)
                           (list fq-class-name))))
               '("java.lang.Object")))))
+    (loop for child in (jsown:val ast "children")
+          do (setf stack (append stack (list child))))))
+
+(defmethod find-index-key-generic ((ast-analyzer ast-analyzer-java) ast)
+  (loop
+    with stack = (list ast)
+    do
+    (setf ast (pop stack))
+    (if (null ast) (return))
+
+    (when (equal (ast-value ast "type") "PACKAGE")
+      (return-from find-index-key-generic (ast-value ast "packageName")))
+
     (loop for child in (jsown:val ast "children")
           do (setf stack (append stack (list child))))))
 
@@ -573,7 +593,8 @@
                   (when (equal (jsown:val child "type") "VARIABLE")
                     (loop for child in (jsown:val child "children")
                           do
-                          (when (jsown:keyp child "name")
+                          (when (and (ast-value child "name")
+                                     (not (equal (ast-value child "name") "")))
                             (setf result (concatenate
                                            'string
                                            result

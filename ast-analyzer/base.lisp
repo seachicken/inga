@@ -28,6 +28,7 @@
            #:matches-signature
            #:find-class-hierarchy
            #:find-class-hierarchy-generic
+           #:find-index-key-generic
            #:convert-to-top-offset
            #:convert-to-pos
            #:exec-command
@@ -44,6 +45,7 @@
 (in-package #:inga/ast-analyzer/base)
 
 (defparameter *index-path* (uiop:merge-pathnames* #p"inga_temp/"))
+(defparameter *index-groups* nil)
 (defparameter *ast-analyzers* nil)
 (defvar *cache*)
 
@@ -75,7 +77,7 @@
   (let ((cached-value (get-value *cache* (get-references-key pos))))
     (values
       (if (null cached-value)
-          (loop for path in (uiop:directory-files *index-path*)
+          (loop for path in (get-scoped-index-paths pos)
                 with results
                 with ast
                 do
@@ -91,6 +93,16 @@
                 (return (values results nil)))
           (if (eq cached-value 'empty) nil cached-value))
       (when cached-value t))))
+
+(defun get-scoped-index-paths (pos)
+  (cond
+    ((eq (cdr (assoc :type pos)) :module-private)
+     (list
+       (merge-pathnames
+         (get-index-path (cdr (assoc :path pos)))
+         (ast-analyzer-path (get-ast-analyzer (cdr (assoc :path pos)))))))
+    (t
+     (uiop:directory-files *index-path*))))
 
 (defgeneric find-reference (ast-analyzer target-pos ast index-path))
 
@@ -177,6 +189,11 @@
 (defgeneric find-class-hierarchy-generic (ast-analyzer fq-class-name root-ast)
   (:method (ast-analyzer fq-class-name root-ast)))
 
+(defun find-index-key (ast index-path)
+  (find-index-key-generic (get-ast-analyzer (namestring index-path)) ast))
+(defgeneric find-index-key-generic (ast-analyzer ast)
+  (:method (ast-analyzer ast)))
+
 (defun convert-to-top-offset (root-path path pos)
   (with-open-file (stream (uiop:merge-pathnames* path root-path))
     (loop for file-line = (read-line stream nil)
@@ -240,17 +257,26 @@
   (clean-indexes)
   (ensure-directories-exist *index-path*) 
   (loop for path in (uiop:directory-files (format nil "~a/**/*" root-path))
-        do (let ((relative-path (enough-namestring path root-path)))
-             (when (is-analysis-target relative-path include exclude)
-               (handler-case
-                 (alexandria:write-string-into-file
-                   (format nil "~a" (exec-command (get-ast-analyzer relative-path) (namestring path)))
-                   (get-index-path relative-path))
-                 (error (e)
-                        (format t "error: ~a, path: ~a~%" e path)
-                        (error 'inga-error)))))))
+        do
+        (let ((relative-path (enough-namestring path root-path)))
+          (when (is-analysis-target relative-path include exclude)
+            (handler-case
+              (let ((ast (exec-command (get-ast-analyzer relative-path) (namestring path)))
+                    (index-path (get-index-path relative-path)))
+                (alexandria:write-string-into-file (format nil "~a" ast) index-path)
+                (let ((index-key (find-index-key (jsown:parse ast) index-path)))
+                  (setf *index-groups*
+                        (if (assoc index-key *index-groups*)
+                            (acons index-key
+                                   (append (list index-path) (assoc index-key *index-groups*))
+                                   *index-groups*)
+                            (acons index-key (list index-path) *index-groups*)))))
+              (error (e)
+                     (format t "error: ~a, path: ~a~%" e path)
+                     (error 'inga-error)))))))
 
 (defun clean-indexes ()
+  (setf *index-groups* nil)
   (uiop:delete-directory-tree *index-path*
                               :validate t
                               :if-does-not-exist :ignore))
