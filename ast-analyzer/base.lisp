@@ -45,7 +45,7 @@
 (in-package #:inga/ast-analyzer/base)
 
 (defparameter *index-path* (uiop:merge-pathnames* #p"inga_temp/"))
-(defparameter *index-groups* nil)
+(defparameter *package-index-groups* nil)
 (defparameter *ast-analyzers* nil)
 (defvar *cache*)
 
@@ -265,18 +265,18 @@
                     (index-path (get-index-path relative-path)))
                 (alexandria:write-string-into-file (format nil "~a" ast) index-path)
                 (let ((index-key (find-index-key (jsown:parse ast) index-path)))
-                  (setf *index-groups*
-                        (if (assoc index-key *index-groups*)
+                  (setf *package-index-groups*
+                        (if (assoc index-key *package-index-groups*)
                             (acons index-key
-                                   (append (list index-path) (assoc index-key *index-groups*))
-                                   *index-groups*)
-                            (acons index-key (list index-path) *index-groups*)))))
+                                   (append (list index-path) (assoc index-key *package-index-groups*))
+                                   *package-index-groups*)
+                            (acons index-key (list index-path) *package-index-groups*)))))
               (error (e)
                      (format t "error: ~a, path: ~a~%" e path)
                      (error 'inga-error)))))))
 
 (defun clean-indexes ()
-  (setf *index-groups* nil)
+  (setf *package-index-groups* nil)
   (uiop:delete-directory-tree *index-path*
                               :validate t
                               :if-does-not-exist :ignore))
