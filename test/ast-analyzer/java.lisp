@@ -12,6 +12,7 @@
 (defparameter *java-path* (merge-pathnames #p"test/fixtures/java/"))
 (defparameter *spring-boot-path*
   (truename (uiop:merge-pathnames* "test/fixtures/spring-boot-realworld-example-app/")))
+(defparameter *lightrun-path* (merge-pathnames "test/fixtures/spring-tutorials/lightrun/"))
 
 (test find-definitions-for-constructor
   (setf inga/ast-analyzer/base::*cache* (make-cache 0))
@@ -21,7 +22,8 @@
             (start-ast-analyzer :kotlin nil *java-path*))))
     (create-indexes *java-path* :include inga/main::*include-java*)
     (is (equal
-          `(((:path . "p1/ConstructorDefinition.java")
+          `(((:type . :module-public)
+             (:path . "p1/ConstructorDefinition.java")
              (:name . "ConstructorDefinition")
              (:fq-name . "p1.ConstructorDefinition.ConstructorDefinition")
              ,(cons :top-offset
@@ -49,7 +51,8 @@
             (start-ast-analyzer :kotlin nil *java-path*))))
     (create-indexes *java-path* :include inga/main::*include-java*)
     (is (equal
-          `(((:path . "p1/MethodDefinition.java")
+          `(((:type . :module-public)
+             (:path . "p1/MethodDefinition.java")
              (:name . "method")
              (:fq-name . "p1.MethodDefinition.method-INT")
              ,(cons :top-offset
@@ -77,7 +80,8 @@
             (start-ast-analyzer :kotlin nil *java-path*))))
     (create-indexes *java-path* :include inga/main::*include-java*)
     (is (equal
-          `(((:path . "p1/InterfaceDefinition.java")
+          `(((:type . :module-default)
+             (:path . "p1/InterfaceDefinition.java")
              (:name . "method")
              (:fq-name . "p1.InterfaceDefinition.method-INT")
              ,(cons :top-offset
@@ -105,7 +109,8 @@
             (start-ast-analyzer :kotlin nil *java-path*))))
     (create-indexes *java-path* :include inga/main::*include-java*)
     (is (equal
-          `(((:path . "p1/InstanceVariableAnnotationDefinition.java")
+          `(((:type . :module-public)
+             (:path . "p1/InstanceVariableAnnotationDefinition.java")
              (:name . "variable")
              (:fq-name . "p1.InstanceVariableAnnotationDefinition.variable")
              ,(cons :top-offset
@@ -162,7 +167,8 @@
              (:name . "GET")
              (:path . "/articles")
              (:file-pos .
-              ((:path . "src/main/java/io/spring/api/ArticlesApi.java")
+              ((:type . :module-public)
+               (:path . "src/main/java/io/spring/api/ArticlesApi.java")
                (:name . "getArticles")
                (:fq-name . "io.spring.api.ArticlesApi.getArticles-INT-INT-java.lang.String-java.lang.String-java.lang.String-io.spring.core.user.User")
                ,(cons :top-offset
@@ -201,7 +207,8 @@
              (:name . "GET")
              (:path . "/{string}")
              (:file-pos .
-              ((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
+              ((:type . :module-public)
+               (:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
                (:name . "get")
                (:fq-name . "p1.RestControllerDefinition.get-java.lang.String")
                ,(cons :top-offset
@@ -239,7 +246,8 @@
              (:name . "POST")
              (:path . "/")
              (:file-pos .
-              ((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
+              ((:type . :module-public)
+               (:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
                (:name . "create")
                (:fq-name . "p1.RestControllerDefinition.create")
                ,(cons :top-offset
@@ -277,7 +285,8 @@
              (:name . "PUT")
              (:path . "/{string}")
              (:file-pos .
-              ((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
+              ((:type . :module-public)
+               (:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
                (:name . "update")
                (:fq-name . "p1.RestControllerDefinition.update-java.lang.String")
                ,(cons :top-offset
@@ -315,7 +324,8 @@
              (:name . "DELETE")
              (:path . "/{string}")
              (:file-pos .
-              ((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
+              ((:type . :module-public)
+               (:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
                (:name . "delete")
                (:fq-name . "p1.RestControllerDefinition.delete-java.lang.String")
                ,(cons :top-offset
@@ -480,6 +490,25 @@
             '((:path . "p1/JavaReference.kt")
               (:name . "method")
               (:fq-name . "p1.JavaReference.method")))))
+    (clean-indexes)
+    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+
+(test get-scoped-index-paths-with-module-private
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (let ((ast-analyzers
+          (list
+            (start-ast-analyzer :java nil *lightrun-path*)
+            (start-ast-analyzer :kotlin nil *lightrun-path*))))
+    (create-indexes *lightrun-path* :include inga/main::*include-java*)
+    (is (equal
+          `(,(merge-pathnames
+               (get-index-path "api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
+               *lightrun-path*))
+          (inga/ast-analyzer/base::get-scoped-index-paths
+            '((:type . :module-private)
+              (:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
+              (:fq-name . "com.baeldung.apiservice.adapters.http.TasksController.getUser-java.lang.String")
+              ))))
     (clean-indexes)
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
