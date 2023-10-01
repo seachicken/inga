@@ -130,6 +130,35 @@
     (clean-indexes)
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
+(test find-definitions-for-generic-type
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (let ((ast-analyzers
+          (list
+            (start-ast-analyzer :java nil *java-path*)
+            (start-ast-analyzer :kotlin nil *java-path*))))
+    (create-indexes *java-path* :include inga/main::*include-java*)
+    (is (equal
+          `(((:type . :module-public)
+             (:path . "p1/GenericTypeDefinition.java")
+             (:name . "GenericTypeDefinition")
+             (:fq-name . "p1.GenericTypeDefinition.GenericTypeDefinition-java.util.List")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *java-path* "p1/GenericTypeDefinition.java"
+                      '((:line . 6) (:offset . 12))))))
+          (find-definitions
+            `((:path . "p1/GenericTypeDefinition.java")
+              ,(cons :start-offset
+                     (convert-to-top-offset
+                       *java-path* "p1/GenericTypeDefinition.java"
+                       '((:line . 6) (:offset . 0))))
+              ,(cons :end-offset
+                     (convert-to-top-offset
+                       *java-path* "p1/GenericTypeDefinition.java"
+                       '((:line . 6) (:offset . -1))))))))
+    (clean-indexes)
+    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+
 ;; class DuplicatedArticleValidator
 ;;                                    ↓[out]
 ;;     implements ConstraintValidator<DuplicatedArticleConstraint, String> {
