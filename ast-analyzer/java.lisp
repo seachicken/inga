@@ -208,11 +208,11 @@
     results))
 
 (defun get-scope (ast)
-  (let ((modifier (ast-value (first (ast-get ast '("MODIFIERS"))) "name")))
+  (let ((modifiers (split-trim-comma (ast-value (first (ast-get ast '("MODIFIERS"))) "name"))))
     (cond
-      ((equal modifier "PUBLIC") :module-public)
-      ((equal modifier "PROTECTED") :module-protected)
-      ((equal modifier "PRIVATE") :module-private)
+      ((find "PUBLIC" modifiers :test #'equal) :module-public)
+      ((find "PROTECTED" modifiers :test #'equal) :module-protected)
+      ((find "PRIVATE" modifiers :test #'equal) :module-private)
       (t :module-default))))
 
 (defmethod find-reference ((ast-analyzer ast-analyzer-java) target-pos ast index-path)
