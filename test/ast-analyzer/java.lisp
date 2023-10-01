@@ -512,6 +512,25 @@
     (clean-indexes)
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
+(test get-scoped-index-paths-with-module-public
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (let ((ast-analyzers
+          (list
+            (start-ast-analyzer :java nil *lightrun-path*)
+            (start-ast-analyzer :kotlin nil *lightrun-path*))))
+    (create-indexes *lightrun-path* :include inga/main::*include-java*)
+    (is (null
+          (find-if-not
+            (lambda (p) (uiop:string-prefix-p "api-service" p))
+            (mapcar (lambda (p) (enough-namestring p inga/ast-analyzer/base::*index-path*))
+                    (inga/ast-analyzer/base::get-scoped-index-paths
+                      '((:type . :module-public)
+                        (:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/users/UserRepository.java")
+                        (:fq-name . "com.baeldung.apiservice.adapters.users.UserRepository.getUserById-java.lang.String")
+                        ))))))
+    (clean-indexes)
+    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+
 (test find-signatures-for-record
   (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzers

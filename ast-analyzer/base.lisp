@@ -28,7 +28,8 @@
            #:matches-signature
            #:find-class-hierarchy
            #:find-class-hierarchy-generic
-           #:find-index-key-generic
+           #:find-package-index-key-generic
+           #:find-project-index-key-generic
            #:convert-to-top-offset
            #:convert-to-pos
            #:exec-command
@@ -45,7 +46,8 @@
 (in-package #:inga/ast-analyzer/base)
 
 (defparameter *index-path* (uiop:merge-pathnames* #p"inga_temp/"))
-(defparameter *index-groups* nil)
+(defparameter *package-index-groups* nil)
+(defparameter *project-index-groups* nil)
 (defparameter *ast-analyzers* nil)
 (defvar *cache*)
 
@@ -101,6 +103,12 @@
        (merge-pathnames
          (get-index-path (cdr (assoc :path pos)))
          (ast-analyzer-path (get-ast-analyzer (cdr (assoc :path pos)))))))
+    ((eq (cdr (assoc :type pos)) :module-public)
+     (cdr (assoc
+            (find-project-index-key
+              (merge-pathnames (cdr (assoc :path pos))
+                               (ast-analyzer-path (get-ast-analyzer (cdr (assoc :path pos))))))
+            *project-index-groups*)))
     (t
      (uiop:directory-files *index-path*))))
 
@@ -189,10 +197,15 @@
 (defgeneric find-class-hierarchy-generic (ast-analyzer fq-class-name root-ast)
   (:method (ast-analyzer fq-class-name root-ast)))
 
-(defun find-index-key (ast index-path)
-  (find-index-key-generic (get-ast-analyzer (namestring index-path)) ast))
-(defgeneric find-index-key-generic (ast-analyzer ast)
+(defun find-package-index-key (ast index-path)
+  (find-package-index-key-generic (get-ast-analyzer (namestring index-path)) ast))
+(defgeneric find-package-index-key-generic (ast-analyzer ast)
   (:method (ast-analyzer ast)))
+
+(defun find-project-index-key (path)
+  (find-project-index-key-generic (get-ast-analyzer (namestring path)) path))
+(defgeneric find-project-index-key-generic (ast-analyzer path)
+  (:method (ast-analyzer path)))
 
 (defun convert-to-top-offset (root-path path pos)
   (with-open-file (stream (uiop:merge-pathnames* path root-path))
@@ -264,19 +277,29 @@
               (let ((ast (exec-command (get-ast-analyzer relative-path) (namestring path)))
                     (index-path (get-index-path relative-path)))
                 (alexandria:write-string-into-file (format nil "~a" ast) index-path)
-                (let ((index-key (find-index-key (jsown:parse ast) index-path)))
-                  (setf *index-groups*
-                        (if (assoc index-key *index-groups*)
+
+                (let ((index-key (find-package-index-key (jsown:parse ast) index-path)))
+                  (setf *package-index-groups*
+                        (if (assoc index-key *package-index-groups*)
                             (acons index-key
-                                   (append (list index-path) (assoc index-key *index-groups*))
-                                   *index-groups*)
-                            (acons index-key (list index-path) *index-groups*)))))
+                                   (append (list index-path) (cdr (assoc index-key *package-index-groups*)))
+                                   *package-index-groups*)
+                            (acons index-key (list index-path) *package-index-groups*))))
+
+                (let ((index-key (find-project-index-key path)))
+                  (setf *project-index-groups*
+                        (if (assoc index-key *project-index-groups*)
+                            (acons index-key
+                                   (append (list index-path) (cdr (assoc index-key *project-index-groups*)))
+                                   *project-index-groups*)
+                            (acons index-key (list index-path) *project-index-groups*))))) 
               (error (e)
                      (format t "error: ~a, path: ~a~%" e path)
                      (error 'inga-error)))))))
 
 (defun clean-indexes ()
-  (setf *index-groups* nil)
+  (setf *package-index-groups* nil)
+  (setf *project-index-groups* nil)
   (uiop:delete-directory-tree *index-path*
                               :validate t
                               :if-does-not-exist :ignore))

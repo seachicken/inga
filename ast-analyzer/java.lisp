@@ -11,6 +11,8 @@
                 #:ast-analyzer-kotlin)
   (:import-from #:inga/plugin/jvm-dependency-loader
                 #:load-signatures)
+  (:import-from #:inga/plugin/jvm-helper
+                #:find-base-path)
   (:import-from #:inga/plugin/spring-property-loader
                 #:find-property)
   (:import-from #:inga/plugin/spring-helper
@@ -295,7 +297,7 @@
     (loop for child in (jsown:val ast "children")
           do (setf stack (append stack (list child))))))
 
-(defmethod find-index-key-generic ((ast-analyzer ast-analyzer-java) ast)
+(defmethod find-package-index-key-generic ((ast-analyzer ast-analyzer-java) ast)
   (loop
     with stack = (list ast)
     do
@@ -303,10 +305,13 @@
     (if (null ast) (return))
 
     (when (equal (ast-value ast "type") "PACKAGE")
-      (return-from find-index-key-generic (ast-value ast "packageName")))
+      (return-from find-package-index-key-generic (ast-value ast "packageName")))
 
     (loop for child in (jsown:val ast "children")
           do (setf stack (append stack (list child))))))
+
+(defmethod find-project-index-key-generic ((ast-analyzer ast-analyzer-java) path)
+  (find-base-path path))
 
 (defun find-fq-name-for-reference (ast index-path)
   (alexandria:switch ((ast-value ast "type") :test #'equal)
