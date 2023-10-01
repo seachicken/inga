@@ -103,6 +103,11 @@
        (merge-pathnames
          (get-index-path (cdr (assoc :path pos)))
          (ast-analyzer-path (get-ast-analyzer (cdr (assoc :path pos)))))))
+    ((eq (cdr (assoc :type pos)) :module-default)
+     (let ((index-path (get-index-path (cdr (assoc :path pos)))))
+       (cdr (assoc
+              (find-package-index-key (parse-to-ast index-path) index-path)
+              *package-index-groups*))))
     ((eq (cdr (assoc :type pos)) :module-public)
      (cdr (assoc
             (find-project-index-key

@@ -305,13 +305,14 @@
     (if (null ast) (return))
 
     (when (equal (ast-value ast "type") "PACKAGE")
-      (return-from find-package-index-key-generic (ast-value ast "packageName")))
+      (return-from find-package-index-key-generic (intern (ast-value ast "packageName"))))
 
     (loop for child in (jsown:val ast "children")
           do (setf stack (append stack (list child))))))
 
 (defmethod find-project-index-key-generic ((ast-analyzer ast-analyzer-java) path)
-  (find-base-path path))
+  (let ((base-path (find-base-path path)))
+    (when base-path (intern (namestring base-path)))))
 
 (defun find-fq-name-for-reference (ast index-path)
   (alexandria:switch ((ast-value ast "type") :test #'equal)
