@@ -79,20 +79,24 @@
   (let ((cached-value (get-value *cache* (get-references-key pos))))
     (values
       (if (null cached-value)
-          (loop for path in (get-scoped-index-paths pos)
-                with results
-                with ast
-                do
-                (let ((ast-analyzer (get-ast-analyzer (namestring path))))
-                  (setf ast (parse-to-ast path))
+          (inga/utils::funtime
+            (lambda ()
+              (loop for path in (get-scoped-index-paths pos)
+                    with results
+                    with ast
+                    do
+                    (let ((ast-analyzer (get-ast-analyzer (namestring path))))
+                      (setf ast (parse-to-ast path))
 
-                  (let ((references (find-references-by-file ast-analyzer path ast pos)))
-                    (when references
-                      (setf results (append results references)))))
-                finally
-                (put-value *cache* (get-references-key pos)
-                           (if results results 'empty))
-                (return (values results nil)))
+                      (let ((references (find-references-by-file ast-analyzer path ast pos)))
+                        (when references
+                          (setf results (append results references)))))
+                    finally
+                    (put-value *cache* (get-references-key pos)
+                               (if results results 'empty))
+                    (return (values results nil))))
+            :label "find-references"
+            :args pos)
           (if (eq cached-value 'empty) nil cached-value))
       (when cached-value t))))
 
