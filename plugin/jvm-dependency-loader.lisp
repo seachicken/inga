@@ -2,10 +2,13 @@
   (:use #:cl
         #:inga/utils)
   (:import-from #:jsown)
+  (:import-from #:inga/errors
+                #:inga-error-process-not-running)
   (:import-from #:inga/plugin/jvm-helper
                 #:find-base-path)
   (:export #:start
            #:stop
+           #:load-hierarchy
            #:load-signatures))
 (in-package #:inga/plugin/jvm-dependency-loader)
 
@@ -27,15 +30,34 @@
   (uiop:close-streams *jvm-dependency-loader*))
 
 (defun load-signatures (fq-class-name from)
+  (unless (uiop:process-alive-p *jvm-dependency-loader*)
+    (error 'inga-error-process-not-running))
+
   (let ((base-path (find-base-path (merge-pathnames from *root-path*))))
     (unless base-path
       (return-from load-signatures))
 
     (jsown:parse
       (exec-command *jvm-dependency-loader*
-                    (format nil "{\"fqcn\":\"~a\",\"from\":\"~a\"}"
+                    (format nil "{\"type\":\"METHODS\",\"fqcn\":\"~a\",\"from\":\"~a\"}"
                             fq-class-name
                             base-path)))))
+
+(defun load-hierarchy (fq-class-name from)
+  (unless (uiop:process-alive-p *jvm-dependency-loader*)
+    (error 'inga-error-process-not-running))
+
+  (let ((base-path (find-base-path (merge-pathnames from *root-path*))))
+    (unless base-path
+      (return-from load-hierarchy))
+
+    (mapcar (lambda (h)
+              (jsown:val h "name"))
+            (jsown:parse
+              (exec-command *jvm-dependency-loader*
+                            (format nil "{\"type\":\"HIERARCHY\",\"fqcn\":\"~a\",\"from\":\"~a\"}"
+                                    fq-class-name
+                                    base-path))))))
 
 (defun exec-command (process cmd)
   (inga/utils::funtime
