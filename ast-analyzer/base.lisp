@@ -140,7 +140,7 @@
                 do (enqueue q child)))))
     results))
 
-(defun find-signature (fq-name find-signatures &optional from)
+(defun find-signature (fq-name find-signatures)
   (when (or (null fq-name) (equal fq-name ""))
     (return-from find-signature))
 
@@ -150,7 +150,7 @@
                                   (if (>= (length (split #\- fq-name)) 2)
                                       (first (butlast (split #\- fq-name)))
                                       fq-name))))))
-    (loop for method in (funcall find-signatures fq-class-name from)
+    (loop for method in (funcall find-signatures fq-class-name)
           with target-name = (subseq (ppcre:regex-replace-all fq-class-name fq-name "") 1)
           with matched-methods
           do
@@ -160,7 +160,7 @@
                                   nil
                                   (mapcar (lambda (type) (jsown:val type "name"))
                                           (jsown:val method "parameterTypes"))))))
-            (when (equal name target-name)
+            (when (matches-signature target-name name)
               (push method matched-methods)))
           finally
           (return (if (> (length matched-methods) 1)
@@ -182,15 +182,22 @@
   (:method (ast-analyzer fq-class-name root-ast)))
 
 (defun matches-signature (target-fq-name api-fq-name)
-  (let ((target-arg-names (cdr (split #\- target-fq-name)))
-        (api-arg-names (cdr (split #\- api-fq-name))))
-    (loop for target-arg-name in target-arg-names
-          for i below (length target-arg-names)
-          do
-          (unless (find-if (lambda (super-class-name)
-                             (equal super-class-name (nth i api-arg-names)))
-                           (find-class-hierarchy target-arg-name))
-            (return-from matches-signature))))
+  (let ((split-target-fq-names (split #\- target-fq-name))
+        (split-api-fq-names (split #\- api-fq-name)))
+    (unless (equal (first split-target-fq-names) (first split-api-fq-names))
+      (return-from matches-signature))
+
+    (let ((target-arg-names (cdr split-target-fq-names))
+          (api-arg-names (mapcar (lambda (n)
+                                   (cl-ppcre:regex-replace-all "\\[L|;" n ""))
+                                 (cdr split-api-fq-names))))
+      (loop for target-arg-name in target-arg-names
+            for i below (length target-arg-names)
+            do
+            (unless (find-if (lambda (super-class-name)
+                               (equal super-class-name (nth i api-arg-names)))
+                             (find-class-hierarchy target-arg-name))
+              (return-from matches-signature)))))
   t)
 
 (defun find-class-hierarchy (fq-class-name)
@@ -198,13 +205,13 @@
       do
       (let ((ast-analyzer (get-ast-analyzer (namestring path)))
             (ast (parse-to-ast path)))
-        (let ((class-hierarchy (find-class-hierarchy-generic ast-analyzer fq-class-name ast)))
+        (let ((class-hierarchy (find-class-hierarchy-generic ast-analyzer fq-class-name ast path)))
           (when class-hierarchy
             (return-from find-class-hierarchy class-hierarchy)))))
   (list fq-class-name))
 
-(defgeneric find-class-hierarchy-generic (ast-analyzer fq-class-name root-ast)
-  (:method (ast-analyzer fq-class-name root-ast)))
+(defgeneric find-class-hierarchy-generic (ast-analyzer fq-class-name root-ast index-path)
+  (:method (ast-analyzer fq-class-name root-ast index-path)))
 
 (defun find-package-index-key (ast index-path)
   (find-package-index-key-generic (get-ast-analyzer (namestring index-path)) ast))

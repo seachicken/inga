@@ -10,7 +10,8 @@
   (:import-from #:inga/ast-analyzer/kotlin
                 #:ast-analyzer-kotlin)
   (:import-from #:inga/plugin/jvm-dependency-loader
-                #:load-signatures)
+                #:load-signatures
+                #:load-hierarchy)
   (:import-from #:inga/plugin/jvm-helper
                 #:find-base-path)
   (:import-from #:inga/plugin/spring-property-loader
@@ -269,12 +270,16 @@
     (loop for child in (jsown:val ast "children")
           do (setf stack (append stack (list child))))))
 
-(defmethod find-class-hierarchy-generic ((ast-analyzer ast-analyzer-java) fq-class-name root-ast)
+(defmethod find-class-hierarchy-generic ((ast-analyzer ast-analyzer-java) fq-class-name root-ast index-path)
   (loop
     with stack = (list root-ast)
     with ast
     with target-package-name = (format nil "~{~a~^.~}" (butlast (split #\. fq-class-name)))
     with target-class-name = (first (last (split #\. fq-class-name)))
+    initially
+    (let ((hierarchy (load-hierarchy fq-class-name (get-original-path index-path))))
+      (when hierarchy
+        (return-from find-class-hierarchy-generic hierarchy)))
     do
     (setf ast (pop stack))
     (if (null ast) (return))
@@ -332,7 +337,7 @@
                        (when fq-name
                          (let ((method (find-signature
                                          fq-name
-                                         #'load-signatures (get-original-path index-path))))
+                                         #'(lambda (fq-class-name) (load-signatures fq-class-name (get-original-path index-path))))))
                            (when method
                              (jsown:val (jsown:val method "returnType") "name")))))
                      (if (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))
@@ -396,7 +401,7 @@
       ((ast-get variable '("METHOD_INVOCATION"))
        (let ((fq-name (find-fq-name-for-reference (first (ast-get variable '("METHOD_INVOCATION"))) index-path)))
          (let ((method (find-signature fq-name
-                                       #'load-signatures (get-original-path index-path))))
+                                       #'(lambda (fq-class-name) (load-signatures fq-class-name (get-original-path index-path))))))
            (when method
              (jsown:val (jsown:val method "returnType") "name"))))))))
 
@@ -441,9 +446,14 @@
                                (find-variable-name (ast-value arg "name") arg index-path))
                               ("METHOD_INVOCATION"
                                (let ((fq-name (find-fq-name-for-reference arg index-path)))
-                                 (ast-value
-                                   (find-signature fq-name #'find-signatures)
-                                   "type")))
+                                 (let ((method (find-signature fq-name
+                                                               #'(lambda (fq-class-name)
+                                                                   (load-signatures fq-class-name (get-original-path index-path))))))
+                                   (if method
+                                       (jsown:val (jsown:val method "returnType") "name")
+                                       (ast-value
+                                         (find-signature fq-name #'find-signatures)
+                                         "type")))))
                               (t
                                 "?"))))))
         finally (return results)))

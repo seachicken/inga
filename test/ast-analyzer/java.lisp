@@ -457,6 +457,7 @@
 
 (test find-references-for-rest-client-get-method
   (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (inga/plugin/jvm-dependency-loader:start *java-path*)
   (let ((ast-analyzers
           (list
             (start-ast-analyzer :java nil *java-path*)
@@ -479,10 +480,12 @@
               (:path . "/path")
               (:name . "GET")))))
     (clean-indexes)
+    (inga/plugin/jvm-dependency-loader:stop)
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-references-for-rest-client-post-method
   (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (inga/plugin/jvm-dependency-loader:start *java-path*)
   (let ((ast-analyzers
           (list
             (start-ast-analyzer :java nil *java-path*)
@@ -500,6 +503,7 @@
               (:path . "/path")
               (:name . "POST")))))
     (clean-indexes)
+    (inga/plugin/jvm-dependency-loader:stop)
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-references-for-kotlin-class
@@ -562,6 +566,7 @@
 
 (test find-signatures-for-record
   (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (inga/plugin/jvm-dependency-loader:start *java-path*)
   (let ((ast-analyzers
           (list
             (start-ast-analyzer :java nil *java-path*)
@@ -574,10 +579,12 @@
               ("type" . "java.lang.String")))
           (find-signatures "p1.RecordDefinition")))
     (clean-indexes)
+    (inga/plugin/jvm-dependency-loader:stop)
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test matches-signature
   (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (inga/plugin/jvm-dependency-loader:start *java-path*)
   (let ((ast-analyzers
           (list
             (start-ast-analyzer :java nil *java-path*)
@@ -587,10 +594,28 @@
           t
           (matches-signature "p2.ApiSignature-p2.ChildClass" "p2.ApiSignature-p2.ParentClass")))
     (clean-indexes)
+    (inga/plugin/jvm-dependency-loader:stop)
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
-(test find-class-hierarchy
+(test find-class-hierarchy-with-standard-class
   (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (inga/plugin/jvm-dependency-loader:start *lightrun-path*)
+  (let ((ast-analyzers
+          (list
+            (start-ast-analyzer :java nil *lightrun-path*)
+            (start-ast-analyzer :kotlin nil *lightrun-path*))))
+    (create-indexes *lightrun-path* :include inga/main::*include-java*)
+    (is (equal
+          '("java.lang.Object"
+            "java.lang.String")
+          (find-class-hierarchy "java.lang.String")))
+    (clean-indexes)
+    (inga/plugin/jvm-dependency-loader:stop)
+    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+
+(test find-class-hierarchy-with-app-class
+  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
+  (inga/plugin/jvm-dependency-loader:start *java-path*)
   (let ((ast-analyzers
           (list
             (start-ast-analyzer :java nil *java-path*)
@@ -602,5 +627,6 @@
             "p2.ChildClass")
           (find-class-hierarchy "p2.ChildClass")))
     (clean-indexes)
+    (inga/plugin/jvm-dependency-loader:stop)
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
