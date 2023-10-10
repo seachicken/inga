@@ -2,7 +2,7 @@ FROM fukamachi/roswell:21.10.14.111-ubuntu AS build
 
 COPY ../.. /inga
 RUN ros && \
-  cd ~/.roswell/local-projects && ln -s /inga inga && \
+  ln -s /inga /root/.roswell/local-projects/inga && \
   ros build /inga/roswell/inga.ros
 
 
