@@ -10,14 +10,13 @@ env:
 
 jobs:
   build-and-push-image:
-
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     strategy:
       matrix:
-        target: [typescript, java]
+        target: [java, typescript]
 
     steps:
       - name: Checkout repository

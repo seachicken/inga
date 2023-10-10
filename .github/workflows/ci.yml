@@ -9,82 +9,87 @@ on:
       - ''
 
 jobs:
-
   test-java:
     strategy:
       matrix:
-        lisp: [sbcl-bin]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
-    container:
-      image: ghcr.io/seachicken/inga:latest-java
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-        submodules: recursive
-    - name: Install Roswell
-      env:
-        LISP: ${{ matrix.lisp }}
-      run: |
-        apt-get update
-        apt-get install -y curl sudo bzip2
-        curl -L https://raw.githubusercontent.com/roswell/roswell/master/scripts/install-for-ci.sh | sh
-    - name: Install fiveam
-      run: ros install fiveam
-    - name: Run tests
-      run: |
-        ros -s fiveam -e "(ql:quickload :inga)
-                          (unless (asdf:test-system :inga)
-                            (uiop:quit 1))
-                          (ql:quickload :inga/test-java)
-                          (unless (fiveam:run! (list
-                                                 (uiop:find-symbol* '#:java
-                                                                    :inga/test/main)
-                                                 (uiop:find-symbol* '#:java
-                                                                    :inga/test/ast-analyzer/java)
-                                                 (uiop:find-symbol* '#:kotlin
-                                                                    :inga/test/ast-analyzer/kotlin)
-                                                 (uiop:find-symbol* '#:java
-                                                                    :inga/test/plugin/jvm-helper)
-                                                 (uiop:find-symbol* '#:java
-                                                                    :inga/test/plugin/spring-property-loader)))
-                            (uiop:quit 1))"
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/java/Dockerfile
+          tags: inga-java
+      - name: Build Docker image for test
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: .github/workflows/docker/Dockerfile
+          tags: test-inga-java
+          build-args: |
+            BASE_IMAGE=inga-java
+      - name: Run tests
+        run: |
+          docker run test-inga-java -c "ros -s fiveam -e \"
+            (ql:quickload :inga)
+            (unless (asdf:test-system :inga)
+              (uiop:quit 1))
+            (ql:quickload :inga/test-java)
+            (unless (fiveam:run! (list
+                                   (uiop:find-symbol* '#:java
+                                                      :inga/test/main)
+                                   (uiop:find-symbol* '#:java
+                                                      :inga/test/ast-analyzer/java)
+                                   (uiop:find-symbol* '#:kotlin
+                                                      :inga/test/ast-analyzer/kotlin)
+                                   (uiop:find-symbol* '#:java
+                                                      :inga/test/plugin/jvm-helper)
+                                   (uiop:find-symbol* '#:java
+                                                      :inga/test/plugin/spring-property-loader)))
+              (uiop:quit 1))\""
 
   test-typescript:
     strategy:
       matrix:
-        lisp: [sbcl-bin]
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
-    container:
-      image: ghcr.io/seachicken/inga:latest-typescript
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-        submodules: recursive
-    - name: Install Roswell
-      env:
-        LISP: ${{ matrix.lisp }}
-      run: |
-        apt-get update
-        apt-get install -y curl sudo bzip2
-        curl -L https://raw.githubusercontent.com/roswell/roswell/master/scripts/install-for-ci.sh | sh
-    - name: Install fiveam
-      run: ros install fiveam
-    - name: Run tests
-      run: |
-        ros -s fiveam -e "(ql:quickload :inga)
-                          (unless (asdf:test-system :inga)
-                            (uiop:quit 1))
-                          (ql:quickload :inga/test-typescript)
-                          (unless (fiveam:run! (list
-                                                 (uiop:find-symbol* '#:typescript
-                                                                    :inga/test/main)
-                                                 (uiop:find-symbol* '#:typescript
-                                                                    :inga/test/ast-analyzer/typescript)))
-                            (uiop:quit 1))"
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/typescript/Dockerfile
+          tags: inga-typescript
+      - name: Build Docker image for test
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./.github/workflows/docker/Dockerfile
+          tags: test-inga-typescript
+          build-args: |
+            BASE_IMAGE=inga-typescript
+      - name: Run tests
+        run: |
+          docker run test-inga-typescript -c "ros -s fiveam -e \"
+            (ql:quickload :inga)
+            (unless (asdf:test-system :inga)
+              (uiop:quit 1))
+            (ql:quickload :inga/test-typescript)
+            (unless (fiveam:run! (list
+                                   (uiop:find-symbol* '#:typescript
+                                                      :inga/test/main)
+                                   (uiop:find-symbol* '#:typescript
+                                                      :inga/test/ast-analyzer/typescript)))
+              (uiop:quit 1))\""
 
