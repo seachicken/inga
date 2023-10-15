@@ -54,7 +54,11 @@
                               result)))))
 
 (defun exec-command (process cmd)
-  (write-line cmd (uiop:process-info-input process))
-  (force-output (uiop:process-info-input process))
-  (read-line (uiop:process-info-output process)))
+  (inga/utils::funtime
+    (lambda ()
+      (write-line cmd (uiop:process-info-input process))
+      (force-output (uiop:process-info-input process))
+      (read-line (uiop:process-info-output process)))
+    :label "spring-property-loader"
+    :args cmd))
 

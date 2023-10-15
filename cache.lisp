@@ -12,7 +12,8 @@
                 (cache-key (list ,@params))
                 (cached-result (gethash cache-key ,cache-sym)))
            (if cached-result
-               cached-result
+               (if (eq cached-result 'empty) nil cached-result)
                (let ((result (progn ,@body)))
-                 (setf (gethash cache-key ,cache-sym) result))))))))
+                 (setf (gethash cache-key ,cache-sym) (or result 'empty))
+                 result)))))))
 
