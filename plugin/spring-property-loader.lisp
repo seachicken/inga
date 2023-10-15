@@ -29,7 +29,7 @@
 (defun stop ()
   (uiop:close-streams *spring-property-loader*))
 
-(defunc find-property (key from)
+(defun find-property (key from)
   (unless (uiop:process-alive-p *spring-property-loader*)
     (error 'inga-error-process-not-running))
 
@@ -53,7 +53,7 @@
                               "8080"
                               result)))))
 
-(defun exec-command (process cmd)
+(defunc exec-command (process cmd)
   (inga/utils::funtime
     (lambda ()
       (write-line cmd (uiop:process-info-input process))

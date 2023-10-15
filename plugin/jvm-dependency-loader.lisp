@@ -30,7 +30,7 @@
 (defun stop ()
   (uiop:close-streams *jvm-dependency-loader*))
 
-(defunc load-signatures (fq-class-name from)
+(defun load-signatures (fq-class-name from)
   (unless (uiop:process-alive-p *jvm-dependency-loader*)
     (error 'inga-error-process-not-running))
 
@@ -44,7 +44,7 @@
                             fq-class-name
                             base-path)))))
 
-(defunc load-hierarchy (fq-class-name from)
+(defun load-hierarchy (fq-class-name from)
   (unless (uiop:process-alive-p *jvm-dependency-loader*)
     (error 'inga-error-process-not-running))
 
@@ -60,7 +60,7 @@
                                     fq-class-name
                                     base-path))))))
 
-(defun exec-command (process cmd)
+(defunc exec-command (process cmd)
   (inga/utils::funtime
     (lambda ()
       (write-line cmd (uiop:process-info-input process))

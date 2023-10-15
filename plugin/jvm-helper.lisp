@@ -1,9 +1,11 @@
 (defpackage #:inga/plugin/jvm-helper
   (:use #:cl)
+  (:import-from #:inga/cache
+                #:defunc)
   (:export #:find-base-path))
 (in-package #:inga/plugin/jvm-helper)
 
-(defun find-base-path (path)
+(defunc find-base-path (path)
   (when (equal path #p"/")
     (return-from find-base-path))
 
