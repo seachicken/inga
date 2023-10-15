@@ -1,6 +1,8 @@
 (defpackage #:inga/plugin/spring-property-loader
   (:use #:cl)
   (:import-from #:jsown)
+  (:import-from #:inga/cache
+                #:defunc)
   (:import-from #:inga/errors
                 #:inga-error-process-not-running)
   (:import-from #:inga/plugin/jvm-helper
@@ -27,7 +29,7 @@
 (defun stop ()
   (uiop:close-streams *spring-property-loader*))
 
-(defun find-property (key from)
+(defunc find-property (key from)
   (unless (uiop:process-alive-p *spring-property-loader*)
     (error 'inga-error-process-not-running))
 
@@ -52,11 +54,7 @@
                               result)))))
 
 (defun exec-command (process cmd)
-  (inga/utils::funtime
-    (lambda ()
-      (write-line cmd (uiop:process-info-input process))
-      (force-output (uiop:process-info-input process))
-      (read-line (uiop:process-info-output process)))
-    :label "spring-property-loader"
-    :args cmd))
+  (write-line cmd (uiop:process-info-input process))
+  (force-output (uiop:process-info-input process))
+  (read-line (uiop:process-info-output process)))
 

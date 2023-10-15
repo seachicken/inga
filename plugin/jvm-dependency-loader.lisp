@@ -1,7 +1,8 @@
 (defpackage #:inga/plugin/jvm-dependency-loader
-  (:use #:cl
-        #:inga/utils)
+  (:use #:cl)
   (:import-from #:jsown)
+  (:import-from #:inga/cache
+                #:defunc)
   (:import-from #:inga/errors
                 #:inga-error-process-not-running)
   (:import-from #:inga/plugin/jvm-helper
@@ -29,7 +30,7 @@
 (defun stop ()
   (uiop:close-streams *jvm-dependency-loader*))
 
-(defun load-signatures (fq-class-name from)
+(defunc load-signatures (fq-class-name from)
   (unless (uiop:process-alive-p *jvm-dependency-loader*)
     (error 'inga-error-process-not-running))
 
@@ -43,7 +44,7 @@
                             fq-class-name
                             base-path)))))
 
-(defun load-hierarchy (fq-class-name from)
+(defunc load-hierarchy (fq-class-name from)
   (unless (uiop:process-alive-p *jvm-dependency-loader*)
     (error 'inga-error-process-not-running))
 
@@ -60,11 +61,7 @@
                                     base-path))))))
 
 (defun exec-command (process cmd)
-  (inga/utils::funtime
-    (lambda ()
-      (write-line cmd (uiop:process-info-input process))
-      (force-output (uiop:process-info-input process))
-      (read-line (uiop:process-info-output process)))
-    :label "jvm-dependency-loader"
-    :args cmd))
+  (write-line cmd (uiop:process-info-input process))
+  (force-output (uiop:process-info-input process))
+  (read-line (uiop:process-info-output process)))
 
