@@ -1,9 +1,7 @@
 (defpackage #:inga/test/ast-analyzer/java
   (:use #:cl
         #:fiveam
-        #:inga/ast-analyzer)
-  (:import-from #:inga/cache
-                #:make-cache))
+        #:inga/ast-analyzer))
 (in-package #:inga/test/ast-analyzer/java)
 
 (def-suite java)
@@ -15,7 +13,6 @@
 (defparameter *lightrun-path* (merge-pathnames "test/fixtures/spring-tutorials/lightrun/"))
 
 (test find-definitions-for-constructor
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzers
           (list
             (start-ast-analyzer :java nil *java-path*)
@@ -44,7 +41,6 @@
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-definitions-for-method
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzers
           (list
             (start-ast-analyzer :java nil *java-path*)
@@ -73,7 +69,6 @@
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-definitions-for-interface
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzers
           (list
             (start-ast-analyzer :java nil *java-path*)
@@ -102,7 +97,6 @@
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-definitions-for-instance-variable-annotation
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzers
           (list
             (start-ast-analyzer :java nil *java-path*)
@@ -131,7 +125,6 @@
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-definitions-for-generic-type
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzers
           (list
             (start-ast-analyzer :java nil *java-path*)
@@ -182,7 +175,6 @@
         (stop-ast-analyzer ast-analyzer))))
 
 (test find-definitions-for-spring-rest-controller
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (inga/plugin/jvm-dependency-loader:start *spring-boot-path*)
   (inga/plugin/spring-property-loader:start *spring-boot-path*)
   (let ((ast-analyzers
@@ -223,7 +215,6 @@
     (inga/plugin/jvm-dependency-loader:stop)))
 
 (test find-definitions-for-spring-rest-get-method
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (inga/plugin/spring-property-loader:start *java-path*)
   (let ((ast-analyzers
           (list
@@ -262,7 +253,6 @@
     (inga/plugin/spring-property-loader:stop))
 
 (test find-definitions-for-spring-rest-post-method
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (inga/plugin/spring-property-loader:start *java-path*)
   (let ((ast-analyzers
           (list
@@ -301,7 +291,6 @@
     (inga/plugin/spring-property-loader:stop))
 
 (test find-definitions-for-spring-rest-put-method
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (inga/plugin/spring-property-loader:start *java-path*)
   (let ((ast-analyzers
           (list
@@ -340,7 +329,6 @@
     (inga/plugin/spring-property-loader:stop))
 
 (test find-definitions-for-spring-rest-delete-method
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (inga/plugin/spring-property-loader:start *java-path*)
   (let ((ast-analyzers
           (list
@@ -396,7 +384,6 @@
         (stop-ast-analyzer ast-analyzer))))
 
 (test find-references-for-new-class
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzers
           (list
             (start-ast-analyzer :java nil *java-path*)
@@ -416,7 +403,6 @@
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-references-for-constructor
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzers
           (list
             (start-ast-analyzer :java nil *java-path*)
@@ -436,7 +422,6 @@
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-references-for-private-method
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzers
           (list
             (start-ast-analyzer :java nil *java-path*)
@@ -456,7 +441,6 @@
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-references-for-rest-client-get-method
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (inga/plugin/jvm-dependency-loader:start *java-path*)
   (let ((ast-analyzers
           (list
@@ -484,7 +468,6 @@
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-references-for-rest-client-post-method
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (inga/plugin/jvm-dependency-loader:start *java-path*)
   (let ((ast-analyzers
           (list
@@ -507,7 +490,6 @@
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-references-for-kotlin-class
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzers
           (list
             (start-ast-analyzer :java nil *java-path*)
@@ -527,7 +509,6 @@
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test get-scoped-index-paths-with-module-private
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzers
           (list
             (start-ast-analyzer :java nil *lightrun-path*)
@@ -546,7 +527,6 @@
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test get-scoped-index-paths-with-module-public
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzers
           (list
             (start-ast-analyzer :java nil *lightrun-path*)
@@ -565,7 +545,6 @@
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-signatures-for-record
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (inga/plugin/jvm-dependency-loader:start *java-path*)
   (let ((ast-analyzers
           (list
@@ -583,7 +562,6 @@
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test matches-signature
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (inga/plugin/jvm-dependency-loader:start *java-path*)
   (let ((ast-analyzers
           (list
@@ -598,7 +576,6 @@
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-class-hierarchy-with-standard-class
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (inga/plugin/jvm-dependency-loader:start *lightrun-path*)
   (let ((ast-analyzers
           (list
@@ -614,7 +591,6 @@
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-class-hierarchy-with-app-class
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (inga/plugin/jvm-dependency-loader:start *java-path*)
   (let ((ast-analyzers
           (list

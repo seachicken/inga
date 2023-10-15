@@ -2,15 +2,17 @@
   (:use #:cl)
   (:import-from #:jsown)
   (:import-from #:flexi-streams)
+  (:import-from #:inga/cache
+                #:defunc)
   (:export #:language-client
            #:make-client
            #:client-process
            #:client-req-id
            #:client-path
-           #:client-cache
            #:start-client
            #:stop-client
            #:references-client
+           #:references-client-generic
            #:get-references-key
            #:get-command
            #:increment-req-id
@@ -27,12 +29,10 @@
          :accessor client-path)
    (id-key :initarg :id-key
            :initform "id"
-           :reader client-id-key)
-   (cache :initarg :cache
-          :accessor client-cache)))
+           :reader client-id-key)))
 
-(defgeneric make-client (kind path cache)
-  (:method (kind path cache)
+(defgeneric make-client (kind path)
+  (:method (kind path)
     (error 'unknown-client :name kind)))
 
 (defgeneric start-client (client)
@@ -41,7 +41,9 @@
 (defgeneric stop-client (client)
   (:method (client)))
 
-(defgeneric references-client (client pos)
+(defunc references-client (client pos)
+  (references-client-generic client pos))
+(defgeneric references-client-generic (client pos)
   (:method (client pos)))
 
 (defgeneric get-command (client command))

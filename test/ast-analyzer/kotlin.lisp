@@ -1,9 +1,7 @@
 (defpackage #:inga/test/ast-analyzer/kotlin
   (:use #:cl
         #:fiveam
-        #:inga/ast-analyzer)
-  (:import-from #:inga/cache
-                #:make-cache))
+        #:inga/ast-analyzer))
 (in-package #:inga/test/ast-analyzer/kotlin)
 
 (def-suite kotlin)
@@ -12,7 +10,6 @@
 (defparameter *kotlin-path* (merge-pathnames #p"test/fixtures/kotlin/"))
 
 (test find-definitions-for-method
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzers
           (list
             (start-ast-analyzer :java nil *kotlin-path*)
@@ -40,7 +37,6 @@
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-references-for-primary-constructor
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzers
           (list
             (start-ast-analyzer :java nil *kotlin-path*)
@@ -60,7 +56,6 @@
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-references-for-fq-method
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzers
           (list
             (start-ast-analyzer :java nil *kotlin-path*)
@@ -80,7 +75,6 @@
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-references-for-java-class
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzers
           (list
             (start-ast-analyzer :java nil *kotlin-path*)

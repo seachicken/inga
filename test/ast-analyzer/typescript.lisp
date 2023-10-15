@@ -1,9 +1,7 @@
 (defpackage #:inga/test/ast-analyzer/typescript
   (:use #:cl
         #:fiveam
-        #:inga/ast-analyzer)
-  (:import-from #:inga/cache
-                #:make-cache))
+        #:inga/ast-analyzer))
 (in-package #:inga/test/ast-analyzer/typescript)
 
 (def-suite typescript)
@@ -18,7 +16,6 @@
 ;;   title: "Hello" ←[in]
 ;; };
 (test find-definitions-for-variable-object-literal-expression
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzer (start-ast-analyzer :typescript nil *nestjs-path*)))
     (create-indexes *nestjs-path* :include inga/main::*include-typescript*)
     (is (equal
@@ -51,7 +48,6 @@
 ;;   }
 ;; }
 (test find-definitions-for-function
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzer (start-ast-analyzer :typescript nil *react-path*)))
     (create-indexes *react-path* :include inga/main::*include-typescript*)
     (is (equal
@@ -82,7 +78,6 @@
 ;;   const a = 0; ←[in]
 ;; });
 (test find-definitions-for-variable-call-expression
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzer (start-ast-analyzer :typescript nil *nestjs-path*)))
     (create-indexes *nestjs-path* :include inga/main::*include-typescript*)
     (is (equal
@@ -116,7 +111,6 @@
   (if t
       (skip "heap exhausted in CI")
       (progn
-        (setf inga/ast-analyzer/base::*cache* (make-cache 0))
         (let ((ast-analyzer (start-ast-analyzer :typescript nil *fixtures-path*)))
           (create-indexes *fixtures-path* :include inga/main::*include-typescript*)
           (is (equal
@@ -149,7 +143,6 @@
 ;;   })
 ;; }
 (test find-definitions-for-variable-arrow-function
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzer (start-ast-analyzer :typescript nil *react-path*)))
     (create-indexes *react-path* :include inga/main::*include-typescript*)
     (is (equal
@@ -183,7 +176,6 @@
   (if t
       (skip "heap exhausted in CI")
       (progn
-        (setf inga/ast-analyzer/base::*cache* (make-cache 0))
         (let ((ast-analyzer (start-ast-analyzer :typescript nil *fixtures-path*)))
           (create-indexes *fixtures-path* :include inga/main::*include-typescript*)
           (is (equal
@@ -216,7 +208,6 @@
 ;;   }
 ;; }
 (test find-definitions-for-method
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzer (start-ast-analyzer :typescript nil *nestjs-path*)))
     (create-indexes *nestjs-path* :include inga/main::*include-typescript*)
     (is (equal
@@ -243,7 +234,6 @@
     (stop-ast-analyzer ast-analyzer)))
 
 (test find-entrypoint
-  (setf inga/ast-analyzer/base::*cache* (make-cache 0))
   (let ((ast-analyzer (start-ast-analyzer :typescript nil *react-path*)))
     (create-indexes *react-path* :include inga/main::*include-typescript*)
     (is (equal

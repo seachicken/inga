@@ -1,19 +1,17 @@
 (defpackage #:inga/ast-analyzer/base
   (:use #:cl
         #:inga/utils)
+  (:import-from #:inga/cache
+                #:defunc)
   (:import-from #:inga/file
                 #:is-match
                 #:is-analysis-target)
-  (:import-from #:inga/cache
-                #:put-value
-                #:get-value)
   (:import-from #:inga/errors
                 #:inga-error)
   (:export #:ast-analyzer
            #:*ast-analyzers*
            #:ast-analyzer-process
            #:ast-analyzer-path
-           #:ast-analyzer-cache
            #:start-ast-analyzer
            #:stop-ast-analyzer
            #:find-definitions
@@ -49,7 +47,6 @@
 (defparameter *package-index-groups* nil)
 (defparameter *project-index-groups* nil)
 (defparameter *ast-analyzers* nil)
-(defvar *cache*)
 
 (defclass ast-analyzer ()
   ((process
@@ -75,30 +72,22 @@
 (defgeneric find-entrypoint-generic (ast-analyzer pos)
   (:method (ast-analyzer pos)))
 
-(defun find-references (pos)
-  (let ((cached-value (get-value *cache* (get-references-key pos))))
-    (values
-      (if (null cached-value)
-          (inga/utils::funtime
-            (lambda ()
-              (loop for path in (get-scoped-index-paths pos)
-                    with results
-                    with ast
-                    do
-                    (let ((ast-analyzer (get-ast-analyzer (namestring path))))
-                      (setf ast (parse-to-ast path))
+(defunc find-references (pos)
+  (inga/utils::funtime
+    (lambda ()
+      (loop for path in (get-scoped-index-paths pos)
+            with results
+            with ast
+            do
+            (let ((ast-analyzer (get-ast-analyzer (namestring path))))
+              (setf ast (parse-to-ast path))
 
-                      (let ((references (find-references-by-file ast-analyzer path ast pos)))
-                        (when references
-                          (setf results (append results references)))))
-                    finally
-                    (put-value *cache* (get-references-key pos)
-                               (if results results 'empty))
-                    (return (values results nil))))
-            :label "find-references"
-            :args pos)
-          (if (eq cached-value 'empty) nil cached-value))
-      (when cached-value t))))
+              (let ((references (find-references-by-file ast-analyzer path ast pos)))
+                (when references
+                  (setf results (append results references)))))
+            finally (return results)))
+    :label "find-references"
+    :args pos))
 
 (defun get-scoped-index-paths (pos)
   (cond

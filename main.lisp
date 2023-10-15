@@ -21,9 +21,6 @@
                 #:find-references
                 #:create-indexes
                 #:clean-indexes)
-  (:import-from #:inga/cache
-                #:make-cache
-                #:size)
   (:import-from #:inga/plugin/jvm-dependency-loader)
   (:import-from #:inga/plugin/jvm-helper
                 #:find-base-path)
@@ -43,12 +40,6 @@
 (defparameter *include-java*
   '("*.java"
     "*.kt"))
-(defparameter *cache-max-size* 100)
-(defparameter *cache* (make-cache *cache-max-size*))
-
-(defparameter *debug-parse* (inga/utils::make-measuring-time))
-(defparameter *debug-find-definitions* (inga/utils::make-measuring-time))
-(defparameter *debug-find-references* (inga/utils::make-measuring-time))
 
 (define-condition inga-error-option-not-found (inga-error) ())
 (define-condition inga-error-context-not-found (inga-error) ())
@@ -61,13 +52,6 @@
                           (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
                           :include include :exclude exclude)))
           (let ((results (analyze ctx diffs)))
-            (log-debug (format nil "cache size: ~a/~a" (size *cache*) *cache-max-size*))
-            (log-debug (format nil "measuring time:~%  find-definitions: [times: ~a, avg-sec: ~f]~%  find-references: [times: ~a, avg-sec: ~f, cache-hit: ~a]"
-                               (inga/utils::measuring-time-times *debug-find-definitions*)
-                               (inga/utils::avg-sec *debug-find-definitions*)
-                               (inga/utils::measuring-time-times *debug-find-references*)
-                               (inga/utils::avg-sec *debug-find-references*)
-                               (inga/utils::measuring-time-cache-hit *debug-find-references*)))
             (ensure-directories-exist "reports/")
             (with-open-file (out "reports/report.json"
                                  :direction :output
@@ -113,14 +97,13 @@
                       (list :base-commit base-commit))))))
 
 (defun start (root-path context-kinds &key include exclude)
-  (setf inga/ast-analyzer/base::*cache* *cache*)
   (let ((ctx (alexandria:switch ((when (> (length context-kinds) 0) (first context-kinds)))
                (:typescript
                  (make-context
                    :project-path root-path
                    :include (or include *include-typescript*)
                    :exclude exclude
-                   :lc (make-client :typescript root-path *cache*)
+                   :lc (make-client :typescript root-path)
                    :ast-analyzers (list
                                     (start-ast-analyzer :typescript exclude root-path))))
                (:java
@@ -222,19 +205,13 @@
                                             ,(convert-to-output-pos (context-project-path ctx)
                                                                     pos)))))  
                                       (find-entrypoints ctx pos q)))
-                            (inga/utils::measure
-                              *debug-find-definitions*
-                              (lambda () (find-definitions range)))))))))
+                            (find-definitions range)))))))
 
 (defun find-entrypoints (ctx pos q)
   (let ((refs
           (if (context-lc ctx)
-              (inga/utils::measure
-                *debug-find-references*
-                (lambda () (references-client (context-lc ctx) pos))) 
-              (inga/utils::measure
-                *debug-find-references*
-                (lambda () (find-references pos)))))
+              (references-client (context-lc ctx) pos) 
+              (find-references pos)))
         results)
     (setf refs (remove nil (mapcar (lambda (ref)
                                      (when (is-analysis-target (cdr (assoc :path ref))
