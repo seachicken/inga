@@ -4,7 +4,8 @@
   (:import-from #:inga/cache
                 #:defunc)
   (:import-from #:inga/errors
-                #:inga-error-process-not-running)
+                #:inga-error-process-not-running
+                #:inga-error-process-failed)
   (:import-from #:inga/plugin/jvm-helper
                 #:find-base-path)
   (:export #:start
@@ -23,7 +24,7 @@
                   `("java" "-cp"
                     ,(format nil "~a/libs/jvm-dependency-loader.jar" (uiop:getenv "INGA_HOME"))
                     "inga.jvmdependencyloader.Main"))
-          :input :stream :output :stream))
+          :input :stream :output :stream :error-output :stream))
   (setf *root-path* root-path)
   *jvm-dependency-loader*)
 
@@ -63,9 +64,14 @@
 (defunc exec-command (process cmd)
   (inga/utils::funtime
     (lambda ()
-      (write-line cmd (uiop:process-info-input process))
-      (force-output (uiop:process-info-input process))
-      (read-line (uiop:process-info-output process)))
+      (handler-case
+        (progn
+          (write-line cmd (uiop:process-info-input process))
+          (force-output (uiop:process-info-input process))
+          (read-line (uiop:process-info-output process)))
+        (error (e)
+               (princ (uiop:slurp-stream-string (uiop:process-info-error-output process)))
+               (error 'inga-error-process-failed))))
     :label "jvm-dependency-loader"
     :args cmd))
 
