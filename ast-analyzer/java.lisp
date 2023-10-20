@@ -139,7 +139,7 @@
                                             vn)
                                       (setf path (replace-variable-name
                                                    path vn
-                                                   (convert-to-json-type (find-variable-name vn v index-path))))))))
+                                                   (convert-to-json-type (find-variable-fq-class-name vn v index-path))))))))
                           (cons :path path))
                         (cons :file-pos pos))))))
           (when (assoc :origin range)
@@ -341,7 +341,7 @@
                            (when method
                              (jsown:val (jsown:val method "returnType") "name")))))
                      (if (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))
-                         (or (find-variable-name
+                         (or (find-variable-fq-class-name
                                (ast-value (first (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))) "name")
                                ast
                                index-path)
@@ -393,7 +393,7 @@
        (when (jsown:keyp ast "parent")
          (enqueue q (jsown:val ast "parent")))))))
 
-(defun find-variable-name (object-name ast index-path)
+(defun find-variable-fq-class-name (object-name ast index-path)
   (let ((variable (find-variable object-name ast index-path)))
     (cond
       ((ast-get variable '("IDENTIFIER"))
@@ -443,7 +443,7 @@
                               ("NEW_CLASS"
                                (find-fq-class-name (ast-value arg "name") arg))
                               ("IDENTIFIER"
-                               (find-variable-name (ast-value arg "name") arg index-path))
+                               (find-variable-fq-class-name (ast-value arg "name") arg index-path))
                               ("METHOD_INVOCATION"
                                (let ((fq-name (find-fq-name-for-reference arg index-path)))
                                  (let ((method (find-signature fq-name
@@ -542,7 +542,7 @@
                         "org.springframework.web.util.UriComponentsBuilder.path-java.lang.String")
                       (setf path (format nil "/{~a}"
                                          (convert-to-json-type
-                                           (find-variable-name
+                                           (find-variable-fq-class-name
                                              (ast-value (get-parameter 0 ast) "name")
                                              ast
                                              index-path)))))

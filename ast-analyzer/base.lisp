@@ -158,7 +158,7 @@
                                  (return method)))
                       (first matched-methods))))))
 
-(defun find-signatures (fq-class-name &optional from)
+(defun find-signatures (fq-class-name)
   (loop for path in (uiop:directory-files *index-path*)
       do
       (let ((ast-analyzer (get-ast-analyzer (namestring path)))
