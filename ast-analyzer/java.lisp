@@ -367,7 +367,7 @@
   (cond
     ((find class-name '("INT") :test 'equal)
      class-name)
-    ((find class-name '("String") :test 'equal)
+    ((find class-name '("Long" "String") :test 'equal)
      (concatenate 'string "java.lang." class-name))
     (t
      (loop
