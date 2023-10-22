@@ -21,8 +21,6 @@
            #:find-references
            #:find-reference
            #:find-signature
-           #:find-signatures
-           #:find-signatures-generic
            #:matches-signature
            #:find-class-hierarchy
            #:find-class-hierarchy-generic
@@ -157,18 +155,6 @@
                             do (unless (jsown:val (jsown:val method "returnType") "isInterface")
                                  (return method)))
                       (first matched-methods))))))
-
-(defun find-signatures (fq-class-name)
-  (loop for path in (uiop:directory-files *index-path*)
-      do
-      (let ((ast-analyzer (get-ast-analyzer (namestring path)))
-            (ast (parse-to-ast path)))
-        (let ((signatures (find-signatures-generic ast-analyzer fq-class-name ast)))
-          (when signatures
-            (return-from find-signatures signatures))))))
-
-(defgeneric find-signatures-generic (ast-analyzer fq-class-name root-ast)
-  (:method (ast-analyzer fq-class-name root-ast)))
 
 (defun matches-signature (target-fq-name api-fq-name)
   (let ((split-target-fq-names (split #\- target-fq-name))

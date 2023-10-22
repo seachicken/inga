@@ -234,42 +234,6 @@
           `((:path . ,(get-original-path index-path))
             (:top-offset . ,(ast-value ast "startPos"))))))))
 
-(defmethod find-signatures-generic ((ast-analyzer ast-analyzer-java) fq-class-name root-ast)
-  (loop
-    with stack = (list root-ast)
-    with ast
-    with target-package-name = (format nil "~{~a~^.~}" (butlast (split #\. fq-class-name)))
-    with target-class-name = (first (last (split #\. fq-class-name)))
-    with package-name
-    with class-name
-    with results
-    do
-    (setf ast (pop stack))
-    (if (null ast) (return results))
-
-    (when (equal (ast-value ast "type") "PACKAGE")
-      (unless (equal (ast-value ast "packageName") target-package-name)
-        (return-from find-signatures-generic))
-      (setf package-name (ast-value ast "packageName")))
-    (when (or
-            (equal (ast-value ast "type") "CLASS")
-            (equal (ast-value ast "type") "RECORD")
-            (equal (ast-value ast "type") "INTERFACE"))
-      (unless (equal (ast-value ast "name") target-class-name)
-        (return-from find-signatures-generic))
-      (setf class-name (ast-value ast "name")))
-    (when (equal (ast-value ast "type") "VARIABLE")
-      (setf results (append results (list
-                                      `(:obj
-                                         ("kind" . "variable")
-                                         ("name" . ,(ast-value ast "name"))
-                                         ("type" . ,(find-fq-class-name
-                                                      (ast-value (first (ast-get ast '("IDENTIFIER"))) "name")
-                                                      ast)))))))
-
-    (loop for child in (jsown:val ast "children")
-          do (setf stack (append stack (list child))))))
-
 (defmethod find-class-hierarchy-generic ((ast-analyzer ast-analyzer-java) fq-class-name root-ast index-path)
   (loop
     with stack = (list root-ast)
@@ -400,8 +364,10 @@
        (find-fq-class-name (ast-value (first (ast-get variable '("IDENTIFIER"))) "name") variable))
       ((ast-get variable '("METHOD_INVOCATION"))
        (let ((fq-name (find-fq-name-for-reference (first (ast-get variable '("METHOD_INVOCATION"))) index-path)))
-         (let ((method (find-signature fq-name
-                                       #'(lambda (fq-class-name) (load-signatures fq-class-name (get-original-path index-path))))))
+         (let ((method (find-signature
+                         fq-name
+                         #'(lambda (fq-class-name)
+                             (load-signatures fq-class-name (get-original-path index-path))))))
            (when method
              (jsown:val (jsown:val method "returnType") "name"))))))))
 
@@ -446,14 +412,13 @@
                                (find-variable-fq-class-name (ast-value arg "name") arg index-path))
                               ("METHOD_INVOCATION"
                                (let ((fq-name (find-fq-name-for-reference arg index-path)))
-                                 (let ((method (find-signature fq-name
-                                                               #'(lambda (fq-class-name)
-                                                                   (load-signatures fq-class-name (get-original-path index-path))))))
+                                 (let ((method (find-signature
+                                                 fq-name
+                                                 #'(lambda (fq-class-name)
+                                                     (load-signatures fq-class-name (get-original-path index-path))))))
                                    (if method
                                        (jsown:val (jsown:val method "returnType") "name")
-                                       (ast-value
-                                         (find-signature fq-name #'find-signatures)
-                                         "type")))))
+                                       "?"))))
                               (t
                                 "?"))))))
         finally (return results)))

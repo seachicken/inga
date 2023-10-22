@@ -68,10 +68,10 @@
         (progn
           (write-line cmd (uiop:process-info-input process))
           (force-output (uiop:process-info-input process))
+          (loop while (listen (uiop:process-info-error-output process))
+                do (format t "~a~%" (read-line (uiop:process-info-error-output process))))
           (read-line (uiop:process-info-output process)))
-        (error (e)
-               (princ (uiop:slurp-stream-string (uiop:process-info-error-output process)))
-               (error 'inga-error-process-failed))))
+        (error (e) (error 'inga-error-process-failed))))
     :label "jvm-dependency-loader"
     :args cmd))
 
