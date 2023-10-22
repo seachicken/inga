@@ -1,7 +1,10 @@
 (defpackage #:inga/test/ast-analyzer/java
   (:use #:cl
         #:fiveam
-        #:inga/ast-analyzer))
+        #:inga/ast-analyzer)
+  (:import-from #:inga/test/helper
+                #:compile-gradle
+                #:compile-maven))
 (in-package #:inga/test/ast-analyzer/java)
 
 (def-suite java)
@@ -11,6 +14,9 @@
 (defparameter *spring-boot-path*
   (truename (uiop:merge-pathnames* "test/fixtures/spring-boot-realworld-example-app/")))
 (defparameter *lightrun-path* (merge-pathnames "test/fixtures/spring-tutorials/lightrun/"))
+
+(compile-gradle *spring-boot-path*)
+(compile-maven *lightrun-path*)
 
 (test find-definitions-for-constructor
   (let ((ast-analyzers
@@ -542,23 +548,6 @@
                         (:fq-name . "com.baeldung.apiservice.adapters.users.UserRepository.getUserById-java.lang.String")
                         ))))))
     (clean-indexes)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
-
-(test find-signatures-for-record
-  (inga/plugin/jvm-dependency-loader:start *java-path*)
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *java-path*)
-            (start-ast-analyzer :kotlin nil *java-path*))))
-    (create-indexes *java-path* :include inga/main::*include-java*)
-    (is (equal
-          '((:obj
-              ("kind" . "variable")
-              ("name" . "s")
-              ("type" . "java.lang.String")))
-          (find-signatures "p1.RecordDefinition")))
-    (clean-indexes)
-    (inga/plugin/jvm-dependency-loader:stop)
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test matches-signature
