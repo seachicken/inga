@@ -177,12 +177,12 @@
 
 (defun find-class-hierarchy (fq-class-name)
   (loop for path in (uiop:directory-files *index-path*)
-      do
-      (let ((ast-analyzer (get-ast-analyzer (namestring path)))
-            (ast (parse-to-ast path)))
-        (let ((class-hierarchy (find-class-hierarchy-generic ast-analyzer fq-class-name ast path)))
-          (when class-hierarchy
-            (return-from find-class-hierarchy class-hierarchy)))))
+        do
+        (let ((ast-analyzer (get-ast-analyzer (namestring path)))
+              (ast (parse-to-ast path)))
+          (let ((class-hierarchy (find-class-hierarchy-generic ast-analyzer fq-class-name ast path)))
+            (when class-hierarchy
+              (return-from find-class-hierarchy class-hierarchy)))))
   (list fq-class-name))
 
 (defgeneric find-class-hierarchy-generic (ast-analyzer fq-class-name root-ast index-path)
