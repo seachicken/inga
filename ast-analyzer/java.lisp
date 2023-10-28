@@ -230,7 +230,7 @@
             `((:path . ,(get-original-path index-path))
               (:top-offset . ,(ast-value ast "startPos"))))))
       (t
-        (when (equal fq-name (cdr (assoc :fq-name target-pos)))
+        (when (matches-signature fq-name (cdr (assoc :fq-name target-pos)))
           `((:path . ,(get-original-path index-path))
             (:top-offset . ,(ast-value ast "startPos"))))))))
 
@@ -362,6 +362,8 @@
     (cond
       ((ast-get variable '("IDENTIFIER"))
        (find-fq-class-name (ast-value (first (ast-get variable '("IDENTIFIER"))) "name") variable))
+      ((ast-get variable '("PARAMETERIZED_TYPE"))
+       (find-fq-class-name (ast-value (first (ast-get variable '("PARAMETERIZED_TYPE"))) "name") variable))
       ((ast-get variable '("METHOD_INVOCATION"))
        (let ((fq-name (find-fq-name-for-reference (first (ast-get variable '("METHOD_INVOCATION"))) index-path)))
          (let ((method (find-signature

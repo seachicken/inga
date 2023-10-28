@@ -409,6 +409,7 @@
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
 (test find-references-for-constructor
+  (inga/plugin/jvm-dependency-loader:start *spring-boot-path*)
   (let ((ast-analyzers
           (list
             (start-ast-analyzer :java nil *java-path*)
@@ -425,7 +426,8 @@
               (:name . "ConstructorHelper")
               (:fq-name . "p1.ConstructorHelper.ConstructorHelper-INT")))))
     (clean-indexes)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+    (loop for a in ast-analyzers do (stop-ast-analyzer a))
+    (inga/plugin/jvm-dependency-loader:stop)))
 
 (test find-references-for-private-method
   (let ((ast-analyzers
@@ -445,6 +447,39 @@
               (:fq-name . "p1.PrivateMethodReference.method2")))))
     (clean-indexes)
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+
+(test find-references-with-sub-class-args
+  (inga/plugin/jvm-dependency-loader:start *spring-boot-path*)
+  (inga/plugin/spring-property-loader:start *spring-boot-path*)
+  (let ((ast-analyzers
+          (list
+            (start-ast-analyzer :java nil *spring-boot-path*)
+            (start-ast-analyzer :kotlin nil *spring-boot-path*))))
+    (create-indexes *spring-boot-path* :include inga/main::*include-java*)
+    (is (equal
+          `(((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *spring-boot-path* "src/main/java/io/spring/application/ArticleQueryService.java"
+                      '((:line . 63) (:offset . 14)))))
+            ((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *spring-boot-path* "src/main/java/io/spring/application/ArticleQueryService.java"
+                      '((:line . 84) (:offset . 14)))))
+            ((:path . "src/main/java/io/spring/application/CommentQueryService.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      *spring-boot-path* "src/main/java/io/spring/application/CommentQueryService.java"
+                      '((:line . 60) (:offset . 14))))))
+          (find-references
+            `((:path . "src/main/java/io/spring/application/CursorPager.java")
+              (:name . "CursorPager")
+              (:fq-name . "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager.Direction-BOOLEAN")))))
+    (clean-indexes)
+    (loop for a in ast-analyzers do (stop-ast-analyzer a))
+    (inga/plugin/spring-property-loader:stop)
+    (inga/plugin/jvm-dependency-loader:stop)))
 
 (test find-references-for-rest-client-get-method
   (inga/plugin/jvm-dependency-loader:start *java-path*)
@@ -564,6 +599,22 @@
     (inga/plugin/jvm-dependency-loader:stop)
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
 
+(test matches-signature-with-sub-class
+  (inga/plugin/jvm-dependency-loader:start *spring-boot-path*)
+  (let ((ast-analyzers
+          (list
+            (start-ast-analyzer :java nil *spring-boot-path*)
+            (start-ast-analyzer :kotlin nil *spring-boot-path*))))
+    (create-indexes *spring-boot-path* :include inga/main::*include-java*)
+    (is (eq
+          t
+          (matches-signature
+            "io.spring.application.CursorPager.CursorPager-java.util.ArrayList-io.spring.application.CursorPager.Direction-BOOLEAN"
+            "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager.Direction-BOOLEAN")))
+    (clean-indexes)
+    (inga/plugin/jvm-dependency-loader:stop)
+    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+
 (test find-class-hierarchy-with-standard-class
   (inga/plugin/jvm-dependency-loader:start *lightrun-path*)
   (let ((ast-analyzers
@@ -572,7 +623,12 @@
             (start-ast-analyzer :kotlin nil *lightrun-path*))))
     (create-indexes *lightrun-path* :include inga/main::*include-java*)
     (is (equal
-          '("java.lang.Object"
+          '("java.io.Serializable"
+            "java.lang.Comparable"
+            "java.lang.CharSequence"
+            "java.lang.constant.Constable"
+            "java.lang.constant.ConstantDesc"
+            "java.lang.Object"
             "java.lang.String")
           (find-class-hierarchy "java.lang.String")))
     (clean-indexes)
