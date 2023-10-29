@@ -1,10 +1,7 @@
 (defpackage #:inga/test/ast-analyzer/java
   (:use #:cl
         #:fiveam
-        #:inga/ast-analyzer)
-  (:import-from #:inga/test/helper
-                #:compile-gradle
-                #:compile-maven))
+        #:inga/ast-analyzer))
 (in-package #:inga/test/ast-analyzer/java)
 
 (def-suite java)
@@ -14,9 +11,6 @@
 (defparameter *spring-boot-path*
   (truename (uiop:merge-pathnames* "test/fixtures/spring-boot-realworld-example-app/")))
 (defparameter *lightrun-path* (merge-pathnames "test/fixtures/spring-tutorials/lightrun/"))
-
-(compile-gradle *spring-boot-path*)
-(compile-maven *lightrun-path*)
 
 (test find-definitions-for-constructor
   (let ((ast-analyzers

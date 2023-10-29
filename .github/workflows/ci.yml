@@ -35,23 +35,27 @@ jobs:
             BASE_IMAGE=inga-java
       - name: Run tests
         run: |
-          docker run test-inga-java -c "ros -s fiveam -e \"
-            (ql:quickload :inga)
-            (unless (asdf:test-system :inga)
-              (uiop:quit 1))
-            (ql:quickload :inga/test-java)
-            (unless (fiveam:run! (list
-                                   (uiop:find-symbol* '#:java
-                                                      :inga/test/main)
-                                   (uiop:find-symbol* '#:java
-                                                      :inga/test/ast-analyzer/java)
-                                   (uiop:find-symbol* '#:kotlin
-                                                      :inga/test/ast-analyzer/kotlin)
-                                   (uiop:find-symbol* '#:java
-                                                      :inga/test/plugin/jvm-helper)
-                                   (uiop:find-symbol* '#:java
-                                                      :inga/test/plugin/spring-property-loader)))
-              (uiop:quit 1))\""
+          docker run test-inga-java -c "
+            (cd /inga/test/fixtures/spring-boot-realworld-example-app && ./gradlew compileJava)
+            (cd /inga/test/fixtures/spring-tutorials/lightrun && mvn compile)
+
+            ros -s fiveam -e \"
+              (ql:quickload :inga)
+              (unless (asdf:test-system :inga)
+                (uiop:quit 1))
+              (ql:quickload :inga/test-java)
+              (unless (fiveam:run! (list
+                                     (uiop:find-symbol* '#:java
+                                                        :inga/test/main)
+                                     (uiop:find-symbol* '#:java
+                                                        :inga/test/ast-analyzer/java)
+                                     (uiop:find-symbol* '#:kotlin
+                                                        :inga/test/ast-analyzer/kotlin)
+                                     (uiop:find-symbol* '#:java
+                                                        :inga/test/plugin/jvm-helper)
+                                     (uiop:find-symbol* '#:java
+                                                        :inga/test/plugin/spring-property-loader)))
+                (uiop:quit 1))\""
 
   test-typescript:
     strategy:

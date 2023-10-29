@@ -1,10 +1,7 @@
 (defpackage #:inga/test/main
   (:use #:cl
         #:fiveam
-        #:inga/main)
-  (:import-from #:inga/test/helper
-                #:compile-gradle
-                #:compile-maven))
+        #:inga/main))
 (in-package #:inga/test/main)
 
 ;; NOTE: To run this test file, execute `(asdf:test-system :inga)' in your Lisp.
@@ -50,9 +47,6 @@
   (truename (uiop:merge-pathnames* "test/fixtures/spring-boot-realworld-example-app/")))
 (defparameter *lightrun-path*
   (truename (uiop:merge-pathnames* "test/fixtures/spring-tutorials/lightrun/")))
-
-(compile-gradle *back-path*)
-(compile-maven *lightrun-path*)
 
 (test analyze-by-range-for-entry-points
   (let ((ctx (inga/main::start *back-path* '(:java) :exclude '("src/test/**"))))
