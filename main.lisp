@@ -161,16 +161,18 @@
   (setf diffs (mapcar (lambda (diff)
                         (push (cons :start-offset
                                     (convert-to-top-offset
-                                      (context-project-path ctx)
-                                      (cdr (assoc :path diff))
+                                      (merge-pathnames
+                                        (cdr (assoc :path diff)) 
+                                        (context-project-path ctx))
                                       (list
                                         (cons :line (cdr (assoc :start diff)))
                                         (cons :offset 0))))
                               diff)
                         (push (cons :end-offset
                                     (convert-to-top-offset
-                                      (context-project-path ctx)
-                                      (cdr (assoc :path diff))
+                                      (merge-pathnames
+                                        (cdr (assoc :path diff)) 
+                                        (context-project-path ctx))
                                       (list
                                         (cons :line (cdr (assoc :end diff)))
                                         (cons :offset -1))))
@@ -268,7 +270,8 @@
 (defun convert-to-output-pos (root-path pos)
   (when (eq (cdr (assoc :type pos)) :rest-server)
     (setf pos (cdr (assoc :file-pos pos))))
-  (let ((text-pos (convert-to-pos root-path (cdr (assoc :path pos)) (cdr (assoc :top-offset pos)))))
+  (let ((text-pos (convert-to-pos (merge-pathnames (cdr (assoc :path pos)) root-path)
+                                  (cdr (assoc :top-offset pos)))))
     (list
       (cons :path (enough-namestring (cdr (assoc :path pos)) root-path))
       (cons :name (cdr (assoc :name pos)))

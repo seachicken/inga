@@ -25,17 +25,17 @@
              (:fq-name . "p1.ConstructorDefinition.ConstructorDefinition")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *java-path* "p1/ConstructorDefinition.java"
+                      (merge-pathnames "p1/ConstructorDefinition.java" *java-path*)
                       '((:line . 4) (:offset . 12))))))
           (find-definitions
             `((:path . "p1/ConstructorDefinition.java")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *java-path* "p1/ConstructorDefinition.java"
+                       (merge-pathnames "p1/ConstructorDefinition.java" *java-path*)
                        '((:line . 4) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *java-path* "p1/ConstructorDefinition.java"
+                       (merge-pathnames "p1/ConstructorDefinition.java" *java-path*)
                        '((:line . 4) (:offset . -1))))))))
     (clean-indexes)
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
@@ -53,17 +53,17 @@
              (:fq-name . "p1.MethodDefinition.method-INT")
              ,(cons :top-offset
                     (convert-to-top-offset
-                       *java-path* "p1/MethodDefinition.java"
+                      (merge-pathnames "p1/MethodDefinition.java" *java-path*)
                       '((:line . 7) (:offset . 17))))))
           (find-definitions
             `((:path . "p1/MethodDefinition.java")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *java-path* "p1/MethodDefinition.java"
+                       (merge-pathnames "p1/MethodDefinition.java" *java-path*)
                        '((:line . 7) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *java-path* "p1/MethodDefinition.java"
+                       (merge-pathnames "p1/MethodDefinition.java" *java-path*)
                        '((:line . 7) (:offset . -1))))))))
     (clean-indexes)
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
@@ -81,17 +81,17 @@
              (:fq-name . "p1.InterfaceDefinition.method-INT")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *java-path* "p1/InterfaceDefinition.java"
+                      (merge-pathnames "p1/InterfaceDefinition.java" *java-path*)
                       '((:line . 6) (:offset . 10))))))
           (find-definitions
             `((:path . "p1/InterfaceDefinition.java")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *java-path* "p1/InterfaceDefinition.java"
+                       (merge-pathnames "p1/InterfaceDefinition.java" *java-path*)
                        '((:line . 6) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *java-path* "p1/InterfaceDefinition.java"
+                       (merge-pathnames "p1/InterfaceDefinition.java" *java-path*)
                        '((:line . 6) (:offset . -1))))))))
     (clean-indexes)
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
@@ -109,17 +109,17 @@
              (:fq-name . "p1.InstanceVariableAnnotationDefinition.variable")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *java-path* "p1/InstanceVariableAnnotationDefinition.java"
+                      (merge-pathnames "p1/InstanceVariableAnnotationDefinition.java" *java-path*)
                       '((:line . 7) (:offset . 19))))))
           (find-definitions
             `((:path . "p1/InstanceVariableAnnotationDefinition.java")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *java-path* "p1/InstanceVariableAnnotationDefinition.java"
+                       (merge-pathnames "p1/InstanceVariableAnnotationDefinition.java" *java-path*)
                        '((:line . 6) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *java-path* "p1/InstanceVariableAnnotationDefinition.java"
+                       (merge-pathnames "p1/InstanceVariableAnnotationDefinition.java" *java-path*)
                        '((:line . 6) (:offset . -1))))))))
     (clean-indexes)
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
@@ -137,17 +137,17 @@
              (:fq-name . "p1.GenericTypeDefinition.GenericTypeDefinition-java.util.List")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *java-path* "p1/GenericTypeDefinition.java"
+                      (merge-pathnames "p1/GenericTypeDefinition.java" *java-path*)
                       '((:line . 6) (:offset . 12))))))
           (find-definitions
             `((:path . "p1/GenericTypeDefinition.java")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *java-path* "p1/GenericTypeDefinition.java"
+                       (merge-pathnames "p1/GenericTypeDefinition.java" *java-path*)
                        '((:line . 6) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *java-path* "p1/GenericTypeDefinition.java"
+                       (merge-pathnames "p1/GenericTypeDefinition.java" *java-path*)
                        '((:line . 6) (:offset . -1))))))))
     (clean-indexes)
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
@@ -194,20 +194,23 @@
                (:fq-name . "io.spring.api.ArticlesApi.getArticles-INT-INT-java.lang.String-java.lang.String-java.lang.String-io.spring.core.user.User")
                ,(cons :top-offset
                       (convert-to-top-offset
-                        *spring-boot-path*
-                        "src/main/java/io/spring/api/ArticlesApi.java"
+                        (merge-pathnames
+                          "src/main/java/io/spring/api/ArticlesApi.java"
+                          *spring-boot-path*)
                         '((:line . 49) (:offset . 25))))))))
           (find-definitions
             `((:path . "src/main/java/io/spring/api/ArticlesApi.java")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *spring-boot-path*
-                       "src/main/java/io/spring/api/ArticlesApi.java"
+                       (merge-pathnames
+                         "src/main/java/io/spring/api/ArticlesApi.java"
+                         *spring-boot-path*)
                        '((:line . 56) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *spring-boot-path*
-                       "src/main/java/io/spring/api/ArticlesApi.java"
+                       (merge-pathnames
+                         "src/main/java/io/spring/api/ArticlesApi.java"
+                         *spring-boot-path*)
                        '((:line . 56) (:offset . -1))))))))
     (clean-indexes)
     (loop for a in ast-analyzers do (stop-ast-analyzer a))
@@ -233,20 +236,20 @@
                (:fq-name . "p1.RestControllerDefinition.get-java.lang.String")
                ,(cons :top-offset
                       (convert-to-top-offset
-                        *java-path*
-                        "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                        (merge-pathnames
+                          "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
                         '((:line . 15) (:offset . 17))))))))
           (find-definitions
             `((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *java-path*
-                       "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                       (merge-pathnames
+                         "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
                        '((:line . 15) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *java-path*
-                       "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                       (merge-pathnames
+                         "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
                        '((:line . 15) (:offset . -1))))))))
     (clean-indexes)
     (loop for a in ast-analyzers do (stop-ast-analyzer a)))
@@ -271,20 +274,20 @@
                (:fq-name . "p1.RestControllerDefinition.create")
                ,(cons :top-offset
                       (convert-to-top-offset
-                        *java-path*
-                        "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                        (merge-pathnames
+                          "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
                         '((:line . 19) (:offset . 17))))))))
           (find-definitions
             `((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *java-path*
-                       "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                       (merge-pathnames
+                         "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
                        '((:line . 19) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *java-path*
-                       "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                       (merge-pathnames
+                         "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
                        '((:line . 19) (:offset . -1))))))))
     (clean-indexes)
     (loop for a in ast-analyzers do (stop-ast-analyzer a)))
@@ -309,20 +312,20 @@
                (:fq-name . "p1.RestControllerDefinition.update-java.lang.String")
                ,(cons :top-offset
                       (convert-to-top-offset
-                        *java-path*
-                        "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                        (merge-pathnames
+                          "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
                         '((:line . 23) (:offset . 17))))))))
           (find-definitions
             `((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *java-path*
-                       "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                       (merge-pathnames
+                         "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
                        '((:line . 23) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *java-path*
-                       "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                       (merge-pathnames
+                         "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
                        '((:line . 23) (:offset . -1))))))))
     (clean-indexes)
     (loop for a in ast-analyzers do (stop-ast-analyzer a)))
@@ -347,20 +350,20 @@
                (:fq-name . "p1.RestControllerDefinition.delete-java.lang.String")
                ,(cons :top-offset
                       (convert-to-top-offset
-                        *java-path*
-                        "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                        (merge-pathnames
+                          "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
                         '((:line . 27) (:offset . 17))))))))
           (find-definitions
             `((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *java-path*
-                       "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                       (merge-pathnames
+                         "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
                        '((:line . 27) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *java-path*
-                       "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                       (merge-pathnames
+                         "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
                        '((:line . 27) (:offset . -1))))))))
     (clean-indexes)
     (loop for a in ast-analyzers do (stop-ast-analyzer a)))
@@ -393,7 +396,7 @@
           `(((:path . "p1/NewClassReference.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *java-path* "p1/NewClassReference.java"
+                      (merge-pathnames "p1/NewClassReference.java" *java-path*)
                       '((:line . 7) (:offset . 9))))))
           (find-references
             `((:path . "p1/NewClassHelper.java")
@@ -413,7 +416,7 @@
           `(((:path . "p1/ConstructorReference.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *java-path* "p1/ConstructorReference.java"
+                      (merge-pathnames "p1/ConstructorReference.java" *java-path*)
                       '((:line . 7) (:offset . 9))))))
           (find-references
             `((:path . "p1/ConstructorHelper.java")
@@ -433,7 +436,7 @@
           `(((:path . "p1/PrivateMethodReference.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *java-path* "p1/PrivateMethodReference.java"
+                      (merge-pathnames "p1/PrivateMethodReference.java" *java-path*)
                       '((:line . 5) (:offset . 9))))))
           (find-references
             `((:path . "p1/PrivateMethodReference.java")
@@ -454,17 +457,23 @@
           `(((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *spring-boot-path* "src/main/java/io/spring/application/ArticleQueryService.java"
+                      (merge-pathnames
+                        "src/main/java/io/spring/application/ArticleQueryService.java"
+                        *spring-boot-path*)
                       '((:line . 63) (:offset . 14)))))
             ((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *spring-boot-path* "src/main/java/io/spring/application/ArticleQueryService.java"
+                      (merge-pathnames
+                        "src/main/java/io/spring/application/ArticleQueryService.java"
+                        *spring-boot-path*)
                       '((:line . 84) (:offset . 14)))))
             ((:path . "src/main/java/io/spring/application/CommentQueryService.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *spring-boot-path* "src/main/java/io/spring/application/CommentQueryService.java"
+                      (merge-pathnames
+                        "src/main/java/io/spring/application/CommentQueryService.java"
+                        *spring-boot-path*)
                       '((:line . 60) (:offset . 14))))))
           (find-references
             `((:path . "src/main/java/io/spring/application/CursorPager.java")
@@ -486,12 +495,12 @@
           `(((:path . "p1/client/ClientRestTemplate.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *java-path* "p1/client/ClientRestTemplate.java"
+                      (merge-pathnames "p1/client/ClientRestTemplate.java" *java-path*)
                       '((:line . 16) (:offset . 16)))))
             ((:path . "p1/client/ClientRestTemplate.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *java-path* "p1/client/ClientRestTemplate.java"
+                      (merge-pathnames "p1/client/ClientRestTemplate.java" *java-path*)
                       '((:line . 24) (:offset . 16))))))
           (find-references
             `((:type . :rest-server)
@@ -513,7 +522,7 @@
           `(((:path . "p1/client/ClientRestTemplate.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *java-path* "p1/client/ClientRestTemplate.java"
+                      (merge-pathnames "p1/client/ClientRestTemplate.java" *java-path*)
                       '((:line . 28) (:offset . 16))))))
           (find-references
             `((:type . :rest-server)
@@ -534,7 +543,7 @@
           `(((:path . "p1/KotlinReference.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *java-path* "p1/KotlinReference.java"
+                      (merge-pathnames "p1/KotlinReference.java" *java-path*)
                       '((:line . 9) (:offset . 9))))))
           (find-references
             '((:path . "p1/JavaReference.kt")

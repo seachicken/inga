@@ -23,20 +23,17 @@
               (:name . "articleAuthorSelect")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *nestjs-path*
-                      "src/article/article.service.ts"
+                      (merge-pathnames "src/article/article.service.ts" *nestjs-path*)
                       '((:line . 7) (:offset . 7))))))
           (find-definitions
             `((:path . "src/article/article.service.ts")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *nestjs-path*
-                       "src/article/article.service.ts"
+                       (merge-pathnames "src/article/article.service.ts" *nestjs-path*)
                        '((:line . 8) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *nestjs-path*
-                       "src/article/article.service.ts"
+                       (merge-pathnames "src/article/article.service.ts" *nestjs-path*)
                        '((:line . 8) (:offset . -1))))))))
     (clean-indexes)
     (stop-ast-analyzer ast-analyzer)))
@@ -55,20 +52,17 @@
               (:name . "addTodo")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *react-path*
-                      "src/App/NewTodoInput/index.tsx"
+                      (merge-pathnames "src/App/NewTodoInput/index.tsx" *react-path*)
                       '((:line . 12) (:offset . 12))))))
           (find-definitions
             `((:path . "src/App/NewTodoInput/index.tsx")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *react-path*
-                       "src/App/NewTodoInput/index.tsx"
+                       (merge-pathnames "src/App/NewTodoInput/index.tsx" *react-path*)
                        '((:line . 13) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *react-path*
-                       "src/App/NewTodoInput/index.tsx"
+                       (merge-pathnames "src/App/NewTodoInput/index.tsx" *react-path*)
                        '((:line . 13) (:offset . -1))))))))
     (clean-indexes)
     (stop-ast-analyzer ast-analyzer)))
@@ -85,20 +79,17 @@
               (:name . "User")  
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *nestjs-path*
-                      "src/user/user.decorator.ts"
+                      (merge-pathnames "src/user/user.decorator.ts" *nestjs-path*)
                       '((:line . 5) (:offset . 14))))))
           (find-definitions
             `((:path . "src/user/user.decorator.ts")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *nestjs-path*
-                       "src/user/user.decorator.ts"
+                       (merge-pathnames "src/user/user.decorator.ts" *nestjs-path*)
                        '((:line . 9) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *nestjs-path*
-                       "src/user/user.decorator.ts"
+                       (merge-pathnames "src/user/user.decorator.ts" *nestjs-path*)
                        '((:line . 9) (:offset . -1))))))))
     (clean-indexes)
     (stop-ast-analyzer ast-analyzer)))
@@ -118,20 +109,17 @@
                    (:name . "a, b")
                    ,(cons :top-offset
                           (convert-to-top-offset
-                            *fixtures-path*
-                            "declaration.ts"
+                            (merge-pathnames "declaration.ts" *fixtures-path*)
                             '((:line . 4) (:offset . 8))))))
                 (find-definitions
                   `((:path . "declaration.ts")
                     ,(cons :start-offset
                            (convert-to-top-offset
-                             *fixtures-path*
-                             "declaration.ts"
+                             (merge-pathnames "declaration.ts" *fixtures-path*)
                              '((:line . 5) (:offset . 0))))
                     ,(cons :end-offset
                            (convert-to-top-offset
-                             *fixtures-path*
-                             "declaration.ts"
+                             (merge-pathnames "declaration.ts" *fixtures-path*)
                              '((:line . 5) (:offset . -1))))))))
           (clean-indexes)
           (stop-ast-analyzer ast-analyzer)))))
@@ -150,20 +138,17 @@
               (:name . "reverseCompleted")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *react-path*
-                      "src/App/TodoList/Item/index.tsx"
+                      (merge-pathnames "src/App/TodoList/Item/index.tsx" *react-path*)
                       '((:line . 62) (:offset . 9))))))
           (find-definitions
             `((:path . "src/App/TodoList/Item/index.tsx")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *react-path*
-                       "src/App/TodoList/Item/index.tsx"
+                       (merge-pathnames "src/App/TodoList/Item/index.tsx" *react-path*)
                        '((:line . 65) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *react-path*
-                       "src/App/TodoList/Item/index.tsx"
+                       (merge-pathnames "src/App/TodoList/Item/index.tsx" *react-path*)
                        '((:line . 65) (:offset . -1))))))))
     (clean-indexes)
     (stop-ast-analyzer ast-analyzer)))
@@ -183,20 +168,17 @@
                    (:name . "f2")
                    ,(cons :top-offset
                           (convert-to-top-offset
-                            *fixtures-path*
-                            "declaration.ts"
+                            (merge-pathnames "declaration.ts" *fixtures-path*)
                             '((:line . 8) (:offset . 7))))))
                 (find-definitions
                   `((:path . "declaration.ts")
                     ,(cons :start-offset
                            (convert-to-top-offset
-                             *fixtures-path*
-                             "declaration.ts"
+                             (merge-pathnames "declaration.ts" *fixtures-path*)
                              '((:line . 9) (:offset . 0))))
                     ,(cons :end-offset
                            (convert-to-top-offset
-                             *fixtures-path*
-                             "declaration.ts"
+                             (merge-pathnames "declaration.ts" *fixtures-path*)
                              '((:line . 9) (:offset . -1))))))))
           (clean-indexes)
           (stop-ast-analyzer ast-analyzer)))))
@@ -215,20 +197,17 @@
               (:name . "findAll")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *nestjs-path*
-                      "src/article/article.service.ts"
+                      (merge-pathnames "src/article/article.service.ts" *nestjs-path*)
                       '((:line . 45) (:offset . 9))))))
           (find-definitions
             `((:path . "src/article/article.service.ts")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *nestjs-path*
-                       "src/article/article.service.ts"
+                       (merge-pathnames "src/article/article.service.ts" *nestjs-path*)
                        '((:line . 46) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *nestjs-path*
-                       "src/article/article.service.ts"
+                       (merge-pathnames "src/article/article.service.ts" *nestjs-path*)
                        '((:line . 46) (:offset . -1))))))))
     (clean-indexes)
     (stop-ast-analyzer ast-analyzer)))
@@ -241,15 +220,13 @@
             (:name . "input")
             ,(cons :top-offset
                    (convert-to-top-offset
-                     *react-path*
-                     "src/App/TodoList/Item/index.tsx"
+                     (merge-pathnames "src/App/TodoList/Item/index.tsx" *react-path*)
                      '((:line . 107) (:offset . 12)))))
           (inga/ast-analyzer/typescript::find-entrypoint
             `((:path . "src/App/TodoList/Item/index.tsx")
               ,(cons :top-offset
                      (convert-to-top-offset
-                       *react-path*
-                       "src/App/TodoList/Item/index.tsx"
+                       (merge-pathnames "src/App/TodoList/Item/index.tsx" *react-path*)
                        '((:line . 111) (:offset . 29))))))))
     (clean-indexes)
     (stop-ast-analyzer ast-analyzer)))
@@ -257,32 +234,28 @@
 (test convert-tsserver-pos-to-tsparser-pos
   (is (equal
         1241
-        (inga/ast-analyzer/typescript::convert-to-top-offset
-          *react-path*
-          "src/App/NewTodoInput/index.tsx"
+        (convert-to-top-offset
+          (merge-pathnames "src/App/NewTodoInput/index.tsx" *react-path*)
           '((:line . 39) (:offset . 69))))))
 
 (test convert-tsparser-pos-to-tsserver-pos
   (is (equal
         '((:line . 39) (:offset . 69))
-        (inga/ast-analyzer/typescript::convert-to-pos
-          *react-path*
-          "src/App/NewTodoInput/index.tsx"
+        (convert-to-pos
+          (merge-pathnames "src/App/NewTodoInput/index.tsx" *react-path*)
           1241))))
 
 (test convert-tsserver-pos-to-tsparser-pos-with-offset1
   (is (equal
         328
-        (inga/ast-analyzer/typescript::convert-to-top-offset
-          *react-path*
-          "src/dataStructure.ts"
+        (convert-to-top-offset
+          (merge-pathnames "src/dataStructure.ts" *react-path*)
           '((:line . 21) (:offset . 1))))))
 
 (test convert-tsparser-pos-to-tsserver-pos-with-offset1
   (is (equal
         '((:line . 21) (:offset . 1))
-        (inga/ast-analyzer/typescript::convert-to-pos
-          *react-path*
-          "src/dataStructure.ts"
+        (convert-to-pos
+          (merge-pathnames "src/dataStructure.ts" *react-path*)
           328))))
 

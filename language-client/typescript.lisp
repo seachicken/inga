@@ -24,7 +24,7 @@
   (uiop:close-streams (client-process client)))
 
 (defmethod references-client-generic ((client language-client-typescript) pos)
-  (let ((text-pos (convert-to-pos (client-path client) (cdr (assoc :path pos))
+  (let ((text-pos (convert-to-pos (merge-pathnames (cdr (assoc :path pos)) (client-path client))
                                   (cdr (assoc :top-offset pos))))
         (full-path (namestring
                      (uiop:merge-pathnames* (cdr (assoc :path pos))
@@ -49,8 +49,9 @@
                                          (cons :offset (jsown:val (jsown:val ref "start") "offset")))))
                           (unless (= (cdr (assoc :line ref-pos)) (cdr (assoc :line text-pos)))
                             (let ((top-offset
-                                    (convert-to-top-offset (client-path client)
-                                                           (cdr (assoc :path ref-pos))
+                                    (convert-to-top-offset (merge-pathnames
+                                                             (cdr (assoc :path ref-pos)) 
+                                                             (client-path client))
                                                            ref-pos)))
                               (list
                                 (cons :path (cdr (assoc :path ref-pos)))

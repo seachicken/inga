@@ -21,17 +21,17 @@
              (:fq-name . "p1.PrimaryConstructorDefinition.method")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *kotlin-path* "p1/PrimaryConstructorDefinition.kt"
+                      (merge-pathnames "p1/PrimaryConstructorDefinition.kt" *kotlin-path*)
                       '((:line . 4) (:offset . 5)))))) ;; FIXME: actual offset is 9
           (find-definitions
             `((:path . "p1/PrimaryConstructorDefinition.kt")
               ,(cons :start-offset
                      (convert-to-top-offset
-                       *kotlin-path* "p1/PrimaryConstructorDefinition.kt"
+                       (merge-pathnames "p1/PrimaryConstructorDefinition.kt" *kotlin-path*)
                        '((:line . 4) (:offset . 0))))
               ,(cons :end-offset
                      (convert-to-top-offset
-                       *kotlin-path* "p1/PrimaryConstructorDefinition.kt"
+                       (merge-pathnames "p1/PrimaryConstructorDefinition.kt" *kotlin-path*)
                        '((:line . 4) (:offset . -1))))))))
     (clean-indexes)
     (loop for a in ast-analyzers do (stop-ast-analyzer a))))
@@ -46,7 +46,7 @@
           `(((:path . "p1/PrimaryConstructorReference.kt")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *kotlin-path* "p1/PrimaryConstructorReference.kt"
+                      (merge-pathnames "p1/PrimaryConstructorReference.kt" *kotlin-path*)
                       '((:line . 7) (:offset . 11))))))
           (find-references
             '((:path . "p1/PrimaryConstructorHelper.kt")
@@ -65,7 +65,7 @@
           `(((:path . "p1/FqMethodReference.kt")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *kotlin-path* "p1/FqMethodReference.kt"
+                      (merge-pathnames "p1/FqMethodReference.kt" *kotlin-path*)
                       '((:line . 5) (:offset . 29))))))
           (find-references
             '((:path . "p1/FqMethodHelper.kt")
@@ -84,7 +84,7 @@
           `(((:path . "p1/JavaReference.kt")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      *kotlin-path* "p1/JavaReference.kt"
+                      (merge-pathnames "p1/JavaReference.kt" *kotlin-path*)
                       '((:line . 7) (:offset . 11))))))
           (find-references
             '((:path . "p1/KotlinReference.java")

@@ -1,7 +1,9 @@
 (defpackage #:inga/test/main
   (:use #:cl
         #:fiveam
-        #:inga/main))
+        #:inga/main)
+  (:import-from #:inga/ast-analyzer/base
+                #:convert-to-top-offset))
 (in-package #:inga/test/main)
 
 ;; NOTE: To run this test file, execute `(asdf:test-system :inga)' in your Lisp.
@@ -28,14 +30,12 @@
                       ctx
                       `((:path . "src/functions.ts")
                         ,(cons :start-offset
-                               (inga/ast-analyzer:convert-to-top-offset
-                                 *front-path*
-                                 "src/functions.ts"
+                               (convert-to-top-offset
+                                 (merge-pathnames "src/functions.ts" *front-path*)
                                  '((:line . 2) (:offset . 0))))
                         ,(cons :end-offset
-                               (inga/ast-analyzer:convert-to-top-offset
-                                 *front-path*
-                                 "src/functions.ts"
+                               (convert-to-top-offset
+                                 (merge-pathnames "src/functions.ts" *front-path*)
                                  '((:line . 2) (:offset . -1)))))))
             :test #'equal)))
     (inga/main::stop ctx)))
@@ -60,14 +60,16 @@
                       ctx
                       `((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
                         ,(cons :start-offset
-                               (inga/ast-analyzer:convert-to-top-offset
-                                 *back-path*
-                                 "src/main/java/io/spring/application/ArticleQueryService.java"
+                               (convert-to-top-offset
+                                 (merge-pathnames
+                                   "src/main/java/io/spring/application/ArticleQueryService.java"
+                                   *back-path*)
                                  '((:line . 105) (:offset . 0))))
                         ,(cons :end-offset
-                               (inga/ast-analyzer:convert-to-top-offset
-                                 *back-path*
-                                 "src/main/java/io/spring/application/ArticleQueryService.java"
+                               (convert-to-top-offset
+                                 (merge-pathnames
+                                   "src/main/java/io/spring/application/ArticleQueryService.java"
+                                   *back-path*)
                                  '((:line . 105) (:offset . -1)))))))
             :test #'equal)))
     (inga/main::stop ctx)))
@@ -90,14 +92,16 @@
                       ctx
                       `((:path . "users-service/src/main/java/com/baeldung/usersservice/adapters/http/UsersController.java")
                         ,(cons :start-offset
-                               (inga/ast-analyzer:convert-to-top-offset
-                                 *lightrun-path*
-                                 "users-service/src/main/java/com/baeldung/usersservice/adapters/http/UsersController.java"
+                               (convert-to-top-offset
+                                 (merge-pathnames
+                                   "users-service/src/main/java/com/baeldung/usersservice/adapters/http/UsersController.java"
+                                   *lightrun-path*)
                                  '((:line . 39) (:offset . 0))))
                         ,(cons :end-offset
-                               (inga/ast-analyzer:convert-to-top-offset
-                                 *lightrun-path*
-                                 "users-service/src/main/java/com/baeldung/usersservice/adapters/http/UsersController.java"
+                               (convert-to-top-offset
+                                 (merge-pathnames
+                                   "users-service/src/main/java/com/baeldung/usersservice/adapters/http/UsersController.java"
+                                   *lightrun-path*)
                                  '((:line . 39) (:offset . -1)))))))
             :test #'equal)))
     (inga/main::stop ctx)))

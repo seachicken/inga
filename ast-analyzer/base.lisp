@@ -198,8 +198,8 @@
 (defgeneric find-project-index-key-generic (ast-analyzer path)
   (:method (ast-analyzer path)))
 
-(defun convert-to-top-offset (root-path path pos)
-  (with-open-file (stream (uiop:merge-pathnames* path root-path))
+(defun convert-to-top-offset (path pos)
+  (with-open-file (stream path)
     (loop for file-line = (read-line stream nil)
           with line-no = 0
           with top-offset = 0
@@ -213,8 +213,8 @@
           ;; add newline code
           (setq top-offset (+ top-offset (length file-line) 1)))))
 
-(defun convert-to-pos (root-path path top-offset)
-  (with-open-file (stream (uiop:merge-pathnames* path root-path))
+(defun convert-to-pos (path top-offset)
+  (with-open-file (stream path)
     (loop for file-line = (read-line stream nil)
           with line-no = 0
           with current-offset = 0
