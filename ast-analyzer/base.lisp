@@ -4,8 +4,8 @@
   (:import-from #:inga/cache
                 #:defunc)
   (:import-from #:inga/file
-                #:is-match
-                #:is-analysis-target)
+                #:is-analysis-target
+                #:get-file-type)
   (:import-from #:inga/errors
                 #:inga-error)
   (:export #:ast-analyzer
@@ -247,15 +247,6 @@
 
 (defun get-ast-analyzer (path)
   (cdr (assoc (get-file-type path) *ast-analyzers*)))
-
-(defun get-file-type (path)
-  (cond
-    ((is-match path '("*.java"))
-      :java)
-    ((is-match path '("*.kt"))
-     :kotlin)
-    ((is-match path '("*.(js|jsx)" "*.(ts|tsx)"))
-     :typescript)))
 
 (defun create-indexes (root-path &key include exclude)
   (clean-indexes)

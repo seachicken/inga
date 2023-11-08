@@ -2,6 +2,7 @@
   (:nicknames #:inga)
   (:use-reexport
     #:inga/ast-parser
+    #:inga/ast-index
     #:inga/main
     #:inga/git
     #:inga/file
