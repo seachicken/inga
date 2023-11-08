@@ -2,7 +2,8 @@
   (:use #:cl)
   (:import-from #:cl-ppcre)
   (:export #:is-match
-           #:is-analysis-target))
+           #:is-analysis-target
+           #:get-file-type))
 (in-package #:inga/file)
 
 (defun is-match (path candidates)
@@ -28,4 +29,13 @@
             ;; replace from "." with escaped dot "\."
             (ppcre:regex-replace-all "\\." str "\\.")
             ".+")))
+
+(defun get-file-type (path)
+  (cond
+    ((is-match path '("*.java"))
+      :java)
+    ((is-match path '("*.kt"))
+     :kotlin)
+    ((is-match path '("*.(js|jsx)" "*.(ts|tsx)"))
+     :typescript)))
 
