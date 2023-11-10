@@ -9,19 +9,14 @@
   ((nearest-ast-pos :initform nil
                     :accessor ast-analyzer-nearest-ast-pos)))
 
-(defmethod start-ast-analyzer ((kind (eql :typescript)) exclude path)
+(defmethod start-ast-analyzer ((kind (eql :typescript)) exclude path index)
   (setf *ast-analyzers*
         (acons :typescript
                (make-instance 'ast-analyzer-typescript
-                              :process
-                              (uiop:launch-program "tsparser"
-                                                   :input :stream :output :stream)
-                              :path path)
+                              :path path
+                              :index index)
                *ast-analyzers*))
   (cdr (assoc :typescript *ast-analyzers*)))
-
-(defmethod stop-ast-analyzer ((ast-analyzer ast-analyzer-typescript))
-  (uiop:close-streams (ast-analyzer-process ast-analyzer)))
 
 (defmethod find-definitions-generic ((ast-analyzer ast-analyzer-typescript) range)
   (let ((q (make-queue))

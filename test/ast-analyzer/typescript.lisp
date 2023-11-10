@@ -1,7 +1,9 @@
 (defpackage #:inga/test/ast-analyzer/typescript
   (:use #:cl
         #:fiveam
-        #:inga/ast-analyzer))
+        #:inga/ast-analyzer
+        #:inga/ast-index
+        #:inga/test/helper))
 (in-package #:inga/test/ast-analyzer/typescript)
 
 (def-suite typescript)
@@ -16,11 +18,10 @@
 ;;   title: "Hello" ←[in]
 ;; };
 (test find-definitions-for-variable-object-literal-expression
-  (let ((ast-analyzer (start-ast-analyzer :typescript nil *nestjs-path*)))
-    (create-indexes *nestjs-path* :include inga/main::*include-typescript*)
+  (with-fixture node-context (*nestjs-path* 'ast-index-disk)
     (is (equal
           `(((:path . "src/article/article.service.ts")
-              (:name . "articleAuthorSelect")
+             (:name . "articleAuthorSelect")
              ,(cons :top-offset
                     (convert-to-top-offset
                       (merge-pathnames "src/article/article.service.ts" *nestjs-path*)
@@ -34,9 +35,7 @@
               ,(cons :end-offset
                      (convert-to-top-offset
                        (merge-pathnames "src/article/article.service.ts" *nestjs-path*)
-                       '((:line . 8) (:offset . -1))))))))
-    (clean-indexes)
-    (stop-ast-analyzer ast-analyzer)))
+                       '((:line . 8) (:offset . -1))))))))))
 
 ;; const NewTodoTextInput: React.FC = () => {
 ;;            ↓[out]
@@ -45,8 +44,7 @@
 ;;   }
 ;; }
 (test find-definitions-for-function
-  (let ((ast-analyzer (start-ast-analyzer :typescript nil *react-path*)))
-    (create-indexes *react-path* :include inga/main::*include-typescript*)
+  (with-fixture node-context (*react-path* 'ast-index-disk)
     (is (equal
           `(((:path . "src/App/NewTodoInput/index.tsx")
               (:name . "addTodo")
@@ -63,17 +61,14 @@
               ,(cons :end-offset
                      (convert-to-top-offset
                        (merge-pathnames "src/App/NewTodoInput/index.tsx" *react-path*)
-                       '((:line . 13) (:offset . -1))))))))
-    (clean-indexes)
-    (stop-ast-analyzer ast-analyzer)))
+                       '((:line . 13) (:offset . -1))))))))))
 
 ;;              ↓[out]
 ;; export const User = createParamDecorator((data: any) => {
 ;;   const a = 0; ←[in]
 ;; });
 (test find-definitions-for-variable-call-expression
-  (let ((ast-analyzer (start-ast-analyzer :typescript nil *nestjs-path*)))
-    (create-indexes *nestjs-path* :include inga/main::*include-typescript*)
+  (with-fixture node-context (*nestjs-path* 'ast-index-disk)
     (is (equal
           `(((:path . "src/user/user.decorator.ts")
               (:name . "User")  
@@ -90,9 +85,7 @@
               ,(cons :end-offset
                      (convert-to-top-offset
                        (merge-pathnames "src/user/user.decorator.ts" *nestjs-path*)
-                       '((:line . 9) (:offset . -1))))))))
-    (clean-indexes)
-    (stop-ast-analyzer ast-analyzer)))
+                       '((:line . 9) (:offset . -1))))))))))
 
 ;;        ↓[out]
 ;; const [a, b] = f(
@@ -101,28 +94,24 @@
 (test find-definitions-for-variable-call-expression-array
   (if t
       (skip "heap exhausted in CI")
-      (progn
-        (let ((ast-analyzer (start-ast-analyzer :typescript nil *fixtures-path*)))
-          (create-indexes *fixtures-path* :include inga/main::*include-typescript*)
-          (is (equal
-                `(((:path . "declaration.ts")
-                   (:name . "a, b")
-                   ,(cons :top-offset
-                          (convert-to-top-offset
-                            (merge-pathnames "declaration.ts" *fixtures-path*)
-                            '((:line . 4) (:offset . 8))))))
-                (find-definitions
-                  `((:path . "declaration.ts")
-                    ,(cons :start-offset
-                           (convert-to-top-offset
-                             (merge-pathnames "declaration.ts" *fixtures-path*)
-                             '((:line . 5) (:offset . 0))))
-                    ,(cons :end-offset
-                           (convert-to-top-offset
-                             (merge-pathnames "declaration.ts" *fixtures-path*)
-                             '((:line . 5) (:offset . -1))))))))
-          (clean-indexes)
-          (stop-ast-analyzer ast-analyzer)))))
+      (with-fixture node-context (*fixtures-path* 'ast-index-disk)
+        (is (equal
+              `(((:path . "declaration.ts")
+                 (:name . "a, b")
+                 ,(cons :top-offset
+                        (convert-to-top-offset
+                          (merge-pathnames "declaration.ts" *fixtures-path*)
+                          '((:line . 4) (:offset . 8))))))
+              (find-definitions
+                `((:path . "declaration.ts")
+                  ,(cons :start-offset
+                         (convert-to-top-offset
+                           (merge-pathnames "declaration.ts" *fixtures-path*)
+                           '((:line . 5) (:offset . 0))))
+                  ,(cons :end-offset
+                         (convert-to-top-offset
+                           (merge-pathnames "declaration.ts" *fixtures-path*)
+                           '((:line . 5) (:offset . -1)))))))))))
 
 ;;       ↓[out]
 ;; const reverseCompleted = (id: Todo['id']): void => {
@@ -131,8 +120,7 @@
 ;;   })
 ;; }
 (test find-definitions-for-variable-arrow-function
-  (let ((ast-analyzer (start-ast-analyzer :typescript nil *react-path*)))
-    (create-indexes *react-path* :include inga/main::*include-typescript*)
+  (with-fixture node-context (*react-path* 'ast-index-disk)
     (is (equal
           `(((:path . "src/App/TodoList/Item/index.tsx")
               (:name . "reverseCompleted")
@@ -149,9 +137,7 @@
               ,(cons :end-offset
                      (convert-to-top-offset
                        (merge-pathnames "src/App/TodoList/Item/index.tsx" *react-path*)
-                       '((:line . 65) (:offset . -1))))))))
-    (clean-indexes)
-    (stop-ast-analyzer ast-analyzer)))
+                       '((:line . 65) (:offset . -1))))))))))
 
 ;;       ↓[out]
 ;; const f2 = () => {
@@ -160,28 +146,24 @@
 (test find-definitions-for-variable-arrow-function-return-undefined
   (if t
       (skip "heap exhausted in CI")
-      (progn
-        (let ((ast-analyzer (start-ast-analyzer :typescript nil *fixtures-path*)))
-          (create-indexes *fixtures-path* :include inga/main::*include-typescript*)
-          (is (equal
-                `(((:path . "declaration.ts")
-                   (:name . "f2")
-                   ,(cons :top-offset
-                          (convert-to-top-offset
-                            (merge-pathnames "declaration.ts" *fixtures-path*)
-                            '((:line . 8) (:offset . 7))))))
-                (find-definitions
-                  `((:path . "declaration.ts")
-                    ,(cons :start-offset
-                           (convert-to-top-offset
-                             (merge-pathnames "declaration.ts" *fixtures-path*)
-                             '((:line . 9) (:offset . 0))))
-                    ,(cons :end-offset
-                           (convert-to-top-offset
-                             (merge-pathnames "declaration.ts" *fixtures-path*)
-                             '((:line . 9) (:offset . -1))))))))
-          (clean-indexes)
-          (stop-ast-analyzer ast-analyzer)))))
+      (with-fixture node-context (*fixtures-path* 'ast-index-disk)
+        (is (equal
+              `(((:path . "declaration.ts")
+                 (:name . "f2")
+                 ,(cons :top-offset
+                        (convert-to-top-offset
+                          (merge-pathnames "declaration.ts" *fixtures-path*)
+                          '((:line . 8) (:offset . 7))))))
+              (find-definitions
+                `((:path . "declaration.ts")
+                  ,(cons :start-offset
+                         (convert-to-top-offset
+                           (merge-pathnames "declaration.ts" *fixtures-path*)
+                           '((:line . 9) (:offset . 0))))
+                  ,(cons :end-offset
+                         (convert-to-top-offset
+                           (merge-pathnames "declaration.ts" *fixtures-path*)
+                           '((:line . 9) (:offset . -1)))))))))))
 
 ;; class ArticleService {
 ;;         ↓[out]
@@ -190,8 +172,7 @@
 ;;   }
 ;; }
 (test find-definitions-for-method
-  (let ((ast-analyzer (start-ast-analyzer :typescript nil *nestjs-path*)))
-    (create-indexes *nestjs-path* :include inga/main::*include-typescript*)
+  (with-fixture node-context (*nestjs-path* 'ast-index-disk)
     (is (equal
           `(((:path . "src/article/article.service.ts")
               (:name . "findAll")
@@ -208,13 +189,10 @@
               ,(cons :end-offset
                      (convert-to-top-offset
                        (merge-pathnames "src/article/article.service.ts" *nestjs-path*)
-                       '((:line . 46) (:offset . -1))))))))
-    (clean-indexes)
-    (stop-ast-analyzer ast-analyzer)))
+                       '((:line . 46) (:offset . -1))))))))))
 
 (test find-entrypoint
-  (let ((ast-analyzer (start-ast-analyzer :typescript nil *react-path*)))
-    (create-indexes *react-path* :include inga/main::*include-typescript*)
+  (with-fixture node-context (*react-path* 'ast-index-disk)
     (is (equal
           `((:path . "src/App/TodoList/Item/index.tsx")
             (:name . "input")
@@ -227,9 +205,7 @@
               ,(cons :top-offset
                      (convert-to-top-offset
                        (merge-pathnames "src/App/TodoList/Item/index.tsx" *react-path*)
-                       '((:line . 111) (:offset . 29))))))))
-    (clean-indexes)
-    (stop-ast-analyzer ast-analyzer)))
+                       '((:line . 111) (:offset . 29))))))))))
 
 (test convert-tsserver-pos-to-tsparser-pos
   (is (equal

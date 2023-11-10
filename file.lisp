@@ -7,7 +7,9 @@
 (in-package #:inga/file)
 
 (defun is-match (path candidates)
-  (loop for candidate in candidates do
+  (loop for candidate in candidates
+        with path = (namestring path)
+        do
         (when (ppcre:scan (to-scan-str candidate) path)
           (return t))))
 

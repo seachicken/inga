@@ -14,13 +14,16 @@
   (:import-from #:inga/ast-analyzer
                 #:convert-to-pos
                 #:convert-to-top-offset
+                #:create-index-groups
                 #:start-ast-analyzer
                 #:stop-ast-analyzer
                 #:find-definitions
                 #:find-entrypoint
-                #:find-references
-                #:create-indexes
-                #:clean-indexes)
+                #:find-references)
+  (:import-from #:inga/ast-index
+                #:ast-index-disk
+                #:clean-indexes 
+                #:create-indexes)
   (:import-from #:inga/plugin/jvm-dependency-loader)
   (:import-from #:inga/plugin/jvm-helper
                 #:find-base-path)
@@ -97,35 +100,39 @@
                       (list :base-commit base-commit))))))
 
 (defun start (root-path context-kinds &key include exclude)
-  (let ((ctx (alexandria:switch ((when (> (length context-kinds) 0) (first context-kinds)))
+  (let* ((index (make-instance 'ast-index-disk :root-path root-path))
+         (ctx (alexandria:switch ((when (> (length context-kinds) 0) (first context-kinds)))
                (:typescript
                  (make-context
                    :project-path root-path
                    :include (or include *include-typescript*)
                    :exclude exclude
                    :lc (make-client :typescript root-path)
+                   :ast-index index
                    :ast-analyzers (list
-                                    (start-ast-analyzer :typescript exclude root-path))))
+                                    (start-ast-analyzer :typescript exclude root-path index))))
                (:java
                  (make-context
                    :project-path root-path
                    :include (or include *include-java*)
                    :exclude exclude
+                   :ast-index index
                    :ast-analyzers (list
-                                    (start-ast-analyzer :java exclude root-path)
-                                    (start-ast-analyzer :kotlin exclude root-path))
+                                    (start-ast-analyzer :java exclude root-path index)
+                                    (start-ast-analyzer :kotlin exclude root-path index))
                    :processes (list
                                 (inga/plugin/spring-property-loader:start root-path)
                                 (inga/plugin/jvm-dependency-loader:start root-path))))
                (t (error 'inga-error-context-not-found)))))
-    (create-indexes root-path :include (context-include ctx) :exclude (context-exclude ctx))
+    (create-indexes index (context-include ctx) (context-exclude ctx))
+    (create-index-groups index)
     (start-client (context-lc ctx))
     ctx))
 
 (defun stop (ctx)
   (loop for p in (context-processes ctx) do (uiop:close-streams p)) 
   (loop for a in (context-ast-analyzers ctx) do (stop-ast-analyzer a))
-  (clean-indexes)
+  (clean-indexes (context-ast-index ctx))
   (stop-client (context-lc ctx)))
 
 (defun get-analysis-kinds (diffs)
@@ -213,7 +220,7 @@
   (let ((refs
           (if (context-lc ctx)
               (references-client (context-lc ctx) pos) 
-              (find-references pos)))
+              (find-references pos (context-ast-index ctx))))
         results)
     (setf refs (remove nil (mapcar (lambda (ref)
                                      (when (is-analysis-target (cdr (assoc :path ref))
@@ -305,6 +312,7 @@
   include
   exclude
   lc
+  ast-index
   ast-analyzers
   processes)
 

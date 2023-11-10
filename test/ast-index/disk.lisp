@@ -6,6 +6,13 @@
 
 (defparameter *java-path* (merge-pathnames "test/fixtures/java/"))
 
+(test get-all-paths
+  (let ((index (make-instance 'ast-index-disk
+                              :root-path *java-path*)))
+    (create-indexes index inga/main::*include-java* nil)
+    (is (< 0 (length (ast-index-paths index))))
+    (clean-indexes index)))
+
 (test get-ast
   (let ((index (make-instance 'ast-index-disk
                               :root-path *java-path*)))

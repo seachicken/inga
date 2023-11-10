@@ -27,7 +27,7 @@
   (setf *ast-parsers* nil))
 
 (defun parse (path)
-  (run-parser (get-parser path) path))
+  (run-parser (get-parser path) (namestring path)))
 
 (defun get-parser (path)
   (let ((file-type (get-file-type path)))

@@ -25,6 +25,7 @@
         do
         (let ((relative-path (enough-namestring path (ast-index-root-path ast-index))))
           (when (is-analysis-target relative-path include exclude)
+            (push relative-path (ast-index-paths ast-index))
             (handler-case
               (alexandria:write-string-into-file
                 (format nil "~a" (parse (namestring path)))
@@ -33,6 +34,7 @@
                      (format t "error: ~a, path: ~a~%" e path)
                      (stop-all-parsers)
                      (error 'inga-error)))))) 
+  (setf (ast-index-paths ast-index) (reverse (ast-index-paths ast-index)))
   (stop-all-parsers))
 
 (defmethod clean-indexes ((ast-index ast-index-disk))

@@ -1,7 +1,9 @@
 (defpackage #:inga/test/ast-analyzer/java
   (:use #:cl
         #:fiveam
-        #:inga/ast-analyzer))
+        #:inga/ast-analyzer
+        #:inga/ast-index
+        #:inga/test/helper))
 (in-package #:inga/test/ast-analyzer/java)
 
 (def-suite java)
@@ -13,11 +15,7 @@
 (defparameter *lightrun-path* (merge-pathnames "test/fixtures/spring-tutorials/lightrun/"))
 
 (test find-definitions-for-constructor
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *java-path*)
-            (start-ast-analyzer :kotlin nil *java-path*))))
-    (create-indexes *java-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (equal
           `(((:type . :module-public)
              (:path . "p1/ConstructorDefinition.java")
@@ -36,16 +34,10 @@
               ,(cons :end-offset
                      (convert-to-top-offset
                        (merge-pathnames "p1/ConstructorDefinition.java" *java-path*)
-                       '((:line . 4) (:offset . -1))))))))
-    (clean-indexes)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+                       '((:line . 4) (:offset . -1))))))))))
 
 (test find-definitions-for-method
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *java-path*)
-            (start-ast-analyzer :kotlin nil *java-path*))))
-    (create-indexes *java-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (equal
           `(((:type . :module-public)
              (:path . "p1/MethodDefinition.java")
@@ -64,16 +56,10 @@
               ,(cons :end-offset
                      (convert-to-top-offset
                        (merge-pathnames "p1/MethodDefinition.java" *java-path*)
-                       '((:line . 7) (:offset . -1))))))))
-    (clean-indexes)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+                       '((:line . 7) (:offset . -1))))))))))
 
 (test find-definitions-for-interface
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *java-path*)
-            (start-ast-analyzer :kotlin nil *java-path*))))
-    (create-indexes *java-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (equal
           `(((:type . :module-default)
              (:path . "p1/InterfaceDefinition.java")
@@ -92,16 +78,10 @@
               ,(cons :end-offset
                      (convert-to-top-offset
                        (merge-pathnames "p1/InterfaceDefinition.java" *java-path*)
-                       '((:line . 6) (:offset . -1))))))))
-    (clean-indexes)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+                       '((:line . 6) (:offset . -1))))))))))
 
 (test find-definitions-for-instance-variable-annotation
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *java-path*)
-            (start-ast-analyzer :kotlin nil *java-path*))))
-    (create-indexes *java-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (equal
           `(((:type . :module-public)
              (:path . "p1/InstanceVariableAnnotationDefinition.java")
@@ -120,16 +100,10 @@
               ,(cons :end-offset
                      (convert-to-top-offset
                        (merge-pathnames "p1/InstanceVariableAnnotationDefinition.java" *java-path*)
-                       '((:line . 6) (:offset . -1))))))))
-    (clean-indexes)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+                       '((:line . 6) (:offset . -1))))))))))
 
 (test find-definitions-for-generic-type
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *java-path*)
-            (start-ast-analyzer :kotlin nil *java-path*))))
-    (create-indexes *java-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (equal
           `(((:type . :module-public)
              (:path . "p1/GenericTypeDefinition.java")
@@ -148,9 +122,7 @@
               ,(cons :end-offset
                      (convert-to-top-offset
                        (merge-pathnames "p1/GenericTypeDefinition.java" *java-path*)
-                       '((:line . 6) (:offset . -1))))))))
-    (clean-indexes)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+                       '((:line . 6) (:offset . -1))))))))))
 
 ;; class DuplicatedArticleValidator
 ;;                                    ↓[out]
@@ -175,13 +147,7 @@
         (stop-ast-analyzer ast-analyzer))))
 
 (test find-definitions-for-spring-rest-controller
-  (inga/plugin/jvm-dependency-loader:start *spring-boot-path*)
-  (inga/plugin/spring-property-loader:start *spring-boot-path*)
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *spring-boot-path*)
-            (start-ast-analyzer :kotlin nil *spring-boot-path*))))
-    (create-indexes *spring-boot-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*spring-boot-path* 'ast-index-disk)
     (is (equal
           `(((:type . :rest-server)
              (:host . "8080")
@@ -211,19 +177,10 @@
                        (merge-pathnames
                          "src/main/java/io/spring/api/ArticlesApi.java"
                          *spring-boot-path*)
-                       '((:line . 56) (:offset . -1))))))))
-    (clean-indexes)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))
-    (inga/plugin/spring-property-loader:stop)
-    (inga/plugin/jvm-dependency-loader:stop)))
+                       '((:line . 56) (:offset . -1))))))))))
 
 (test find-definitions-for-spring-rest-get-method
-  (inga/plugin/spring-property-loader:start *java-path*)
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *java-path*)
-            (start-ast-analyzer :kotlin nil *java-path*))))
-    (create-indexes *java-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (equal
           `(((:type . :rest-server)
              (:host . "8080")
@@ -250,18 +207,10 @@
                      (convert-to-top-offset
                        (merge-pathnames
                          "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
-                       '((:line . 15) (:offset . -1))))))))
-    (clean-indexes)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a)))
-    (inga/plugin/spring-property-loader:stop))
+                       '((:line . 15) (:offset . -1))))))))))
 
 (test find-definitions-for-spring-rest-post-method
-  (inga/plugin/spring-property-loader:start *java-path*)
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *java-path*)
-            (start-ast-analyzer :kotlin nil *java-path*))))
-    (create-indexes *java-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (equal
           `(((:type . :rest-server)
              (:host . "8080")
@@ -288,18 +237,10 @@
                      (convert-to-top-offset
                        (merge-pathnames
                          "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
-                       '((:line . 19) (:offset . -1))))))))
-    (clean-indexes)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a)))
-    (inga/plugin/spring-property-loader:stop))
+                       '((:line . 19) (:offset . -1))))))))))
 
 (test find-definitions-for-spring-rest-put-method
-  (inga/plugin/spring-property-loader:start *java-path*)
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *java-path*)
-            (start-ast-analyzer :kotlin nil *java-path*))))
-    (create-indexes *java-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (equal
           `(((:type . :rest-server)
              (:host . "8080")
@@ -326,18 +267,10 @@
                      (convert-to-top-offset
                        (merge-pathnames
                          "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
-                       '((:line . 23) (:offset . -1))))))))
-    (clean-indexes)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a)))
-    (inga/plugin/spring-property-loader:stop))
+                       '((:line . 23) (:offset . -1))))))))))
 
 (test find-definitions-for-spring-rest-delete-method
-  (inga/plugin/spring-property-loader:start *java-path*)
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *java-path*)
-            (start-ast-analyzer :kotlin nil *java-path*))))
-    (create-indexes *java-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (equal
           `(((:type . :rest-server)
              (:host . "8080")
@@ -364,10 +297,7 @@
                      (convert-to-top-offset
                        (merge-pathnames
                          "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
-                       '((:line . 27) (:offset . -1))))))))
-    (clean-indexes)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a)))
-    (inga/plugin/spring-property-loader:stop))
+                       '((:line . 27) (:offset . -1))))))))))
 
 ;; public class Article {
 ;;   public void update(String title, String description, String body) {
@@ -387,11 +317,7 @@
         (stop-ast-analyzer ast-analyzer))))
 
 (test find-references-for-new-class
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *java-path*)
-            (start-ast-analyzer :kotlin nil *java-path*))))
-    (create-indexes *java-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (equal
           `(((:path . "p1/NewClassReference.java")
              ,(cons :top-offset
@@ -401,17 +327,11 @@
           (find-references
             `((:path . "p1/NewClassHelper.java")
               (:name . "method")
-              (:fq-name . "p1.NewClassHelper.method")))))
-    (clean-indexes)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+              (:fq-name . "p1.NewClassHelper.method"))
+            *index*)))))
 
 (test find-references-for-constructor
-  (inga/plugin/jvm-dependency-loader:start *spring-boot-path*)
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *java-path*)
-            (start-ast-analyzer :kotlin nil *java-path*))))
-    (create-indexes *java-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (equal
           `(((:path . "p1/ConstructorReference.java")
              ,(cons :top-offset
@@ -421,17 +341,11 @@
           (find-references
             `((:path . "p1/ConstructorHelper.java")
               (:name . "ConstructorHelper")
-              (:fq-name . "p1.ConstructorHelper.ConstructorHelper-INT")))))
-    (clean-indexes)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))
-    (inga/plugin/jvm-dependency-loader:stop)))
+              (:fq-name . "p1.ConstructorHelper.ConstructorHelper-INT"))
+            *index*)))))
 
 (test find-references-for-private-method
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *java-path*)
-            (start-ast-analyzer :kotlin nil *java-path*))))
-    (create-indexes *java-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (equal
           `(((:path . "p1/PrivateMethodReference.java")
              ,(cons :top-offset
@@ -441,18 +355,11 @@
           (find-references
             `((:path . "p1/PrivateMethodReference.java")
               (:name . "method2")
-              (:fq-name . "p1.PrivateMethodReference.method2")))))
-    (clean-indexes)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+              (:fq-name . "p1.PrivateMethodReference.method2"))
+            *index*)))))
 
 (test find-references-with-sub-class-args
-  (inga/plugin/jvm-dependency-loader:start *spring-boot-path*)
-  (inga/plugin/spring-property-loader:start *spring-boot-path*)
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *spring-boot-path*)
-            (start-ast-analyzer :kotlin nil *spring-boot-path*))))
-    (create-indexes *spring-boot-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*spring-boot-path* 'ast-index-disk)
     (is (equal
           `(((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
              ,(cons :top-offset
@@ -478,19 +385,21 @@
           (find-references
             `((:path . "src/main/java/io/spring/application/CursorPager.java")
               (:name . "CursorPager")
-              (:fq-name . "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager.Direction-BOOLEAN")))))
-    (clean-indexes)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))
-    (inga/plugin/spring-property-loader:stop)
-    (inga/plugin/jvm-dependency-loader:stop)))
+              (:fq-name . "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager.Direction-BOOLEAN"))
+            *index*)))))
+
+(test find-fq-name-for-reference
+  (with-fixture jvm-context (*spring-boot-path* 'ast-index-memory)
+    (let ((path "src/main/java/io/spring/application/ArticleQueryService.java"))
+      (is (equal
+            "io.spring.application.CursorPager.CursorPager-java.util.ArrayList-io.spring.application.CursorPager.Direction-BOOLEAN"
+            (inga/ast-analyzer/java::find-fq-name-for-reference
+              (find-ast path `((:line . 63) (:offset . 14)) *index*)
+              (get-index-path path)
+              *index*))))))
 
 (test find-references-for-rest-client-get-method
-  (inga/plugin/jvm-dependency-loader:start *java-path*)
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *java-path*)
-            (start-ast-analyzer :kotlin nil *java-path*))))
-    (create-indexes *java-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (equal
           `(((:path . "p1/client/ClientRestTemplate.java")
              ,(cons :top-offset
@@ -506,18 +415,11 @@
             `((:type . :rest-server)
               (:host . "8080")
               (:path . "/path")
-              (:name . "GET")))))
-    (clean-indexes)
-    (inga/plugin/jvm-dependency-loader:stop)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+              (:name . "GET"))
+            *index*)))))
 
 (test find-references-for-rest-client-post-method
-  (inga/plugin/jvm-dependency-loader:start *java-path*)
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *java-path*)
-            (start-ast-analyzer :kotlin nil *java-path*))))
-    (create-indexes *java-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (equal
           `(((:path . "p1/client/ClientRestTemplate.java")
              ,(cons :top-offset
@@ -528,17 +430,11 @@
             `((:type . :rest-server)
               (:host . "8080")
               (:path . "/path")
-              (:name . "POST")))))
-    (clean-indexes)
-    (inga/plugin/jvm-dependency-loader:stop)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+              (:name . "POST"))
+            *index*)))))
 
 (test find-references-for-kotlin-class
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *java-path*)
-            (start-ast-analyzer :kotlin nil *java-path*))))
-    (create-indexes *java-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (equal
           `(((:path . "p1/KotlinReference.java")
              ,(cons :top-offset
@@ -548,83 +444,47 @@
           (find-references
             '((:path . "p1/JavaReference.kt")
               (:name . "method")
-              (:fq-name . "p1.JavaReference.method")))))
-    (clean-indexes)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+              (:fq-name . "p1.JavaReference.method"))
+            *index*)))))
 
 (test get-scoped-index-paths-with-module-private
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *lightrun-path*)
-            (start-ast-analyzer :kotlin nil *lightrun-path*))))
-    (create-indexes *lightrun-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*lightrun-path* 'ast-index-disk)
     (is (equal
-          `(,(merge-pathnames
-               (get-index-path "api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
-               *lightrun-path*))
-          (inga/ast-analyzer/base::get-scoped-index-paths
+          '("api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
+          (inga/ast-analyzer::get-scoped-index-paths
             '((:type . :module-private)
               (:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
               (:fq-name . "com.baeldung.apiservice.adapters.http.TasksController.getUser-java.lang.String")
-              ))))
-    (clean-indexes)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+              )
+            *index*)))))
 
 (test get-scoped-index-paths-with-module-public
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *lightrun-path*)
-            (start-ast-analyzer :kotlin nil *lightrun-path*))))
-    (create-indexes *lightrun-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*lightrun-path* 'ast-index-disk)
     (is (null
           (find-if-not
             (lambda (p) (uiop:string-prefix-p "api-service" p))
-            (mapcar (lambda (p) (enough-namestring p inga/ast-analyzer/base::*index-path*))
-                    (inga/ast-analyzer/base::get-scoped-index-paths
-                      '((:type . :module-public)
-                        (:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/users/UserRepository.java")
-                        (:fq-name . "com.baeldung.apiservice.adapters.users.UserRepository.getUserById-java.lang.String")
-                        ))))))
-    (clean-indexes)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+            (inga/ast-analyzer::get-scoped-index-paths
+              '((:type . :module-public)
+                (:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/users/UserRepository.java")
+                (:fq-name . "com.baeldung.apiservice.adapters.users.UserRepository.getUserById-java.lang.String"))
+              *index*))))))
 
 (test matches-signature
-  (inga/plugin/jvm-dependency-loader:start *java-path*)
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *java-path*)
-            (start-ast-analyzer :kotlin nil *java-path*))))
-    (create-indexes *java-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (eq
           t
-          (matches-signature "p2.ApiSignature-p2.ChildClass" "p2.ApiSignature-p2.ParentClass")))
-    (clean-indexes)
-    (inga/plugin/jvm-dependency-loader:stop)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+          (matches-signature "p2.ApiSignature-p2.ChildClass" "p2.ApiSignature-p2.ParentClass" *index*)))))
 
 (test matches-signature-with-sub-class
-  (inga/plugin/jvm-dependency-loader:start *spring-boot-path*)
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *spring-boot-path*)
-            (start-ast-analyzer :kotlin nil *spring-boot-path*))))
-    (create-indexes *spring-boot-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*spring-boot-path* 'ast-index-disk)
     (is (eq
           t
           (matches-signature
             "io.spring.application.CursorPager.CursorPager-java.util.ArrayList-io.spring.application.CursorPager.Direction-BOOLEAN"
-            "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager.Direction-BOOLEAN")))
-    (clean-indexes)
-    (inga/plugin/jvm-dependency-loader:stop)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+            "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager.Direction-BOOLEAN" *index*)))))
 
 (test find-class-hierarchy-with-standard-class
-  (inga/plugin/jvm-dependency-loader:start *lightrun-path*)
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *lightrun-path*)
-            (start-ast-analyzer :kotlin nil *lightrun-path*))))
-    (create-indexes *lightrun-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*lightrun-path* 'ast-index-disk)
     (is (equal
           '("java.io.Serializable"
             "java.lang.Comparable"
@@ -633,24 +493,13 @@
             "java.lang.constant.ConstantDesc"
             "java.lang.Object"
             "java.lang.String")
-          (find-class-hierarchy "java.lang.String")))
-    (clean-indexes)
-    (inga/plugin/jvm-dependency-loader:stop)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+          (find-class-hierarchy "java.lang.String" *index*)))))
 
 (test find-class-hierarchy-with-app-class
-  (inga/plugin/jvm-dependency-loader:start *java-path*)
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *java-path*)
-            (start-ast-analyzer :kotlin nil *java-path*))))
-    (create-indexes *java-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (equal
           '("java.lang.Object"
             "p2.ParentClass"
             "p2.ChildClass")
-          (find-class-hierarchy "p2.ChildClass")))
-    (clean-indexes)
-    (inga/plugin/jvm-dependency-loader:stop)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+          (find-class-hierarchy "p2.ChildClass" *index*)))))
 

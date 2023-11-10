@@ -7,6 +7,10 @@
                 #:merge-paths
                 #:get-variable-names
                 #:replace-variable-name)
+  (:import-from #:inga/ast-index
+                #:ast-index-paths
+                #:ast-index-root-path
+                #:get-ast)
   (:import-from #:inga/ast-analyzer/kotlin
                 #:ast-analyzer-kotlin)
   (:import-from #:inga/plugin/jvm-dependency-loader
@@ -21,33 +25,72 @@
   (:export #:ast-analyzer-java))
 (in-package #:inga/ast-analyzer/java)
 
+(defvar *package-index-groups* nil)
+(defvar *project-index-groups* nil)
+
 ;; https://github.com/javaparser/javaparser/blob/d7a83612e1fa0c3c93ebac243a768339346382b5/javaparser-core/src/main/java/com/github/javaparser/JavaToken.java#L258
 (defparameter *java-rbrace* 100) ;; }
 
 (defclass ast-analyzer-java (ast-analyzer)
   ())
 
-(defmethod start-ast-analyzer ((kind (eql :java)) exclude path)
+(defmethod start-ast-analyzer ((kind (eql :java)) exclude path index)
   (setf *ast-analyzers*
         (acons :java
-               (make-instance
-                 'ast-analyzer-java
-                 :process
-                 (uiop:launch-program
-                   (format nil "~{~a~^ ~}"
-                           (list "java" "-cp"
-                                 (format nil "~a/libs/javaparser.jar" (uiop:getenv "INGA_HOME"))
-                                 "--add-opens" "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
-                                 "--add-opens" "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED"
-                                 "--add-opens" "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"
-                                 "inga.Main"))
-                   :input :stream :output :stream)
-                 :path path) 
+               (make-instance 'ast-analyzer-java
+                              :path path
+                              :index index)
                *ast-analyzers*))
   (cdr (assoc :java *ast-analyzers*)))
 
-(defmethod stop-ast-analyzer ((ast-analyzer ast-analyzer-java))
-  (uiop:close-streams (ast-analyzer-process ast-analyzer)))
+(defmethod set-index-group ((ast-analyzer ast-analyzer-java) path)
+  (let ((index-key (find-package-index-key (get-ast (ast-analyzer-index ast-analyzer) path))))
+    (setf *package-index-groups*
+          (if (assoc index-key *package-index-groups*)
+              (acons index-key
+                     (append (list path) (cdr (assoc index-key *package-index-groups*)))
+                     *package-index-groups*)
+              (acons index-key (list path) *package-index-groups*))))
+  (let ((index-key (find-project-index-key
+                     (merge-pathnames path (ast-index-root-path (ast-analyzer-index ast-analyzer))))))
+    (setf *project-index-groups*
+          (if (assoc index-key *project-index-groups*)
+              (acons index-key
+                     (append (list path) (cdr (assoc index-key *project-index-groups*)))
+                     *project-index-groups*)
+              (acons index-key (list path) *project-index-groups*)))))
+
+(defmethod get-scoped-index-paths-generic ((ast-analyzer ast-analyzer-java) pos)
+  (cond
+    ((eq (cdr (assoc :type pos)) :module-private)
+     (list (cdr (assoc :path pos))))
+    ((eq (cdr (assoc :type pos)) :module-default)
+     (cdr (assoc
+            (find-package-index-key (get-ast (ast-analyzer-index ast-analyzer) path))
+            *package-index-groups*)))
+    ((eq (cdr (assoc :type pos)) :module-public)
+     (cdr (assoc
+            (find-project-index-key (merge-pathnames (cdr (assoc :path pos)) (ast-analyzer-path ast-analyzer)))
+            *project-index-groups*)))
+    (t
+     (ast-index-paths (ast-analyzer-index ast-analyzer)))))
+
+(defun find-package-index-key (ast)
+  (loop
+    with stack = (list ast)
+    do
+    (setf ast (pop stack))
+    (if (null ast) (return))
+
+    (when (equal (ast-value ast "type") "PACKAGE")
+      (return-from find-package-index-key (intern (ast-value ast "packageName"))))
+
+    (loop for child in (jsown:val ast "children")
+          do (setf stack (append stack (list child))))))
+
+(defun find-project-index-key (path)
+  (let ((base-path (find-base-path path)))
+    (when base-path (intern (namestring base-path)))))
 
 (defmethod find-definitions-generic ((ast-analyzer ast-analyzer-java) range)
   (let ((q (make-queue))
@@ -139,7 +182,9 @@
                                             vn)
                                       (setf path (replace-variable-name
                                                    path vn
-                                                   (convert-to-json-type (find-variable-fq-class-name vn v index-path))))))))
+                                                   (convert-to-json-type
+                                                     (find-variable-fq-class-name vn v index-path
+                                                                                  (ast-analyzer-index ast-analyzer)))))))))
                           (cons :path path))
                         (cons :file-pos pos))))))
           (when (assoc :origin range)
@@ -217,12 +262,12 @@
       (t :module-default))))
 
 (defmethod find-reference ((ast-analyzer ast-analyzer-java) target-pos ast index-path)
-  (let ((fq-name (find-fq-name-for-reference ast index-path)))
+  (let ((fq-name (find-fq-name-for-reference ast index-path (ast-analyzer-index ast-analyzer))))
     (unless fq-name (return-from find-reference))
 
     (alexandria:switch ((cdr (assoc :type target-pos)))
       (:rest-server
-        (let ((rest-client (find-rest-client fq-name ast index-path)))
+        (let ((rest-client (find-rest-client fq-name ast index-path (ast-analyzer-index ast-analyzer))))
           (when (and
                   (equal (cdr (assoc :host rest-client)) (cdr (assoc :host target-pos)))
                   (equal (cdr (assoc :path rest-client)) (cdr (assoc :path target-pos)))
@@ -230,11 +275,13 @@
             `((:path . ,(get-original-path index-path))
               (:top-offset . ,(ast-value ast "startPos"))))))
       (t
-        (when (matches-signature fq-name (cdr (assoc :fq-name target-pos)))
+        (when (matches-signature fq-name (cdr (assoc :fq-name target-pos))
+                                 (ast-analyzer-index ast-analyzer))
           `((:path . ,(get-original-path index-path))
             (:top-offset . ,(ast-value ast "startPos"))))))))
 
-(defmethod find-class-hierarchy-generic ((ast-analyzer ast-analyzer-java) fq-class-name root-ast index-path)
+(defmethod find-class-hierarchy-generic ((ast-analyzer ast-analyzer-java)
+                                         fq-class-name root-ast index-path index)
   (loop
     with stack = (list root-ast)
     with ast
@@ -259,37 +306,20 @@
           (if parent-class-name
               (let ((parent-fq-class-name (find-fq-class-name parent-class-name ast)))
                 (when parent-fq-class-name
-                  (append (find-class-hierarchy parent-fq-class-name)
+                  (append (find-class-hierarchy parent-fq-class-name index)
                           (list parent-fq-class-name)
                           (list fq-class-name))))
               '("java.lang.Object")))))
     (loop for child in (jsown:val ast "children")
           do (setf stack (append stack (list child))))))
 
-(defmethod find-package-index-key-generic ((ast-analyzer ast-analyzer-java) ast)
-  (loop
-    with stack = (list ast)
-    do
-    (setf ast (pop stack))
-    (if (null ast) (return))
-
-    (when (equal (ast-value ast "type") "PACKAGE")
-      (return-from find-package-index-key-generic (intern (ast-value ast "packageName"))))
-
-    (loop for child in (jsown:val ast "children")
-          do (setf stack (append stack (list child))))))
-
-(defmethod find-project-index-key-generic ((ast-analyzer ast-analyzer-java) path)
-  (let ((base-path (find-base-path path)))
-    (when base-path (intern (namestring base-path)))))
-
-(defun find-fq-name-for-reference (ast index-path)
+(defun find-fq-name-for-reference (ast index-path index)
   (alexandria:switch ((ast-value ast "type") :test #'equal)
     ("NEW_CLASS"
      (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
              (find-fq-class-name (ast-value ast "name") ast)
              (ast-value ast "name")
-             (find-method-args (ast-get ast '("*")) index-path)))
+             (find-method-args (ast-get ast '("*")) index-path index)))
     ("METHOD_INVOCATION"
      (if (ast-get ast '("MEMBER_SELECT"))
          (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
@@ -297,18 +327,21 @@
                  (if (ast-get ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
                      (let ((fq-name (find-fq-name-for-reference
                                       (first (ast-get ast '("MEMBER_SELECT" "METHOD_INVOCATION")))
-                                      index-path)))
+                                      index-path
+                                      index)))
                        (when fq-name
                          (let ((method (find-signature
                                          fq-name
-                                         #'(lambda (fq-class-name) (load-signatures fq-class-name (get-original-path index-path))))))
+                                         #'(lambda (fq-class-name) (load-signatures fq-class-name (get-original-path index-path)))
+                                         index)))
                            (when method
                              (jsown:val (jsown:val method "returnType") "name")))))
                      (if (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))
                          (or (find-variable-fq-class-name
                                (ast-value (first (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))) "name")
                                ast
-                               index-path)
+                               index-path
+                               index)
                              (find-fq-class-name
                                ;; IDENTIFIER is class name
                                (ast-value (first (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))) "name")
@@ -317,12 +350,12 @@
                            (ast-value (first (ast-get ast '("MEMBER_SELECT" "NEW_CLASS"))) "name")
                            ast)))
                  (ast-value (first (ast-get ast '("*"))) "name")
-                 (find-method-args (nthcdr 1 (ast-get ast '("*"))) index-path))
+                 (find-method-args (nthcdr 1 (ast-get ast '("*"))) index-path index))
          (format nil "~a~:[~;-~]~:*~{~a~^-~}"
                  (find-fq-name-for-definition
                    (ast-value (first (ast-get ast '("IDENTIFIER"))) "name")
                    ast)
-                 (find-method-args (nthcdr 1 (ast-get ast '("*"))) index-path))))))
+                 (find-method-args (nthcdr 1 (ast-get ast '("*"))) index-path index))))))
 
 (defun find-fq-class-name (class-name ast)
   (unless class-name
@@ -357,7 +390,7 @@
        (when (jsown:keyp ast "parent")
          (enqueue q (jsown:val ast "parent")))))))
 
-(defun find-variable-fq-class-name (object-name ast index-path)
+(defun find-variable-fq-class-name (object-name ast index-path index)
   (let ((variable (find-variable object-name ast index-path)))
     (cond
       ((ast-get variable '("IDENTIFIER"))
@@ -365,11 +398,13 @@
       ((ast-get variable '("PARAMETERIZED_TYPE"))
        (find-fq-class-name (ast-value (first (ast-get variable '("PARAMETERIZED_TYPE"))) "name") variable))
       ((ast-get variable '("METHOD_INVOCATION"))
-       (let ((fq-name (find-fq-name-for-reference (first (ast-get variable '("METHOD_INVOCATION"))) index-path)))
+       (let ((fq-name (find-fq-name-for-reference
+                        (first (ast-get variable '("METHOD_INVOCATION"))) index-path index)))
          (let ((method (find-signature
                          fq-name
                          #'(lambda (fq-class-name)
-                             (load-signatures fq-class-name (get-original-path index-path))))))
+                             (load-signatures fq-class-name (get-original-path index-path)))
+                         index)))
            (when method
              (jsown:val (jsown:val method "returnType") "name"))))))))
 
@@ -392,7 +427,7 @@
 
     (enqueue q (ast-value ast "parent"))))
 
-(defun find-method-args (ast index-path)
+(defun find-method-args (ast index-path index)
   (loop for arg in ast
         with results
         do
@@ -411,13 +446,14 @@
                               ("NEW_CLASS"
                                (find-fq-class-name (ast-value arg "name") arg))
                               ("IDENTIFIER"
-                               (find-variable-fq-class-name (ast-value arg "name") arg index-path))
+                               (find-variable-fq-class-name (ast-value arg "name") arg index-path index))
                               ("METHOD_INVOCATION"
-                               (let ((fq-name (find-fq-name-for-reference arg index-path)))
+                               (let ((fq-name (find-fq-name-for-reference arg index-path index)))
                                  (let ((method (find-signature
                                                  fq-name
                                                  #'(lambda (fq-class-name)
-                                                     (load-signatures fq-class-name (get-original-path index-path))))))
+                                                     (load-signatures fq-class-name (get-original-path index-path)))
+                                                 index)))
                                    (if method
                                        (jsown:val (jsown:val method "returnType") "name")
                                        "?"))))
@@ -450,31 +486,35 @@
     (when (jsown:keyp ast "parent")
       (enqueue q (jsown:val ast "parent")))))
 
-(defun find-rest-client (fq-name ast index-path)
+(defun find-rest-client (fq-name ast index-path index)
   ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/client/RestTemplate.html
   (cond
     ((matches-signature
        fq-name
-       "org.springframework.web.client.RestTemplate.exchange-java.lang.String-HttpMethod-NULL-Class")
+       "org.springframework.web.client.RestTemplate.exchange-java.lang.String-HttpMethod-NULL-Class"
+       index)
      `((:host . ,(find-api-host 0 ast))
        (:name . ,(find-api-method-from-http-method (nth 2 (ast-get ast '("*")))))
        (:path . ,(find-api-path 0 ast))))
     ((matches-signature
        fq-name
-       "org.springframework.web.client.RestTemplate.getForObject-java.lang.String-Class")
+       "org.springframework.web.client.RestTemplate.getForObject-java.lang.String-Class"
+       index)
      `((:host . ,(find-api-host 0 ast))
        (:name . "GET")
        (:path . ,(find-api-path 0 ast))))
     ((matches-signature
        fq-name
-       "org.springframework.web.client.RestTemplate.getForObject-java.net.URI-Class")
-     (let ((server (find-server-from-uri 0 ast index-path)))
+       "org.springframework.web.client.RestTemplate.getForObject-java.net.URI-Class"
+       index)
+     (let ((server (find-server-from-uri 0 ast index-path index)))
        `((:host . ,(cdr (assoc :host server)))
          (:name . "GET")
          (:path . ,(cdr (assoc :path server))))))
     ((matches-signature
        fq-name
-       "org.springframework.web.client.RestTemplate.postForObject-java.lang.String-java.lang.Object-Class")
+       "org.springframework.web.client.RestTemplate.postForObject-java.lang.String-java.lang.Object-Class"
+       index)
      `((:host . ,(find-api-host 0 ast))
        (:name . "POST")
        (:path . ,(find-api-path 0 ast))))))
@@ -495,13 +535,13 @@
 (defun get-parameter (idx ast)
   (nth (1+ idx) (ast-get ast '("*"))))
 
-(defun find-server-from-uri (arg-i ast index-path)
+(defun find-server-from-uri (arg-i ast index-path index)
   (let ((param-uri (nth (1+ arg-i) (ast-get ast '("*")))))
     (let ((variable-uri (find-variable (ast-value param-uri "name") param-uri index-path))
           host
           path)
       (labels ((find-uri-components-builder (ast index-path)
-                 (let ((fq-name (find-fq-name-for-reference ast index-path)))
+                 (let ((fq-name (find-fq-name-for-reference ast index-path index)))
                    (unless fq-name (return-from find-uri-components-builder))
                    (cond
                      ((equal
@@ -512,7 +552,8 @@
                                            (find-variable-fq-class-name
                                              (ast-value (get-parameter 0 ast) "name")
                                              ast
-                                             index-path)))))
+                                             index-path
+                                             index)))))
                      ((equal
                         fq-name
                         "org.springframework.web.util.UriComponentsBuilder.fromUriString-java.lang.String")

@@ -1,7 +1,9 @@
 (defpackage #:inga/test/ast-analyzer/kotlin
   (:use #:cl
         #:fiveam
-        #:inga/ast-analyzer))
+        #:inga/ast-analyzer
+        #:inga/ast-index
+        #:inga/test/helper))
 (in-package #:inga/test/ast-analyzer/kotlin)
 
 (def-suite kotlin)
@@ -10,11 +12,7 @@
 (defparameter *kotlin-path* (merge-pathnames #p"test/fixtures/kotlin/"))
 
 (test find-definitions-for-method
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *kotlin-path*)
-            (start-ast-analyzer :kotlin nil *kotlin-path*))))
-    (create-indexes *kotlin-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*kotlin-path* 'ast-index-disk)
     (is (equal
           `(((:path . "p1/PrimaryConstructorDefinition.kt")
              (:name . "method")
@@ -32,16 +30,10 @@
               ,(cons :end-offset
                      (convert-to-top-offset
                        (merge-pathnames "p1/PrimaryConstructorDefinition.kt" *kotlin-path*)
-                       '((:line . 4) (:offset . -1))))))))
-    (clean-indexes)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+                       '((:line . 4) (:offset . -1))))))))))
 
 (test find-references-for-primary-constructor
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *kotlin-path*)
-            (start-ast-analyzer :kotlin nil *kotlin-path*))))
-    (create-indexes *kotlin-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*kotlin-path* 'ast-index-disk)
     (is (equal
           `(((:path . "p1/PrimaryConstructorReference.kt")
              ,(cons :top-offset
@@ -51,16 +43,10 @@
           (find-references
             '((:path . "p1/PrimaryConstructorHelper.kt")
               (:name . "method")
-              (:fq-name . "p1.PrimaryConstructorHelper.method")))))
-    (clean-indexes)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+              (:fq-name . "p1.PrimaryConstructorHelper.method")))))))
 
 (test find-references-for-fq-method
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *kotlin-path*)
-            (start-ast-analyzer :kotlin nil *kotlin-path*))))
-    (create-indexes *kotlin-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*kotlin-path* 'ast-index-disk)
     (is (equal
           `(((:path . "p1/FqMethodReference.kt")
              ,(cons :top-offset
@@ -70,16 +56,10 @@
           (find-references
             '((:path . "p1/FqMethodHelper.kt")
               (:name . "method")
-              (:fq-name . "p1.FqMethodHelper.method")))))
-    (clean-indexes)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+              (:fq-name . "p1.FqMethodHelper.method")))))))
 
 (test find-references-for-java-class
-  (let ((ast-analyzers
-          (list
-            (start-ast-analyzer :java nil *kotlin-path*)
-            (start-ast-analyzer :kotlin nil *kotlin-path*))))
-    (create-indexes *kotlin-path* :include inga/main::*include-java*)
+  (with-fixture jvm-context (*kotlin-path* 'ast-index-disk)
     (is (equal
           `(((:path . "p1/JavaReference.kt")
              ,(cons :top-offset
@@ -89,7 +69,5 @@
           (find-references
             '((:path . "p1/KotlinReference.java")
               (:name . "method")
-              (:fq-name . "p1.KotlinReference.method")))))
-    (clean-indexes)
-    (loop for a in ast-analyzers do (stop-ast-analyzer a))))
+              (:fq-name . "p1.KotlinReference.method")))))))
 

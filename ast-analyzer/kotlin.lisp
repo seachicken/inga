@@ -5,25 +5,20 @@
   (:export #:ast-analyzer-kotlin))
 (in-package #:inga/ast-analyzer/kotlin)
 
+(defvar *package-index-groups* nil)
+(defvar *project-index-groups* nil)
+
 (defclass ast-analyzer-kotlin (ast-analyzer)
   ())
 
-(defmethod start-ast-analyzer ((kind (eql :kotlin)) exclude path)
+(defmethod start-ast-analyzer ((kind (eql :kotlin)) exclude path index)
   (setf *ast-analyzers*
         (acons :kotlin
-               (make-instance
-                 'ast-analyzer-kotlin
-                 :process
-                 (uiop:launch-program
-                   (format nil "java -cp ~a/libs/ktparser.jar inga.Main"
-                           (uiop:getenv "INGA_HOME"))
-                   :input :stream :output :stream)
-                 :path path) 
+               (make-instance 'ast-analyzer-kotlin
+                              :path path
+                              :index index)
                *ast-analyzers*))
   (cdr (assoc :kotlin *ast-analyzers*)))
-
-(defmethod stop-ast-analyzer ((ast-analyzer ast-analyzer-kotlin))
-  (uiop:close-streams (ast-analyzer-process ast-analyzer)))
 
 (defmethod find-definitions-generic ((ast-analyzer ast-analyzer-kotlin) range)
   (let ((q (make-queue))

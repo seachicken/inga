@@ -4,7 +4,8 @@
   (:import-from #:jsown)
   (:export #:ast-index
            #:ast-index-root-path
-           #:ast-index-store
+           #:ast-index-paths
+           #:ast-scoped-paths
            #:create-indexes
            #:clean-indexes
            #:get-ast
@@ -15,8 +16,12 @@
   ((root-path
      :initarg :root-path
      :accessor ast-index-root-path)
-   (store
-     :accessor ast-index-store)))
+   (paths
+     :initform nil
+     :accessor ast-index-paths)
+   (scoped-paths
+     :initform nil
+     :accessor ast-scoped-paths)))
 
 (defgeneric create-indexes (ast-index include exclude))
 
