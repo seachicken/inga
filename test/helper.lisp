@@ -54,7 +54,8 @@
 
 (defun find-ast (path pos ast-index)
   (loop with ast = (get-ast ast-index path)
-        with offset = (convert-to-top-offset (merge-pathnames path (ast-index-root-path ast-index)) pos)
+        with offset = (convert-to-top-offset
+                        (merge-pathnames path (ast-index-root-path ast-index)) pos)
         with stack = (list ast)
         do
         (setf ast (pop stack))

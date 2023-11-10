@@ -398,6 +398,18 @@
               (get-index-path path)
               *index*))))))
 
+(test find-fq-name-for-reference-with-lib-args
+  (with-fixture jvm-context (*lightrun-path* 'ast-index-memory)
+    (let ((path "api-service/src/main/java/com/baeldung/apiservice/adapters/users/UserRepository.java"))
+      (is (equal
+            "org.springframework.web.client.RestTemplate.getForObject-java.net.URI-Class"
+            (inga/ast-analyzer/java::find-fq-name-for-reference
+              ;;                                 ↓
+              ;; return restTemplate.getForObject(uri, User.class);
+              (find-ast path `((:line . 25) (:offset . 45)) *index*)
+              (get-index-path path)
+              *index*))))))
+
 (test find-references-for-rest-client-get-method
   (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (equal

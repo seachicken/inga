@@ -43,7 +43,8 @@
           (find-references
             '((:path . "p1/PrimaryConstructorHelper.kt")
               (:name . "method")
-              (:fq-name . "p1.PrimaryConstructorHelper.method")))))))
+              (:fq-name . "p1.PrimaryConstructorHelper.method"))
+            *index*)))))
 
 (test find-references-for-fq-method
   (with-fixture jvm-context (*kotlin-path* 'ast-index-disk)
@@ -56,7 +57,8 @@
           (find-references
             '((:path . "p1/FqMethodHelper.kt")
               (:name . "method")
-              (:fq-name . "p1.FqMethodHelper.method")))))))
+              (:fq-name . "p1.FqMethodHelper.method"))
+            *index*)))))
 
 (test find-references-for-java-class
   (with-fixture jvm-context (*kotlin-path* 'ast-index-disk)
@@ -69,5 +71,6 @@
           (find-references
             '((:path . "p1/KotlinReference.java")
               (:name . "method")
-              (:fq-name . "p1.KotlinReference.method")))))))
+              (:fq-name . "p1.KotlinReference.method"))
+            *index*)))))
 
