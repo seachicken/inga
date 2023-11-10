@@ -47,7 +47,7 @@
   (create-indexes *index* inga/main::*include-typescript* nil)
   (setf *analyzers*
         (list
-          (start-ast-analyzer :typescript nil root-path)))
+          (start-ast-analyzer :typescript nil root-path *index*)))
   (&body)
   (loop for a in *analyzers* do (stop-ast-analyzer a))
   (clean-indexes *index*))
