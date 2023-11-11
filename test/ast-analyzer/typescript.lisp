@@ -26,7 +26,8 @@
                     (convert-to-top-offset
                       (merge-pathnames "src/article/article.service.ts" *nestjs-path*)
                       '((:line . 7) (:offset . 7))))))
-          (find-definitions (create-range "src/article/article.service.ts" 8 8))))))
+          (find-definitions
+            (create-range "src/article/article.service.ts" :line 8))))))
 
 ;; const NewTodoTextInput: React.FC = () => {
 ;;            ↓[out]
@@ -43,7 +44,8 @@
                     (convert-to-top-offset
                       (merge-pathnames "src/App/NewTodoInput/index.tsx" *react-path*)
                       '((:line . 12) (:offset . 12))))))
-          (find-definitions (create-range "src/App/NewTodoInput/index.tsx" 13 13))))))
+          (find-definitions
+            (create-range "src/App/NewTodoInput/index.tsx" :line 13))))))
 
 ;;              ↓[out]
 ;; export const User = createParamDecorator((data: any) => {
@@ -58,7 +60,8 @@
                     (convert-to-top-offset
                       (merge-pathnames "src/user/user.decorator.ts" *nestjs-path*)
                       '((:line . 5) (:offset . 14))))))
-          (find-definitions (create-range "src/user/user.decorator.ts" 9 9))))))
+          (find-definitions
+            (create-range "src/user/user.decorator.ts" :line 9))))))
 
 ;;        ↓[out]
 ;; const [a, b] = f(
@@ -75,7 +78,8 @@
                         (convert-to-top-offset
                           (merge-pathnames "declaration.ts" *fixtures-path*)
                           '((:line . 4) (:offset . 8))))))
-              (find-definitions (create-range "declaration.ts" 5 5)))))))
+              (find-definitions
+                (create-range "declaration.ts" :line 5)))))))
 
 ;;       ↓[out]
 ;; const reverseCompleted = (id: Todo['id']): void => {
@@ -92,7 +96,8 @@
                     (convert-to-top-offset
                       (merge-pathnames "src/App/TodoList/Item/index.tsx" *react-path*)
                       '((:line . 62) (:offset . 9))))))
-          (find-definitions (create-range "src/App/TodoList/Item/index.tsx" 65 65))))))
+          (find-definitions
+            (create-range "src/App/TodoList/Item/index.tsx" :line 65))))))
 
 ;;       ↓[out]
 ;; const f2 = () => {
@@ -109,7 +114,8 @@
                         (convert-to-top-offset
                           (merge-pathnames "declaration.ts" *fixtures-path*)
                           '((:line . 8) (:offset . 7))))))
-              (find-definitions (create-range "declaration.ts" 9 9)))))))
+              (find-definitions
+                (create-range "declaration.ts" :line 9)))))))
 
 ;; class ArticleService {
 ;;         ↓[out]
@@ -126,7 +132,8 @@
                     (convert-to-top-offset
                       (merge-pathnames "src/article/article.service.ts" *nestjs-path*)
                       '((:line . 45) (:offset . 9))))))
-          (find-definitions (create-range "src/article/article.service.ts" 46 46))))))
+          (find-definitions
+            (create-range "src/article/article.service.ts" :line 46))))))
 
 (test find-entrypoint
   (with-fixture node-context (*react-path* 'ast-index-disk)

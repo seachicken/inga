@@ -70,7 +70,7 @@
         (loop for child in (jsown:val ast "children")
               do (setf stack (append stack (list child))))))
 
-(defun create-range (path start end &key (root-path *root-path*))
+(defun create-range (path &key line (start line) (end start) (root-path *root-path*))
   `((:path . ,path)
     (:start-offset .
      ,(convert-to-top-offset (merge-pathnames path root-path)

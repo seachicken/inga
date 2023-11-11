@@ -21,7 +21,7 @@
                     (convert-to-top-offset
                       (merge-pathnames "p1/PrimaryConstructorDefinition.kt" *kotlin-path*)
                       '((:line . 4) (:offset . 5)))))) ;; FIXME: actual offset is 9
-          (find-definitions (create-range "p1/PrimaryConstructorDefinition.kt" 4 4))))))
+          (find-definitions (create-range "p1/PrimaryConstructorDefinition.kt" :line 4))))))
 
 (test find-references-for-primary-constructor
   (with-fixture jvm-context (*kotlin-path* 'ast-index-disk)
