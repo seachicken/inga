@@ -14,6 +14,20 @@
   (truename (uiop:merge-pathnames* "test/fixtures/spring-boot-realworld-example-app/")))
 (defparameter *lightrun-path* (merge-pathnames "test/fixtures/spring-tutorials/lightrun/"))
 
+(test find-definitions-with-primitive
+  (with-fixture jvm-context (*spring-boot-path* 'ast-index-disk)
+    (is (equal
+          `(((:type . :module-public)
+             (:path . "src/main/java/io/spring/application/CursorPager.java")
+             (:name . "CursorPager")
+             (:fq-name . "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.Direction-BOOLEAN")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames "src/main/java/io/spring/application/CursorPager.java" *spring-boot-path*)
+                      '((:line . 12) (:offset . 10))))))
+          (find-definitions
+            (create-range "src/main/java/io/spring/application/CursorPager.java" :line 12))))))
+
 (test find-definitions-for-constructor
   (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (equal
