@@ -324,9 +324,16 @@
            (setf fq-names
                  (if import
                      (list (ast-value import "fqName"))
-                     (list
-                       (ast-value (first (ast-get ast '("PACKAGE"))) "packageName")
-                       class-name)))))
+                     (append
+                       (list (ast-value (first (ast-get ast '("PACKAGE"))) "packageName"))
+                       fq-names)))))
+
+       (when (equal (ast-value ast "type") "CLASS")
+         (push class-name fq-names)
+         (when (and (not (equal (ast-value ast "name") class-name))
+                    ;; ignore parent class name
+                    (not (ast-find-name (ast-get ast '("IDENTIFIER")) class-name)))
+           (push (ast-value ast "name") fq-names)))
 
        (when (jsown:keyp ast "parent")
          (enqueue q (jsown:val ast "parent")))))))

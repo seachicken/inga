@@ -14,13 +14,13 @@
   (truename (uiop:merge-pathnames* "test/fixtures/spring-boot-realworld-example-app/")))
 (defparameter *lightrun-path* (merge-pathnames "test/fixtures/spring-tutorials/lightrun/"))
 
-(test find-definitions-with-primitive
+(test find-definitions-with-inner-class-and-primitive
   (with-fixture jvm-context (*spring-boot-path* 'ast-index-disk)
     (is (equal
           `(((:type . :module-public)
              (:path . "src/main/java/io/spring/application/CursorPager.java")
              (:name . "CursorPager")
-             (:fq-name . "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.Direction-BOOLEAN")
+             (:fq-name . "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager.Direction-BOOLEAN")
              ,(cons :top-offset
                     (convert-to-top-offset
                       (merge-pathnames "src/main/java/io/spring/application/CursorPager.java" *spring-boot-path*)
@@ -292,6 +292,15 @@
               (find-ast path `((:line . 25) (:offset . 45)) *index*)
               (get-index-path path)
               *index*))))))
+
+(test find-fq-class-name-for-inner-class
+  (with-fixture jvm-context (*spring-boot-path* 'ast-index-memory)
+    (let ((path "src/main/java/io/spring/application/CursorPager.java"))
+      (is (equal
+            "io.spring.application.CursorPager.Direction"
+            (inga/ast-analyzer/java::find-fq-class-name
+              "Direction"
+              (find-ast path `((:line . 12) (:offset . 46)) *index*)))))))
 
 (test find-references-for-rest-client-get-method
   (with-fixture jvm-context (*java-path* 'ast-index-disk)
