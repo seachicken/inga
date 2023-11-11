@@ -17,10 +17,12 @@
   (:export #:*index*
            #:jvm-context
            #:node-context
-           #:find-ast))
+           #:find-ast
+           #:create-range))
 (in-package #:inga/test/helper)
 
 (def-fixture jvm-context (root-path index-type)
+  (defparameter *root-path* root-path)
   (defparameter *index* nil)
   (defparameter *analyzers* nil)
   (inga/plugin/jvm-dependency-loader:start root-path)
@@ -40,6 +42,7 @@
   (inga/plugin/jvm-dependency-loader:stop))
 
 (def-fixture node-context (root-path index-type)
+  (defparameter *root-path* root-path)
   (defparameter *index* nil)
   (defparameter *analyzers* nil)
   (setf *index* (make-instance index-type
@@ -66,4 +69,13 @@
 
         (loop for child in (jsown:val ast "children")
               do (setf stack (append stack (list child))))))
+
+(defun create-range (path start end &key (root-path *root-path*))
+  `((:path . ,path)
+    (:start-offset .
+     ,(convert-to-top-offset (merge-pathnames path root-path)
+                             `((:line . ,start) (:offset . 0))))
+    (:end-offset .
+     ,(convert-to-top-offset (merge-pathnames path root-path)
+                             `((:line . ,end) (:offset . -1))))))
 
