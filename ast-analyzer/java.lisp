@@ -280,21 +280,21 @@
                  (if (ast-get ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
                      (let ((fq-name (find-fq-name-for-reference
                                       (first (ast-get ast '("MEMBER_SELECT" "METHOD_INVOCATION")))
-                                      path
-                                      index)))
+                                      path index)))
                        (when fq-name
                          (let ((method (find-signature
                                          fq-name
-                                         #'(lambda (fq-class-name) (load-signatures fq-class-name path))
+                                         #'(lambda (fq-class-name)
+                                             (format t " load-signatures. fqcn: ~a, path: ~a~%"
+                                                     fq-class-name path)
+                                             (load-signatures fq-class-name path))
                                          index)))
                            (when method
                              (jsown:val (jsown:val method "returnType") "name")))))
                      (if (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))
                          (or (find-variable-fq-class-name
                                (ast-value (first (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))) "name")
-                               ast
-                               path
-                               index)
+                               ast path index)
                              (find-fq-class-name
                                ;; IDENTIFIER is class name
                                (ast-value (first (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))) "name")
@@ -498,8 +498,8 @@
 (defun find-server-from-uri (arg-i ast path index)
   (let ((param-uri (nth (1+ arg-i) (ast-get ast '("*")))))
     (let ((variable-uri (find-variable (ast-value param-uri "name") param-uri))
-          host
-          path)
+          found-path
+          host)
       (labels ((find-uri-components-builder (ast path)
                  (let ((fq-name (find-fq-name-for-reference ast path index)))
                    (unless fq-name (return-from find-uri-components-builder))
@@ -507,13 +507,11 @@
                      ((equal
                         fq-name
                         "org.springframework.web.util.UriComponentsBuilder.path-java.lang.String")
-                      (setf path (format nil "/{~a}"
-                                         (convert-to-json-type
-                                           (find-variable-fq-class-name
-                                             (ast-value (get-parameter 0 ast) "name")
-                                             ast
-                                             path
-                                             index)))))
+                      (setf found-path (format nil "/{~a}"
+                                               (convert-to-json-type
+                                                 (find-variable-fq-class-name
+                                                   (ast-value (get-parameter 0 ast) "name")
+                                                   ast path index)))))
                      ((equal
                         fq-name
                         "org.springframework.web.util.UriComponentsBuilder.fromUriString-java.lang.String")
@@ -537,7 +535,7 @@
           (first (ast-get variable-uri '("METHOD_INVOCATION")))
           path))
       `((:host . ,host)
-        (:path . ,path)))))
+        (:path . ,found-path)))))
 
 (defun convert-to-json-type (type)
   (alexandria:switch (type :test #'equal)
