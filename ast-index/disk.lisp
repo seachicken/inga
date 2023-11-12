@@ -18,14 +18,15 @@
      :initform (merge-pathnames "inga_temp/")
      :accessor ast-index-disk-path)))
 
-(defmethod create-indexes ((ast-index ast-index-disk) include exclude)
-  (clean-indexes ast-index)
+(defmethod create-indexes ((ast-index ast-index-disk) include include-files exclude)
   (ensure-directories-exist (ast-index-disk-path ast-index)) 
   (loop for path in (uiop:directory-files (format nil "~a/**/*" (ast-index-root-path ast-index)))
         do
         (let ((relative-path (enough-namestring path (ast-index-root-path ast-index))))
-          (when (is-analysis-target relative-path include exclude)
-            (push relative-path (ast-index-paths ast-index))
+          (when (and (is-analysis-target relative-path include exclude)
+                     (is-analysis-target relative-path include-files exclude))
+            (setf (ast-index-paths ast-index)
+                  (append (ast-index-paths ast-index) (list relative-path)))
             (handler-case
               (alexandria:write-string-into-file
                 (format nil "~a" (parse (namestring path)))
@@ -34,7 +35,6 @@
                      (format t "error: ~a, path: ~a~%" e path)
                      (stop-all-parsers)
                      (error 'inga-error)))))) 
-  (setf (ast-index-paths ast-index) (reverse (ast-index-paths ast-index)))
   (stop-all-parsers))
 
 (defmethod clean-indexes ((ast-index ast-index-disk))

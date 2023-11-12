@@ -2,31 +2,42 @@
   (:use #:cl
         #:inga/ast-analyzer/base
         #:inga/utils)
+  (:import-from #:inga/ast-index
+                #:clean-indexes
+                #:create-indexes)
   (:export #:ast-analyzer-typescript))
 (in-package #:inga/ast-analyzer/typescript)
+
+(defparameter *include-typescript* '("*.(js|jsx)"
+                                     "*.(ts|tsx)"))
 
 (defclass ast-analyzer-typescript (ast-analyzer)
   ((nearest-ast-pos :initform nil
                     :accessor ast-analyzer-nearest-ast-pos)))
 
-(defmethod start-ast-analyzer ((kind (eql :typescript)) exclude path index)
+(defmethod start-ast-analyzer ((kind (eql :typescript)) include exclude path index)
   (setf *ast-analyzers*
         (acons :typescript
                (make-instance 'ast-analyzer-typescript
                               :path path
                               :index index)
                *ast-analyzers*))
+  (create-indexes index include *include-typescript* exclude)
   (cdr (assoc :typescript *ast-analyzers*)))
+
+(defmethod stop-ast-analyzer ((ast-analyzer ast-analyzer-typescript))
+  (clean-indexes (ast-analyzer-index ast-analyzer))
+  (setf *ast-analyzers* nil))
 
 (defmethod find-definitions-generic ((ast-analyzer ast-analyzer-typescript) range)
   (let ((q (make-queue))
         (src-path (cdr (assoc :path range)))
-        (index-path (get-index-path (cdr (assoc :path range))))
+        (path (cdr (assoc :path range)))
         (start-offset (cdr (assoc :start-offset range)))
         (end-offset (cdr (assoc :end-offset range)))
         ast
         results)
-    (setf ast (cdr (jsown:parse (uiop:read-file-string index-path))))
+    (setf ast (get-ast (ast-analyzer-index ast-analyzer) path))
     (enqueue q ast)
     (loop
       (setf ast (dequeue q))
@@ -146,7 +157,7 @@
 
 (defmethod find-entrypoint-generic ((ast-analyzer ast-analyzer-typescript) pos)
   (let ((top-offset (cdr (assoc :top-offset pos)))
-        (ast (cdr (jsown:parse (uiop:read-file-string (get-index-path (cdr (assoc :path pos))))))))
+        (ast (get-ast (ast-analyzer-index ast-analyzer) (cdr (assoc :path pos)))))
     (setf (ast-analyzer-nearest-ast-pos ast-analyzer) nil)
     (let ((component-pos (find-component ast-analyzer ast top-offset)))
       (when component-pos
@@ -158,7 +169,7 @@
             (push (cons :origin (cdr (assoc :origin pos))) result))
           result)))))
 
-(defmethod find-reference ((ast-analyzer ast-analyzer-typescript) target-pos ast index-path))
+(defmethod find-reference ((ast-analyzer ast-analyzer-typescript) target-pos ast path))
 
 (defun find-component (ast-analyzer ast pos)
   (when (and (jsown:keyp ast "kindName")

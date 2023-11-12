@@ -8,14 +8,17 @@
                 #:get-file-type)
   (:import-from #:inga/errors
                 #:inga-error)
+  (:import-from #:inga/ast-index
+                #:ast-index-paths
+                #:clean-indexes
+                #:create-indexes
+                #:get-ast) 
   (:export #:ast-analyzer
            #:*ast-analyzers*
            #:ast-analyzer-path
            #:ast-analyzer-index
            #:start-ast-analyzer
            #:stop-ast-analyzer
-           #:create-index-groups
-           #:set-index-group
            #:get-scoped-index-paths
            #:get-scoped-index-paths-generic
            #:find-definitions
@@ -34,17 +37,12 @@
            #:find-project-index-key-generic
            #:convert-to-top-offset
            #:convert-to-pos
-           #:get-index-path
-           #:get-original-path
            #:contains-offset
            #:ast-value
            #:ast-get
            #:ast-find-name
            #:ast-find-names
-           #:ast-find-suffix)
-  (:import-from #:inga/ast-index
-                #:ast-index-paths
-                #:get-ast))
+           #:ast-find-suffix))
 (in-package #:inga/ast-analyzer/base)
 
 (defparameter *index-path* (uiop:merge-pathnames* #p"inga_temp/"))
@@ -58,21 +56,12 @@
      :initarg :index
      :accessor ast-analyzer-index)))
 
-(defgeneric start-ast-analyzer (kind exclude path index)
-  (:method (kind exclude path index)
+(defgeneric start-ast-analyzer (kind include exclude path index)
+  (:method (kind include exclude path index)
    (error 'unknown-ast-analyzer :name kind)))
 
 (defgeneric stop-ast-analyzer (ast-analyzer)
-  (:method (ast-analyzer)
-   (setf *ast-analyzers* nil)))
-
-(defun create-index-groups (index)
-  (loop for path in (ast-index-paths index)
-        do
-        (set-index-group (get-ast-analyzer path) path)))
-
-(defgeneric set-index-group (ast-analyzer path)
-  (:method (ast-analyzer path)))
+  (:method (ast-analyzer)))
 
 (defun get-scoped-index-paths (pos index)
   (let ((ast-analyzer (get-ast-analyzer (cdr (assoc :path pos)))))
@@ -110,9 +99,9 @@
     :label "find-references"
     :args pos))
 
-(defgeneric find-reference (ast-analyzer target-pos ast index-path))
+(defgeneric find-reference (ast-analyzer target-pos ast path))
 
-(defun find-references-by-file (ast-analyzer index-path ast target-pos)
+(defun find-references-by-file (ast-analyzer path ast target-pos)
   (let ((q (make-queue))
         results)
     (enqueue q ast)
@@ -120,7 +109,7 @@
       (let ((ast (dequeue q)))
         (when (null ast) (return))
 
-        (let ((ref (find-reference ast-analyzer target-pos ast index-path)))
+        (let ((ref (find-reference ast-analyzer target-pos ast path)))
           (when ref
             (setf results (append results (list ref)))))
 
@@ -187,8 +176,8 @@
               (return-from find-class-hierarchy class-hierarchy)))))
   (list fq-class-name))
 
-(defgeneric find-class-hierarchy-generic (ast-analyzer fq-class-name root-ast index-path index)
-  (:method (ast-analyzer fq-class-name root-ast index-path index)))
+(defgeneric find-class-hierarchy-generic (ast-analyzer fq-class-name root-ast path index)
+  (:method (ast-analyzer fq-class-name root-ast path index)))
 
 (defun convert-to-top-offset (path pos)
   (with-open-file (stream path)
@@ -234,18 +223,6 @@
 
 (defun get-ast-analyzer (path)
   (cdr (assoc (get-file-type path) *ast-analyzers*)))
-
-(defun get-index-path (original-path)
-  (uiop:merge-pathnames*
-    *index-path*
-    (ppcre:regex-replace-all "/" original-path "--")))
-
-(defun get-original-path (index-path)
-  (format nil "~{~a~^/~}"
-          (split #\/ (ppcre:regex-replace-all
-                       "--"
-                       (enough-namestring index-path *index-path*)
-                       "/"))))
 
 (defun contains-offset (a-start a-end b-start b-end)
   (and (<= a-start b-end) (>= a-end b-start)))

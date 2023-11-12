@@ -10,9 +10,13 @@
   (:import-from #:inga/ast-index
                 #:ast-index-paths
                 #:ast-index-root-path
+                #:clean-indexes
+                #:create-indexes
                 #:get-ast)
   (:import-from #:inga/ast-analyzer/kotlin
                 #:ast-analyzer-kotlin)
+  (:import-from #:inga/file
+                #:get-file-type)
   (:import-from #:inga/plugin/jvm-dependency-loader
                 #:load-signatures
                 #:load-hierarchy)
@@ -28,34 +32,50 @@
 (defvar *package-index-groups* nil)
 (defvar *project-index-groups* nil)
 
+(defparameter *include-java* '("*.java"))
+
 (defclass ast-analyzer-java (ast-analyzer)
   ())
 
-(defmethod start-ast-analyzer ((kind (eql :java)) exclude path index)
+(defmethod start-ast-analyzer ((kind (eql :java)) include exclude path index)
   (setf *ast-analyzers*
         (acons :java
                (make-instance 'ast-analyzer-java
                               :path path
                               :index index)
                *ast-analyzers*))
+  (create-indexes index include *include-java* exclude)
+  (create-index-groups *include-java* exclude index)
   (cdr (assoc :java *ast-analyzers*)))
 
-(defmethod set-index-group ((ast-analyzer ast-analyzer-java) path)
-  (let ((index-key (find-package-index-key (get-ast (ast-analyzer-index ast-analyzer) path))))
-    (setf *package-index-groups*
-          (if (assoc index-key *package-index-groups*)
-              (acons index-key
-                     (append (list path) (cdr (assoc index-key *package-index-groups*)))
-                     *package-index-groups*)
-              (acons index-key (list path) *package-index-groups*))))
-  (let ((index-key (find-project-index-key
-                     (merge-pathnames path (ast-index-root-path (ast-analyzer-index ast-analyzer))))))
-    (setf *project-index-groups*
-          (if (assoc index-key *project-index-groups*)
-              (acons index-key
-                     (append (list path) (cdr (assoc index-key *project-index-groups*)))
-                     *project-index-groups*)
-              (acons index-key (list path) *project-index-groups*)))))
+(defmethod stop-ast-analyzer ((ast-analyzer ast-analyzer-java))
+  (clean-index-groups (ast-analyzer-index ast-analyzer)) 
+  (clean-indexes (ast-analyzer-index ast-analyzer))
+  (setf *ast-analyzers* nil))
+
+(defun create-index-groups (include exclude index)
+  (loop for path in (remove-if-not (lambda (p) (eq (get-file-type p) :java))
+                                   (ast-index-paths index))
+        do
+        (let ((index-key (find-package-index-key (get-ast index path))))
+          (setf *package-index-groups*
+                (if (assoc index-key *package-index-groups*)
+                    (acons index-key
+                           (append (list path) (cdr (assoc index-key *package-index-groups*)))
+                           *package-index-groups*)
+                    (acons index-key (list path) *package-index-groups*))))
+        (let ((index-key (find-project-index-key
+                           (merge-pathnames path (ast-index-root-path index)))))
+          (setf *project-index-groups*
+                (if (assoc index-key *project-index-groups*)
+                    (acons index-key
+                           (append (list path) (cdr (assoc index-key *project-index-groups*)))
+                           *project-index-groups*)
+                    (acons index-key (list path) *project-index-groups*))))))
+
+(defun clean-index-groups (index)
+  (setf *package-index-groups* nil)
+  (setf *project-index-groups* nil))
 
 (defmethod get-scoped-index-paths-generic ((ast-analyzer ast-analyzer-java) pos)
   (cond
@@ -63,7 +83,7 @@
      (list (cdr (assoc :path pos))))
     ((eq (cdr (assoc :type pos)) :module-default)
      (cdr (assoc
-            (find-package-index-key (get-ast (ast-analyzer-index ast-analyzer) path))
+            (find-package-index-key (get-ast (ast-analyzer-index ast-analyzer) (cdr (assoc :path pos))))
             *package-index-groups*)))
     ((eq (cdr (assoc :type pos)) :module-public)
      (cdr (assoc
@@ -92,15 +112,14 @@
 (defmethod find-definitions-generic ((ast-analyzer ast-analyzer-java) range)
   (let ((q (make-queue))
         (src-path (cdr (assoc :path range)))
-        (index-path (get-index-path (cdr (assoc :path range))))
+        (path (cdr (assoc :path range)))
         (start-offset (cdr (assoc :start-offset range)))
         (end-offset (cdr (assoc :end-offset range)))
         ast
         root-ast
-        annotation-pos
         results)
     (handler-case
-      (setf ast (cdr (jsown:parse (uiop:read-file-string index-path))))
+      (setf ast (get-ast (ast-analyzer-index ast-analyzer) path))
       (error (e)
              (format t "~a~%" e)
              (return-from find-definitions-generic)))
@@ -148,14 +167,13 @@
                          (cons :name (jsown:val ast "name")))
                      (cons :fq-name (get-fq-name-of-declaration
                                       root-ast
-                                      (jsown:val ast "pos")
-                                      index-path))
+                                      (jsown:val ast "pos")))
                      (cons :top-offset (jsown:val ast "pos")))))
           (when is-entrypoint-file
             (let ((mapping (first (ast-find-names
                                         (ast-get ast '("MODIFIERS" "ANNOTATION"))
                                         '("GetMapping" "PostMapping" "PutMapping" "DeleteMapping"))))
-                  (port (find-property "server.port" (get-original-path index-path))))
+                  (port (find-property "server.port" path)))
               (when (and mapping port)
                 (setf pos
                       (list
@@ -169,7 +187,7 @@
                                         "name"))))
                           (loop for vn in (get-variable-names path)
                                 do
-                                (let ((v (find-variable vn ast index-path)))
+                                (let ((v (find-variable vn ast)))
                                   (let ((path-variable (first (ast-find-name
                                                                 (ast-get v '("MODIFIERS"
                                                                              "ANNOTATION"))
@@ -180,8 +198,9 @@
                                       (setf path (replace-variable-name
                                                    path vn
                                                    (convert-to-json-type
-                                                     (find-variable-fq-class-name vn v index-path
-                                                                                  (ast-analyzer-index ast-analyzer)))))))))
+                                                     (find-variable-fq-class-name
+                                                       vn v path
+                                                       (ast-analyzer-index ast-analyzer)))))))))
                           (cons :path path))
                         (cons :file-pos pos))))))
           (when (assoc :origin range)
@@ -202,34 +221,34 @@
       ((find "PRIVATE" modifiers :test #'equal) :module-private)
       (t :module-default))))
 
-(defmethod find-reference ((ast-analyzer ast-analyzer-java) target-pos ast index-path)
-  (let ((fq-name (find-fq-name-for-reference ast index-path (ast-analyzer-index ast-analyzer))))
+(defmethod find-reference ((ast-analyzer ast-analyzer-java) target-pos ast path)
+  (let ((fq-name (find-fq-name-for-reference ast path (ast-analyzer-index ast-analyzer))))
     (unless fq-name (return-from find-reference))
 
     (alexandria:switch ((cdr (assoc :type target-pos)))
       (:rest-server
-        (let ((rest-client (find-rest-client fq-name ast index-path (ast-analyzer-index ast-analyzer))))
+        (let ((rest-client (find-rest-client fq-name ast path (ast-analyzer-index ast-analyzer))))
           (when (and
                   (equal (cdr (assoc :host rest-client)) (cdr (assoc :host target-pos)))
                   (equal (cdr (assoc :path rest-client)) (cdr (assoc :path target-pos)))
                   (equal (cdr (assoc :name rest-client)) (cdr (assoc :name target-pos))))
-            `((:path . ,(get-original-path index-path))
+            `((:path . ,path)
               (:top-offset . ,(ast-value ast "startPos"))))))
       (t
         (when (matches-signature fq-name (cdr (assoc :fq-name target-pos))
                                  (ast-analyzer-index ast-analyzer))
-          `((:path . ,(get-original-path index-path))
+          `((:path . ,path)
             (:top-offset . ,(ast-value ast "startPos"))))))))
 
 (defmethod find-class-hierarchy-generic ((ast-analyzer ast-analyzer-java)
-                                         fq-class-name root-ast index-path index)
+                                         fq-class-name root-ast path index)
   (loop
     with stack = (list root-ast)
     with ast
     with target-package-name = (format nil "~{~a~^.~}" (butlast (split #\. fq-class-name)))
     with target-class-name = (first (last (split #\. fq-class-name)))
     initially
-    (let ((hierarchy (load-hierarchy fq-class-name (get-original-path index-path))))
+    (let ((hierarchy (load-hierarchy fq-class-name path)))
       (when hierarchy
         (return-from find-class-hierarchy-generic hierarchy)))
     do
@@ -254,13 +273,13 @@
     (loop for child in (jsown:val ast "children")
           do (setf stack (append stack (list child))))))
 
-(defun find-fq-name-for-reference (ast index-path index)
+(defun find-fq-name-for-reference (ast path index)
   (alexandria:switch ((ast-value ast "type") :test #'equal)
     ("NEW_CLASS"
      (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
              (find-fq-class-name (ast-value ast "name") ast)
              (ast-value ast "name")
-             (find-method-args (ast-get ast '("*")) index-path index)))
+             (find-method-args (ast-get ast '("*")) path index)))
     ("METHOD_INVOCATION"
      (if (ast-get ast '("MEMBER_SELECT"))
          (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
@@ -268,12 +287,12 @@
                  (if (ast-get ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
                      (let ((fq-name (find-fq-name-for-reference
                                       (first (ast-get ast '("MEMBER_SELECT" "METHOD_INVOCATION")))
-                                      index-path
+                                      path
                                       index)))
                        (when fq-name
                          (let ((method (find-signature
                                          fq-name
-                                         #'(lambda (fq-class-name) (load-signatures fq-class-name (get-original-path index-path)))
+                                         #'(lambda (fq-class-name) (load-signatures fq-class-name path))
                                          index)))
                            (when method
                              (jsown:val (jsown:val method "returnType") "name")))))
@@ -281,7 +300,7 @@
                          (or (find-variable-fq-class-name
                                (ast-value (first (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))) "name")
                                ast
-                               index-path
+                               path
                                index)
                              (find-fq-class-name
                                ;; IDENTIFIER is class name
@@ -291,12 +310,12 @@
                            (ast-value (first (ast-get ast '("MEMBER_SELECT" "NEW_CLASS"))) "name")
                            ast)))
                  (ast-value (first (ast-get ast '("*"))) "name")
-                 (find-method-args (nthcdr 1 (ast-get ast '("*"))) index-path index))
+                 (find-method-args (nthcdr 1 (ast-get ast '("*"))) path index))
          (format nil "~a~:[~;-~]~:*~{~a~^-~}"
                  (find-fq-name-for-definition
                    (ast-value (first (ast-get ast '("IDENTIFIER"))) "name")
                    ast)
-                 (find-method-args (nthcdr 1 (ast-get ast '("*"))) index-path index))))))
+                 (find-method-args (nthcdr 1 (ast-get ast '("*"))) path index))))))
 
 (defun find-fq-class-name (class-name ast)
   (unless class-name
@@ -330,16 +349,16 @@
 
        (when (equal (ast-value ast "type") "CLASS")
          (push class-name fq-names)
-         (when (and (not (equal (ast-value ast "name") class-name))
-                    ;; ignore parent class name
-                    (not (ast-find-name (ast-get ast '("IDENTIFIER")) class-name)))
+         ;; for inner class
+         (when (or (ast-find-name (ast-get ast '("CLASS")) class-name)
+                   (ast-find-name (ast-get ast '("ENUM")) class-name))
            (push (ast-value ast "name") fq-names)))
 
        (when (jsown:keyp ast "parent")
          (enqueue q (jsown:val ast "parent")))))))
 
-(defun find-variable-fq-class-name (object-name ast index-path index)
-  (let ((variable (find-variable object-name ast index-path)))
+(defun find-variable-fq-class-name (object-name ast path index)
+  (let ((variable (find-variable object-name ast)))
     (cond
       ((ast-get variable '("IDENTIFIER"))
        (find-fq-class-name (ast-value (first (ast-get variable '("IDENTIFIER"))) "name") variable))
@@ -347,16 +366,16 @@
        (find-fq-class-name (ast-value (first (ast-get variable '("PARAMETERIZED_TYPE"))) "name") variable))
       ((ast-get variable '("METHOD_INVOCATION"))
        (let ((fq-name (find-fq-name-for-reference
-                        (first (ast-get variable '("METHOD_INVOCATION"))) index-path index)))
+                        (first (ast-get variable '("METHOD_INVOCATION"))) path index)))
          (let ((method (find-signature
                          fq-name
                          #'(lambda (fq-class-name)
-                             (load-signatures fq-class-name (get-original-path index-path)))
+                             (load-signatures fq-class-name path))
                          index)))
            (when method
              (jsown:val (jsown:val method "returnType") "name"))))))))
 
-(defun find-variable (object-name ast index-path)
+(defun find-variable (object-name ast)
   (unless object-name
     (return-from find-variable))
 
@@ -375,7 +394,7 @@
 
     (enqueue q (ast-value ast "parent"))))
 
-(defun find-method-args (ast index-path index)
+(defun find-method-args (ast path index)
   (loop for arg in ast
         with results
         do
@@ -394,13 +413,13 @@
                               ("NEW_CLASS"
                                (find-fq-class-name (ast-value arg "name") arg))
                               ("IDENTIFIER"
-                               (find-variable-fq-class-name (ast-value arg "name") arg index-path index))
+                               (find-variable-fq-class-name (ast-value arg "name") arg path index))
                               ("METHOD_INVOCATION"
-                               (let ((fq-name (find-fq-name-for-reference arg index-path index)))
+                               (let ((fq-name (find-fq-name-for-reference arg path index)))
                                  (let ((method (find-signature
                                                  fq-name
                                                  #'(lambda (fq-class-name)
-                                                     (load-signatures fq-class-name (get-original-path index-path)))
+                                                     (load-signatures fq-class-name path))
                                                  index)))
                                    (if method
                                        (jsown:val (jsown:val method "returnType") "name")
@@ -434,7 +453,7 @@
     (when (jsown:keyp ast "parent")
       (enqueue q (jsown:val ast "parent")))))
 
-(defun find-rest-client (fq-name ast index-path index)
+(defun find-rest-client (fq-name ast path index)
   ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/client/RestTemplate.html
   (cond
     ((matches-signature
@@ -455,7 +474,7 @@
        fq-name
        "org.springframework.web.client.RestTemplate.getForObject-java.net.URI-Class"
        index)
-     (let ((server (find-server-from-uri 0 ast index-path index)))
+     (let ((server (find-server-from-uri 0 ast path index)))
        `((:host . ,(cdr (assoc :host server)))
          (:name . "GET")
          (:path . ,(cdr (assoc :path server))))))
@@ -483,13 +502,13 @@
 (defun get-parameter (idx ast)
   (nth (1+ idx) (ast-get ast '("*"))))
 
-(defun find-server-from-uri (arg-i ast index-path index)
+(defun find-server-from-uri (arg-i ast path index)
   (let ((param-uri (nth (1+ arg-i) (ast-get ast '("*")))))
-    (let ((variable-uri (find-variable (ast-value param-uri "name") param-uri index-path))
+    (let ((variable-uri (find-variable (ast-value param-uri "name") param-uri))
           host
           path)
-      (labels ((find-uri-components-builder (ast index-path)
-                 (let ((fq-name (find-fq-name-for-reference ast index-path index)))
+      (labels ((find-uri-components-builder (ast path)
+                 (let ((fq-name (find-fq-name-for-reference ast path index)))
                    (unless fq-name (return-from find-uri-components-builder))
                    (cond
                      ((equal
@@ -500,15 +519,12 @@
                                            (find-variable-fq-class-name
                                              (ast-value (get-parameter 0 ast) "name")
                                              ast
-                                             index-path
+                                             path
                                              index)))))
                      ((equal
                         fq-name
                         "org.springframework.web.util.UriComponentsBuilder.fromUriString-java.lang.String")
-                      (let ((v (find-variable
-                                 (ast-value (get-parameter 0 ast) "name")
-                                 ast
-                                 index-path)))
+                      (let ((v (find-variable (ast-value (get-parameter 0 ast) "name") ast)))
                         (let ((value (first (ast-find-name
                                               (ast-get v '("MODIFIERS"
                                                            "ANNOTATION"))
@@ -520,13 +536,13 @@
                                       (find-property
                                         (first (get-variable-names
                                                  (ast-value (first (ast-get value '("STRING_LITERAL"))) "name")))
-                                        (get-original-path index-path))))))))))
+                                        path)))))))))
                    (find-uri-components-builder
                      (first (ast-get ast '("MEMBER_SELECT" "METHOD_INVOCATION")))
-                     index-path))))
+                     path))))
         (find-uri-components-builder
           (first (ast-get variable-uri '("METHOD_INVOCATION")))
-          index-path))
+          path))
       `((:host . ,host)
         (:path . ,path)))))
 
@@ -535,7 +551,7 @@
     ("java.lang.String" "string")
     ("INT" "number")))
 
-(defun get-fq-name-of-declaration (root-ast top-offset index-path)
+(defun get-fq-name-of-declaration (root-ast top-offset)
   (let ((stack (list root-ast))
         result)
     (loop

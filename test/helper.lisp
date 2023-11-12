@@ -3,6 +3,7 @@
         #:fiveam)
   (:import-from #:inga/ast-index
                 #:ast-index-root-path
+                #:ast-index-paths
                 #:clean-indexes
                 #:create-indexes
                 #:get-ast)
@@ -10,8 +11,6 @@
                 #:ast-analyzer-java 
                 #:ast-value
                 #:convert-to-top-offset
-                #:create-index-groups
-                #:get-index-path
                 #:start-ast-analyzer
                 #:stop-ast-analyzer)
   (:export #:*index*
@@ -21,7 +20,7 @@
            #:create-range))
 (in-package #:inga/test/helper)
 
-(def-fixture jvm-context (root-path index-type)
+(def-fixture jvm-context (root-path index-type &key (include '("**")))
   (defparameter *root-path* root-path)
   (defparameter *index* nil)
   (defparameter *analyzers* nil)
@@ -29,31 +28,26 @@
   (inga/plugin/spring-property-loader:start root-path)
   (setf *index* (make-instance index-type
                                :root-path root-path))
-  (create-indexes *index* inga/main::*include-java* nil)
-  (create-index-groups *index*)
   (setf *analyzers*
         (list
-          (start-ast-analyzer :java nil root-path *index*)
-          (start-ast-analyzer :kotlin nil root-path *index*)))
+          (start-ast-analyzer :java include nil root-path *index*)
+          (start-ast-analyzer :kotlin include nil root-path *index*)))
   (&body)
   (loop for a in *analyzers* do (stop-ast-analyzer a))
-  (clean-indexes *index*)
   (inga/plugin/spring-property-loader:stop)
   (inga/plugin/jvm-dependency-loader:stop))
 
-(def-fixture node-context (root-path index-type)
+(def-fixture node-context (root-path index-type &key  include '("**"))
   (defparameter *root-path* root-path)
   (defparameter *index* nil)
   (defparameter *analyzers* nil)
   (setf *index* (make-instance index-type
                                :root-path root-path))
-  (create-indexes *index* inga/main::*include-typescript* nil)
   (setf *analyzers*
         (list
-          (start-ast-analyzer :typescript nil root-path *index*)))
+          (start-ast-analyzer :typescript include nil root-path *index*)))
   (&body)
-  (loop for a in *analyzers* do (stop-ast-analyzer a))
-  (clean-indexes *index*))
+  (loop for a in *analyzers* do (stop-ast-analyzer a)))
 
 (defun find-ast (path pos ast-index)
   (loop with ast = (get-ast ast-index path)

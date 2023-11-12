@@ -2,34 +2,75 @@
   (:use #:cl
         #:inga/ast-analyzer/base
         #:inga/utils)
+  (:import-from #:inga/ast-index
+                #:ast-index-paths
+                #:ast-index-root-path
+                #:clean-indexes
+                #:create-indexes
+                #:get-ast)
+  (:import-from #:inga/file
+                #:get-file-type)
   (:export #:ast-analyzer-kotlin))
 (in-package #:inga/ast-analyzer/kotlin)
 
 (defvar *package-index-groups* nil)
 (defvar *project-index-groups* nil)
 
+(defparameter *include-kotlin* '("*.kt"))
+
 (defclass ast-analyzer-kotlin (ast-analyzer)
   ())
 
-(defmethod start-ast-analyzer ((kind (eql :kotlin)) exclude path index)
+(defmethod start-ast-analyzer ((kind (eql :kotlin)) include exclude path index)
   (setf *ast-analyzers*
         (acons :kotlin
                (make-instance 'ast-analyzer-kotlin
                               :path path
                               :index index)
                *ast-analyzers*))
+  (create-indexes index include *include-kotlin* exclude)
+  (create-index-groups *include-kotlin* exclude index)
   (cdr (assoc :kotlin *ast-analyzers*)))
+
+(defmethod stop-ast-analyzer ((ast-analyzer ast-analyzer-kotlin))
+  (clean-index-groups (ast-analyzer-index ast-analyzer)) 
+  (clean-indexes (ast-analyzer-index ast-analyzer))
+  (setf *ast-analyzers* nil))
+
+(defun create-index-groups (include exclude index)
+  (loop for path in (remove-if-not (lambda (p) (eq (get-file-type p) :kotlin))
+                                   (ast-index-paths index))
+        do
+        (let ((index-key (find-package-index-key (get-ast index path))))
+          (setf *package-index-groups*
+                (if (assoc index-key *package-index-groups*)
+                    (acons index-key
+                           (append (list path) (cdr (assoc index-key *package-index-groups*)))
+                           *package-index-groups*)
+                    (acons index-key (list path) *package-index-groups*))))
+        (let ((index-key (find-project-index-key
+                           (merge-pathnames path (ast-index-root-path index)))))
+          (setf *project-index-groups*
+                (if (assoc index-key *project-index-groups*)
+                    (acons index-key
+                           (append (list path) (cdr (assoc index-key *project-index-groups*)))
+                           *project-index-groups*)
+                    (acons index-key (list path) *project-index-groups*))))))
+
+(defun clean-index-groups (index)
+  (setf *package-index-groups* nil)
+  (setf *project-index-groups* nil))
 
 (defmethod find-definitions-generic ((ast-analyzer ast-analyzer-kotlin) range)
   (let ((q (make-queue))
         (src-path (cdr (assoc :path range)))
-        (index-path (get-index-path (cdr (assoc :path range))))
+        (path (cdr (assoc :path range)))
         (start-offset (cdr (assoc :start-offset range)))
         (end-offset (cdr (assoc :end-offset range)))
         ast
         results)
     (handler-case
-      (setf ast (cdr (jsown:parse (uiop:read-file-string index-path))))
+      (setf ast (get-ast (ast-analyzer-index ast-analyzer) path))
       (error (e)
              (format t "~a~%" e)
              (return-from find-definitions-generic)))
@@ -62,7 +103,7 @@
               do (enqueue q (cdr child)))))
     results))
 
-(defmethod find-reference ((ast-analyzer ast-analyzer-kotlin) target-pos ast index-path)
+(defmethod find-reference ((ast-analyzer ast-analyzer-kotlin) target-pos ast path)
   (let ((fq-name (find-fq-name-for-reference ast)))
     (unless fq-name (return-from find-reference))
 
@@ -73,7 +114,7 @@
       (t
         (when (equal fq-name (cdr (assoc :fq-name target-pos)))
           (list
-            (cons :path (get-original-path index-path))
+            (cons :path path)
             (cons :top-offset (ast-value ast "textOffset"))))))))
 
 (defun find-fq-name-for-reference (ast)

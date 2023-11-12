@@ -23,7 +23,7 @@
      :initform nil
      :accessor ast-scoped-paths)))
 
-(defgeneric create-indexes (ast-index include exclude))
+(defgeneric create-indexes (ast-index include include-files exclude))
 
 (defgeneric clean-indexes (ast-index))
 

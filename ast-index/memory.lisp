@@ -13,14 +13,16 @@
 (defclass ast-index-memory (ast-index)
   ())
 
-(defmethod create-indexes (ast-index include exclude)
+(defmethod create-indexes ((ast-index ast-index-memory) include include-files exclude)
   (loop for path in (uiop:directory-files (format nil "~a/**/*" (ast-index-root-path ast-index)))
         do
         (let ((relative-path (enough-namestring path (ast-index-root-path ast-index))))
-          (when (is-analysis-target relative-path include exclude)
-            (push relative-path (ast-index-paths ast-index))))))
+          (when (and (is-analysis-target relative-path include exclude)
+                     (is-analysis-target relative-path include-files exclude))
+            (setf (ast-index-paths ast-index)
+                  (append (ast-index-paths ast-index) (list relative-path)))))))
 
-(defmethod clean-indexes (ast-index)
+(defmethod clean-indexes ((ast-index ast-index-memory))
   (stop-all-parsers))
 
 (defmethod get-ast (ast-index path)

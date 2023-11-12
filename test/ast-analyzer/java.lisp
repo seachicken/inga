@@ -242,7 +242,7 @@
             *index*)))))
 
 (test find-references-with-sub-class-args
-  (with-fixture jvm-context (*spring-boot-path* 'ast-index-disk)
+  (with-fixture jvm-context (*spring-boot-path* 'ast-index-disk :include '("src/main/**"))
     (is (equal
           `(((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
              ,(cons :top-offset
@@ -272,13 +272,15 @@
             *index*)))))
 
 (test find-fq-name-for-reference
-  (with-fixture jvm-context (*spring-boot-path* 'ast-index-memory)
+  (with-fixture jvm-context (*spring-boot-path* 'ast-index-memory :include '("src/main/**"))
     (let ((path "src/main/java/io/spring/application/ArticleQueryService.java"))
       (is (equal
             "io.spring.application.CursorPager.CursorPager-java.util.ArrayList-io.spring.application.CursorPager.Direction-BOOLEAN"
+            ;;        ↓
+            ;; return new CursorPager<>(new ArrayList<>(), page.getDirection(), false);
             (inga/ast-analyzer/java::find-fq-name-for-reference
               (find-ast path `((:line . 63) (:offset . 14)) *index*)
-              (get-index-path path)
+              path
               *index*))))))
 
 (test find-fq-name-for-reference-with-lib-args
@@ -290,11 +292,20 @@
               ;;                                 ↓
               ;; return restTemplate.getForObject(uri, User.class);
               (find-ast path `((:line . 25) (:offset . 45)) *index*)
-              (get-index-path path)
+              path
               *index*))))))
 
+(test find-fq-class-name-for-same-package
+  (with-fixture jvm-context (*spring-boot-path* 'ast-index-memory :include '("src/main/**"))
+    (let ((path "src/main/java/io/spring/application/ArticleQueryService.java"))
+      (is (equal
+            "io.spring.application.CursorPager"
+            (inga/ast-analyzer/java::find-fq-class-name
+              "CursorPager"
+              (find-ast path `((:line . 63) (:offset . 14)) *index*)))))))
+
 (test find-fq-class-name-for-inner-class
-  (with-fixture jvm-context (*spring-boot-path* 'ast-index-memory)
+  (with-fixture jvm-context (*spring-boot-path* 'ast-index-memory :include '("src/main/**"))
     (let ((path "src/main/java/io/spring/application/CursorPager.java"))
       (is (equal
             "io.spring.application.CursorPager.Direction"
