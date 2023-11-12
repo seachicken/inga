@@ -4,7 +4,8 @@
         #:inga/utils)
   (:import-from #:inga/ast-index
                 #:clean-indexes
-                #:create-indexes)
+                #:create-indexes
+                #:get-ast)
   (:export #:ast-analyzer-typescript))
 (in-package #:inga/ast-analyzer/typescript)
 
@@ -37,8 +38,7 @@
         (end-offset (cdr (assoc :end-offset range)))
         ast
         results)
-    (setf ast (get-ast (ast-analyzer-index ast-analyzer) path))
-    (enqueue q ast)
+    (enqueue q (get-ast (ast-analyzer-index ast-analyzer) path))
     (loop
       (setf ast (dequeue q))
       (if (null ast) (return))
@@ -142,17 +142,14 @@
         (when (and
                 (jsown:keyp ast "kindName") (string= (jsown:val ast "kindName") "FirstStatement"))
           (let ((dec-list (jsown:val (jsown:val ast "declarationList") "declarations")))
-            (loop for d in dec-list
-                  do (enqueue q (cdr d)))))
+            (loop for d in dec-list do (enqueue q d))))
 
         (when (and
                 (jsown:keyp ast "kindName") (string= (jsown:val ast "kindName") "ClassDeclaration"))
-          (loop for m in (jsown:val ast "members")
-                do (enqueue q (cdr m))))
+          (loop for m in (jsown:val ast "members") do (enqueue q m)))
 
         (when (jsown:keyp ast "statements")
-          (loop for s in (jsown:val ast "statements")
-                do (enqueue q (cdr s)))))
+          (loop for s in (jsown:val ast "statements") do (enqueue q s))))
     results))
 
 (defmethod find-entrypoint-generic ((ast-analyzer ast-analyzer-typescript) pos)

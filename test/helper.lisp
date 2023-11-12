@@ -37,7 +37,7 @@
   (inga/plugin/spring-property-loader:stop)
   (inga/plugin/jvm-dependency-loader:stop))
 
-(def-fixture node-context (root-path index-type &key  include '("**"))
+(def-fixture node-context (root-path index-type &key (include '("**")))
   (defparameter *root-path* root-path)
   (defparameter *index* nil)
   (defparameter *analyzers* nil)

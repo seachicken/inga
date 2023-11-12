@@ -45,7 +45,7 @@
                               :index index)
                *ast-analyzers*))
   (create-indexes index include *include-java* exclude)
-  (create-index-groups *include-java* exclude index)
+  (create-index-groups index)
   (cdr (assoc :java *ast-analyzers*)))
 
 (defmethod stop-ast-analyzer ((ast-analyzer ast-analyzer-java))
@@ -53,7 +53,7 @@
   (clean-indexes (ast-analyzer-index ast-analyzer))
   (setf *ast-analyzers* nil))
 
-(defun create-index-groups (include exclude index)
+(defun create-index-groups (index)
   (loop for path in (remove-if-not (lambda (p) (eq (get-file-type p) :java))
                                    (ast-index-paths index))
         do
@@ -118,11 +118,7 @@
         ast
         root-ast
         results)
-    (handler-case
-      (setf ast (get-ast (ast-analyzer-index ast-analyzer) path))
-      (error (e)
-             (format t "~a~%" e)
-             (return-from find-definitions-generic)))
+    (setf ast (get-ast (ast-analyzer-index ast-analyzer) path))
     (setf root-ast ast)
     (enqueue q ast)
     (loop
@@ -207,10 +203,7 @@
             (push (cons :origin (cdr (assoc :origin range))) pos))
           (setf results (append results (list pos)))))
 
-      (loop for child in (jsown:val ast "children")
-            do
-            (setf (jsown:val child "parent") ast)
-            (enqueue q child)))
+      (loop for child in (jsown:val ast "children") do (enqueue q child)))
     results))
 
 (defun get-scope (ast)

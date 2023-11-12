@@ -29,37 +29,11 @@
                               :index index)
                *ast-analyzers*))
   (create-indexes index include *include-kotlin* exclude)
-  (create-index-groups *include-kotlin* exclude index)
   (cdr (assoc :kotlin *ast-analyzers*)))
 
 (defmethod stop-ast-analyzer ((ast-analyzer ast-analyzer-kotlin))
-  (clean-index-groups (ast-analyzer-index ast-analyzer)) 
   (clean-indexes (ast-analyzer-index ast-analyzer))
   (setf *ast-analyzers* nil))
-
-(defun create-index-groups (include exclude index)
-  (loop for path in (remove-if-not (lambda (p) (eq (get-file-type p) :kotlin))
-                                   (ast-index-paths index))
-        do
-        (let ((index-key (find-package-index-key (get-ast index path))))
-          (setf *package-index-groups*
-                (if (assoc index-key *package-index-groups*)
-                    (acons index-key
-                           (append (list path) (cdr (assoc index-key *package-index-groups*)))
-                           *package-index-groups*)
-                    (acons index-key (list path) *package-index-groups*))))
-        (let ((index-key (find-project-index-key
-                           (merge-pathnames path (ast-index-root-path index)))))
-          (setf *project-index-groups*
-                (if (assoc index-key *project-index-groups*)
-                    (acons index-key
-                           (append (list path) (cdr (assoc index-key *project-index-groups*)))
-                           *project-index-groups*)
-                    (acons index-key (list path) *project-index-groups*))))))
-
-(defun clean-index-groups (index)
-  (setf *package-index-groups* nil)
-  (setf *project-index-groups* nil))
 
 (defmethod find-definitions-generic ((ast-analyzer ast-analyzer-kotlin) range)
   (let ((q (make-queue))
@@ -69,18 +43,13 @@
         (end-offset (cdr (assoc :end-offset range)))
         ast
         results)
-    (handler-case
-      (setf ast (get-ast (ast-analyzer-index ast-analyzer) path))
-      (error (e)
-             (format t "~a~%" e)
-             (return-from find-definitions-generic)))
-    (enqueue q ast)
+    (enqueue q (get-ast (ast-analyzer-index ast-analyzer) path))
     (loop
       (setf ast (dequeue q))
       (if (null ast) (return))
 
       (when (and
-              (string= (cdr (car ast)) "FUN")
+              (equal (ast-value ast "type") "FUN")
               (contains-offset (jsown:val (jsown:val ast "textRange") "startOffset")
                                (jsown:val (jsown:val ast "textRange") "endOffset")            
                                start-offset
@@ -98,9 +67,7 @@
                               (push (cons :origin (cdr (assoc :origin range))) pos))
                             pos))))))
 
-      (when (jsown:keyp ast "children")
-        (loop for child in (jsown:val ast "children")
-              do (enqueue q (cdr child)))))
+      (loop for child in (jsown:val ast "children") do (enqueue q child)))
     results))
 
 (defmethod find-reference ((ast-analyzer ast-analyzer-kotlin) target-pos ast path)
