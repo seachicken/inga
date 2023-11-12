@@ -285,8 +285,6 @@
                          (let ((method (find-signature
                                          fq-name
                                          #'(lambda (fq-class-name)
-                                             (format t " load-signatures. fqcn: ~a, path: ~a~%"
-                                                     fq-class-name path)
                                              (load-signatures fq-class-name path))
                                          index)))
                            (when method
