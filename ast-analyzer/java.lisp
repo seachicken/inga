@@ -369,8 +369,7 @@
                         (first (ast-get variable '("METHOD_INVOCATION"))) path index)))
          (let ((method (find-signature
                          fq-name
-                         #'(lambda (fq-class-name)
-                             (load-signatures fq-class-name path))
+                         #'(lambda (fq-class-name) (load-signatures fq-class-name path))
                          index)))
            (when method
              (jsown:val (jsown:val method "returnType") "name"))))))))
