@@ -395,35 +395,29 @@
     (enqueue q (ast-value ast "parent"))))
 
 (defun find-method-args (ast path index)
-  (loop for arg in ast
-        with results
-        do
-        (setf results
-              (append results
-                      (list
-                        (if (uiop:string-suffix-p (ast-value arg "type") "_LITERAL")
-                            (if (equal (ast-value arg "type") "STRING_LITERAL")
-                                "java.lang.String"
-                                (ppcre:regex-replace-all "_LITERAL" (ast-value arg "type") ""))
-                            (alexandria:switch ((jsown:val arg "type") :test #'equal)
-                              ("MEMBER_SELECT"
-                               (if (ast-find-name (list arg) "class")
-                                   "Class"
-                                   (ast-value (first (ast-get arg '("IDENTIFIER"))) "name")))
-                              ("NEW_CLASS"
-                               (find-fq-class-name (ast-value arg "name") arg))
-                              ("IDENTIFIER"
-                               (find-variable-fq-class-name (ast-value arg "name") arg path index))
-                              ("METHOD_INVOCATION"
-                               (let ((fq-name (find-fq-name-for-reference arg path index)))
-                                 (let ((method (find-signature
-                                                 fq-name
-                                                 #'(lambda (fq-class-name)
-                                                     (load-signatures fq-class-name path))
-                                                 index)))
-                                   (when method
-                                       (jsown:val (jsown:val method "returnType") "name"))))))))))
-        finally (return results)))
+  (mapcar (lambda (arg)
+            (if (uiop:string-suffix-p (ast-value arg "type") "_LITERAL")
+                (if (equal (ast-value arg "type") "STRING_LITERAL")
+                    "java.lang.String"
+                    (ppcre:regex-replace-all "_LITERAL" (ast-value arg "type") ""))
+                (alexandria:switch ((jsown:val arg "type") :test #'equal)
+                  ("MEMBER_SELECT"
+                   (if (ast-find-name (list arg) "class")
+                       "Class"
+                       (ast-value (first (ast-get arg '("IDENTIFIER"))) "name")))
+                  ("NEW_CLASS"
+                   (find-fq-class-name (ast-value arg "name") arg))
+                  ("IDENTIFIER"
+                   (find-variable-fq-class-name (ast-value arg "name") arg path index))
+                  ("METHOD_INVOCATION"
+                   (let ((fq-name (find-fq-name-for-reference arg path index)))
+                     (let ((method (find-signature
+                                     fq-name
+                                     #'(lambda (fq-class-name)
+                                         (load-signatures fq-class-name path))
+                                     index)))
+                       (when method (jsown:val (jsown:val method "returnType") "name"))))))))
+          ast))
 
 (defun find-fq-name-for-definition (method-name ast)
   (loop

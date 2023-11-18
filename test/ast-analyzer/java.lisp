@@ -13,6 +13,7 @@
 (defparameter *spring-boot-path*
   (truename (uiop:merge-pathnames* "test/fixtures/spring-boot-realworld-example-app/")))
 (defparameter *lightrun-path* (merge-pathnames "test/fixtures/spring-tutorials/lightrun/"))
+(defparameter *guava-modules* (merge-pathnames "test/fixtures/spring-tutorials/guava-modules/"))
 
 (test find-definitions-with-inner-class-and-primitive
   (with-fixture jvm-context (*spring-boot-path* 'ast-index-disk)
@@ -307,6 +308,18 @@
               path
               *index*))))))
 
+(test find-fq-name-for-reference-with-array-args
+  (with-fixture jvm-context (*guava-modules* 'ast-index-memory)
+    (let ((path "guava-collections/src/test/java/com/baeldung/guava/ordering/GuavaOrderingExamplesUnitTest.java"))
+      (is (equal
+            "com.google.common.collect.Ordering.explicit-java.util.ArrayList"
+            ;;                  ↓
+            ;; Ordering.explicit(Lists.newArrayList("b", "zz", "aa", "ccc"));
+            (inga/ast-analyzer/java::find-fq-name-for-reference
+              (find-ast path `((:line . 104) (:offset . 65)) *index*)
+              path
+              *index*))))))
+
 (test find-fq-class-name-for-same-package
   (with-fixture jvm-context (*spring-boot-path* 'ast-index-memory :include '("src/main/**"))
     (let ((path "src/main/java/io/spring/application/ArticleQueryService.java"))
@@ -400,7 +413,10 @@
   (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (eq
           t
-          (matches-signature "p2.ApiSignature-p2.ChildClass" "p2.ApiSignature-p2.ParentClass" *index*)))))
+          (matches-signature
+            "p2.ApiSignature-p2.ChildClass"
+            "p2.ApiSignature-p2.ParentClass"
+            *index*)))))
 
 (test matches-signature-with-sub-class
   (with-fixture jvm-context (*spring-boot-path* 'ast-index-disk)
@@ -408,7 +424,17 @@
           t
           (matches-signature
             "io.spring.application.CursorPager.CursorPager-java.util.ArrayList-io.spring.application.CursorPager.Direction-BOOLEAN"
-            "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager.Direction-BOOLEAN" *index*)))))
+            "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager.Direction-BOOLEAN"
+            *index*)))))
+
+(test matches-signature-with-object-array
+  (with-fixture jvm-context (*guava-modules* 'ast-index-memory)
+    (is (eq
+          t
+          (matches-signature
+            "com.google.common.collect.Lists.newArrayList-java.lang.String-java.lang.String"
+            "com.google.common.collect.Lists.newArrayList-java.lang.Object[]"
+            *index*)))))
 
 (test find-class-hierarchy-with-standard-class
   (with-fixture jvm-context (*lightrun-path* 'ast-index-disk)

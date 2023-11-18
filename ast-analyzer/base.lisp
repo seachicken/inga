@@ -132,13 +132,11 @@
           with target-name = (subseq (ppcre:regex-replace-all fq-class-name fq-name "") 1)
           with matched-methods
           do
-          (let ((name (format nil "~a~:[~;-~]~:*~{~a~^-~}"
+          (let ((api-name (format nil "~a~:[~;-~]~:*~{~a~^-~}"
                               (jsown:val method "name")
-                              (if (equal (ast-value method "kind") "variable")
-                                  nil
-                                  (mapcar (lambda (type) (jsown:val type "name"))
-                                          (jsown:val method "parameterTypes"))))))
-            (when (matches-signature target-name name index)
+                              (mapcar (lambda (type) (jsown:val type "name"))
+                                      (jsown:val method "parameterTypes")))))
+            (when (matches-signature target-name api-name index)
               (push method matched-methods)))
           finally
           (return (if (> (length matched-methods) 1)
@@ -154,14 +152,17 @@
       (return-from matches-signature))
 
     (let ((target-arg-names (cdr split-target-fq-names))
-          (api-arg-names (mapcar (lambda (n)
-                                   (cl-ppcre:regex-replace-all "\\[L|;" n ""))
-                                 (cdr split-api-fq-names))))
+          (api-arg-names (cdr split-api-fq-names)))
       (loop for target-arg-name in target-arg-names
             for i below (length target-arg-names)
+            with array-arg
             do
+            (when (and (< i (length api-arg-names)) (uiop:string-suffix-p (nth i api-arg-names) "[]"))
+              (setf array-arg (subseq (nth i api-arg-names) 0 (- (length (nth i api-arg-names)) 2))))
             (unless (find-if (lambda (super-class-name)
-                               (equal super-class-name (nth i api-arg-names)))
+                               (or
+                                 (equal super-class-name (nth i api-arg-names))
+                                 (equal super-class-name array-arg)))
                              (find-class-hierarchy target-arg-name index))
               (return-from matches-signature)))))
   t)
