@@ -7,7 +7,8 @@
                 #:inga-error-process-not-running
                 #:inga-error-process-failed)
   (:import-from #:inga/plugin/jvm-helper
-                #:find-base-path)
+                #:find-base-path
+                #:is-primitive-type)
   (:export #:start
            #:stop
            #:load-hierarchy
@@ -51,6 +52,8 @@
 (defun load-hierarchy (fq-class-name from)
   (unless (uiop:process-alive-p *jvm-dependency-loader*)
     (error 'inga-error-process-not-running))
+  (when (is-primitive-type fq-class-name)
+    (return-from load-hierarchy))
   ;; TODO: remove NIL check when correctly got fq-class-name
   (when (equal fq-class-name "NIL")
     (return-from load-hierarchy))

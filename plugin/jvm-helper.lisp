@@ -2,7 +2,8 @@
   (:use #:cl)
   (:import-from #:inga/cache
                 #:defunc)
-  (:export #:find-base-path))
+  (:export #:find-base-path
+           #:is-primitive-type))
 (in-package #:inga/plugin/jvm-helper)
 
 (defunc find-base-path (path)
@@ -15,4 +16,16 @@
           (when (find (file-namestring file) '("pom.xml" "build.gradle") :test #'equal)
             (return-from find-base-path parent-path)))
     (find-base-path parent-path)))
+
+(defun is-primitive-type (class-name)
+  (find class-name '("BOOLEAN"
+                     "BYTE"
+                     "SHORT"
+                     "INT"
+                     "LONG"
+                     "CHAR"
+                     "FLOAT"
+                     "DOUBLE"
+                     ) :test 'equal))
+
 

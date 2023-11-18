@@ -21,7 +21,8 @@
                 #:load-signatures
                 #:load-hierarchy)
   (:import-from #:inga/plugin/jvm-helper
-                #:find-base-path)
+                #:find-base-path
+                #:is-primitive-type)
   (:import-from #:inga/plugin/spring-property-loader
                 #:find-property)
   (:import-from #:inga/plugin/spring-helper
@@ -319,7 +320,7 @@
     (return-from find-fq-class-name))
 
   (cond
-    ((find class-name '("BOOLEAN" "INT") :test 'equal)
+    ((is-primitive-type class-name)
      class-name)
     ((find class-name '("Long" "String") :test 'equal)
      (concatenate 'string "java.lang." class-name))
