@@ -48,6 +48,9 @@
 (defun load-hierarchy (fq-class-name from)
   (unless (uiop:process-alive-p *jvm-dependency-loader*)
     (error 'inga-error-process-not-running))
+  ;; TODO: remove NIL check when correctly got fq-class-name
+  (when (equal fq-class-name "NIL")
+    (return-from load-hierarchy))
 
   (let ((base-path (find-base-path (merge-pathnames from *root-path*))))
     (unless base-path
