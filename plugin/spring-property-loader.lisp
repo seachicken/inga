@@ -13,8 +13,8 @@
            #:find-property))
 (in-package #:inga/plugin/spring-property-loader)
 
-(defvar *spring-property-loader*)
-(defvar *root-path*)
+(defparameter *spring-property-loader* nil)
+(defparameter *root-path* nil)
 
 (defun start (root-path)
   (setf *spring-property-loader*
@@ -39,20 +39,22 @@
     (unless base-path
       (return-from find-property))
 
-    (loop for property in (jsown:parse
-                            (exec-command *spring-property-loader* (namestring base-path)))
-          with result
-          do
-          (when (and
-                  (jsown:keyp property key)
-                  (or (not (jsown:keyp property "spring.config.activate.on-profile"))
-                      (find (jsown:val property "spring.config.activate.on-profile")
-                            prod-profile-candidates
-                            :test #'equal)))
-            (setf result (jsown:val property key)))
-          finally (return (if (and (equal key "server.port") (null result))
-                              "8080"
-                              result)))))
+    (let ((results (exec-command *spring-property-loader* (namestring base-path))))
+      (unless results (return-from find-property))
+
+      (loop for property in (jsown:parse results)
+            with result
+            do
+            (when (and
+                    (jsown:keyp property key)
+                    (or (not (jsown:keyp property "spring.config.activate.on-profile"))
+                        (find (jsown:val property "spring.config.activate.on-profile")
+                              prod-profile-candidates
+                              :test #'equal)))
+              (setf result (jsown:val property key)))
+            finally (return (if (and (equal key "server.port") (null result))
+                                "8080"
+                                result))))))
 
 (defunc exec-command (process cmd)
   (inga/utils::funtime
@@ -61,9 +63,10 @@
         (progn
           (write-line cmd (uiop:process-info-input process))
           (force-output (uiop:process-info-input process))
-          (loop while (listen (uiop:process-info-error-output process))
-                do (format t "~a~%" (read-line (uiop:process-info-error-output process))))
-          (read-line (uiop:process-info-output process)))
+          (prog1
+            (read-line (uiop:process-info-output process))  
+            (loop while (listen (uiop:process-info-error-output process))
+                  do (format t "~a~%" (read-line (uiop:process-info-error-output process))))))
         (error (e) (error 'inga-error-process-failed))))
     :label "spring-property-loader"
     :args cmd))

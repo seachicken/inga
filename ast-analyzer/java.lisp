@@ -277,29 +277,35 @@
      (if (ast-get ast '("MEMBER_SELECT"))
          (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
                  ;; if method chain
-                 (if (ast-get ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
-                     (let ((fq-name (find-fq-name-for-reference
-                                      (first (ast-get ast '("MEMBER_SELECT" "METHOD_INVOCATION")))
-                                      path index)))
-                       (when fq-name
-                         (let ((method (find-signature
-                                         fq-name
-                                         #'(lambda (fq-class-name)
-                                             (load-signatures fq-class-name path))
-                                         index)))
-                           (when method
-                             (jsown:val (jsown:val method "returnType") "name")))))
-                     (if (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))
-                         (or (find-variable-fq-class-name
-                               (ast-value (first (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))) "name")
-                               ast path index)
-                             (find-fq-class-name
-                               ;; IDENTIFIER is class name
-                               (ast-value (first (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))) "name")
-                               ast))
-                         (find-fq-class-name
-                           (ast-value (first (ast-get ast '("MEMBER_SELECT" "NEW_CLASS"))) "name")
-                           ast)))
+                 (cond
+                   ((ast-get ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
+                    (let ((fq-name (find-fq-name-for-reference
+                                     (first (ast-get ast '("MEMBER_SELECT" "METHOD_INVOCATION")))
+                                     path index)))
+                      (when fq-name
+                        (let ((method (find-signature
+                                        fq-name
+                                        #'(lambda (fq-class-name)
+                                            (load-signatures fq-class-name path))
+                                        index)))
+                          (when method
+                            (jsown:val (jsown:val method "returnType") "name"))))))
+                   ((ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))
+                    (or (find-variable-fq-class-name
+                          (ast-value (first (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))) "name")
+                          ast path index)
+                        (find-fq-class-name
+                          ;; IDENTIFIER is class name
+                          (ast-value (first (ast-get ast '("MEMBER_SELECT" "IDENTIFIER"))) "name")
+                          ast)))
+                   ((ast-get ast '("MEMBER_SELECT" "NEW_CLASS"))
+                    (find-fq-class-name
+                      (ast-value (first (ast-get ast '("MEMBER_SELECT" "NEW_CLASS"))) "name")
+                      ast))
+                   ((ast-get ast '("MEMBER_SELECT" "MEMBER_SELECT"))
+                    (find-fq-class-name
+                      (ast-value (first (ast-get ast '("MEMBER_SELECT" "MEMBER_SELECT"))) "name")
+                      ast)))
                  (ast-value (first (ast-get ast '("*"))) "name")
                  (find-method-args (nthcdr 1 (ast-get ast '("*"))) path index))
          (format nil "~a~:[~;-~]~:*~{~a~^-~}"
@@ -317,6 +323,8 @@
      class-name)
     ((find class-name '("Long" "String") :test 'equal)
      (concatenate 'string "java.lang." class-name))
+    ((equal class-name "class")
+     "java.lang.Class")
     (t
      (loop
        with q = (make-queue)
@@ -412,11 +420,8 @@
                                                  #'(lambda (fq-class-name)
                                                      (load-signatures fq-class-name path))
                                                  index)))
-                                   (if method
-                                       (jsown:val (jsown:val method "returnType") "name")
-                                       "?"))))
-                              (t
-                                "?"))))))
+                                   (when method
+                                       (jsown:val (jsown:val method "returnType") "name"))))))))))
         finally (return results)))
 
 (defun find-fq-name-for-definition (method-name ast)

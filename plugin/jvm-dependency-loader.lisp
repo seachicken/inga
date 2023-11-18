@@ -14,8 +14,8 @@
            #:load-signatures))
 (in-package #:inga/plugin/jvm-dependency-loader)
 
-(defvar *jvm-dependency-loader*)
-(defvar *root-path*)
+(defparameter *jvm-dependency-loader* nil)
+(defparameter *root-path* nil)
 
 (defun start (root-path)
   (setf *jvm-dependency-loader*
@@ -39,11 +39,11 @@
     (unless base-path
       (return-from load-signatures))
 
-    (jsown:parse
-      (exec-command *jvm-dependency-loader*
-                    (format nil "{\"type\":\"METHODS\",\"fqcn\":\"~a\",\"from\":\"~a\"}"
-                            fq-class-name
-                            base-path)))))
+    (let ((results (exec-command *jvm-dependency-loader*
+                                 (format nil "{\"type\":\"METHODS\",\"fqcn\":\"~a\",\"from\":\"~a\"}"
+                                         fq-class-name
+                                         base-path))))
+      (when results (jsown:parse results)))))
 
 (defun load-hierarchy (fq-class-name from)
   (unless (uiop:process-alive-p *jvm-dependency-loader*)
@@ -53,13 +53,13 @@
     (unless base-path
       (return-from load-hierarchy))
 
-    (mapcar (lambda (h)
-              (jsown:val h "name"))
-            (jsown:parse
-              (exec-command *jvm-dependency-loader*
-                            (format nil "{\"type\":\"HIERARCHY\",\"fqcn\":\"~a\",\"from\":\"~a\"}"
-                                    fq-class-name
-                                    base-path))))))
+    (mapcar (lambda (h) (jsown:val h "name"))
+            (let ((results (exec-command
+                             *jvm-dependency-loader*
+                             (format nil "{\"type\":\"HIERARCHY\",\"fqcn\":\"~a\",\"from\":\"~a\"}"
+                                     fq-class-name
+                                     base-path))))
+              (when results (jsown:parse results))))))
 
 (defunc exec-command (process cmd)
   (inga/utils::funtime
@@ -68,9 +68,10 @@
         (progn
           (write-line cmd (uiop:process-info-input process))
           (force-output (uiop:process-info-input process))
-          (loop while (listen (uiop:process-info-error-output process))
-                do (format t "~a~%" (read-line (uiop:process-info-error-output process))))
-          (read-line (uiop:process-info-output process)))
+          (prog1
+            (read-line (uiop:process-info-output process)) 
+            (loop while (listen (uiop:process-info-error-output process))
+                  do (format t "~a~%" (read-line (uiop:process-info-error-output process))))))
         (error (e) (error 'inga-error-process-failed))))
     :label "jvm-dependency-loader"
     :args cmd))

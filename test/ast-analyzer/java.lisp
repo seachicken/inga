@@ -271,7 +271,7 @@
               (:fq-name . "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager.Direction-BOOLEAN"))
             *index*)))))
 
-(test find-fq-name-for-reference
+(test find-fq-name-for-reference-with-new-class
   (with-fixture jvm-context (*spring-boot-path* 'ast-index-memory :include '("src/main/**"))
     (let ((path "src/main/java/io/spring/application/ArticleQueryService.java"))
       (is (equal
@@ -292,6 +292,18 @@
               ;;                                 ↓
               ;; return restTemplate.getForObject(uri, User.class);
               (find-ast path `((:line . 25) (:offset . 45)) *index*)
+              path
+              *index*))))))
+
+(test find-fq-name-for-reference-with-member_select-member_select
+  (with-fixture jvm-context (*lightrun-path* 'ast-index-memory)
+    (let ((path "api-service/src/main/java/com/baeldung/apiservice/RequestIdGenerator.java"))
+      (is (equal
+            "java.lang.Class.getCanonicalName"
+            ;;                                                  ↓
+            ;; MDC.put(RequestIdGenerator.class.getCanonicalName(), requestId);
+            (inga/ast-analyzer/java::find-fq-name-for-reference
+              (find-ast path `((:line . 19) (:offset . 58)) *index*)
               path
               *index*))))))
 
