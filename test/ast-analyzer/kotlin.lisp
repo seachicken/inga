@@ -85,6 +85,21 @@
               (:name . "GET"))
             *index*)))))
 
+(test find-references-for-rest-client-post-method
+  (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
+    (is (equal
+          `(((:path . "p1/client/ClientRestTemplate.kt")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames "p1/client/ClientRestTemplate.kt" *kotlin-path*)
+                      '((:line . 22) (:offset . 29))))))
+          (find-references
+            `((:type . :rest-server)
+              (:host . "8080")
+              (:path . "/path")
+              (:name . "POST"))
+            *index*)))))
+
 (test find-fq-name-for-reference-with-string-literal
   (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
     (let ((path "p1/client/ClientRestTemplate.kt"))
@@ -106,6 +121,18 @@
               ;;                     ↓
               ;; return restTemplate.exchange("http://localhost:8080/path", HttpMethod.GET, null, String::class.java)
               (find-ast path `((:line . 18) (:offset . 29)) *index* :key-offset "textOffset")
+              path
+              *index*))))))
+
+(test find-fq-name-for-reference-with-new-class
+  (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
+    (let ((path "p1/client/ClientRestTemplate.kt"))
+      (is (equal
+            "org.springframework.web.client.RestTemplate.postForObject-java.lang.String-java.lang.String-java.lang.Class"
+            (inga/ast-analyzer/kotlin::find-fq-name-for-reference
+              ;;                     ↓
+              ;; return restTemplate.postForObject(
+              (find-ast path `((:line . 22) (:offset . 29)) *index* :key-offset "textOffset")
               path
               *index*))))))
 

@@ -1,4 +1,4 @@
-package fixtures
+package p1.client
 
 import org.springframework.http.HttpMethod
 import org.springframework.http.ResponseEntity
@@ -21,7 +21,7 @@ class ClientRestTemplate(private val restTemplate: RestTemplate) {
     fun post(): String {
         return restTemplate.postForObject(
             "http://localhost:8080/path",
-            new RequestClass("a"),
+            "data",
             String::class.java
         )
     }

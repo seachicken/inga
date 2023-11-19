@@ -11,6 +11,8 @@
                 #:get-ast)
   (:import-from #:inga/file
                 #:get-file-type)
+  (:import-from #:inga/plugin/jvm-dependency-loader
+                #:load-hierarchy)
   (:export #:ast-analyzer-kotlin))
 (in-package #:inga/ast-analyzer/kotlin)
 
@@ -70,6 +72,45 @@
 
       (loop for child in (jsown:val ast "children") do (enqueue q child)))
     results))
+
+(defmethod find-class-hierarchy-generic ((ast-analyzer ast-analyzer-kotlin)
+                                         fq-class-name root-ast path index)
+  (loop
+    with stack = (list root-ast)
+    with ast
+    with target-package-name = (format nil "~{~a~^.~}" (butlast (split #\. fq-class-name)))
+    with target-class-name = (first (last (split #\. fq-class-name)))
+    initially
+    (let ((hierarchy (load-hierarchy fq-class-name path)))
+      (when hierarchy
+        (return-from find-class-hierarchy-generic hierarchy)))
+    do
+    (setf ast (pop stack))
+    (if (null ast) (return))
+
+    (when (equal (ast-value ast "type") "kotlin.FILE")
+      (unless (equal (format nil "~{~a~^.~}"
+                             (mapcar (lambda (ast) (ast-value ast "name"))
+                                     (ast-get ast '("PACKAGE_DIRECTIVE"
+                                                    "DOT_QUALIFIED_EXPRESSION"
+                                                    "REFERENCE_EXPRESSION"))))
+                     target-package-name)
+        (return-from find-class-hierarchy-generic)))
+    (when (equal (ast-value ast "type") "CLASS")
+      (unless (equal (ast-value ast "name") target-class-name)
+        (return-from find-class-hierarchy-generic))
+      (return-from find-class-hierarchy-generic
+        ;; TODO: fix parent class get
+        (let ((parent-class-name (ast-value (first (ast-get ast '("IDENTIFIER"))) "name")))
+          (if parent-class-name
+              (let ((parent-fq-class-name (find-fq-class-name parent-class-name ast)))
+                (when parent-fq-class-name
+                  (append (find-class-hierarchy parent-fq-class-name index)
+                          (list parent-fq-class-name)
+                          (list fq-class-name))))
+              '("java.lang.Object")))))
+    (loop for child in (jsown:val ast "children")
+          do (setf stack (append stack (list child))))))
 
 (defmethod find-reference ((ast-analyzer ast-analyzer-kotlin) target-pos ast path)
   (let ((fq-name (find-fq-name-for-reference ast path (ast-analyzer-index ast-analyzer))))
@@ -146,7 +187,12 @@
        ((ast-get ast '("REFERENCE_EXPRESSION"))
         (find-fq-class-name
           (ast-value (first (ast-get ast '("REFERENCE_EXPRESSION"))) "name")
-          ast))))))
+          ast))))
+    ("CALL_EXPRESSION"
+     (when (ast-get ast '("REFERENCE_EXPRESSION"))
+        (find-fq-class-name
+          (ast-value (first (ast-get ast '("REFERENCE_EXPRESSION"))) "name")
+          ast)))))
 
 (defun find-fq-class-name (class-name ast)
   (loop
@@ -154,15 +200,21 @@
     initially (enqueue q ast)
     do
     (setf ast (dequeue q))
-    (when (null ast) (return))
+    (unless ast (return))
 
     (when (equal (ast-value ast "type") "kotlin.FILE")
       (let ((import (first (ast-find-suffix
                              (ast-get ast '("IMPORT_LIST" "IMPORT_DIRECTIVE"))
                              (concatenate 'string "." class-name)
                              :key-name "fqName"))))
-        (when import
-          (return (ast-value import "fqName")))))
+        (return (if import
+                    (ast-value import "fqName")
+                    (format nil "~{~a~^.~}"
+                            (append (mapcar (lambda (ast) (ast-value ast "name"))
+                                            (ast-get ast '("PACKAGE_DIRECTIVE"
+                                                           "DOT_QUALIFIED_EXPRESSION"
+                                                           "REFERENCE_EXPRESSION")))
+                                    (list class-name)))))))
 
     (enqueue q (ast-value ast "parent"))))
 
@@ -206,6 +258,13 @@
        index)
      `((:host . ,(find-api-host 0 ast))
        (:name . "GET")
+       (:path . ,(find-api-path 0 ast))))
+    ((matches-signature
+       fq-name
+       "org.springframework.web.client.RestTemplate.postForObject-java.lang.String-java.lang.Object-java.lang.Class"
+       index)
+     `((:host . ,(find-api-host 0 ast))
+       (:name . "POST")
        (:path . ,(find-api-path 0 ast))))))
 
 (defun find-api-method-from-http-method (http-method)
