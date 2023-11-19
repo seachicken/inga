@@ -2,6 +2,7 @@
   (:use #:cl
         #:inga/ast-analyzer/base
         #:inga/utils)
+  (:import-from #:quri)
   (:import-from #:inga/ast-index
                 #:ast-index-paths
                 #:ast-index-root-path
@@ -71,24 +72,31 @@
     results))
 
 (defmethod find-reference ((ast-analyzer ast-analyzer-kotlin) target-pos ast path)
-  (let ((fq-name (find-fq-name-for-reference ast)))
+  (let ((fq-name (find-fq-name-for-reference ast path (ast-analyzer-index ast-analyzer))))
     (unless fq-name (return-from find-reference))
+    (format t "fq-name: ~a~%" fq-name)
 
     (alexandria:switch ((cdr (assoc :type target-pos)))
       (:rest-server
-        ;; TODO: implementes
-        nil)
+        (let ((rest-client (find-rest-client fq-name ast path (ast-analyzer-index ast-analyzer))))
+          (format t "rest-client: ~a~%" rest-client)
+          (when (and
+                  (equal (cdr (assoc :host rest-client)) (cdr (assoc :host target-pos)))
+                  (equal (cdr (assoc :path rest-client)) (cdr (assoc :path target-pos)))
+                  (equal (cdr (assoc :name rest-client)) (cdr (assoc :name target-pos))))
+            `((:path . ,path)
+              (:top-offset . ,(ast-value ast "textOffset"))))))
       (t
         (when (equal fq-name (cdr (assoc :fq-name target-pos)))
           (list
             (cons :path path)
             (cons :top-offset (ast-value ast "textOffset"))))))))
 
-(defun find-fq-name-for-reference (ast)
+(defun find-fq-name-for-reference (ast path index)
   (alexandria:switch ((ast-value ast "type") :test #'equal)
     ("CALL_EXPRESSION"
      (let ((root (first (ast-get ast '("DOT_QUALIFIED_EXPRESSION") :direction :upward))))
-       (format nil "~a.~a"
+       (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
                (if (ast-get root '("DOT_QUALIFIED_EXPRESSION"))
                    (let (fq-class-names)
                      ;; get class name
@@ -121,7 +129,24 @@
                            (ast-value (first (ast-get root '("REFERENCE_EXPRESSION"))) "name")
                            ast))
                      ast))
-               (ast-value (first (ast-get ast '("REFERENCE_EXPRESSION"))) "name"))))))
+               (ast-value (first (ast-get ast '("REFERENCE_EXPRESSION"))) "name")
+               (mapcar (lambda (arg) (find-fq-class-name-by-ast arg path index))
+                       (ast-get ast '("VALUE_ARGUMENT_LIST" "VALUE_ARGUMENT" "*"))))))))
+
+(defun find-fq-class-name-by-ast (ast path index)
+  (alexandria:switch ((ast-value ast "type") :test #'equal)
+    ("STRING_TEMPLATE"
+     "java.lang.String")
+    ("NULL"
+     "NULL")
+    ("DOT_QUALIFIED_EXPRESSION"
+     (cond
+       ((ast-get ast '("CLASS_LITERAL_EXPRESSION"))
+        "java.lang.Class")
+       ((ast-get ast '("REFERENCE_EXPRESSION"))
+        (find-fq-class-name
+          (ast-value (first (ast-get ast '("REFERENCE_EXPRESSION"))) "name")
+          ast))))))
 
 (defun find-fq-class-name (class-name ast)
   (loop
@@ -164,4 +189,38 @@
                                 "name"))))
 
     (enqueue q (ast-value ast "parent"))))
+
+(defun find-rest-client (fq-name ast path index)
+  ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/client/RestTemplate.html
+  (cond
+    ((matches-signature
+       fq-name
+       "org.springframework.web.client.RestTemplate.exchange-java.lang.String-org.springframework.http.HttpMethod-NULL-java.lang.Class"
+       index)
+     `((:host . ,(find-api-host 0 ast))
+       (:name . ,(find-api-method-from-http-method (get-parameter 1 ast)))
+       (:path . ,(find-api-path 0 ast))))
+    ((matches-signature
+       fq-name
+       "org.springframework.web.client.RestTemplate.getForObject-java.lang.String-java.lang.Class"
+       index)
+     `((:host . ,(find-api-host 0 ast))
+       (:name . "GET")
+       (:path . ,(find-api-path 0 ast))))))
+
+(defun find-api-method-from-http-method (http-method)
+  (ast-value (nth 1 (ast-get http-method '("REFERENCE_EXPRESSION"))) "name"))
+
+(defun find-api-host (arg-i ast)
+  (let ((url (first (ast-get (get-parameter arg-i ast) '("LITERAL_STRING_TEMPLATE_ENTRY")))))
+    (when url
+      (format nil "~a" (quri:uri-port (quri:uri (ast-value url "name")))))))
+
+(defun find-api-path (arg-i ast)
+  (let ((url (first (ast-get (get-parameter arg-i ast) '("LITERAL_STRING_TEMPLATE_ENTRY")))))
+    (when url
+      (quri:uri-path (quri:uri (ast-value url "name"))))))
+
+(defun get-parameter (idx ast)
+  (nth idx (ast-get ast '("VALUE_ARGUMENT_LIST" "VALUE_ARGUMENT" "*"))))
 

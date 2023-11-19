@@ -24,6 +24,7 @@
   (defparameter *root-path* root-path)
   (defparameter *index* nil)
   (defparameter *analyzers* nil)
+  (defparameter *key-offset* "pos")
   (inga/plugin/jvm-dependency-loader:start root-path)
   (inga/plugin/spring-property-loader:start root-path)
   (setf *index* (make-instance index-type
@@ -49,7 +50,7 @@
   (&body)
   (loop for a in *analyzers* do (stop-ast-analyzer a)))
 
-(defun find-ast (path pos ast-index)
+(defun find-ast (path pos ast-index &key (key-offset *key-offset*))
   (loop with ast = (get-ast ast-index path)
         with offset = (convert-to-top-offset
                         (merge-pathnames path (ast-index-root-path ast-index)) pos)
@@ -58,7 +59,7 @@
         (setf ast (pop stack))
         (when (or
                 (null ast)
-                (eq (ast-value ast "pos") offset))
+                (eq (ast-value ast key-offset) offset))
           (return ast))
 
         (loop for child in (jsown:val ast "children")
