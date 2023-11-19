@@ -27,7 +27,7 @@ public class ClientRestTemplate {
     public String post() {
         return restTemplate.postForObject(
             "http://localhost:8080/path",
-            new RequestClass("a"),
+            "data",
             String.class
         );
     }
