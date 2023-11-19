@@ -288,7 +288,7 @@
   (with-fixture jvm-context (*lightrun-path* 'ast-index-memory)
     (let ((path "api-service/src/main/java/com/baeldung/apiservice/adapters/users/UserRepository.java"))
       (is (equal
-            "org.springframework.web.client.RestTemplate.getForObject-java.net.URI-Class"
+            "org.springframework.web.client.RestTemplate.getForObject-java.net.URI-java.lang.Class"
             (inga/ast-analyzer/java::find-fq-name-for-reference
               ;;                                 ↓
               ;; return restTemplate.getForObject(uri, User.class);

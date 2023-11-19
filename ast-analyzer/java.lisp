@@ -402,7 +402,7 @@
                 (alexandria:switch ((jsown:val arg "type") :test #'equal)
                   ("MEMBER_SELECT"
                    (if (ast-find-name (list arg) "class")
-                       "Class"
+                       "java.lang.Class"
                        (ast-value (first (ast-get arg '("IDENTIFIER"))) "name")))
                   ("NEW_CLASS"
                    (find-fq-class-name (ast-value arg "name") arg))
@@ -448,21 +448,21 @@
   (cond
     ((matches-signature
        fq-name
-       "org.springframework.web.client.RestTemplate.exchange-java.lang.String-HttpMethod-NULL-Class"
+       "org.springframework.web.client.RestTemplate.exchange-java.lang.String-HttpMethod-NULL-java.lang.Class"
        index)
      `((:host . ,(find-api-host 0 ast))
        (:name . ,(find-api-method-from-http-method (nth 2 (ast-get ast '("*")))))
        (:path . ,(find-api-path 0 ast))))
     ((matches-signature
        fq-name
-       "org.springframework.web.client.RestTemplate.getForObject-java.lang.String-Class"
+       "org.springframework.web.client.RestTemplate.getForObject-java.lang.String-java.lang.Class"
        index)
      `((:host . ,(find-api-host 0 ast))
        (:name . "GET")
        (:path . ,(find-api-path 0 ast))))
     ((matches-signature
        fq-name
-       "org.springframework.web.client.RestTemplate.getForObject-java.net.URI-Class"
+       "org.springframework.web.client.RestTemplate.getForObject-java.net.URI-java.lang.Class"
        index)
      (let ((server (find-server-from-uri 0 ast path index)))
        `((:host . ,(cdr (assoc :host server)))
@@ -470,7 +470,7 @@
          (:path . ,(cdr (assoc :path server))))))
     ((matches-signature
        fq-name
-       "org.springframework.web.client.RestTemplate.postForObject-java.lang.String-java.lang.Object-Class"
+       "org.springframework.web.client.RestTemplate.postForObject-java.lang.String-java.lang.Object-java.lang.Class"
        index)
      `((:host . ,(find-api-host 0 ast))
        (:name . "POST")
