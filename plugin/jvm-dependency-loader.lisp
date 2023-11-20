@@ -35,8 +35,9 @@
 (defun load-signatures (fq-class-name from)
   (unless (uiop:process-alive-p *jvm-dependency-loader*)
     (error 'inga-error-process-not-running))
-  ;; TODO: remove NIL check when correctly got fq-class-name
-  (when (equal fq-class-name "NIL")
+  (when (or (null fq-class-name) (equal fq-class-name "")
+            ;; TODO: remove NIL check when correctly got fq-class-name
+            (equal fq-class-name "NIL"))
     (return-from load-signatures))
 
   (let ((base-path (find-base-path (merge-pathnames from *root-path*))))
@@ -54,8 +55,9 @@
     (error 'inga-error-process-not-running))
   (when (is-primitive-type fq-class-name)
     (return-from load-hierarchy))
-  ;; TODO: remove NIL check when correctly got fq-class-name
-  (when (equal fq-class-name "NIL")
+  (when (or (null fq-class-name) (equal fq-class-name "")
+            ;; TODO: remove NIL check when correctly got fq-class-name
+            (equal fq-class-name "NIL"))
     (return-from load-hierarchy))
 
   (let ((base-path (find-base-path (merge-pathnames from *root-path*))))
