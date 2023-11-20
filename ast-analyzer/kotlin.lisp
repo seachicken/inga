@@ -115,12 +115,10 @@
 (defmethod find-reference ((ast-analyzer ast-analyzer-kotlin) target-pos ast path)
   (let ((fq-name (find-fq-name-for-reference ast path (ast-analyzer-index ast-analyzer))))
     (unless fq-name (return-from find-reference))
-    (format t "fq-name: ~a~%" fq-name)
 
     (alexandria:switch ((cdr (assoc :type target-pos)))
       (:rest-server
         (let ((rest-client (find-rest-client fq-name ast path (ast-analyzer-index ast-analyzer))))
-          (format t "rest-client: ~a~%" rest-client)
           (when (and
                   (equal (cdr (assoc :host rest-client)) (cdr (assoc :host target-pos)))
                   (equal (cdr (assoc :path rest-client)) (cdr (assoc :path target-pos)))
