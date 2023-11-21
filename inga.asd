@@ -16,12 +16,14 @@
 (defsystem "inga/test-typescript"
   :class :package-inferred-system
   :depends-on ("fiveam"
+               "inga/test/helper"
                "inga/test/main"
                "inga/test/ast-analyzer/typescript"))
 
 (defsystem "inga/test-java"
   :class :package-inferred-system
   :depends-on ("fiveam"
+               "inga/test/helper"
                "inga/test/main"
                "inga/test/ast-analyzer/java"
                "inga/test/ast-analyzer/kotlin"

@@ -38,6 +38,7 @@ jobs:
           docker run test-inga-java -c "
             (cd /inga/test/fixtures/spring-boot-realworld-example-app && ./gradlew compileJava)
             (cd /inga/test/fixtures/spring-tutorials/lightrun && mvn compile)
+            (cd /inga/test/fixtures/spring-tutorials/guava-modules && mvn compile)
 
             ros -s fiveam -e \"
               (ql:quickload :inga)

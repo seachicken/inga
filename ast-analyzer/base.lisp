@@ -153,11 +153,17 @@
 
     (let ((target-arg-names (cdr split-target-fq-names))
           (api-arg-names (cdr split-api-fq-names)))
+      (unless (or (eq (length target-arg-names) (length api-arg-names))
+                  (and (> (length api-arg-names) 0)
+                       (<= (length api-arg-names) (length target-arg-names))
+                       (is-array (nth (1- (length api-arg-names)) api-arg-names))))
+        (return-from matches-signature))
+
       (loop for target-arg-name in target-arg-names
             for i below (length target-arg-names)
             with array-arg
             do
-            (when (and (< i (length api-arg-names)) (uiop:string-suffix-p (nth i api-arg-names) "[]"))
+            (when (and (< i (length api-arg-names)) (is-array (nth i api-arg-names)))
               (setf array-arg (subseq (nth i api-arg-names) 0 (- (length (nth i api-arg-names)) 2))))
             (unless (find-if (lambda (super-class-name)
                                (or
@@ -166,6 +172,9 @@
                              (find-class-hierarchy target-arg-name index))
               (return-from matches-signature)))))
   t)
+
+(defun is-array (name)
+  (uiop:string-suffix-p name "[]"))
 
 (defun find-class-hierarchy (fq-class-name index)
   (loop for path in (ast-index-paths index)

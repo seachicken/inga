@@ -131,9 +131,9 @@
     ctx))
 
 (defun stop (ctx)
+  (stop-client (context-lc ctx)) 
   (loop for p in (context-processes ctx) do (uiop:close-streams p)) 
-  (loop for a in (context-ast-analyzers ctx) do (stop-ast-analyzer a))
-  (stop-client (context-lc ctx)))
+  (loop for a in (context-ast-analyzers ctx) do (stop-ast-analyzer a)))
 
 (defun get-analysis-kinds (diffs)
   (remove nil

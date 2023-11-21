@@ -418,6 +418,16 @@
             "p2.ApiSignature-p2.ParentClass"
             *index*)))))
 
+(test not-matches-signature-with-no-args
+  (with-fixture jvm-context (*lightrun-path* 'ast-index-disk)
+    (is (eq
+          nil
+          ;; https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/web/util/UriComponentsBuilder.html
+          (matches-signature
+            "build"
+            "build-boolean"
+            *index*)))))
+
 (test matches-signature-with-sub-class
   (with-fixture jvm-context (*spring-boot-path* 'ast-index-disk)
     (is (eq
@@ -434,6 +444,15 @@
           (matches-signature
             "com.google.common.collect.Lists.newArrayList-java.lang.String-java.lang.String"
             "com.google.common.collect.Lists.newArrayList-java.lang.Object[]"
+            *index*)))))
+
+(test not-matches-signature-with-object-array
+  (with-fixture jvm-context (*lightrun-path* 'ast-index-disk)
+    (is (eq
+          nil
+          (matches-signature
+            "build"
+            "build-java.lang.Object[]"
             *index*)))))
 
 (test find-class-hierarchy-with-standard-class
