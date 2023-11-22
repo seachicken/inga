@@ -15,10 +15,10 @@ ENV JVM_DEPENDENCY_LOADER 0.3.4
 
 COPY --from=build /inga/roswell/inga /usr/local/bin/
 
-ADD https://github.com/seachicken/javaparser/releases/download/javaparser-$JAVAPARSER/javaparser-$JAVAPARSER.jar ./libs/javaparser.jar
-ADD https://github.com/seachicken/ktparser/releases/download/ktparser-$KTPARSRER/ktparser-$KTPARSRER.jar ./libs/ktparser.jar 
-ADD https://github.com/seachicken/jvm-dependency-loader/releases/download/jvm-dependency-loader-$JVM_DEPENDENCY_LOADER/jvm-dependency-loader-$JVM_DEPENDENCY_LOADER.jar ./libs/jvm-dependency-loader.jar
-ADD https://github.com/seachicken/spring-property-loader/releases/download/spring-property-loader-$SPRING_PROPERTY_LOADER/spring-property-loader-$SPRING_PROPERTY_LOADER.jar ./libs/spring-property-loader.jar
+ADD https://github.com/seachicken/javaparser/releases/download/v$JAVAPARSER/javaparser-$JAVAPARSER.jar ./libs/javaparser.jar
+ADD https://github.com/seachicken/ktparser/releases/download/v$KTPARSRER/ktparser-$KTPARSRER.jar ./libs/ktparser.jar
+ADD https://github.com/seachicken/jvm-dependency-loader/releases/download/v$JVM_DEPENDENCY_LOADER/jvm-dependency-loader-$JVM_DEPENDENCY_LOADER.jar ./libs/jvm-dependency-loader.jar
+ADD https://github.com/seachicken/spring-property-loader/releases/download/v$SPRING_PROPERTY_LOADER/spring-property-loader-$SPRING_PROPERTY_LOADER.jar ./libs/spring-property-loader.jar
 
 RUN apt-get update && \
   apt-get install -y git && \
