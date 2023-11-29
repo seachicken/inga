@@ -3,7 +3,8 @@
   (:import-from #:inga/cache
                 #:defunc)
   (:export #:find-base-path
-           #:is-primitive-type))
+           #:is-primitive-type
+           #:convert-to-json-type))
 (in-package #:inga/plugin/jvm-helper)
 
 (defunc find-base-path (path)
@@ -28,4 +29,8 @@
                      "DOUBLE"
                      ) :test 'equal))
 
+(defun convert-to-json-type (type)
+  (alexandria:switch (type :test #'equal)
+    ("java.lang.String" "string")
+    ("INT" "number")))
 

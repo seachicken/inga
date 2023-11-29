@@ -21,6 +21,7 @@
                 #:load-signatures
                 #:load-hierarchy)
   (:import-from #:inga/plugin/jvm-helper
+                #:convert-to-json-type
                 #:find-base-path
                 #:is-primitive-type)
   (:import-from #:inga/plugin/spring-property-loader
@@ -533,11 +534,6 @@
           path))
       `((:host . ,host)
         (:path . ,found-path)))))
-
-(defun convert-to-json-type (type)
-  (alexandria:switch (type :test #'equal)
-    ("java.lang.String" "string")
-    ("INT" "number")))
 
 (defun get-fq-name-of-declaration (root-ast top-offset)
   (let ((stack (list root-ast))

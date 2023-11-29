@@ -16,12 +16,33 @@
     (is (equal
           `(((:path . "p1/PrimaryConstructorDefinition.kt")
              (:name . "method")
-             (:fq-name . "p1.PrimaryConstructorDefinition.method")
+             (:fq-name . "p1.PrimaryConstructorDefinition.method-INT")
              ,(cons :top-offset
                     (convert-to-top-offset
                       (merge-pathnames "p1/PrimaryConstructorDefinition.kt" *kotlin-path*)
                       '((:line . 4) (:offset . 5)))))) ;; FIXME: actual offset is 9
           (find-definitions (create-range "p1/PrimaryConstructorDefinition.kt" :line 4))))))
+
+(test find-definitions-for-spring-rest-get-method
+  (with-fixture jvm-context (*kotlin-path* 'ast-index-disk)
+    (is (equal
+          `(((:type . :rest-server)
+             (:host . "8080")
+             (:name . "GET")
+             (:path . "/{string}")
+             (:file-pos .
+              (;; TODO: add scope
+               ;;(:type . :module-public)
+               (:path . "p1/server/spring/src/main/p1/RestControllerDefinition.kt")
+               (:name . "get")
+               (:fq-name . "p1.RestControllerDefinition.get-java.lang.String")
+               ,(cons :top-offset
+                      (convert-to-top-offset
+                        (merge-pathnames
+                          "p1/server/spring/src/main/p1/RestControllerDefinition.kt" *kotlin-path*)
+                        '((:line . 14) (:offset . 5))))))))
+          (find-definitions
+            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.kt" :line 15))))))
 
 (test find-references-for-primary-constructor
   (with-fixture jvm-context (*kotlin-path* 'ast-index-disk)
@@ -135,4 +156,24 @@
               (find-ast path `((:line . 22) (:offset . 29)) *index* :key-offset "textOffset")
               path
               *index*))))))
+
+(test get-dot-expressions-with-zero-dot
+  (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
+    (let ((path "p1/PrimaryConstructorDefinition.kt"))
+      (is (equal
+            '("p1")
+            (inga/ast-analyzer/kotlin::get-dot-expressions
+              ;;         ↓
+              ;; package p1
+              (find-ast path `((:line . 1) (:offset . 9)) *index* :key-offset "textOffset")))))))
+
+(test get-dot-expressions-with-one-dot
+  (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
+    (let ((path "p1/client/ClientRestTemplate.kt"))
+      (is (equal
+            '("p1" "client")
+            (inga/ast-analyzer/kotlin::get-dot-expressions
+              ;;         ↓
+              ;; package p1.client
+              (find-ast path `((:line . 1) (:offset . 9)) *index* :key-offset "textOffset")))))))
 

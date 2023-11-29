@@ -54,6 +54,24 @@
               "A"
               (ast-value (first actual) "type")))))))
 
+(test get-nodes-with-asts
+  (let ((ast '(:obj
+                ("type" . "A")
+                ("children" . ((:obj
+                                 ("type" . "B")
+                                 ("children" . nil))
+                               (:obj
+                                 ("type" . "B")
+                                 ("children" . nil)))))))
+    (is (equal
+          '((:obj
+              ("type" . "B")
+              ("children" . nil))
+            (:obj
+              ("type" . "B")
+              ("children" . nil)))
+          (ast-get (list ast) '("B"))))))
+
 (test get-nested-nodes
   (let ((ast '(:obj
                 ("type" . "A")

@@ -11,8 +11,18 @@
                 #:get-ast)
   (:import-from #:inga/file
                 #:get-file-type)
+  (:import-from #:inga/path
+                #:merge-paths
+                #:get-variable-names
+                #:replace-variable-name)
   (:import-from #:inga/plugin/jvm-dependency-loader
                 #:load-hierarchy)
+  (:import-from #:inga/plugin/jvm-helper
+                #:convert-to-json-type)
+  (:import-from #:inga/plugin/spring-property-loader
+                #:find-property)
+  (:import-from #:inga/plugin/spring-helper
+                #:convert-to-http-method)
   (:export #:ast-analyzer-kotlin))
 (in-package #:inga/ast-analyzer/kotlin)
 
@@ -39,39 +49,146 @@
   (setf *ast-analyzers* nil))
 
 (defmethod find-definitions-generic ((ast-analyzer ast-analyzer-kotlin) range)
-  (let ((q (make-queue))
-        (src-path (cdr (assoc :path range)))
-        (path (cdr (assoc :path range)))
-        (start-offset (cdr (assoc :start-offset range)))
-        (end-offset (cdr (assoc :end-offset range)))
-        ast
-        results)
-    (enqueue q (get-ast (ast-analyzer-index ast-analyzer) path))
+  (let* ((q (make-queue))
+         (src-path (cdr (assoc :path range)))
+         (path (cdr (assoc :path range)))
+         (start-offset (cdr (assoc :start-offset range)))
+         (end-offset (cdr (assoc :end-offset range)))
+         (root-ast (get-ast (ast-analyzer-index ast-analyzer) path))
+         ast
+         results)
+    (enqueue q root-ast)
     (loop
+      with entrypoint-name
+      do
       (setf ast (dequeue q))
       (if (null ast) (return))
 
+      (when (equal (ast-value ast "type") "CLASS")
+        (let ((annotations (ast-get ast '("MODIFIER_LIST" "ANNOTATION_ENTRY"))))
+          (when (ast-find-name (ast-get annotations '("CONSTRUCTOR_CALLEE"
+                                                      "TYPE_REFERENCE"
+                                                      "USER_TYPE"
+                                                      "REFERENCE_EXPRESSION"))
+                               "RestController")
+            (let ((request-mapping
+                    (first (ast-find-name (ast-get annotations '("CONSTRUCTOR_CALLEE"
+                                                                 "TYPE_REFERENCE"
+                                                                 "USER_TYPE"
+                                                                 "REFERENCE_EXPRESSION"))
+                                          "RequestMapping"))))
+              (when request-mapping
+                (setf entrypoint-name
+                      (ast-value (first (ast-get 
+                                          (ast-value
+                                            (first (ast-get request-mapping '("USER_TYPE"
+                                                                              "TYPE_REFERENCE"
+                                                                              "CONSTRUCTOR_CALLEE")
+                                                            :direction :upward))
+                                            "parent")
+                                          '("VALUE_ARGUMENT_LIST"
+                                            "VALUE_ARGUMENT"
+                                            "STRING_TEMPLATE"
+                                            "LITERAL_STRING_TEMPLATE_ENTRY")))
+                                 "name")))))))
       (when (and
               (equal (ast-value ast "type") "FUN")
               (contains-offset (jsown:val (jsown:val ast "textRange") "startOffset")
                                (jsown:val (jsown:val ast "textRange") "endOffset")            
                                start-offset
                                end-offset))
-        (when (jsown:keyp ast "name")
-          (setf results
-                (append results
-                        (list
-                          (let ((pos (list
-                                       (cons :path src-path)
-                                       (cons :name (jsown:val ast "name"))
-                                       (cons :fq-name (when (jsown:keyp ast "fqName") (jsown:val ast "fqName")))
-                                       (cons :top-offset (jsown:val (jsown:val ast "textRange") "startOffset")))))
-                            (when (assoc :origin range)
-                              (push (cons :origin (cdr (assoc :origin range))) pos))
-                            pos))))))
+        (push
+          (let ((pos (list
+                       (cons :path src-path)
+                       (cons :name (jsown:val ast "name"))
+                       (cons :fq-name (find-fq-name-for-definition ast root-ast))
+                       (cons :top-offset (jsown:val (jsown:val ast "textRange") "startOffset")))))
+            (when (assoc :origin range)
+              (push (cons :origin (cdr (assoc :origin range))) pos))
+            (if entrypoint-name
+                (let* ((mapping (first (ast-find-names
+                                         (ast-get ast '("MODIFIER_LIST"
+                                                        "ANNOTATION_ENTRY"
+                                                        "CONSTRUCTOR_CALLEE"
+                                                        "TYPE_REFERENCE"
+                                                        "USER_TYPE"
+                                                        "REFERENCE_EXPRESSION"))
+                                         '("GetMapping" "PostMapping" "PutMapping" "DeleteMapping"))))
+                       (mapping-value (ast-value (first (ast-get ast '("MODIFIER_LIST"
+                                                                       "ANNOTATION_ENTRY"
+                                                                       "VALUE_ARGUMENT_LIST"
+                                                                       "VALUE_ARGUMENT"
+                                                                       "STRING_TEMPLATE"
+                                                                       "LITERAL_STRING_TEMPLATE_ENTRY")))
+                                                 "name"))
+                       (port (find-property "server.port" src-path))
+                       (path (merge-paths entrypoint-name mapping-value)))
+                  (when (and mapping port)
+                    `((:type . :rest-server)
+                      (:host . ,port)
+                      (:name . ,(convert-to-http-method (ast-value mapping "name")))
+                      (:path .
+                       ,(loop for vn in (get-variable-names path)
+                              for i from 0
+                              with params = (ast-get ast '("VALUE_PARAMETER_LIST" "VALUE_PARAMETER"))
+                              do
+                              (let* ((param (nth i params))
+                                     (pv (ast-find-name
+                                           (ast-get param '("MODIFIER_LIST"
+                                                            "ANNOTATION_ENTRY"
+                                                            "CONSTRUCTOR_CALLEE"
+                                                            "TYPE_REFERENCE"
+                                                            "USER_TYPE"
+                                                            "REFERENCE_EXPRESSION"))
+                                           "PathVariable"))
+                                     (pv-name
+                                       (ast-value (first (ast-get param '("MODIFIER_LIST"
+                                                                          "ANNOTATION_ENTRY"
+                                                                          "VALUE_ARGUMENT_LIST"
+                                                                          "VALUE_ARGUMENT"
+                                                                          "STRING_TEMPLATE"
+                                                                          "LITERAL_STRING_TEMPLATE_ENTRY")))
+                                                  "name")))
+                                (when (equal vn pv-name)
+                                  (setf path (replace-variable-name
+                                               path vn
+                                               (convert-to-json-type
+                                                 (find-fq-class-name-by-ast
+                                                   (first (ast-get param '("TYPE_REFERENCE")))))))))
+                              finally (return path)))
+                      (:file-pos . ,pos))))
+                pos))
+          results))
 
       (loop for child in (jsown:val ast "children") do (enqueue q child)))
     results))
+
+(defun find-fq-name-for-definition (target-ast root-ast)
+  (loop
+    with stack = (list root-ast)
+    with ast
+    with result
+    do
+    (setf ast (pop stack))
+    (unless ast (return result))
+    
+    (when (equal (ast-value ast "type") "PACKAGE_DIRECTIVE")
+      (setf result (format nil "~{~a~^.~}" (get-dot-expressions (first (ast-value ast "children"))))))
+    (when (equal (ast-value ast "type") "CLASS")
+      (setf result (concatenate 'string result "." (ast-value ast "name"))))
+    (when (and (eq ast target-ast)
+               (equal (ast-value ast "type") "FUN"))
+      (setf result (concatenate 'string result "." (ast-value ast "name"))) 
+      (loop for param in (ast-get ast '("VALUE_PARAMETER_LIST" "VALUE_PARAMETER" "TYPE_REFERENCE"))
+            do
+            (setf result (concatenate
+                           'string
+                           result
+                           "-"
+                           (find-fq-class-name-by-ast param)))))
+
+    (loop for child in (ast-value ast "children")
+          do (setf stack (append stack (list child))))))
 
 (defmethod find-class-hierarchy-generic ((ast-analyzer ast-analyzer-kotlin)
                                          fq-class-name root-ast path index)
@@ -137,28 +254,14 @@
      (let ((root (first (ast-get ast '("DOT_QUALIFIED_EXPRESSION") :direction :upward))))
        (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
                (if (ast-get root '("DOT_QUALIFIED_EXPRESSION"))
-                   (let (fq-class-names)
-                     ;; get class name
-                     (push (ast-value (first (ast-get root '("DOT_QUALIFIED_EXPRESSION"
-                                                             "CALL_EXPRESSION"
-                                                             "REFERENCE_EXPRESSION")))
-                                      "name")
-                           fq-class-names)
-                     ;; get package name
-                     (labels ((get-names (nodes)
-                                (mapcar (lambda (ast) (ast-value ast "name")) nodes))
-                              (get-package-names (ast)
-                                (loop for child in (ast-get ast '("DOT_QUALIFIED_EXPRESSION"))
-                                      with names
-                                      do
-                                      (setf names (append names (get-package-names child)))
-                                      (setf names (append names (get-names
-                                                                  (ast-get
-                                                                    child
-                                                                    '("REFERENCE_EXPRESSION")))))
-                                      finally (return names))))
-                       (setf fq-class-names (append (get-package-names root) fq-class-names)))
-                     (format nil "~{~a~^.~}" fq-class-names))
+                   (format nil "~{~a~^.~}"
+                           (append
+                             (get-dot-expressions (first (ast-value root "children")))
+                             (list
+                               (ast-value (first (ast-get root '("DOT_QUALIFIED_EXPRESSION"
+                                                                 "CALL_EXPRESSION"
+                                                                 "REFERENCE_EXPRESSION")))
+                                          "name"))))
                    (find-fq-class-name
                      (if (> (length (ast-get root '("CALL_EXPRESSION"))) 1)
                          (ast-value
@@ -169,15 +272,24 @@
                            ast))
                      ast))
                (ast-value (first (ast-get ast '("REFERENCE_EXPRESSION"))) "name")
-               (mapcar (lambda (arg) (find-fq-class-name-by-ast arg path index))
+               (mapcar (lambda (arg) (find-fq-class-name-by-ast arg))
                        (ast-get ast '("VALUE_ARGUMENT_LIST" "VALUE_ARGUMENT" "*"))))))))
 
-(defun find-fq-class-name-by-ast (ast path index)
+(defun find-fq-class-name-by-ast (ast)
   (alexandria:switch ((ast-value ast "type") :test #'equal)
-    ("STRING_TEMPLATE"
-     "java.lang.String")
     ("NULL"
      "NULL")
+    ("STRING_TEMPLATE"
+     "java.lang.String")
+    ("TYPE_REFERENCE"
+     (let ((class-name (ast-value
+                         (first (ast-get ast '("USER_TYPE" "REFERENCE_EXPRESSION")))
+                         "name")))
+       (cond
+         ((find class-name '("String") :test 'equal)
+          (concatenate 'string "java.lang." class-name))
+         ((equal class-name "Int")
+          "INT"))))
     ("DOT_QUALIFIED_EXPRESSION"
      (cond
        ((ast-get ast '("CLASS_LITERAL_EXPRESSION"))
@@ -280,4 +392,19 @@
 
 (defun get-parameter (idx ast)
   (nth idx (ast-get ast '("VALUE_ARGUMENT_LIST" "VALUE_ARGUMENT" "*"))))
+
+(defun get-dot-expressions (ast)
+  (cond
+    ((equal (ast-value ast "type") "REFERENCE_EXPRESSION")
+     (list (ast-value ast "name")))
+    ((equal (ast-value ast "type") "DOT_QUALIFIED_EXPRESSION")
+     (let ((results))
+       (labels ((get-names (ast)
+                  (loop for child in (ast-get ast '("REFERENCE_EXPRESSION"))
+                        with names
+                        do
+                        (setf names (append names (get-names child)))
+                        (setf names (append names (list (ast-value child "name"))))
+                        finally (return names))))
+         (setf results (append (get-names ast) results))) results))))
 
