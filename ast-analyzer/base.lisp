@@ -246,7 +246,7 @@
                     (key-type "type") (key-downward "children") (key-upward "parent"))
   (loop for path in info-path
         with key-direction = (if (eq direction :downward) key-downward key-upward)
-        with results = (if (ast-value ast key-type) (list ast) ast)
+        with results = (if (jsown:keyp ast key-type) (list ast) ast)
         do
         (setf results
               (loop for node in (if (eq direction :downward)
