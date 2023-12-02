@@ -29,7 +29,7 @@
             (:obj
               ("type" . "B")
               ("children" . nil)))
-          (ast-get ast '("B"))))))
+          (ast:extract ast '("B"))))))
 
 (test get-nodes-in-upward-direction
   (let ((ast '(:obj
@@ -46,8 +46,8 @@
                      (setf (jsown:val node "parent") ast)
                      (f node))))
       (f ast))
-    (setf ast (first (ast-get ast '("B"))))
-    (let ((actual (ast-get ast '("A") :direction :upward)))
+    (setf ast (first (ast:extract ast '("B"))))
+    (let ((actual (ast:extract ast '("A") :direction :upward)))
       (is (and
             (eq 1 (length actual))
             (equal
@@ -70,7 +70,7 @@
             (:obj
               ("type" . "B")
               ("children" . nil)))
-          (ast-get (list ast) '("B"))))))
+          (ast:extract (list ast) '("B"))))))
 
 (test get-nested-nodes
   (let ((ast '(:obj
@@ -84,7 +84,7 @@
           '((:obj
               ("type" . "C")
               ("children" . nil)))
-          (ast-get ast '("B" "C"))))))
+          (ast:extract ast '("B" "C"))))))
 
 (test get-nodes-by-wild-card
   (let ((ast '(:obj
@@ -102,7 +102,7 @@
             (:obj
               ("type" . "C")
               ("children" . nil)))
-          (ast-get ast '("*"))))))
+          (ast:extract ast '("*"))))))
 
 (test find-name
   (let ((nodes '((:obj

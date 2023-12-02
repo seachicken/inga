@@ -1,4 +1,5 @@
 (defpackage #:inga/ast-analyzer/base
+  (:nicknames #:ast)
   (:use #:cl
         #:inga/utils)
   (:import-from #:inga/cache
@@ -39,7 +40,7 @@
            #:convert-to-pos
            #:contains-offset
            #:ast-value
-           #:ast-get
+           #:extract
            #:ast-find-name
            #:ast-find-names
            #:ast-find-suffix))
@@ -241,7 +242,7 @@
   (and (jsown:keyp ast key)
        (jsown:val ast key)))
 
-(defun ast-get (ast info-path
+(defun extract (ast info-path
                     &key (direction :downward)
                     (key-type "type") (key-downward "children") (key-upward "parent"))
   (loop for path in info-path
