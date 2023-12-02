@@ -22,9 +22,8 @@
   (setf *jvm-dependency-loader*
         (uiop:launch-program
           (format nil "~{~a~^ ~}"
-                  `("java" "-cp"
-                    ,(format nil "~a/libs/jvm-dependency-loader.jar" (uiop:getenv "INGA_HOME"))
-                    "inga.jvmdependencyloader.Main"))
+                  `("java" "-jar"
+                    ,(format nil "~a/libs/jvm-dependency-loader.jar" (uiop:getenv "INGA_HOME"))))
           :input :stream :output :stream :error-output :stream))
   (setf *root-path* root-path)
   *jvm-dependency-loader*)

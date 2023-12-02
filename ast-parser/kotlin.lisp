@@ -12,9 +12,8 @@
     'ast-parser-kotlin
     :process (uiop:launch-program
                (format nil "~{~a~^ ~}"
-                       `("java" "-cp"
-                         ,(format nil "~a/libs/ktparser.jar" (uiop:getenv "INGA_HOME"))
-                         "inga.Main"))
+                       `("java" "-jar"
+                         ,(format nil "~a/libs/ktparser.jar" (uiop:getenv "INGA_HOME"))))
                :input :stream :output :stream :error-output :stream)))
 
 (defmethod stop ((ast-parser ast-parser-kotlin))

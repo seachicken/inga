@@ -20,9 +20,8 @@
   (setf *spring-property-loader*
         (uiop:launch-program
           (format nil "~{~a~^ ~}"
-                  `("java" "-cp"
-                    ,(format nil "~a/libs/spring-property-loader.jar" (uiop:getenv "INGA_HOME"))
-                    "inga.springpropertyloader.Main"))
+                  `("java" "-jar"
+                    ,(format nil "~a/libs/spring-property-loader.jar" (uiop:getenv "INGA_HOME"))))
           :input :stream :output :stream :error-output :stream))
   (setf *root-path* root-path)
   *spring-property-loader*)
