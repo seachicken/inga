@@ -325,8 +325,8 @@
 
     (enqueue q (ast-value ast "parent"))))
 
-(defun find-class-name-by-variable-name (object-name ast)
-  (unless object-name
+(defun find-class-name-by-variable-name (variable-name ast)
+  (unless variable-name
     (return-from find-class-name-by-variable-name))
 
   (loop
@@ -340,7 +340,7 @@
       (let ((variable (first (ast-find-name (ast:extract ast '("PRIMARY_CONSTRUCTOR"
                                                                "VALUE_PARAMETER_LIST"
                                                                "VALUE_PARAMETER"))
-                                            object-name))))
+                                            variable-name))))
         (return-from find-class-name-by-variable-name
                      (ast-value (first (ast:extract variable '("TYPE_REFERENCE"
                                                                "USER_TYPE"

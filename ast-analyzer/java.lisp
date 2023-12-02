@@ -196,7 +196,7 @@
                                       (setf path (replace-variable-name
                                                    path vn
                                                    (convert-to-json-type
-                                                     (find-variable-fq-class-name
+                                                     (find-fq-class-name-by-variable-name
                                                        vn v path
                                                        (ast-analyzer-index ast-analyzer)))))))))
                           (cons :path path))
@@ -259,7 +259,7 @@
       (return-from find-class-hierarchy-generic
         (let ((parent-class-name (ast-value (first (ast:extract ast '("IDENTIFIER"))) "name")))
           (if parent-class-name
-              (let ((parent-fq-class-name (find-fq-class-name parent-class-name ast)))
+              (let ((parent-fq-class-name (find-fq-class-name-by-class-name parent-class-name ast)))
                 (when parent-fq-class-name
                   (append (find-class-hierarchy parent-fq-class-name index)
                           (list parent-fq-class-name)
@@ -272,7 +272,7 @@
   (alexandria:switch ((ast-value ast "type") :test #'equal)
     ("NEW_CLASS"
      (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
-             (find-fq-class-name (ast-value ast "name") ast)
+             (find-fq-class-name-by-class-name (ast-value ast "name") ast)
              (ast-value ast "name")
              (find-method-args (ast:extract ast '("*")) path index)))
     ("METHOD_INVOCATION"
@@ -293,19 +293,19 @@
                           (when method
                             (jsown:val (jsown:val method "returnType") "name"))))))
                    ((ast:extract ast '("MEMBER_SELECT" "IDENTIFIER"))
-                    (or (find-variable-fq-class-name
+                    (or (find-fq-class-name-by-variable-name
                           (ast-value (first (ast:extract ast '("MEMBER_SELECT" "IDENTIFIER"))) "name")
                           ast path index)
-                        (find-fq-class-name
+                        (find-fq-class-name-by-class-name
                           ;; IDENTIFIER is class name
                           (ast-value (first (ast:extract ast '("MEMBER_SELECT" "IDENTIFIER"))) "name")
                           ast)))
                    ((ast:extract ast '("MEMBER_SELECT" "NEW_CLASS"))
-                    (find-fq-class-name
+                    (find-fq-class-name-by-class-name
                       (ast-value (first (ast:extract ast '("MEMBER_SELECT" "NEW_CLASS"))) "name")
                       ast))
                    ((ast:extract ast '("MEMBER_SELECT" "MEMBER_SELECT"))
-                    (find-fq-class-name
+                    (find-fq-class-name-by-class-name
                       (ast-value (first (ast:extract ast '("MEMBER_SELECT" "MEMBER_SELECT"))) "name")
                       ast)))
                  (ast-value (first (ast:extract ast '("*"))) "name")
@@ -316,9 +316,9 @@
                    ast)
                  (find-method-args (nthcdr 1 (ast:extract ast '("*"))) path index))))))
 
-(defun find-fq-class-name (class-name ast)
+(defun find-fq-class-name-by-class-name (class-name ast)
   (unless class-name
-    (return-from find-fq-class-name))
+    (return-from find-fq-class-name-by-class-name))
 
   (cond
     ((is-primitive-type class-name)
@@ -358,13 +358,13 @@
        (when (jsown:keyp ast "parent")
          (enqueue q (jsown:val ast "parent")))))))
 
-(defun find-variable-fq-class-name (object-name ast path index)
-  (let ((variable (find-variable object-name ast)))
+(defun find-fq-class-name-by-variable-name (variable-name ast path index)
+  (let ((variable (find-variable variable-name ast)))
     (cond
       ((ast:extract variable '("IDENTIFIER"))
-       (find-fq-class-name (ast-value (first (ast:extract variable '("IDENTIFIER"))) "name") variable))
+       (find-fq-class-name-by-class-name (ast-value (first (ast:extract variable '("IDENTIFIER"))) "name") variable))
       ((ast:extract variable '("PARAMETERIZED_TYPE"))
-       (find-fq-class-name (ast-value (first (ast:extract variable '("PARAMETERIZED_TYPE"))) "name") variable))
+       (find-fq-class-name-by-class-name (ast-value (first (ast:extract variable '("PARAMETERIZED_TYPE"))) "name") variable))
       ((ast:extract variable '("METHOD_INVOCATION"))
        (let ((fq-name (find-fq-name-for-reference
                         (first (ast:extract variable '("METHOD_INVOCATION"))) path index)))
@@ -375,8 +375,8 @@
            (when method
              (jsown:val (jsown:val method "returnType") "name"))))))))
 
-(defun find-variable (object-name ast)
-  (unless object-name
+(defun find-variable (variable-name ast)
+  (unless variable-name
     (return-from find-variable))
 
   (loop
@@ -387,8 +387,8 @@
     (when (null ast) (return))
 
     (let ((variable (first (if (equal (ast-value ast "type") "VARIABLE")
-                               (ast-find-name (list ast) object-name)
-                               (ast-find-name (ast:extract ast '("VARIABLE")) object-name)))))
+                               (ast-find-name (list ast) variable-name)
+                               (ast-find-name (ast:extract ast '("VARIABLE")) variable-name)))))
       (when variable
         (return variable)))
 
@@ -406,9 +406,9 @@
                        "java.lang.Class"
                        (ast-value (first (ast:extract arg '("IDENTIFIER"))) "name")))
                   ("NEW_CLASS"
-                   (find-fq-class-name (ast-value arg "name") arg))
+                   (find-fq-class-name-by-class-name (ast-value arg "name") arg))
                   ("IDENTIFIER"
-                   (find-variable-fq-class-name (ast-value arg "name") arg path index))
+                   (find-fq-class-name-by-variable-name (ast-value arg "name") arg path index))
                   ("METHOD_INVOCATION"
                    (let ((fq-name (find-fq-name-for-reference arg path index)))
                      (let ((method (find-signature
@@ -507,7 +507,7 @@
                         "org.springframework.web.util.UriComponentsBuilder.path-java.lang.String")
                       (setf found-path (format nil "/{~a}"
                                                (convert-to-json-type
-                                                 (find-variable-fq-class-name
+                                                 (find-fq-class-name-by-variable-name
                                                    (ast-value (get-parameter 0 ast) "name")
                                                    ast path index)))))
                      ((equal
@@ -571,7 +571,7 @@
                                            'string
                                            result
                                            "-"
-                                           (find-fq-class-name (ast-value child "name") ast))))))))
+                                           (find-fq-class-name-by-class-name (ast-value child "name") ast))))))))
           (return-from get-fq-name-of-declaration result))
 
         (loop for child in (jsown:val ast "children")
