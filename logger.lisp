@@ -1,4 +1,5 @@
 (defpackage #:inga/logger
+  (:nicknames #:logger)
   (:use #:cl)
   (:import-from #:local-time)
   (:export #:log-debug))

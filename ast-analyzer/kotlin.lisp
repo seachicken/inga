@@ -153,7 +153,7 @@
                                   (setf path (replace-variable-name
                                                path vn
                                                (convert-to-json-type
-                                                 (find-fq-class-name-by-ast
+                                                 (find-fq-class-name
                                                    (first (ast:extract param '("TYPE_REFERENCE")))))))))
                               finally (return path)))
                       (:file-pos . ,pos))))
@@ -185,7 +185,7 @@
                            'string
                            result
                            "-"
-                           (find-fq-class-name-by-ast param)))))
+                           (find-fq-class-name param)))))
 
     (loop for child in (ast-value ast "children")
           do (setf stack (append stack (list child))))))
@@ -220,7 +220,7 @@
         ;; TODO: fix parent class get
         (let ((parent-class-name (ast-value (first (ast:extract ast '("IDENTIFIER"))) "name")))
           (if parent-class-name
-              (let ((parent-fq-class-name (find-fq-class-name parent-class-name ast)))
+              (let ((parent-fq-class-name (find-fq-class-name-by-class-name parent-class-name ast)))
                 (when parent-fq-class-name
                   (append (find-class-hierarchy parent-fq-class-name index)
                           (list parent-fq-class-name)
@@ -262,20 +262,12 @@
                                                                      "CALL_EXPRESSION"
                                                                      "REFERENCE_EXPRESSION")))
                                           "name"))))
-                   (find-fq-class-name
-                     (if (> (length (ast:extract root '("CALL_EXPRESSION"))) 1)
-                         (ast-value
-                           (first (ast:extract root '("CALL_EXPRESSION" "REFERENCE_EXPRESSION")))
-                           "name") 
-                         (find-variable-name
-                           (ast-value (first (ast:extract root '("REFERENCE_EXPRESSION"))) "name")
-                           ast))
-                     ast))
+                   (find-fq-class-name ast))
                (ast-value (first (ast:extract ast '("REFERENCE_EXPRESSION"))) "name")
-               (mapcar (lambda (arg) (find-fq-class-name-by-ast arg))
+               (mapcar (lambda (arg) (find-fq-class-name arg))
                        (ast:extract ast '("VALUE_ARGUMENT_LIST" "VALUE_ARGUMENT" "*"))))))))
 
-(defun find-fq-class-name-by-ast (ast)
+(defun find-fq-class-name (ast)
   (alexandria:switch ((ast-value ast "type") :test #'equal)
     ("NULL"
      "NULL")
@@ -295,16 +287,21 @@
        ((ast:extract ast '("CLASS_LITERAL_EXPRESSION"))
         "java.lang.Class")
        ((ast:extract ast '("REFERENCE_EXPRESSION"))
-        (find-fq-class-name
+        (find-fq-class-name-by-class-name
           (ast-value (first (ast:extract ast '("REFERENCE_EXPRESSION"))) "name")
           ast))))
     ("CALL_EXPRESSION"
      (when (ast:extract ast '("REFERENCE_EXPRESSION"))
-        (find-fq-class-name
-          (ast-value (first (ast:extract ast '("REFERENCE_EXPRESSION"))) "name")
-          ast)))))
+       (let ((parent (first (ast:extract ast '("DOT_QUALIFIED_EXPRESSION") :direction :upward))))
+         (find-fq-class-name-by-class-name
+           (if parent
+               (find-class-name-by-variable-name
+                 (ast-value (first (ast:extract parent '("REFERENCE_EXPRESSION"))) "name")
+                 ast)
+               (ast-value (first (ast:extract ast '("REFERENCE_EXPRESSION"))) "name"))
+           ast))))))
 
-(defun find-fq-class-name (class-name ast)
+(defun find-fq-class-name-by-class-name (class-name ast)
   (loop
     with q = (make-queue)
     initially (enqueue q ast)
@@ -322,15 +319,15 @@
                     (format nil "~{~a~^.~}"
                             (append (mapcar (lambda (ast) (ast-value ast "name"))
                                             (ast:extract ast '("PACKAGE_DIRECTIVE"
-                                                           "DOT_QUALIFIED_EXPRESSION"
-                                                           "REFERENCE_EXPRESSION")))
+                                                               "DOT_QUALIFIED_EXPRESSION"
+                                                               "REFERENCE_EXPRESSION")))
                                     (list class-name)))))))
 
     (enqueue q (ast-value ast "parent"))))
 
-(defun find-variable-name (object-name ast)
+(defun find-class-name-by-variable-name (object-name ast)
   (unless object-name
-    (return-from find-variable-name))
+    (return-from find-class-name-by-variable-name))
 
   (loop
     with q = (make-queue)
@@ -344,7 +341,7 @@
                                                                "VALUE_PARAMETER_LIST"
                                                                "VALUE_PARAMETER"))
                                             object-name))))
-        (return-from find-variable-name
+        (return-from find-class-name-by-variable-name
                      (ast-value (first (ast:extract variable '("TYPE_REFERENCE"
                                                                "USER_TYPE"
                                                                "REFERENCE_EXPRESSION")))
