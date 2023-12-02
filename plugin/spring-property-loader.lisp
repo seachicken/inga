@@ -33,23 +33,20 @@
   (unless (uiop:process-alive-p *spring-property-loader*)
     (error 'inga-error-process-not-running))
 
-  (let ((prod-profile-candidates '("production" "prod" "release"))
-        (base-path (find-base-path (merge-pathnames from *root-path*))))
+  (let ((base-path (find-base-path (merge-pathnames from *root-path*))))
     (unless base-path
       (return-from find-property))
 
-    (let ((results (exec-command *spring-property-loader* (namestring base-path))))
+    (let ((results (exec-command
+                     *spring-property-loader*
+                     (format nil "{\"from\":\"~a\",\"profileCandidates\":[\"production\",\"prod\",\"release\"]}"
+                             (namestring base-path)))))
       (unless results (return-from find-property))
 
       (loop for property in (jsown:parse results)
             with result
             do
-            (when (and
-                    (jsown:keyp property key)
-                    (or (not (jsown:keyp property "spring.config.activate.on-profile"))
-                        (find (jsown:val property "spring.config.activate.on-profile")
-                              prod-profile-candidates
-                              :test #'equal)))
+            (when (jsown:keyp property key)
               (setf result (jsown:val property key)))
             finally (return (if (and (equal key "server.port") (null result))
                                 "8080"
