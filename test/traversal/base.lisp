@@ -1,8 +1,8 @@
-(defpackage #:inga/test/ast-analyzer/base
+(defpackage #:inga/test/traversal/base
   (:use #:cl
         #:fiveam
-        #:inga/ast-analyzer))
-(in-package #:inga/test/ast-analyzer/base)
+        #:inga/traversal))
+(in-package #:inga/test/traversal/base)
 
 (test get-value
   (let ((ast '(:obj

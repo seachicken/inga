@@ -1,7 +1,7 @@
 (defpackage #:inga/language-client/typescript
   (:use #:cl
         #:inga/language-client/base)
-  (:import-from #:inga/ast-analyzer
+  (:import-from #:inga/traversal
                 #:convert-to-pos
                 #:convert-to-top-offset)
   (:export #:language-client-typescript))

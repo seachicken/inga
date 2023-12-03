@@ -1,5 +1,5 @@
-(defpackage #:inga/ast-analyzer/base
-  (:nicknames #:ast)
+(defpackage #:inga/traversal/base
+  (:nicknames #:trav)
   (:use #:cl
         #:inga/utils)
   (:import-from #:inga/cache
@@ -14,12 +14,12 @@
                 #:clean-indexes
                 #:create-indexes
                 #:get-ast) 
-  (:export #:ast-analyzer
-           #:*ast-analyzers*
-           #:ast-analyzer-path
-           #:ast-analyzer-index
-           #:start-ast-analyzer
-           #:stop-ast-analyzer
+  (:export #:traversal
+           #:*traversals*
+           #:traversal-path
+           #:traversal-index
+           #:start-traversal
+           #:stop-traversal
            #:get-scoped-index-paths
            #:get-scoped-index-paths-generic
            #:find-definitions
@@ -40,48 +40,48 @@
            #:convert-to-pos
            #:contains-offset
            #:ast-value
-           #:extract
+           #:get-asts
            #:ast-find-name
            #:ast-find-names
            #:ast-find-suffix))
-(in-package #:inga/ast-analyzer/base)
+(in-package #:inga/traversal/base)
 
 (defparameter *index-path* (uiop:merge-pathnames* #p"inga_temp/"))
-(defparameter *ast-analyzers* nil)
+(defparameter *traversals* nil)
 
-(defclass ast-analyzer ()
+(defclass traversal ()
   ((path
      :initarg :path
-     :accessor ast-analyzer-path)
+     :accessor traversal-path)
    (index
      :initarg :index
-     :accessor ast-analyzer-index)))
+     :accessor traversal-index)))
 
-(defgeneric start-ast-analyzer (kind include exclude path index)
+(defgeneric start-traversal (kind include exclude path index)
   (:method (kind include exclude path index)
-   (error 'unknown-ast-analyzer :name kind)))
+   (error 'unknown-traversal :name kind)))
 
-(defgeneric stop-ast-analyzer (ast-analyzer)
-  (:method (ast-analyzer)))
+(defgeneric stop-traversal (traversal)
+  (:method (traversal)))
 
 (defun get-scoped-index-paths (pos index)
-  (let ((ast-analyzer (get-ast-analyzer (cdr (assoc :path pos)))))
-    (if ast-analyzer
-        (get-scoped-index-paths-generic ast-analyzer pos)
+  (let ((traversal (get-traversal (cdr (assoc :path pos)))))
+    (if traversal
+        (get-scoped-index-paths-generic traversal pos)
         (ast-index-paths index))))
-(defgeneric get-scoped-index-paths-generic (ast-analyzer pos)
-  (:method (ast-analyzer pos)
-   (ast-index-paths (ast-analyzer-index ast-analyzer))))
+(defgeneric get-scoped-index-paths-generic (traversal pos)
+  (:method (traversal pos)
+   (ast-index-paths (traversal-index traversal))))
 
 (defun find-definitions (range)
-  (let ((ast-analyzer (get-ast-analyzer (cdr (assoc :path range)))))
-    (find-definitions-generic ast-analyzer range)))
-(defgeneric find-definitions-generic (ast-analyzer range))
+  (let ((traversal (get-traversal (cdr (assoc :path range)))))
+    (find-definitions-generic traversal range)))
+(defgeneric find-definitions-generic (traversal range))
 
 (defun find-entrypoint (pos)
-  (find-entrypoint-generic (cdr (assoc :typescript *ast-analyzers*)) pos))
-(defgeneric find-entrypoint-generic (ast-analyzer pos)
-  (:method (ast-analyzer pos)))
+  (find-entrypoint-generic (cdr (assoc :typescript *traversals*)) pos))
+(defgeneric find-entrypoint-generic (traversal pos)
+  (:method (traversal pos)))
 
 (defunc find-references (pos index)
   (inga/utils::funtime
@@ -90,19 +90,19 @@
             with results
             with ast
             do
-            (let ((ast-analyzer (get-ast-analyzer (namestring path))))
-              (setf ast (get-ast (ast-analyzer-index ast-analyzer) path))
+            (let ((traversal (get-traversal (namestring path))))
+              (setf ast (get-ast (traversal-index traversal) path))
 
-              (let ((references (find-references-by-file ast-analyzer path ast pos)))
+              (let ((references (find-references-by-file traversal path ast pos)))
                 (when references
                   (setf results (append results references)))))
             finally (return results)))
     :label "find-references"
     :args pos))
 
-(defgeneric find-reference (ast-analyzer target-pos ast path))
+(defgeneric find-reference (traversal target-pos ast path))
 
-(defun find-references-by-file (ast-analyzer path ast target-pos)
+(defun find-references-by-file (traversal path ast target-pos)
   (let ((q (make-queue))
         results)
     (enqueue q ast)
@@ -110,7 +110,7 @@
       (let ((ast (dequeue q)))
         (when (null ast) (return))
 
-        (let ((ref (find-reference ast-analyzer target-pos ast path)))
+        (let ((ref (find-reference traversal target-pos ast path)))
           (when ref
             (setf results (append results (list ref)))))
 
@@ -180,15 +180,15 @@
 (defun find-class-hierarchy (fq-class-name index)
   (loop for path in (ast-index-paths index)
         do
-        (let* ((ast-analyzer (get-ast-analyzer (namestring path)))
-               (ast (get-ast (ast-analyzer-index ast-analyzer) path)))
-          (let ((class-hierarchy (find-class-hierarchy-generic ast-analyzer fq-class-name ast path index)))
+        (let* ((traversal (get-traversal (namestring path)))
+               (ast (get-ast (traversal-index traversal) path)))
+          (let ((class-hierarchy (find-class-hierarchy-generic traversal fq-class-name ast path index)))
             (when class-hierarchy
               (return-from find-class-hierarchy class-hierarchy)))))
   (list fq-class-name))
 
-(defgeneric find-class-hierarchy-generic (ast-analyzer fq-class-name root-ast path index)
-  (:method (ast-analyzer fq-class-name root-ast path index)))
+(defgeneric find-class-hierarchy-generic (traversal fq-class-name root-ast path index)
+  (:method (traversal fq-class-name root-ast path index)))
 
 (defun convert-to-top-offset (path pos)
   (with-open-file (stream path)
@@ -232,8 +232,8 @@
                       (cdr (assoc :path pos))
                       (cdr (assoc :top-offset pos))))))
 
-(defun get-ast-analyzer (path)
-  (cdr (assoc (get-file-type path) *ast-analyzers*)))
+(defun get-traversal (path)
+  (cdr (assoc (get-file-type path) *traversals*)))
 
 (defun contains-offset (a-start a-end b-start b-end)
   (and (<= a-start b-end) (>= a-end b-start)))
@@ -242,9 +242,9 @@
   (and (jsown:keyp ast key)
        (jsown:val ast key)))
 
-(defun extract (ast info-path
-                    &key (direction :downward)
-                    (key-type "type") (key-downward "children") (key-upward "parent"))
+(defun get-asts (ast info-path
+                     &key (direction :downward)
+                     (key-type "type") (key-downward "children") (key-upward "parent"))
   (loop for path in info-path
         with key-direction = (if (eq direction :downward) key-downward key-upward)
         with results = (if (jsown:keyp ast key-type) (list ast) ast)

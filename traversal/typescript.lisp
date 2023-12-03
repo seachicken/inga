@@ -1,36 +1,36 @@
-(defpackage #:inga/ast-analyzer/typescript
+(defpackage #:inga/traversal/typescript
   (:use #:cl
-        #:inga/ast-analyzer/base
+        #:inga/traversal/base
         #:inga/utils)
   (:import-from #:inga/ast-index
                 #:clean-indexes
                 #:create-indexes
                 #:get-ast)
-  (:export #:ast-analyzer-typescript))
-(in-package #:inga/ast-analyzer/typescript)
+  (:export #:traversal-typescript))
+(in-package #:inga/traversal/typescript)
 
 (defparameter *include-typescript* '("*.(js|jsx)"
                                      "*.(ts|tsx)"))
 
-(defclass ast-analyzer-typescript (ast-analyzer)
+(defclass traversal-typescript (traversal)
   ((nearest-ast-pos :initform nil
-                    :accessor ast-analyzer-nearest-ast-pos)))
+                    :accessor traversal-nearest-ast-pos)))
 
-(defmethod start-ast-analyzer ((kind (eql :typescript)) include exclude path index)
-  (setf *ast-analyzers*
+(defmethod start-traversal ((kind (eql :typescript)) include exclude path index)
+  (setf *traversals*
         (acons :typescript
-               (make-instance 'ast-analyzer-typescript
+               (make-instance 'traversal-typescript
                               :path path
                               :index index)
-               *ast-analyzers*))
+               *traversals*))
   (create-indexes index include *include-typescript* exclude)
-  (cdr (assoc :typescript *ast-analyzers*)))
+  (cdr (assoc :typescript *traversals*)))
 
-(defmethod stop-ast-analyzer ((ast-analyzer ast-analyzer-typescript))
-  (clean-indexes (ast-analyzer-index ast-analyzer))
-  (setf *ast-analyzers* nil))
+(defmethod stop-traversal ((traversal traversal-typescript))
+  (clean-indexes (traversal-index traversal))
+  (setf *traversals* nil))
 
-(defmethod find-definitions-generic ((ast-analyzer ast-analyzer-typescript) range)
+(defmethod find-definitions-generic ((traversal traversal-typescript) range)
   (let ((q (make-queue))
         (src-path (cdr (assoc :path range)))
         (path (cdr (assoc :path range)))
@@ -38,7 +38,7 @@
         (end-offset (cdr (assoc :end-offset range)))
         ast
         results)
-    (enqueue q (get-ast (ast-analyzer-index ast-analyzer) path))
+    (enqueue q (get-ast (traversal-index traversal) path))
     (loop
       (setf ast (dequeue q))
       (if (null ast) (return))
@@ -152,11 +152,11 @@
           (loop for s in (jsown:val ast "statements") do (enqueue q s))))
     results))
 
-(defmethod find-entrypoint-generic ((ast-analyzer ast-analyzer-typescript) pos)
+(defmethod find-entrypoint-generic ((traversal traversal-typescript) pos)
   (let ((top-offset (cdr (assoc :top-offset pos)))
-        (ast (get-ast (ast-analyzer-index ast-analyzer) (cdr (assoc :path pos)))))
-    (setf (ast-analyzer-nearest-ast-pos ast-analyzer) nil)
-    (let ((component-pos (find-component ast-analyzer ast top-offset)))
+        (ast (get-ast (traversal-index traversal) (cdr (assoc :path pos)))))
+    (setf (traversal-nearest-ast-pos traversal) nil)
+    (let ((component-pos (find-component traversal ast top-offset)))
       (when component-pos
         (let ((result (list
                      (cons :path (cdr (assoc :path pos)))
@@ -166,15 +166,15 @@
             (push (cons :origin (cdr (assoc :origin pos))) result))
           result)))))
 
-(defmethod find-reference ((ast-analyzer ast-analyzer-typescript) target-pos ast path))
+(defmethod find-reference ((traversal traversal-typescript) target-pos ast path))
 
-(defun find-component (ast-analyzer ast pos)
+(defun find-component (traversal ast pos)
   (when (and (jsown:keyp ast "kindName")
              (or
                (string= (jsown:val ast "kindName") "JsxOpeningElement") 
                (string= (jsown:val ast "kindName") "JsxSelfClosingElement"))
              (jsown:keyp ast "tagName"))
-    (setf (ast-analyzer-nearest-ast-pos ast-analyzer)
+    (setf (traversal-nearest-ast-pos traversal)
           (list
             (cons :name (let ((tag-name (cdr (jsown:val ast "tagName"))))
                           (if (jsown:keyp tag-name "escapedText")
@@ -186,19 +186,19 @@
     (if (consp (car ast))
         (progn
           (when (and (jsown:keyp ast "start") (equal (jsown:val ast "start") pos))
-            (return-from find-component (ast-analyzer-nearest-ast-pos ast-analyzer)))
+            (return-from find-component (traversal-nearest-ast-pos traversal)))
 
         (if (consp (cdr (car ast)))
             (progn
-              (let ((comp-pos (find-component ast-analyzer (cdr (car ast)) pos)))
+              (let ((comp-pos (find-component traversal (cdr (car ast)) pos)))
                 (when (not (null comp-pos))
                   (return-from find-component comp-pos)))
-              (return-from find-component (find-component ast-analyzer (cdr ast) pos)))
+              (return-from find-component (find-component traversal (cdr ast) pos)))
             (progn
               (when (cdr ast)
-                (return-from find-component (find-component ast-analyzer (cdr ast) pos))))))
+                (return-from find-component (find-component traversal (cdr ast) pos))))))
       (progn
-        (return-from find-component (find-component ast-analyzer (cdr ast) pos))))))
+        (return-from find-component (find-component traversal (cdr ast) pos))))))
 
 (defun find-return-type (ast)
   (when (and

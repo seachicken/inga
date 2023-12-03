@@ -7,12 +7,12 @@
                 #:clean-indexes
                 #:create-indexes
                 #:get-ast)
-  (:import-from #:inga/ast-analyzer
-                #:ast-analyzer-java 
+  (:import-from #:inga/traversal
+                #:traversal-java 
                 #:ast-value
                 #:convert-to-top-offset
-                #:start-ast-analyzer
-                #:stop-ast-analyzer)
+                #:start-traversal
+                #:stop-traversal)
   (:export #:*index*
            #:jvm-context
            #:node-context
@@ -31,10 +31,10 @@
                                :root-path root-path))
   (setf *analyzers*
         (list
-          (start-ast-analyzer :java include nil root-path *index*)
-          (start-ast-analyzer :kotlin include nil root-path *index*)))
+          (start-traversal :java include nil root-path *index*)
+          (start-traversal :kotlin include nil root-path *index*)))
   (&body)
-  (loop for a in *analyzers* do (stop-ast-analyzer a))
+  (loop for a in *analyzers* do (stop-traversal a))
   (inga/plugin/spring-property-loader:stop)
   (inga/plugin/jvm-dependency-loader:stop))
 
@@ -46,9 +46,9 @@
                                :root-path root-path))
   (setf *analyzers*
         (list
-          (start-ast-analyzer :typescript include nil root-path *index*)))
+          (start-traversal :typescript include nil root-path *index*)))
   (&body)
-  (loop for a in *analyzers* do (stop-ast-analyzer a)))
+  (loop for a in *analyzers* do (stop-traversal a)))
 
 (defun find-ast (path pos ast-index &key (key-offset *key-offset*))
   (loop with ast = (get-ast ast-index path)

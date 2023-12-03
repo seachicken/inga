@@ -1,10 +1,10 @@
-(defpackage #:inga/test/ast-analyzer/kotlin
+(defpackage #:inga/test/traversal/kotlin
   (:use #:cl
         #:fiveam
-        #:inga/ast-analyzer
+        #:inga/traversal
         #:inga/ast-index
         #:inga/test/helper))
-(in-package #:inga/test/ast-analyzer/kotlin)
+(in-package #:inga/test/traversal/kotlin)
 
 (def-suite kotlin)
 (in-suite kotlin)
@@ -126,7 +126,7 @@
     (let ((path "p1/client/ClientRestTemplate.kt"))
       (is (equal
             "org.springframework.web.client.RestTemplate.getForObject-java.lang.String-java.lang.Class"
-            (inga/ast-analyzer/kotlin::find-fq-name-for-reference
+            (inga/traversal/kotlin::find-fq-name-for-reference
               ;;                     ↓
               ;; return restTemplate.getForObject("http://localhost:8080/path", String::class.java)
               (find-ast path `((:line . 10) (:offset . 29)) *index* :key-offset "textOffset")
@@ -138,7 +138,7 @@
     (let ((path "p1/client/ClientRestTemplate.kt"))
       (is (equal
             "org.springframework.web.client.RestTemplate.exchange-java.lang.String-org.springframework.http.HttpMethod-NULL-java.lang.Class"
-            (inga/ast-analyzer/kotlin::find-fq-name-for-reference
+            (inga/traversal/kotlin::find-fq-name-for-reference
               ;;                     ↓
               ;; return restTemplate.exchange("http://localhost:8080/path", HttpMethod.GET, null, String::class.java)
               (find-ast path `((:line . 18) (:offset . 29)) *index* :key-offset "textOffset")
@@ -150,7 +150,7 @@
     (let ((path "p1/client/ClientRestTemplate.kt"))
       (is (equal
             "org.springframework.web.client.RestTemplate.postForObject-java.lang.String-java.lang.String-java.lang.Class"
-            (inga/ast-analyzer/kotlin::find-fq-name-for-reference
+            (inga/traversal/kotlin::find-fq-name-for-reference
               ;;                     ↓
               ;; return restTemplate.postForObject(
               (find-ast path `((:line . 22) (:offset . 29)) *index* :key-offset "textOffset")
@@ -162,7 +162,7 @@
     (let ((path "p1/PrimaryConstructorDefinition.kt"))
       (is (equal
             '("p1")
-            (inga/ast-analyzer/kotlin::get-dot-expressions
+            (inga/traversal/kotlin::get-dot-expressions
               ;;         ↓
               ;; package p1
               (find-ast path `((:line . 1) (:offset . 9)) *index* :key-offset "textOffset")))))))
@@ -172,7 +172,7 @@
     (let ((path "p1/client/ClientRestTemplate.kt"))
       (is (equal
             '("p1" "client")
-            (inga/ast-analyzer/kotlin::get-dot-expressions
+            (inga/traversal/kotlin::get-dot-expressions
               ;;         ↓
               ;; package p1.client
               (find-ast path `((:line . 1) (:offset . 9)) *index* :key-offset "textOffset")))))))

@@ -1,10 +1,10 @@
-(defpackage #:inga/test/ast-analyzer/java
+(defpackage #:inga/test/traversal/java
   (:use #:cl
         #:fiveam
-        #:inga/ast-analyzer
+        #:inga/traversal
         #:inga/ast-index
         #:inga/test/helper))
-(in-package #:inga/test/ast-analyzer/java)
+(in-package #:inga/test/traversal/java)
 
 (def-suite java)
 (in-suite java)
@@ -279,7 +279,7 @@
             "io.spring.application.CursorPager.CursorPager-java.util.ArrayList-io.spring.application.CursorPager.Direction-BOOLEAN"
             ;;        ↓
             ;; return new CursorPager<>(new ArrayList<>(), page.getDirection(), false);
-            (inga/ast-analyzer/java::find-fq-name-for-reference
+            (inga/traversal/java::find-fq-name-for-reference
               (find-ast path `((:line . 63) (:offset . 14)) *index*)
               path
               *index*))))))
@@ -289,7 +289,7 @@
     (let ((path "api-service/src/main/java/com/baeldung/apiservice/adapters/users/UserRepository.java"))
       (is (equal
             "org.springframework.web.client.RestTemplate.getForObject-java.net.URI-java.lang.Class"
-            (inga/ast-analyzer/java::find-fq-name-for-reference
+            (inga/traversal/java::find-fq-name-for-reference
               ;;                                 ↓
               ;; return restTemplate.getForObject(uri, User.class);
               (find-ast path `((:line . 25) (:offset . 45)) *index*)
@@ -303,7 +303,7 @@
             "java.lang.Class.getCanonicalName"
             ;;                                                  ↓
             ;; MDC.put(RequestIdGenerator.class.getCanonicalName(), requestId);
-            (inga/ast-analyzer/java::find-fq-name-for-reference
+            (inga/traversal/java::find-fq-name-for-reference
               (find-ast path `((:line . 19) (:offset . 58)) *index*)
               path
               *index*))))))
@@ -315,7 +315,7 @@
             "com.google.common.collect.Ordering.explicit-java.util.ArrayList"
             ;;                  ↓
             ;; Ordering.explicit(Lists.newArrayList("b", "zz", "aa", "ccc"));
-            (inga/ast-analyzer/java::find-fq-name-for-reference
+            (inga/traversal/java::find-fq-name-for-reference
               (find-ast path `((:line . 104) (:offset . 65)) *index*)
               path
               *index*))))))
@@ -325,7 +325,7 @@
     (let ((path "src/main/java/io/spring/application/ArticleQueryService.java"))
       (is (equal
             "io.spring.application.CursorPager"
-            (inga/ast-analyzer/java::find-fq-class-name
+            (inga/traversal/java::find-fq-class-name-by-class-name
               "CursorPager"
               (find-ast path `((:line . 63) (:offset . 14)) *index*)))))))
 
@@ -334,7 +334,7 @@
     (let ((path "src/main/java/io/spring/application/CursorPager.java"))
       (is (equal
             "io.spring.application.CursorPager.Direction"
-            (inga/ast-analyzer/java::find-fq-class-name
+            (inga/traversal/java::find-fq-class-name-by-class-name
               "Direction"
               (find-ast path `((:line . 12) (:offset . 46)) *index*)))))))
 
@@ -391,7 +391,7 @@
   (with-fixture jvm-context (*lightrun-path* 'ast-index-disk)
     (is (equal
           '("api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
-          (inga/ast-analyzer::get-scoped-index-paths
+          (inga/traversal::get-scoped-index-paths
             '((:type . :module-private)
               (:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
               (:fq-name . "com.baeldung.apiservice.adapters.http.TasksController.getUser-java.lang.String")
@@ -403,7 +403,7 @@
     (is (null
           (find-if-not
             (lambda (p) (uiop:string-prefix-p "api-service" p))
-            (inga/ast-analyzer::get-scoped-index-paths
+            (inga/traversal::get-scoped-index-paths
               '((:type . :module-public)
                 (:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/users/UserRepository.java")
                 (:fq-name . "com.baeldung.apiservice.adapters.users.UserRepository.getUserById-java.lang.String"))

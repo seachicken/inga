@@ -11,11 +11,11 @@
                 #:start-client
                 #:stop-client
                 #:references-client)
-  (:import-from #:inga/ast-analyzer
+  (:import-from #:inga/traversal
                 #:convert-to-pos
                 #:convert-to-top-offset
-                #:start-ast-analyzer
-                #:stop-ast-analyzer
+                #:start-traversal
+                #:stop-traversal
                 #:find-definitions
                 #:find-entrypoint
                 #:find-references)
@@ -106,21 +106,21 @@
                    :exclude exclude
                    :lc (make-client :typescript root-path)
                    :ast-index index
-                   :ast-analyzers (list
-                                    (start-ast-analyzer :typescript
-                                                        (or include *include-typescript*)
-                                                        exclude root-path index))))
+                   :traversals (list
+                                  (start-traversal :typescript
+                                                   (or include *include-typescript*)
+                                                   exclude root-path index))))
                (:java
                  (make-context
                    :project-path root-path
                    :include (or include *include-java*)
                    :exclude exclude
                    :ast-index index
-                   :ast-analyzers (list
-                                    (start-ast-analyzer :java
+                   :traversals (list
+                                    (start-traversal :java
                                                         (or include *include-java*)
                                                         exclude root-path index)
-                                    (start-ast-analyzer :kotlin
+                                    (start-traversal :kotlin
                                                         (or include *include-java*)
                                                         exclude root-path index))
                    :processes (list
@@ -133,7 +133,7 @@
 (defun stop (ctx)
   (stop-client (context-lc ctx)) 
   (loop for p in (context-processes ctx) do (uiop:close-streams p)) 
-  (loop for a in (context-ast-analyzers ctx) do (stop-ast-analyzer a)))
+  (loop for a in (context-traversals ctx) do (stop-traversal a)))
 
 (defun get-analysis-kinds (diffs)
   (remove nil
@@ -313,6 +313,6 @@
   exclude
   lc
   ast-index
-  ast-analyzers
+  traversals
   processes)
 
