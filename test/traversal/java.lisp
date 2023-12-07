@@ -272,6 +272,18 @@
               (:fq-name . "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager.Direction-BOOLEAN"))
             *index*)))))
 
+(test find-fq-name-for-reference-with-enum
+  (with-fixture jvm-context (*java-path* 'ast-index-memory)
+    (let ((path "p1/client/ClientRestTemplate.java"))
+      (is (equal
+            "org.springframework.web.client.RestTemplate.exchange-java.lang.String-org.springframework.http.HttpMethod-NULL-java.lang.Class"
+            (inga/traversal/java::find-fq-name-for-reference
+              ;;                             ↓
+              ;; return restTemplate.exchange("http://localhost:8080/path", HttpMethod.GET, null, String.class);
+              (find-ast path `((:line . 24) (:offset . 37)) *index*)
+              path
+              *index*))))))
+
 (test find-fq-name-for-reference-with-new-class
   (with-fixture jvm-context (*spring-boot-path* 'ast-index-memory :include '("src/main/**"))
     (let ((path "src/main/java/io/spring/application/ArticleQueryService.java"))

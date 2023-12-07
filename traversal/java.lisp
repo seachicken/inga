@@ -2,6 +2,8 @@
   (:use #:cl
         #:inga/traversal/base
         #:inga/utils)
+  (:import-from #:alexandria
+                #:switch)
   (:import-from #:quri)
   (:import-from #:inga/path
                 #:merge-paths
@@ -274,7 +276,8 @@
      (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
              (find-fq-class-name-by-class-name (ast-value ast "name") ast)
              (ast-value ast "name")
-             (find-method-args (trav:get-asts ast '("*")) path index)))
+             (mapcar (lambda (arg) (find-fq-class-name arg path index))
+                       (trav:get-asts ast '("*")))))
     ("METHOD_INVOCATION"
      (if (trav:get-asts ast '("MEMBER_SELECT"))
          (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
@@ -309,12 +312,38 @@
                       (ast-value (first (trav:get-asts ast '("MEMBER_SELECT" "MEMBER_SELECT"))) "name")
                       ast)))
                  (ast-value (first (trav:get-asts ast '("*"))) "name")
-                 (find-method-args (nthcdr 1 (trav:get-asts ast '("*"))) path index))
+                 (mapcar (lambda (arg) (find-fq-class-name arg path index))
+                       (nthcdr 1 (trav:get-asts ast '("*")))))
          (format nil "~a~:[~;-~]~:*~{~a~^-~}"
                  (find-fq-name-for-definition
                    (ast-value (first (trav:get-asts ast '("IDENTIFIER"))) "name")
                    ast)
-                 (find-method-args (nthcdr 1 (trav:get-asts ast '("*"))) path index))))))
+                 (mapcar (lambda (arg) (find-fq-class-name arg path index))
+                         (nthcdr 1 (trav:get-asts ast '("*")))))))))
+
+(defun find-fq-class-name (ast path index)
+  (if (uiop:string-suffix-p (ast-value ast "type") "_LITERAL")
+      (if (equal (ast-value ast "type") "STRING_LITERAL")
+          "java.lang.String"
+          (ppcre:regex-replace-all "_LITERAL" (ast-value ast "type") ""))
+      (switch ((ast-value ast "type") :test #'equal)
+        ("MEMBER_SELECT"
+         (if (ast-find-name (list ast) "class")
+             "java.lang.Class"
+             (find-fq-class-name-by-class-name
+               (ast-value (first (trav:get-asts ast '("IDENTIFIER"))) "name") ast)))
+        ("NEW_CLASS"
+         (find-fq-class-name-by-class-name (ast-value ast "name") ast))
+        ("IDENTIFIER"
+         (find-fq-class-name-by-variable-name (ast-value ast "name") ast path index))
+        ("METHOD_INVOCATION"
+         (let ((fq-name (find-fq-name-for-reference ast path index)))
+           (let ((method (find-signature
+                           fq-name
+                           #'(lambda (fq-class-name)
+                               (load-signatures fq-class-name path))
+                           index)))
+             (when method (jsown:val (jsown:val method "returnType") "name"))))))))
 
 (defun find-fq-class-name-by-class-name (class-name ast)
   (unless class-name
@@ -394,31 +423,6 @@
 
     (enqueue q (ast-value ast "parent"))))
 
-(defun find-method-args (ast path index)
-  (mapcar (lambda (arg)
-            (if (uiop:string-suffix-p (ast-value arg "type") "_LITERAL")
-                (if (equal (ast-value arg "type") "STRING_LITERAL")
-                    "java.lang.String"
-                    (ppcre:regex-replace-all "_LITERAL" (ast-value arg "type") ""))
-                (alexandria:switch ((jsown:val arg "type") :test #'equal)
-                  ("MEMBER_SELECT"
-                   (if (ast-find-name (list arg) "class")
-                       "java.lang.Class"
-                       (ast-value (first (trav:get-asts arg '("IDENTIFIER"))) "name")))
-                  ("NEW_CLASS"
-                   (find-fq-class-name-by-class-name (ast-value arg "name") arg))
-                  ("IDENTIFIER"
-                   (find-fq-class-name-by-variable-name (ast-value arg "name") arg path index))
-                  ("METHOD_INVOCATION"
-                   (let ((fq-name (find-fq-name-for-reference arg path index)))
-                     (let ((method (find-signature
-                                     fq-name
-                                     #'(lambda (fq-class-name)
-                                         (load-signatures fq-class-name path))
-                                     index)))
-                       (when method (jsown:val (jsown:val method "returnType") "name"))))))))
-          ast))
-
 (defun find-fq-name-for-definition (method-name ast)
   (loop
     with q = (make-queue)
@@ -449,7 +453,7 @@
   (cond
     ((matches-signature
        fq-name
-       "org.springframework.web.client.RestTemplate.exchange-java.lang.String-HttpMethod-NULL-java.lang.Class"
+       "org.springframework.web.client.RestTemplate.exchange-java.lang.String-org.springframework.http.HttpMethod-NULL-java.lang.Class"
        index)
      `((:host . ,(find-api-host 0 ast))
        (:name . ,(find-api-method-from-http-method (nth 2 (trav:get-asts ast '("*")))))
