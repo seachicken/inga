@@ -4,6 +4,9 @@
         #:inga/traversal))
 (in-package #:inga/test/traversal/base)
 
+(def-suite traversal/base)
+(in-suite traversal/base)
+
 (test get-value
   (let ((ast '(:obj
                 ("type" . "A")
@@ -29,7 +32,7 @@
             (:obj
               ("type" . "B")
               ("children" . nil)))
-          (ast:extract ast '("B"))))))
+          (trav:get-asts ast '("B"))))))
 
 (test get-nodes-in-upward-direction
   (let ((ast '(:obj
@@ -46,13 +49,36 @@
                      (setf (jsown:val node "parent") ast)
                      (f node))))
       (f ast))
-    (setf ast (first (ast:extract ast '("B"))))
-    (let ((actual (ast:extract ast '("A") :direction :upward)))
+    (setf ast (trav:get-ast ast '("B")))
+    (let ((actual (trav:get-asts ast '("A") :direction :upward)))
       (is (and
             (eq 1 (length actual))
             (equal
               "A"
               (ast-value (first actual) "type")))))))
+
+(test get-nodes-in-horizontal-direction
+  (let ((ast '(:obj
+                ("type" . "A")
+                ("children" . ((:obj
+                                 ("type" . "B")
+                                 ("name" . "b1")
+                                 ("children" . nil))
+                               (:obj
+                                 ("type" . "B")
+                                 ("name" . "b2")
+                                 ("children" . nil)))))))
+    (labels ((f (ast)
+               (loop for node in (ast-value ast "children")
+                     do
+                     (setf (jsown:val node "parent") ast)
+                     (f node))))
+      (f ast))
+    (setf ast (trav:get-ast ast '("B")))
+    (let ((actual (trav:get-ast ast '("B") :direction :horizontal)))
+      (is (equal
+            "b2"
+            (ast-value actual "name"))))))
 
 (test get-nodes-with-asts
   (let ((ast '(:obj
@@ -70,7 +96,7 @@
             (:obj
               ("type" . "B")
               ("children" . nil)))
-          (ast:extract (list ast) '("B"))))))
+          (trav:get-asts (list ast) '("B"))))))
 
 (test get-nested-nodes
   (let ((ast '(:obj
@@ -84,7 +110,7 @@
           '((:obj
               ("type" . "C")
               ("children" . nil)))
-          (ast:extract ast '("B" "C"))))))
+          (trav:get-asts ast '("B" "C"))))))
 
 (test get-nodes-by-wild-card
   (let ((ast '(:obj
@@ -102,7 +128,7 @@
             (:obj
               ("type" . "C")
               ("children" . nil)))
-          (ast:extract ast '("*"))))))
+          (trav:get-asts ast '("*"))))))
 
 (test find-name
   (let ((nodes '((:obj

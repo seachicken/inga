@@ -2,6 +2,9 @@
   (:nicknames #:trav)
   (:use #:cl
         #:inga/utils)
+  (:import-from #:alexandria
+                #:switch)
+  (:import-from #:jsown)
   (:import-from #:inga/cache
                 #:defunc)
   (:import-from #:inga/file
@@ -40,6 +43,7 @@
            #:convert-to-pos
            #:contains-offset
            #:ast-value
+           #:get-ast
            #:get-asts
            #:ast-find-name
            #:ast-find-names
@@ -242,26 +246,38 @@
   (and (jsown:keyp ast key)
        (jsown:val ast key)))
 
+(defun get-ast (ast info-path
+                    &key (direction :downward)
+                    (key-type "type") (key-downward "children") (key-upward "parent"))
+  (first (get-asts ast info-path :direction direction :key-type key-type :key-downward key-downward :key-upward key-upward)))
+
 (defun get-asts (ast info-path
                      &key (direction :downward)
                      (key-type "type") (key-downward "children") (key-upward "parent"))
-  (loop for path in info-path
-        with key-direction = (if (eq direction :downward) key-downward key-upward)
-        with results = (if (jsown:keyp ast key-type) (list ast) ast)
-        do
-        (setf results
-              (loop for node in (if (eq direction :downward)
-                                    (apply #'append
-                                           (mapcar (lambda (r) (ast-value r key-direction)) results))
-                                    (list (ast-value (first results) key-direction)))
-                    with nodes
-                    do
-                    (when (or
-                            (equal path "*")
-                            (equal path (ast-value node key-type)))
-                      (setf nodes (append nodes (list node))))
-                    finally (return nodes)))
-        finally (return results)))
+  (if (equal direction :horizontal)
+      (loop for node in (remove-if (lambda (r) (equal r ast))
+                                   (ast-value (ast-value ast key-upward) key-downward))
+            with results
+            do (push node results)
+            finally (return results))
+      (loop for path in info-path
+            with results = (if (jsown:keyp ast key-type) (list ast) ast)
+            do
+            (setf results
+                  (loop for node in (switch (direction)
+                                      (:downward
+                                        (apply #'append
+                                               (mapcar (lambda (r) (ast-value r key-downward)) results)))
+                                      (:upward
+                                        (list (ast-value (first results) key-upward))))
+                        with nodes
+                        do
+                        (when (or
+                                (equal path "*")
+                                (equal path (ast-value node key-type)))
+                          (setf nodes (append nodes (list node))))
+                        finally (return nodes)))
+            finally (return results))))
 
 (defun ast-find-name (nodes name &key (key-name "name"))
   (loop for node in nodes
@@ -288,4 +304,13 @@
                 (uiop:string-suffix-p (jsown:val node key-name) suffix))
           (setf results (append results (list node))))
         finally (return results)))
+
+(defun debug-ast (ast &key (key-downward "children") (key-upward "parent"))
+  (format t "~&ast: ") 
+  (loop for key in (remove-if (lambda (key)
+                                (or (equal key key-downward) (equal key key-upward)))
+                              (jsown:keywords ast))
+        do (format t "(~a . ~a) " key (ast-value ast key)))
+  (format t "~%") 
+  ast)
 
