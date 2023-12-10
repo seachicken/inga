@@ -50,27 +50,27 @@
   (&body)
   (loop for a in *analyzers* do (stop-traversal a)))
 
-(defun find-ast (path pos ast-index &key (key-offset *key-offset*))
-  (loop with ast = (get-ast ast-index path)
-        with offset = (convert-to-top-offset
-                        (merge-pathnames path (ast-index-root-path ast-index)) pos)
-        with stack = (list ast)
-        do
-        (setf ast (pop stack))
-        (when (or
-                (null ast)
-                (eq (ast-value ast key-offset) offset))
-          (return ast))
+(defmacro find-ast (path pos &key key-offset)
+  `(loop
+     with offset = (convert-to-top-offset (merge-pathnames ,path (ast-index-root-path *index*))
+                                          ,pos)
+     with stack = (list (get-ast *index* ,path))
+     with ast 
+     do
+     (setf ast (pop stack))
+     (when (or (null ast)
+               (eq (ast-value ast (or ,key-offset *key-offset*)) offset))
+       (return ast))
+     (loop for child in (ast-value ast "children")
+           do (setf stack (append stack (list child))))))
 
-        (loop for child in (jsown:val ast "children")
-              do (setf stack (append stack (list child))))))
-
-(defun create-range (path &key line (start line) (end start) (root-path *root-path*))
-  `((:path . ,path)
-    (:start-offset .
-     ,(convert-to-top-offset (merge-pathnames path root-path)
-                             `((:line . ,start) (:offset . 0))))
-    (:end-offset .
-     ,(convert-to-top-offset (merge-pathnames path root-path)
-                             `((:line . ,end) (:offset . -1))))))
+(defmacro create-range (path &key line (start line) (end start))
+  `(list
+     (cons :path ,path)
+     (cons :start-offset
+           (convert-to-top-offset (merge-pathnames ,path *root-path*)
+                                  (list (cons :line ,start) (cons :offset 0))))
+     (cons :end-offset
+           (convert-to-top-offset (merge-pathnames ,path *root-path*)
+                                  (list (cons :line ,end) (cons :offset -1))))))
 

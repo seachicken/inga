@@ -49,7 +49,7 @@
                      (setf (jsown:val node "parent") ast)
                      (f node))))
       (f ast))
-    (setf ast (trav:get-ast ast '("B")))
+    (setf ast (first (trav:get-asts ast '("B"))))
     (let ((actual (trav:get-asts ast '("A") :direction :upward)))
       (is (and
             (eq 1 (length actual))
@@ -74,11 +74,33 @@
                      (setf (jsown:val node "parent") ast)
                      (f node))))
       (f ast))
-    (setf ast (trav:get-ast ast '("B")))
-    (let ((actual (trav:get-ast ast '("B") :direction :horizontal)))
+    (setf ast (first (trav:get-asts ast '("B"))))
+    (let ((actual (first (trav:get-asts ast '("B") :direction :horizontal))))
       (is (equal
             "b2"
             (ast-value actual "name"))))))
+
+(test does-not-get-nodes-when-target-is-missing-in-horizontal-direction
+  (let ((ast '(:obj
+                ("type" . "A")
+                ("children" . ((:obj
+                                 ("type" . "B")
+                                 ("name" . "b1")
+                                 ("children" . nil))
+                               (:obj
+                                 ("type" . "B")
+                                 ("name" . "b2")
+                                 ("children" . nil)))))))
+    (labels ((f (ast)
+               (loop for node in (ast-value ast "children")
+                     do
+                     (setf (jsown:val node "parent") ast)
+                     (f node))))
+      (f ast))
+    (setf ast (first (trav:get-asts ast '("B"))))
+    (is (equal
+          nil
+          (trav:get-asts ast '("C") :direction :horizontal)))))
 
 (test get-nodes-with-asts
   (let ((ast '(:obj

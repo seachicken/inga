@@ -169,46 +169,77 @@
                                       root-ast
                                       (jsown:val ast "pos")))
                      (cons :top-offset (jsown:val ast "pos")))))
-          (when is-entrypoint-file
-            (let ((mapping (first (ast-find-names
-                                        (trav:get-asts ast '("MODIFIERS" "ANNOTATION"))
-                                        '("GetMapping" "PostMapping" "PutMapping" "DeleteMapping"))))
-                  (port (find-property "server.port" path)))
-              (when (and mapping port)
-                (setf pos
-                      (list
-                        (cons :type :rest-server)
-                        (cons :host port)
-                        (cons :name (convert-to-http-method (ast-value mapping "name")))
-                        (let ((path (merge-paths 
-                                      entrypoint-name
-                                      (ast-value
-                                        (first (trav:get-asts mapping '("STRING_LITERAL")))
-                                        "name"))))
-                          (loop for vn in (get-variable-names path)
-                                do
-                                (let ((v (find-variable vn ast)))
-                                  (let ((path-variable (first (ast-find-name
-                                                                (trav:get-asts v '("MODIFIERS"
-                                                                                 "ANNOTATION"))
-                                                                "PathVariable"))))
-                                    (when (ast-find-name
-                                            (trav:get-asts path-variable '("STRING_LITERAL"))
-                                            vn)
-                                      (setf path (replace-variable-name
-                                                   path vn
-                                                   (convert-to-json-type
-                                                     (find-fq-class-name-by-variable-name
-                                                       vn v path
-                                                       (traversal-index traversal)))))))))
-                          (cons :path path))
-                        (cons :file-pos pos))))))
           (when (assoc :origin range)
             (push (cons :origin (cdr (assoc :origin range))) pos))
-          (setf results (append results (list pos)))))
+          (if is-entrypoint-file
+            (let* ((mapping (first (ast-find-names
+                                     (trav:get-asts ast '("MODIFIERS" "ANNOTATION"))
+                                     '("GetMapping" "PostMapping" "PutMapping" "DeleteMapping"
+                                       "RequestMapping"))))
+                   (paths (get-mapping-paths mapping entrypoint-name))
+                   (port (find-property "server.port" path)))
+              (when (and mapping port)
+                (loop for path in paths
+                      do
+                      (setf results
+                            (append results
+                                    (list
+                                      (list
+                                        (cons :type :rest-server)
+                                        (cons :host port)
+                                        (cons :name
+                                              (or (convert-to-http-method (ast-value mapping "name"))
+                                                  (labels
+                                                    ((get-method (ast)
+                                                       (first (ast-find-name (trav:get-asts ast '("ASSIGNMENT"
+                                                                                                  "IDENTIFIER"))
+                                                                             "method")))
+                                                     (get-name (ast)
+                                                       (ast-value (first (trav:get-asts ast '("MEMBER_SELECT")
+                                                                                        :direction :horizontal))
+                                                                  "name")))
+                                                    (get-name (get-method mapping)))))
+                                        (cons :path
+                                              (loop for vn in (get-variable-names path)
+                                                    do
+                                                    (let ((v (find-variable vn ast)))
+                                                      (let ((path-variable (first (ast-find-name
+                                                                                    (trav:get-asts v '("MODIFIERS"
+                                                                                                       "ANNOTATION"))
+                                                                                    "PathVariable"))))
+                                                        (when (or (ast-find-name
+                                                                    (trav:get-asts path-variable '("STRING_LITERAL"))
+                                                                    vn)
+                                                                  (null (ast-find-name (trav:get-asts path-variable '("ASSIGNMENT"
+                                                                                                                      "IDENTIFIER"
+                                                                                                                      ))
+                                                                                       "value")))
+                                                          (setf path (replace-variable-name
+                                                                       path vn
+                                                                       (convert-to-json-type
+                                                                         (find-fq-class-name-by-variable-name
+                                                                           vn v path
+                                                                           (traversal-index traversal))))))))
+                                                    finally (return path)))
+                                        (cons :file-pos pos))))))))
+            (setf results (append results (list pos))))))
 
       (loop for child in (jsown:val ast "children") do (enqueue q child)))
     results))
+
+(defun get-mapping-paths (mapping root-path)
+  (let* ((value (first (ast-find-name (trav:get-asts mapping '("ASSIGNMENT" "IDENTIFIER"))
+                                      "value")))
+         (value-names (mapcar (lambda (ast) (ast-value ast "name"))
+                              (or (trav:get-asts mapping '("STRING_LITERAL"))
+                                  (trav:get-asts value '("STRING_LITERAL")
+                                                 :direction :horizontal)
+                                  (trav:get-asts (first (trav:get-asts value '("NEW_ARRAY")
+                                                                       :direction :horizontal))
+                                                 '("STRING_LITERAL"))))))
+    (format t "value-names: ~a~%" value-names)
+    (mapcar (lambda (value-name) (merge-paths root-path value-name))
+            (or value-names '("")))))
 
 (defun get-scope (ast)
   (let ((modifiers (split-trim-comma (ast-value (first (trav:get-asts ast '("MODIFIERS"))) "name"))))

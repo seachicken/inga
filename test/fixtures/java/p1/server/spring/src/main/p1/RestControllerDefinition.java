@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 @RequestMapping("/")
@@ -25,5 +26,16 @@ public class RestControllerDefinition {
 
     @DeleteMapping("/{v}")
     public void delete(@PathVariable("v") String v) {
+    }
+
+    @RequestMapping(value = "request/{v}", method = RequestMethod.GET)
+    public void get(@PathVariable("v") String v) {
+    }
+
+    @GetMapping(value = {"/{v1}/{v2}", "/{v1}"})
+    public void get(
+            @PathVariable String v1,
+            @PathVariable(required = false) String v2
+    ) {
     }
 }

@@ -43,11 +43,11 @@
            #:convert-to-pos
            #:contains-offset
            #:ast-value
-           #:get-ast
            #:get-asts
            #:ast-find-name
            #:ast-find-names
-           #:ast-find-suffix))
+           #:ast-find-suffix
+           #:debug-ast))
 (in-package #:inga/traversal/base)
 
 (defparameter *index-path* (uiop:merge-pathnames* #p"inga_temp/"))
@@ -246,11 +246,6 @@
   (and (jsown:keyp ast key)
        (jsown:val ast key)))
 
-(defun get-ast (ast info-path
-                    &key (direction :downward)
-                    (key-type "type") (key-downward "children") (key-upward "parent"))
-  (first (get-asts ast info-path :direction direction :key-type key-type :key-downward key-downward :key-upward key-upward)))
-
 (defun get-asts (ast info-path
                      &key (direction :downward)
                      (key-type "type") (key-downward "children") (key-upward "parent"))
@@ -258,7 +253,11 @@
       (loop for node in (remove-if (lambda (r) (equal r ast))
                                    (ast-value (ast-value ast key-upward) key-downward))
             with results
-            do (push node results)
+            do
+            (when (or
+                    (find "*" info-path :test #'equal)
+                    (find (ast-value node key-type) info-path :test #'equal))
+              (push node results))
             finally (return results))
       (loop for path in info-path
             with results = (if (jsown:keyp ast key-type) (list ast) ast)

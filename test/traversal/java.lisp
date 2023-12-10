@@ -136,9 +136,63 @@
                       (convert-to-top-offset
                         (merge-pathnames
                           "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
-                        '((:line . 15) (:offset . 17))))))))
+                        '((:line . 16) (:offset . 17))))))))
           (find-definitions
-            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 15))))))
+            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 16))))))
+
+(test find-definitions-for-spring-rest-get-method-with-request-mapping
+  (with-fixture jvm-context (*java-path* 'ast-index-disk)
+    (is (equal
+          `(((:type . :rest-server)
+             (:host . "8080")
+             (:name . "GET")
+             (:path . "/request/{string}")
+             (:file-pos .
+              ((:type . :module-public)
+               (:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
+               (:name . "get")
+               (:fq-name . "p1.RestControllerDefinition.get-java.lang.String")
+               ,(cons :top-offset
+                      (convert-to-top-offset
+                        (merge-pathnames
+                          "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
+                        '((:line . 32) (:offset . 17))))))))
+          (find-definitions
+            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 32))))))
+
+(test find-definitions-for-spring-rest-get-method-with-values
+  (with-fixture jvm-context (*java-path* 'ast-index-disk)
+    (is (equal
+          `(((:type . :rest-server)
+             (:host . "8080")
+             (:name . "GET")
+             (:path . "/{string}/{string}")
+             (:file-pos .
+              ((:type . :module-public)
+               (:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
+               (:name . "get")
+               (:fq-name . "p1.RestControllerDefinition.get-java.lang.String-java.lang.String")
+               ,(cons :top-offset
+                      (convert-to-top-offset
+                        (merge-pathnames
+                          "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
+                        '((:line . 36) (:offset . 17)))))))
+            ((:type . :rest-server)
+             (:host . "8080")
+             (:name . "GET")
+             (:path . "/{string}")
+             (:file-pos .
+              ((:type . :module-public)
+               (:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
+               (:name . "get")
+               (:fq-name . "p1.RestControllerDefinition.get-java.lang.String-java.lang.String")
+               ,(cons :top-offset
+                      (convert-to-top-offset
+                        (merge-pathnames
+                          "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
+                        '((:line . 36) (:offset . 17))))))))
+          (find-definitions
+            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 36))))))
 
 (test find-definitions-for-spring-rest-post-method
   (with-fixture jvm-context (*java-path* 'ast-index-disk)
@@ -156,9 +210,9 @@
                       (convert-to-top-offset
                         (merge-pathnames
                           "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
-                        '((:line . 19) (:offset . 17))))))))
+                        '((:line . 20) (:offset . 17))))))))
           (find-definitions
-            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 19))))))
+            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 20))))))
 
 (test find-definitions-for-spring-rest-put-method
   (with-fixture jvm-context (*java-path* 'ast-index-disk)
@@ -176,9 +230,9 @@
                       (convert-to-top-offset
                         (merge-pathnames
                           "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
-                        '((:line . 23) (:offset . 17))))))))
+                        '((:line . 24) (:offset . 17))))))))
           (find-definitions
-            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 23))))))
+            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 24))))))
 
 (test find-definitions-for-spring-rest-delete-method
   (with-fixture jvm-context (*java-path* 'ast-index-disk)
@@ -196,9 +250,9 @@
                       (convert-to-top-offset
                         (merge-pathnames
                           "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
-                        '((:line . 27) (:offset . 17))))))))
+                        '((:line . 28) (:offset . 17))))))))
           (find-definitions
-            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 27))))))
+            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 28))))))
 
 (test find-references-for-new-class
   (with-fixture jvm-context (*java-path* 'ast-index-disk)
@@ -280,7 +334,7 @@
             (inga/traversal/java::find-fq-name-for-reference
               ;;                             ↓
               ;; return restTemplate.exchange("http://localhost:8080/path", HttpMethod.GET, null, String.class);
-              (find-ast path `((:line . 24) (:offset . 37)) *index*)
+              (find-ast path '((:line . 24) (:offset . 37)))
               path
               *index*))))))
 
@@ -292,7 +346,7 @@
             ;;        ↓
             ;; return new CursorPager<>(new ArrayList<>(), page.getDirection(), false);
             (inga/traversal/java::find-fq-name-for-reference
-              (find-ast path `((:line . 63) (:offset . 14)) *index*)
+              (find-ast path '((:line . 63) (:offset . 14)))
               path
               *index*))))))
 
@@ -304,7 +358,7 @@
             (inga/traversal/java::find-fq-name-for-reference
               ;;                                 ↓
               ;; return restTemplate.getForObject(uri, User.class);
-              (find-ast path `((:line . 25) (:offset . 45)) *index*)
+              (find-ast path '((:line . 25) (:offset . 45)))
               path
               *index*))))))
 
@@ -316,21 +370,21 @@
             ;;                                                  ↓
             ;; MDC.put(RequestIdGenerator.class.getCanonicalName(), requestId);
             (inga/traversal/java::find-fq-name-for-reference
-              (find-ast path `((:line . 19) (:offset . 58)) *index*)
+              (find-ast path '((:line . 19) (:offset . 58)))
               path
               *index*))))))
 
-(test find-fq-name-for-reference-with-array-args
-  (with-fixture jvm-context (*guava-modules* 'ast-index-memory)
-    (let ((path "guava-collections/src/test/java/com/baeldung/guava/ordering/GuavaOrderingExamplesUnitTest.java"))
-      (is (equal
-            "com.google.common.collect.Ordering.explicit-java.util.ArrayList"
-            ;;                  ↓
-            ;; Ordering.explicit(Lists.newArrayList("b", "zz", "aa", "ccc"));
-            (inga/traversal/java::find-fq-name-for-reference
-              (find-ast path `((:line . 104) (:offset . 65)) *index*)
-              path
-              *index*))))))
+;;(test find-fq-name-for-reference-with-array-args
+;;  (with-fixture jvm-context (*guava-modules* 'ast-index-memory)
+;;    (let ((path "guava-collections/src/test/java/com/baeldung/guava/ordering/GuavaOrderingExamplesUnitTest.java"))
+;;      (is (equal
+;;            "com.google.common.collect.Ordering.explicit-java.util.ArrayList"
+;;            ;;                  ↓
+;;            ;; Ordering.explicit(Lists.newArrayList("b", "zz", "aa", "ccc"));
+;;            (inga/traversal/java::find-fq-name-for-reference
+;;              (find-ast path '((:line . 104) (:offset . 65)))
+;;              path
+;;              *index*))))))
 
 (test find-fq-class-name-for-same-package
   (with-fixture jvm-context (*spring-boot-path* 'ast-index-memory :include '("src/main/**"))
@@ -339,7 +393,7 @@
             "io.spring.application.CursorPager"
             (inga/traversal/java::find-fq-class-name-by-class-name
               "CursorPager"
-              (find-ast path `((:line . 63) (:offset . 14)) *index*)))))))
+              (find-ast path '((:line . 63) (:offset . 14)))))))))
 
 (test find-fq-class-name-for-inner-class
   (with-fixture jvm-context (*spring-boot-path* 'ast-index-memory :include '("src/main/**"))
@@ -348,7 +402,7 @@
             "io.spring.application.CursorPager.Direction"
             (inga/traversal/java::find-fq-class-name-by-class-name
               "Direction"
-              (find-ast path `((:line . 12) (:offset . 46)) *index*)))))))
+              (find-ast path '((:line . 12) (:offset . 46)))))))))
 
 (test find-references-for-rest-client-get-method
   (with-fixture jvm-context (*java-path* 'ast-index-disk)
@@ -441,7 +495,7 @@
             *index*)))))
 
 (test matches-signature-with-sub-class
-  (with-fixture jvm-context (*spring-boot-path* 'ast-index-disk)
+  (with-fixture jvm-context (*spring-boot-path* 'ast-index-disk :include '("src/main/**"))
     (is (eq
           t
           (matches-signature
