@@ -237,7 +237,6 @@
                                   (trav:get-asts (first (trav:get-asts value '("NEW_ARRAY")
                                                                        :direction :horizontal))
                                                  '("STRING_LITERAL"))))))
-    (format t "value-names: ~a~%" value-names)
     (mapcar (lambda (value-name) (merge-paths root-path value-name))
             (or value-names '("")))))
 
