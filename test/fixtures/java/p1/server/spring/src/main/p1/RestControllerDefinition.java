@@ -29,13 +29,25 @@ public class RestControllerDefinition {
     }
 
     @RequestMapping(value = "request/{v}", method = RequestMethod.GET)
-    public void get(@PathVariable("v") String v) {
+    public void getWithRequest(@PathVariable("v") String v) {
     }
 
     @GetMapping(value = {"/{v1}/{v2}", "/{v1}"})
-    public void get(
+    public void getWithValues(
             @PathVariable String v1,
             @PathVariable(required = false) String v2
     ) {
+    }
+
+    @GetMapping("/{v}")
+    public void getWithValue(@PathVariable(value = "v") String v) {
+    }
+
+    @GetMapping("/{v}")
+    public void getWithName(@PathVariable(name = "v") String v) {
+    }
+
+    @GetMapping("/{v}")
+    public void getWithNoValue(@PathVariable String v) {
     }
 }

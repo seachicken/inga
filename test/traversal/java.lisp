@@ -150,8 +150,8 @@
              (:file-pos .
               ((:type . :module-public)
                (:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
-               (:name . "get")
-               (:fq-name . "p1.RestControllerDefinition.get-java.lang.String")
+               (:name . "getWithRequest")
+               (:fq-name . "p1.RestControllerDefinition.getWithRequest-java.lang.String")
                ,(cons :top-offset
                       (convert-to-top-offset
                         (merge-pathnames
@@ -170,8 +170,8 @@
              (:file-pos .
               ((:type . :module-public)
                (:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
-               (:name . "get")
-               (:fq-name . "p1.RestControllerDefinition.get-java.lang.String-java.lang.String")
+               (:name . "getWithValues")
+               (:fq-name . "p1.RestControllerDefinition.getWithValues-java.lang.String-java.lang.String")
                ,(cons :top-offset
                       (convert-to-top-offset
                         (merge-pathnames
@@ -184,8 +184,8 @@
              (:file-pos .
               ((:type . :module-public)
                (:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
-               (:name . "get")
-               (:fq-name . "p1.RestControllerDefinition.get-java.lang.String-java.lang.String")
+               (:name . "getWithValues")
+               (:fq-name . "p1.RestControllerDefinition.getWithValues-java.lang.String-java.lang.String")
                ,(cons :top-offset
                       (convert-to-top-offset
                         (merge-pathnames
