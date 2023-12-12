@@ -1,5 +1,6 @@
 (defpackage #:inga/traversal/spring-base
-  (:use #:cl)
+  (:use #:cl
+        #:inga/traversal/base)
   (:export #:get-value-from-path-variable))
 (in-package #:inga/traversal/spring-base)
 
