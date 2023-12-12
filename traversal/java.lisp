@@ -17,6 +17,8 @@
                 #:get-ast)
   (:import-from #:inga/traversal/kotlin
                 #:traversal-kotlin)
+  (:import-from #:inga/traversal/spring-base
+                #:get-value-from-path-variable)
   (:import-from #:inga/file
                 #:get-file-type)
   (:import-from #:inga/plugin/jvm-dependency-loader
@@ -202,24 +204,20 @@
                                         (cons :path
                                               (loop for vn in (get-variable-names path)
                                                     do
-                                                    (let ((v (find-variable vn ast)))
-                                                      (let ((path-variable (first (ast-find-name
-                                                                                    (trav:get-asts v '("MODIFIERS"
-                                                                                                       "ANNOTATION"))
-                                                                                    "PathVariable"))))
-                                                        (when (or (ast-find-name
-                                                                    (trav:get-asts path-variable '("STRING_LITERAL"))
-                                                                    vn)
-                                                                  (null (ast-find-name (trav:get-asts path-variable '("ASSIGNMENT"
-                                                                                                                      "IDENTIFIER"
-                                                                                                                      ))
-                                                                                       "value")))
-                                                          (setf path (replace-variable-name
-                                                                       path vn
-                                                                       (convert-to-json-type
-                                                                         (find-fq-class-name-by-variable-name
-                                                                           vn v path
-                                                                           (traversal-index traversal))))))))
+                                                    (let* ((v (find-variable vn ast))
+                                                           (path-variable-value
+                                                             (get-value-from-path-variable
+                                                               :java
+                                                               (first (ast-find-name
+                                                                        (trav:get-asts v '("MODIFIERS"
+                                                                                           "ANNOTATION"))
+                                                                        "PathVariable")))))
+                                                      (setf path (replace-variable-name
+                                                                   path vn
+                                                                   (convert-to-json-type
+                                                                     (find-fq-class-name-by-variable-name
+                                                                       vn v path
+                                                                       (traversal-index traversal))))))
                                                     finally (return path)))
                                         (cons :file-pos pos))))))))
             (setf results (append results (list pos))))))
