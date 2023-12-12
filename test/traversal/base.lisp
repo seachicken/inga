@@ -1,7 +1,9 @@
 (defpackage #:inga/test/traversal/base
   (:use #:cl
         #:fiveam
-        #:inga/traversal))
+        #:inga/traversal)
+  (:import-from #:inga/ast-index
+                #:attach-parent))
 (in-package #:inga/test/traversal/base)
 
 (def-suite traversal/base)
@@ -35,20 +37,15 @@
           (trav:get-asts ast '("B"))))))
 
 (test get-nodes-in-upward-direction
-  (let ((ast '(:obj
-                ("type" . "A")
-                ("children" . ((:obj
-                                 ("type" . "B")
-                                 ("children" . nil))
-                               (:obj
-                                 ("type" . "B")
-                                 ("children" . nil)))))))
-    (labels ((f (ast)
-               (loop for node in (ast-value ast "children")
-                     do
-                     (setf (jsown:val node "parent") ast)
-                     (f node))))
-      (f ast))
+  (let ((ast (attach-parent
+               '(:obj
+                  ("type" . "A")
+                  ("children" . ((:obj
+                                   ("type" . "B")
+                                   ("children" . nil))
+                                 (:obj
+                                   ("type" . "B")
+                                   ("children" . nil))))))))
     (setf ast (first (trav:get-asts ast '("B"))))
     (let ((actual (trav:get-asts ast '("A") :direction :upward)))
       (is (and
@@ -58,22 +55,17 @@
               (ast-value (first actual) "type")))))))
 
 (test get-nodes-in-horizontal-direction
-  (let ((ast '(:obj
-                ("type" . "A")
-                ("children" . ((:obj
-                                 ("type" . "B")
-                                 ("name" . "b1")
-                                 ("children" . nil))
-                               (:obj
-                                 ("type" . "B")
-                                 ("name" . "b2")
-                                 ("children" . nil)))))))
-    (labels ((f (ast)
-               (loop for node in (ast-value ast "children")
-                     do
-                     (setf (jsown:val node "parent") ast)
-                     (f node))))
-      (f ast))
+  (let ((ast (attach-parent
+               '(:obj
+                  ("type" . "A")
+                  ("children" . ((:obj
+                                   ("type" . "B")
+                                   ("name" . "b1")
+                                   ("children" . nil))
+                                 (:obj
+                                   ("type" . "B")
+                                   ("name" . "b2")
+                                   ("children" . nil))))))))
     (setf ast (first (trav:get-asts ast '("B"))))
     (let ((actual (first (trav:get-asts ast '("B") :direction :horizontal))))
       (is (equal
@@ -81,22 +73,17 @@
             (ast-value actual "name"))))))
 
 (test does-not-get-nodes-when-target-is-missing-in-horizontal-direction
-  (let ((ast '(:obj
-                ("type" . "A")
-                ("children" . ((:obj
-                                 ("type" . "B")
-                                 ("name" . "b1")
-                                 ("children" . nil))
-                               (:obj
-                                 ("type" . "B")
-                                 ("name" . "b2")
-                                 ("children" . nil)))))))
-    (labels ((f (ast)
-               (loop for node in (ast-value ast "children")
-                     do
-                     (setf (jsown:val node "parent") ast)
-                     (f node))))
-      (f ast))
+  (let ((ast (attach-parent
+               '(:obj
+                  ("type" . "A")
+                  ("children" . ((:obj
+                                   ("type" . "B")
+                                   ("name" . "b1")
+                                   ("children" . nil))
+                                 (:obj
+                                   ("type" . "B")
+                                   ("name" . "b2")
+                                   ("children" . nil))))))))
     (setf ast (first (trav:get-asts ast '("B"))))
     (is (equal
           nil
