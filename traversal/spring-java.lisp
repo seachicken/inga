@@ -8,7 +8,7 @@
       (or (trav:ast-value
             (first (trav:get-asts ast '("STRING_LITERAL")))
             "name")
-          (when (trav:ast-find-names
+          (when (trav:filter-by-names
                   (trav:get-asts ast '("ASSIGNMENT" "IDENTIFIER"))
                   '("value" "name"))
             (trav:ast-value

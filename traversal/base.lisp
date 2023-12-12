@@ -44,8 +44,8 @@
            #:contains-offset
            #:ast-value
            #:get-asts
-           #:ast-find-name
-           #:ast-find-names
+           #:filter-by-name
+           #:filter-by-names
            #:ast-find-suffix
            #:debug-ast))
 (in-package #:inga/traversal/base)
@@ -278,7 +278,7 @@
                         finally (return nodes)))
             finally (return results))))
 
-(defun ast-find-name (nodes name &key (key-name "name"))
+(defun filter-by-name (nodes name &key (key-name "name"))
   (loop for node in nodes
         with results
         do
@@ -286,7 +286,7 @@
           (setf results (append results (list node))))
         finally (return results)))
 
-(defun ast-find-names (nodes names &key (key-name "name"))
+(defun filter-by-names (nodes names &key (key-name "name"))
   (loop for node in nodes
         with results
         do

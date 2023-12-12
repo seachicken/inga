@@ -66,16 +66,16 @@
 
       (when (equal (ast-value ast "type") "CLASS")
         (let ((annotations (trav:get-asts ast '("MODIFIER_LIST" "ANNOTATION_ENTRY"))))
-          (when (ast-find-name (trav:get-asts annotations '("CONSTRUCTOR_CALLEE"
-                                                            "TYPE_REFERENCE"
-                                                            "USER_TYPE"
-                                                            "REFERENCE_EXPRESSION"))
+          (when (trav:filter-by-name (trav:get-asts annotations '("CONSTRUCTOR_CALLEE"
+                                                                  "TYPE_REFERENCE"
+                                                                  "USER_TYPE"
+                                                                  "REFERENCE_EXPRESSION"))
                                "RestController")
             (let ((request-mapping
-                    (first (ast-find-name (trav:get-asts annotations '("CONSTRUCTOR_CALLEE"
-                                                                       "TYPE_REFERENCE"
-                                                                       "USER_TYPE"
-                                                                       "REFERENCE_EXPRESSION"))
+                    (first (trav:filter-by-name (trav:get-asts annotations '("CONSTRUCTOR_CALLEE"
+                                                                             "TYPE_REFERENCE"
+                                                                             "USER_TYPE"
+                                                                             "REFERENCE_EXPRESSION"))
                                           "RequestMapping"))))
               (when request-mapping
                 (setf entrypoint-name
@@ -106,7 +106,7 @@
             (when (assoc :origin range)
               (push (cons :origin (cdr (assoc :origin range))) pos))
             (if entrypoint-name
-                (let* ((mapping (first (ast-find-names
+                (let* ((mapping (first (trav:filter-by-names
                                          (trav:get-asts ast '("MODIFIER_LIST"
                                                               "ANNOTATION_ENTRY"
                                                               "CONSTRUCTOR_CALLEE"
@@ -133,7 +133,7 @@
                               with params = (trav:get-asts ast '("VALUE_PARAMETER_LIST" "VALUE_PARAMETER"))
                               do
                               (let* ((param (nth i params))
-                                     (pv (ast-find-name
+                                     (pv (trav:filter-by-name
                                            (trav:get-asts param '("MODIFIER_LIST"
                                                                   "ANNOTATION_ENTRY"
                                                                   "CONSTRUCTOR_CALLEE"
@@ -337,9 +337,9 @@
     (when (null ast) (return))
 
     (when (equal (ast-value ast "type") "CLASS")
-      (let ((variable (first (ast-find-name (trav:get-asts ast '("PRIMARY_CONSTRUCTOR"
-                                                                 "VALUE_PARAMETER_LIST"
-                                                                 "VALUE_PARAMETER"))
+      (let ((variable (first (trav:filter-by-name (trav:get-asts ast '("PRIMARY_CONSTRUCTOR"
+                                                                       "VALUE_PARAMETER_LIST"
+                                                                       "VALUE_PARAMETER"))
                                             variable-name))))
         (return-from find-class-name-by-variable-name
                      (ast-value (first (trav:get-asts variable '("TYPE_REFERENCE"

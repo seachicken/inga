@@ -149,7 +149,7 @@
               ("type" . "A")
               ("name" . "a")
               ("children" . nil)))
-          (ast-find-name nodes "a")))))
+          (trav:filter-by-name nodes "a")))))
 
 (test does-not-find-a-name
   (let ((nodes '((:obj
@@ -158,7 +158,7 @@
                    ("children" . nil)))))
     (is (equal
           nil
-          (ast-find-name nodes "b")))))
+          (trav:filter-by-name nodes "b")))))
 
 (test does-not-contains-a-name
   (let ((nodes '((:obj
@@ -166,7 +166,7 @@
                    ("children" . nil)))))
     (is (equal
           nil
-          (ast-find-name nodes "a")))))
+          (trav:filter-by-name nodes "a")))))
 
 (test find-names
   (let ((nodes '((:obj
@@ -186,7 +186,7 @@
               ("type" . "B")
               ("name" . "b")
               ("children" . nil)))
-          (ast-find-names nodes '("a" "b"))))))
+          (trav:filter-by-names nodes '("a" "b"))))))
 
 (test find-suffix
   (let ((nodes '((:obj

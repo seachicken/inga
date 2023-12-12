@@ -138,9 +138,9 @@
       (when (equal (ast-value ast "type") "CLASS")
         (setf class-name (jsown:val ast "name"))
         (let ((annotations (trav:get-asts ast '("MODIFIERS" "ANNOTATION"))))
-          (when (ast-find-name annotations "RestController")
+          (when (trav:filter-by-name annotations "RestController")
             (setf is-entrypoint-file t))
-          (let ((request-mapping (first (ast-find-name annotations "RequestMapping"))))
+          (let ((request-mapping (first (trav:filter-by-name annotations "RequestMapping"))))
             (when request-mapping
               (setf entrypoint-name 
                     (or
@@ -174,7 +174,7 @@
           (when (assoc :origin range)
             (push (cons :origin (cdr (assoc :origin range))) pos))
           (if is-entrypoint-file
-            (let* ((mapping (first (ast-find-names
+            (let* ((mapping (first (trav:filter-by-names
                                      (trav:get-asts ast '("MODIFIERS" "ANNOTATION"))
                                      '("GetMapping" "PostMapping" "PutMapping" "DeleteMapping"
                                        "RequestMapping"))))
@@ -193,9 +193,10 @@
                                               (or (convert-to-http-method (ast-value mapping "name"))
                                                   (labels
                                                     ((get-method (ast)
-                                                       (first (ast-find-name (trav:get-asts ast '("ASSIGNMENT"
-                                                                                                  "IDENTIFIER"))
-                                                                             "method")))
+                                                       (first (trav:filter-by-name
+                                                                (trav:get-asts ast '("ASSIGNMENT"
+                                                                                     "IDENTIFIER"))
+                                                                "method")))
                                                      (get-name (ast)
                                                        (ast-value (first (trav:get-asts ast '("MEMBER_SELECT")
                                                                                         :direction :horizontal))
@@ -208,7 +209,7 @@
                                                            (path-variable-value
                                                              (get-value-from-path-variable
                                                                :java
-                                                               (first (ast-find-name
+                                                               (first (trav:filter-by-name
                                                                         (trav:get-asts v '("MODIFIERS"
                                                                                            "ANNOTATION"))
                                                                         "PathVariable")))))
@@ -226,7 +227,7 @@
     results))
 
 (defun get-mapping-paths (mapping root-path)
-  (let* ((value (first (ast-find-name (trav:get-asts mapping '("ASSIGNMENT" "IDENTIFIER"))
+  (let* ((value (first (trav:filter-by-name (trav:get-asts mapping '("ASSIGNMENT" "IDENTIFIER"))
                                       "value")))
          (value-names (mapcar (lambda (ast) (ast-value ast "name"))
                               (or (trav:get-asts mapping '("STRING_LITERAL"))
@@ -356,7 +357,7 @@
           (ppcre:regex-replace-all "_LITERAL" (ast-value ast "type") ""))
       (switch ((ast-value ast "type") :test #'equal)
         ("MEMBER_SELECT"
-         (if (ast-find-name (list ast) "class")
+         (if (trav:filter-by-name (list ast) "class")
              "java.lang.Class"
              (find-fq-class-name-by-class-name
                (ast-value (first (trav:get-asts ast '("IDENTIFIER"))) "name") ast)))
@@ -408,8 +409,8 @@
        (when (equal (ast-value ast "type") "CLASS")
          (push class-name fq-names)
          ;; for inner class
-         (when (or (ast-find-name (trav:get-asts ast '("CLASS")) class-name)
-                   (ast-find-name (trav:get-asts ast '("ENUM")) class-name))
+         (when (or (trav:filter-by-name (trav:get-asts ast '("CLASS")) class-name)
+                   (trav:filter-by-name (trav:get-asts ast '("ENUM")) class-name))
            (push (ast-value ast "name") fq-names)))
 
        (when (jsown:keyp ast "parent")
@@ -419,9 +420,11 @@
   (let ((variable (find-variable variable-name ast)))
     (cond
       ((trav:get-asts variable '("IDENTIFIER"))
-       (find-fq-class-name-by-class-name (ast-value (first (trav:get-asts variable '("IDENTIFIER"))) "name") variable))
+       (find-fq-class-name-by-class-name
+         (ast-value (first (trav:get-asts variable '("IDENTIFIER"))) "name") variable))
       ((trav:get-asts variable '("PARAMETERIZED_TYPE"))
-       (find-fq-class-name-by-class-name (ast-value (first (trav:get-asts variable '("PARAMETERIZED_TYPE"))) "name") variable))
+       (find-fq-class-name-by-class-name
+         (ast-value (first (trav:get-asts variable '("PARAMETERIZED_TYPE"))) "name") variable))
       ((trav:get-asts variable '("METHOD_INVOCATION"))
        (let ((fq-name (find-fq-name-for-reference
                         (first (trav:get-asts variable '("METHOD_INVOCATION"))) path index)))
@@ -444,8 +447,8 @@
     (when (null ast) (return))
 
     (let ((variable (first (if (equal (ast-value ast "type") "VARIABLE")
-                               (ast-find-name (list ast) variable-name)
-                               (ast-find-name (trav:get-asts ast '("VARIABLE")) variable-name)))))
+                               (trav:filter-by-name (list ast) variable-name)
+                               (trav:filter-by-name (trav:get-asts ast '("VARIABLE")) variable-name)))))
       (when variable
         (return variable)))
 
@@ -460,7 +463,7 @@
     (setf ast (dequeue q))
     (when (null ast) (return (format nil "~{~a~^.~}" fq-names)))
 
-    (when (ast-find-name (trav:get-asts ast '("METHOD")) method-name)
+    (when (trav:filter-by-name (trav:get-asts ast '("METHOD")) method-name)
       (setf fq-names (append fq-names (list method-name))))
     (when (and
             fq-names
@@ -546,9 +549,9 @@
                         fq-name
                         "org.springframework.web.util.UriComponentsBuilder.fromUriString-java.lang.String")
                       (let ((v (find-variable (ast-value (get-parameter 0 ast) "name") ast)))
-                        (let ((value (first (ast-find-name
+                        (let ((value (first (trav:filter-by-name
                                               (trav:get-asts v '("MODIFIERS"
-                                                           "ANNOTATION"))
+                                                                 "ANNOTATION"))
                                               "Value"))))
                           (setf host
                                 (write-to-string
