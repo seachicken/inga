@@ -136,9 +136,9 @@
                       (convert-to-top-offset
                         (merge-pathnames
                           "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
-                        '((:line . 16) (:offset . 17))))))))
+                        '((:line . 20) (:offset . 17))))))))
           (find-definitions
-            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 16))))))
+            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 20))))))
 
 (test find-definitions-for-spring-rest-get-method-with-request-mapping
   (with-fixture jvm-context (*java-path* 'ast-index-disk)
@@ -156,9 +156,9 @@
                       (convert-to-top-offset
                         (merge-pathnames
                           "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
-                        '((:line . 32) (:offset . 17))))))))
+                        '((:line . 16) (:offset . 17))))))))
           (find-definitions
-            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 32))))))
+            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 16))))))
 
 (test find-definitions-for-spring-rest-get-method-with-values
   (with-fixture jvm-context (*java-path* 'ast-index-disk)
@@ -210,9 +210,9 @@
                       (convert-to-top-offset
                         (merge-pathnames
                           "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
-                        '((:line . 20) (:offset . 17))))))))
+                        '((:line . 24) (:offset . 17))))))))
           (find-definitions
-            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 20))))))
+            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 24))))))
 
 (test find-definitions-for-spring-rest-put-method
   (with-fixture jvm-context (*java-path* 'ast-index-disk)
@@ -230,9 +230,9 @@
                       (convert-to-top-offset
                         (merge-pathnames
                           "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
-                        '((:line . 24) (:offset . 17))))))))
+                        '((:line . 28) (:offset . 17))))))))
           (find-definitions
-            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 24))))))
+            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 28))))))
 
 (test find-definitions-for-spring-rest-delete-method
   (with-fixture jvm-context (*java-path* 'ast-index-disk)
@@ -250,9 +250,9 @@
                       (convert-to-top-offset
                         (merge-pathnames
                           "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
-                        '((:line . 28) (:offset . 17))))))))
+                        '((:line . 32) (:offset . 17))))))))
           (find-definitions
-            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 28))))))
+            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 32))))))
 
 (test find-references-for-new-class
   (with-fixture jvm-context (*java-path* 'ast-index-disk)

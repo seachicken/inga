@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/")
 @RestController
 public class RestControllerDefinition {
+    @RequestMapping(value = "request/{v}", method = RequestMethod.GET)
+    public void getWithRequest(@PathVariable("v") String v) {
+    }
+
     @GetMapping("/{v}")
     public void get(@PathVariable("v") String v) {
     }
@@ -26,10 +30,6 @@ public class RestControllerDefinition {
 
     @DeleteMapping("/{v}")
     public void delete(@PathVariable("v") String v) {
-    }
-
-    @RequestMapping(value = "request/{v}", method = RequestMethod.GET)
-    public void getWithRequest(@PathVariable("v") String v) {
     }
 
     @GetMapping(value = {"/{v1}/{v2}", "/{v1}"})

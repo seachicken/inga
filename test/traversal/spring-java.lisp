@@ -24,7 +24,7 @@
             :java
             (first (trav:get-asts
                      (find-ast "p1/server/spring/src/main/p1/RestControllerDefinition.java"
-                               '((:line . 16) (:offset . 21)))
+                               '((:line . 20) (:offset . 21)))
                      '("ANNOTATION"))))))))
 
 (test get-value-from-path-variable-with-value
