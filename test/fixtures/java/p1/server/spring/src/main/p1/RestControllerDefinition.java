@@ -32,6 +32,14 @@ public class RestControllerDefinition {
     public void delete(@PathVariable("v") String v) {
     }
 
+    @RequestMapping(path = "/{v}", method = RequestMethod.GET)
+    public void getWithRequestPath(@PathVariable String v) {
+    }
+
+    @RequestMapping
+    public void getWithRequestNoValue() {
+    }
+
     @GetMapping(value = {"/{v1}/{v2}", "/{v1}"})
     public void getWithValues(
             @PathVariable String v1,
