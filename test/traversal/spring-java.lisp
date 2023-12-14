@@ -17,26 +17,39 @@
 (test get-value-from-request-mapping-with-single-member-annotation
   (with-fixture jvm-context (*java-path* 'ast-index-memory)
     (is (equal
-          "/"
+          "/mapping"
           ;; ↓
           ;; @RequestMapping("/")
           (get-value-from-request-mapping
             :java
             (first (trav:get-asts
-                     (find-ast "p1/server/spring/src/main/p1/RestControllerDefinition.java"
-                               '((:line . 12) (:offset . 1)))
+                     (find-ast "p1/server/spring/src/main/p1/RequestMappingDefinition.java"
+                               '((:line . 8) (:offset . 1)))
+                     '("ANNOTATION"))))))))
+
+(test get-value-from-request-mapping-with-no-value
+  (with-fixture jvm-context (*java-path* 'ast-index-memory)
+    (is (equal
+          ""
+          ;; ↓
+          ;; @RequestMapping
+          (get-value-from-request-mapping
+            :java
+            (first (trav:get-asts
+                     (find-ast "p1/server/spring/src/main/p1/RequestMappingDefinition.java"
+                               '((:line . 11) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
 (test get-value-from-request-mapping-with-value
   (with-fixture jvm-context (*java-path* 'ast-index-memory)
     (is (equal
-          "request/{v}"
+          "/{v}"
           ;; ↓
           ;; @RequestMapping(value = "/{v}", method = RequestMethod.GET)
           (get-value-from-request-mapping
             :java
             (first (trav:get-asts
-                     (find-ast "p1/server/spring/src/main/p1/RestControllerDefinition.java"
+                     (find-ast "p1/server/spring/src/main/p1/RequestMappingDefinition.java"
                                '((:line . 15) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
@@ -49,21 +62,8 @@
           (get-value-from-request-mapping
             :java
             (first (trav:get-asts
-                     (find-ast "p1/server/spring/src/main/p1/RestControllerDefinition.java"
-                               '((:line . 35) (:offset . 5)))
-                     '("ANNOTATION"))))))))
-
-(test get-value-from-request-mapping-with-no-value
-  (with-fixture jvm-context (*java-path* 'ast-index-memory)
-    (is (equal
-          ""
-          ;; ↓
-          ;; @RequestMapping
-          (get-value-from-request-mapping
-            :java
-            (first (trav:get-asts
-                     (find-ast "p1/server/spring/src/main/p1/RestControllerDefinition.java"
-                               '((:line . 39) (:offset . 5)))
+                     (find-ast "p1/server/spring/src/main/p1/RequestMappingDefinition.java"
+                               '((:line . 19) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
 ;; PathVariable
