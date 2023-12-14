@@ -69,6 +69,19 @@
 ;; PathVariable
 ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/bind/annotation/PathVariable.html
 
+(test get-value-from-path-variable-with-no-value
+  (with-fixture jvm-context (*java-path* 'ast-index-memory)
+    (is (equal
+          "v"
+          ;;                    ↓
+          ;; public void method(@PathVariable String v) {
+          (get-value-from-path-variable
+            :java
+            (first (trav:get-asts
+                     (find-ast "p1/server/spring/src/main/p1/PathVariableDefinition.java"
+                               '((:line . 11) (:offset . 32)))
+                     '("ANNOTATION"))))))))
+
 (test get-value-from-path-variable-with-single-member-annotation
   (with-fixture jvm-context (*java-path* 'ast-index-memory)
     (is (equal
@@ -78,8 +91,8 @@
           (get-value-from-path-variable
             :java
             (first (trav:get-asts
-                     (find-ast "p1/server/spring/src/main/p1/RestControllerDefinition.java"
-                               '((:line . 20) (:offset . 21)))
+                     (find-ast "p1/server/spring/src/main/p1/PathVariableDefinition.java"
+                               '((:line . 15) (:offset . 37)))
                      '("ANNOTATION"))))))))
 
 (test get-value-from-path-variable-with-value
@@ -91,8 +104,8 @@
           (get-value-from-path-variable
             :java
             (first (trav:get-asts
-                     (find-ast "p1/server/spring/src/main/p1/RestControllerDefinition.java"
-                               '((:line . 51) (:offset . 30)))
+                     (find-ast "p1/server/spring/src/main/p1/PathVariableDefinition.java"
+                               '((:line . 19) (:offset . 30)))
                      '("ANNOTATION"))))))))
 
 (test get-value-from-path-variable-with-name
@@ -104,20 +117,7 @@
           (get-value-from-path-variable
             :java
             (first (trav:get-asts
-                     (find-ast "p1/server/spring/src/main/p1/RestControllerDefinition.java"
-                               '((:line . 55) (:offset . 29)))
-                     '("ANNOTATION"))))))))
-
-(test get-value-from-path-variable-with-no-value
-  (with-fixture jvm-context (*java-path* 'ast-index-memory)
-    (is (equal
-          "v"
-          ;;                    ↓
-          ;; public void method(@PathVariable String v) {
-          (get-value-from-path-variable
-            :java
-            (first (trav:get-asts
-                     (find-ast "p1/server/spring/src/main/p1/RestControllerDefinition.java"
-                               '((:line . 59) (:offset . 32)))
+                     (find-ast "p1/server/spring/src/main/p1/PathVariableDefinition.java"
+                               '((:line . 23) (:offset . 29)))
                      '("ANNOTATION"))))))))
 
