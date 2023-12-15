@@ -66,6 +66,19 @@
                                '((:line . 19) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
+(test get-method-from-request-mapping
+  (with-fixture jvm-context (*java-path* 'ast-index-memory)
+    (is (equal
+          "GET"
+          ;; ↓
+          ;; @RequestMapping(value = "/{v}", method = RequestMethod.GET)
+          (get-method-from-request-mapping
+            :java
+            (first (trav:get-asts
+                     (find-ast "p1/server/spring/src/main/p1/RequestMappingDefinition.java"
+                               '((:line . 15) (:offset . 5)))
+                     '("ANNOTATION"))))))))
+
 ;; PathVariable
 ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/bind/annotation/PathVariable.html
 

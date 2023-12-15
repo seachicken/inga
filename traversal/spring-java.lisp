@@ -16,6 +16,14 @@
               "name")))
       ""))
 
+(defmethod get-method-from-request-mapping ((type (eql :java)) ast)
+  (when (equal (trav:ast-value ast "name") "RequestMapping")
+    (let ((method (first (trav:filter-by-name
+                           (trav:get-asts ast '("ASSIGNMENT" "IDENTIFIER"))
+                           "method"))))
+      (trav:ast-value (first (trav:get-asts method '("MEMBER_SELECT") :direction :horizontal))
+                      "name"))))
+
 (defmethod get-value-from-path-variable ((type (eql :java)) ast)
   (if (trav:ast-value ast "children")
       (or (trav:ast-value
