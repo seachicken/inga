@@ -18,6 +18,7 @@
   (:import-from #:inga/traversal/kotlin
                 #:traversal-kotlin)
   (:import-from #:inga/traversal/spring-base
+                #:get-method-from-request-mapping
                 #:get-value-from-path-variable)
   (:import-from #:inga/file
                 #:get-file-type)
@@ -30,8 +31,6 @@
                 #:is-primitive-type)
   (:import-from #:inga/plugin/spring-property-loader
                 #:find-property)
-  (:import-from #:inga/plugin/spring-helper
-                #:convert-to-http-method)
   (:export #:traversal-java))
 (in-package #:inga/traversal/java)
 
@@ -189,19 +188,7 @@
                                       (list
                                         (cons :type :rest-server)
                                         (cons :host port)
-                                        (cons :name
-                                              (or (convert-to-http-method (ast-value mapping "name"))
-                                                  (labels
-                                                    ((get-method (ast)
-                                                       (first (trav:filter-by-name
-                                                                (trav:get-asts ast '("ASSIGNMENT"
-                                                                                     "IDENTIFIER"))
-                                                                "method")))
-                                                     (get-name (ast)
-                                                       (ast-value (first (trav:get-asts ast '("MEMBER_SELECT")
-                                                                                        :direction :horizontal))
-                                                                  "name")))
-                                                    (get-name (get-method mapping)))))
+                                        (cons :name (get-method-from-request-mapping :java mapping))
                                         (cons :path
                                               (loop for vn in (get-variable-names path)
                                                     do

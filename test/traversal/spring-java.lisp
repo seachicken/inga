@@ -79,6 +79,22 @@
                                '((:line . 15) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
+;; GetMapping
+;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/bind/annotation/GetMapping.html
+
+(test get-method-from-get-mapping
+  (with-fixture jvm-context (*java-path* 'ast-index-memory)
+    (is (equal
+          "GET"
+          ;; ↓
+          ;; @GetMapping
+          (get-method-from-request-mapping
+            :java
+            (first (trav:get-asts
+                     (find-ast "p1/server/spring/src/main/p1/GetMappingDefinition.java"
+                               '((:line . 10) (:offset . 5)))
+                     '("ANNOTATION"))))))))
+
 ;; PathVariable
 ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/bind/annotation/PathVariable.html
 

@@ -176,7 +176,7 @@
                       (convert-to-top-offset
                         (merge-pathnames
                           "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
-                        '((:line . 36) (:offset . 17)))))))
+                        '((:line . 44) (:offset . 17)))))))
             ((:type . :rest-server)
              (:host . "8080")
              (:name . "GET")
@@ -190,9 +190,9 @@
                       (convert-to-top-offset
                         (merge-pathnames
                           "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
-                        '((:line . 36) (:offset . 17))))))))
+                        '((:line . 44) (:offset . 17))))))))
           (find-definitions
-            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 36))))))
+            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 44))))))
 
 (test find-definitions-for-spring-rest-post-method
   (with-fixture jvm-context (*java-path* 'ast-index-disk)
