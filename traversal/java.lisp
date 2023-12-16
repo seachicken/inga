@@ -19,7 +19,8 @@
                 #:traversal-kotlin)
   (:import-from #:inga/traversal/spring-base
                 #:get-method-from-request-mapping
-                #:get-value-from-path-variable)
+                #:get-value-from-path-variable
+                #:get-values-from-request-mapping)
   (:import-from #:inga/file
                 #:get-file-type)
   (:import-from #:inga/plugin/jvm-dependency-loader
@@ -177,7 +178,8 @@
                                      (trav:get-asts ast '("MODIFIERS" "ANNOTATION"))
                                      '("GetMapping" "PostMapping" "PutMapping" "DeleteMapping"
                                        "RequestMapping"))))
-                   (paths (get-mapping-paths mapping entrypoint-name))
+                   (paths (mapcar (lambda (v) (merge-paths entrypoint-name v))
+                                  (get-values-from-request-mapping :java mapping)))
                    (port (find-property "server.port" path)))
               (when (and mapping port)
                 (loop for path in paths
@@ -192,39 +194,18 @@
                                         (cons :path
                                               (loop for vn in (get-variable-names path)
                                                     do
-                                                    (let* ((v (find-variable vn ast))
-                                                           (path-variable-value
-                                                             (get-value-from-path-variable
-                                                               :java
-                                                               (first (trav:filter-by-name
-                                                                        (trav:get-asts v '("MODIFIERS"
-                                                                                           "ANNOTATION"))
-                                                                        "PathVariable")))))
-                                                      (setf path (replace-variable-name
-                                                                   path vn
-                                                                   (convert-to-json-type
-                                                                     (find-fq-class-name-by-variable-name
-                                                                       vn v path
-                                                                       (traversal-index traversal))))))
+                                                    (setf path (replace-variable-name
+                                                                 path vn
+                                                                 (convert-to-json-type
+                                                                   (find-fq-class-name-by-variable-name
+                                                                     vn (find-variable vn ast) path
+                                                                     (traversal-index traversal)))))
                                                     finally (return path)))
                                         (cons :file-pos pos))))))))
             (setf results (append results (list pos))))))
 
       (loop for child in (jsown:val ast "children") do (enqueue q child)))
     results))
-
-(defun get-mapping-paths (mapping root-path)
-  (let* ((value (first (trav:filter-by-name (trav:get-asts mapping '("ASSIGNMENT" "IDENTIFIER"))
-                                      "value")))
-         (value-names (mapcar (lambda (ast) (ast-value ast "name"))
-                              (or (trav:get-asts mapping '("STRING_LITERAL"))
-                                  (trav:get-asts value '("STRING_LITERAL")
-                                                 :direction :horizontal)
-                                  (trav:get-asts (first (trav:get-asts value '("NEW_ARRAY")
-                                                                       :direction :horizontal))
-                                                 '("STRING_LITERAL"))))))
-    (mapcar (lambda (value-name) (merge-paths root-path value-name))
-            (or value-names '("")))))
 
 (defun get-scope (ast)
   (let ((modifiers (split-trim-comma (ast-value (first (trav:get-asts ast '("MODIFIERS"))) "name"))))

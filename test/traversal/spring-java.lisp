@@ -17,10 +17,10 @@
 (test get-value-from-request-mapping-with-single-member-annotation
   (with-fixture jvm-context (*java-path* 'ast-index-memory)
     (is (equal
-          "/mapping"
+          '("/mapping")
           ;; ↓
           ;; @RequestMapping("/")
-          (get-value-from-request-mapping
+          (get-values-from-request-mapping
             :java
             (first (trav:get-asts
                      (find-ast "p1/server/spring/src/main/p1/RequestMappingDefinition.java"
@@ -30,10 +30,10 @@
 (test get-value-from-request-mapping-with-no-value
   (with-fixture jvm-context (*java-path* 'ast-index-memory)
     (is (equal
-          ""
+          '("")
           ;; ↓
           ;; @RequestMapping
-          (get-value-from-request-mapping
+          (get-values-from-request-mapping
             :java
             (first (trav:get-asts
                      (find-ast "p1/server/spring/src/main/p1/RequestMappingDefinition.java"
@@ -43,27 +43,53 @@
 (test get-value-from-request-mapping-with-value
   (with-fixture jvm-context (*java-path* 'ast-index-memory)
     (is (equal
-          "/{v}"
+          '("/{v}")
           ;; ↓
           ;; @RequestMapping(value = "/{v}", method = RequestMethod.GET)
-          (get-value-from-request-mapping
+          (get-values-from-request-mapping
             :java
             (first (trav:get-asts
                      (find-ast "p1/server/spring/src/main/p1/RequestMappingDefinition.java"
                                '((:line . 15) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
-(test get-value-from-request-mapping-with-path
+(test get-values-from-request-mapping-with-value
   (with-fixture jvm-context (*java-path* 'ast-index-memory)
     (is (equal
-          "/{v}"
+          '("/{v1}" "/{v1}/{v2}")
           ;; ↓
-          ;; @RequestMapping(path = "/{v}", method = RequestMethod.GET)
-          (get-value-from-request-mapping
+          ;; @RequestMapping(value = {"/{v1}", "/{v1}/{v2}"}, method = RequestMethod.GET)
+          (get-values-from-request-mapping
             :java
             (first (trav:get-asts
                      (find-ast "p1/server/spring/src/main/p1/RequestMappingDefinition.java"
                                '((:line . 19) (:offset . 5)))
+                     '("ANNOTATION"))))))))
+
+(test get-value-from-request-mapping-with-path
+  (with-fixture jvm-context (*java-path* 'ast-index-memory)
+    (is (equal
+          '("/{v}")
+          ;; ↓
+          ;; @RequestMapping(path = "/{v}", method = RequestMethod.GET)
+          (get-values-from-request-mapping
+            :java
+            (first (trav:get-asts
+                     (find-ast "p1/server/spring/src/main/p1/RequestMappingDefinition.java"
+                               '((:line . 23) (:offset . 5)))
+                     '("ANNOTATION"))))))))
+
+(test get-values-from-request-mapping-with-path
+  (with-fixture jvm-context (*java-path* 'ast-index-memory)
+    (is (equal
+          '("/{v1}" "/{v1}/{v2}")
+          ;; ↓
+          ;; @RequestMapping(path = {"/{v1}", "/{v1}/{v2}"}, method = RequestMethod.GET)
+          (get-values-from-request-mapping
+            :java
+            (first (trav:get-asts
+                     (find-ast "p1/server/spring/src/main/p1/RequestMappingDefinition.java"
+                               '((:line . 27) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
 (test get-method-from-request-mapping
@@ -82,6 +108,19 @@
 ;; GetMapping
 ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/bind/annotation/GetMapping.html
 
+(test get-value-from-get-mapping-with-single-member-annotation
+  (with-fixture jvm-context (*java-path* 'ast-index-memory)
+    (is (equal
+          '("/{v}")
+          ;; ↓
+          ;; @GetMapping("/{v}")
+          (get-values-from-request-mapping
+            :java
+            (first (trav:get-asts
+                     (find-ast "p1/server/spring/src/main/p1/GetMappingDefinition.java"
+                               '((:line . 13) (:offset . 5)))
+                     '("ANNOTATION"))))))))
+
 (test get-method-from-get-mapping
   (with-fixture jvm-context (*java-path* 'ast-index-memory)
     (is (equal
@@ -92,7 +131,7 @@
             :java
             (first (trav:get-asts
                      (find-ast "p1/server/spring/src/main/p1/GetMappingDefinition.java"
-                               '((:line . 10) (:offset . 5)))
+                               '((:line . 9) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
 ;; PathVariable

@@ -3,18 +3,22 @@
         #:inga/traversal/spring-base))
 (in-package #:inga/traversal/spring-java)
 
-(defmethod get-value-from-request-mapping ((type (eql :java)) ast)
-  (if (trav:ast-value ast "children")
-      (or (trav:ast-value
-            (first (trav:get-asts ast '("STRING_LITERAL")))
-            "name")
-          (when (trav:filter-by-names
-                  (trav:get-asts ast '("ASSIGNMENT" "IDENTIFIER"))
-                  '("value" "path"))
-            (trav:ast-value
-              (first (trav:get-asts ast '("ASSIGNMENT" "STRING_LITERAL")))
-              "name")))
-      ""))
+(defmethod get-values-from-request-mapping ((type (eql :java)) ast)
+  (let* ((values (trav:filter-by-names
+                   (trav:get-asts ast '("ASSIGNMENT" "IDENTIFIER"))
+                   '("value" "path")))
+         (values (mapcar (lambda (ast) (trav:ast-value ast "name"))
+                         (or (trav:get-asts ast '("STRING_LITERAL"))
+                             (apply #'append
+                                    (mapcar (lambda (v)
+                                              (or (trav:get-asts v '("STRING_LITERAL")
+                                                                 :direction :horizontal)
+                                                  (trav:get-asts
+                                                    (first (trav:get-asts v '("NEW_ARRAY")
+                                                                          :direction :horizontal))
+                                                    '("STRING_LITERAL"))))
+                                            values))))))
+    (or values '(""))))
 
 (defmethod get-method-from-request-mapping ((type (eql :java)) ast)
   (if (equal (trav:ast-value ast "name") "RequestMapping")

@@ -16,7 +16,15 @@ public class RequestMappingDefinition {
     public void getWithValue(@PathVariable String v) {
     }
 
+    @RequestMapping(value = {"/{v1}", "/{v1}/{v2}"}, method = RequestMethod.GET)
+    public void getWithValues(@PathVariable String v1, @PathVariable(required = false) String v2) {
+    }
+
     @RequestMapping(path = "/{v}", method = RequestMethod.GET)
     public void getWithPath(@PathVariable String v) {
+    }
+
+    @RequestMapping(path = {"/{v1}", "/{v1}/{v2}"}, method = RequestMethod.GET)
+    public void getWithPaths(@PathVariable String v1, @PathVariable(required = false) String v2) {
     }
 }
