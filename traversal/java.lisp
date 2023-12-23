@@ -32,7 +32,8 @@
                 #:is-primitive-type)
   (:import-from #:inga/plugin/spring-property-loader
                 #:find-property)
-  (:export #:traversal-java))
+  (:export #:traversal-java
+           #:find-fq-class-name))
 (in-package #:inga/traversal/java)
 
 (defvar *package-index-groups* nil)
@@ -136,20 +137,7 @@
       (if (null ast) (return))
 
       (when (equal (ast-value ast "type") "CLASS")
-        (setf class-name (jsown:val ast "name"))
-        (let ((annotations (trav:get-asts ast '("MODIFIERS" "ANNOTATION"))))
-          (when (trav:filter-by-name annotations "RestController")
-            (setf is-entrypoint-file t))
-          (let ((request-mapping (first (trav:filter-by-name annotations "RequestMapping"))))
-            (when request-mapping
-              (setf entrypoint-name 
-                    (or
-                      (ast-value
-                        (first (trav:get-asts request-mapping '("STRING_LITERAL")))
-                        "name")
-                      (ast-value
-                        (first (trav:get-asts request-mapping '("ASSIGNMENT" "STRING_LITERAL")))
-                        "name")))))))
+        (setf class-name (jsown:val ast "name")))
       (when (and
               (or
                 ;; field reference
@@ -173,36 +161,7 @@
                      (cons :top-offset (jsown:val ast "pos")))))
           (when (assoc :origin range)
             (push (cons :origin (cdr (assoc :origin range))) pos))
-          (if is-entrypoint-file
-            (let* ((mapping (first (trav:filter-by-names
-                                     (trav:get-asts ast '("MODIFIERS" "ANNOTATION"))
-                                     '("GetMapping" "PostMapping" "PutMapping" "DeleteMapping"
-                                       "RequestMapping"))))
-                   (paths (mapcar (lambda (v) (merge-paths entrypoint-name v))
-                                  (get-values-from-request-mapping :java mapping)))
-                   (port (find-property "server.port" path)))
-              (when (and mapping port)
-                (loop for path in paths
-                      do
-                      (setf results
-                            (append results
-                                    (list
-                                      (list
-                                        (cons :type :rest-server)
-                                        (cons :host port)
-                                        (cons :name (get-method-from-request-mapping :java mapping))
-                                        (cons :path
-                                              (loop for vn in (get-variable-names path)
-                                                    do
-                                                    (setf path (replace-variable-name
-                                                                 path vn
-                                                                 (convert-to-json-type
-                                                                   (find-fq-class-name-by-variable-name
-                                                                     vn (find-variable vn ast) path
-                                                                     (traversal-index traversal)))))
-                                                    finally (return path)))
-                                        (cons :file-pos pos))))))))
-            (setf results (append results (list pos))))))
+          (setf results (append results (list pos)))))
 
       (loop for child in (jsown:val ast "children") do (enqueue q child)))
     results))
@@ -331,6 +290,8 @@
                (ast-value (first (trav:get-asts ast '("IDENTIFIER"))) "name") ast)))
         ("NEW_CLASS"
          (find-fq-class-name-by-class-name (ast-value ast "name") ast))
+        ("VARIABLE"
+         (find-fq-class-name-by-variable-name (ast-value ast "name") ast path index))
         ("IDENTIFIER"
          (find-fq-class-name-by-variable-name (ast-value ast "name") ast path index))
         ("METHOD_INVOCATION"

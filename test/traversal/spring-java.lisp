@@ -11,6 +11,26 @@
 
 (defparameter *java-path* (merge-pathnames "test/fixtures/java/"))
 
+(test find-definitions-for-spring-rest-get-method
+  (with-fixture jvm-context (*java-path* 'ast-index-disk)
+    (is (equal
+          `(((:type . :rest-server)
+             (:host . "8080")
+             (:name . "GET")
+             (:path . "/{string}")
+             (:file-pos .
+              ((:type . :module-public)
+               (:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
+               (:name . "get")
+               (:fq-name . "p1.RestControllerDefinition.get-java.lang.String")
+               ,(cons :top-offset
+                      (convert-to-top-offset
+                        (merge-pathnames
+                          "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
+                        '((:line . 20) (:offset . 17))))))))
+          (find-definitions
+            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 20))))))
+
 ;; RequestMapping
 ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/bind/annotation/RequestMapping.html
 

@@ -120,26 +120,6 @@
           (find-definitions
             (create-range "src/main/java/io/spring/api/ArticlesApi.java" :line 56))))))
 
-(test find-definitions-for-spring-rest-get-method
-  (with-fixture jvm-context (*java-path* 'ast-index-disk)
-    (is (equal
-          `(((:type . :rest-server)
-             (:host . "8080")
-             (:name . "GET")
-             (:path . "/{string}")
-             (:file-pos .
-              ((:type . :module-public)
-               (:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
-               (:name . "get")
-               (:fq-name . "p1.RestControllerDefinition.get-java.lang.String")
-               ,(cons :top-offset
-                      (convert-to-top-offset
-                        (merge-pathnames
-                          "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
-                        '((:line . 20) (:offset . 17))))))))
-          (find-definitions
-            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 20))))))
-
 (test find-definitions-for-spring-rest-get-method-with-request-mapping
   (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (equal
@@ -159,100 +139,6 @@
                         '((:line . 16) (:offset . 17))))))))
           (find-definitions
             (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 16))))))
-
-(test find-definitions-for-spring-rest-get-method-with-values
-  (with-fixture jvm-context (*java-path* 'ast-index-disk)
-    (is (equal
-          `(((:type . :rest-server)
-             (:host . "8080")
-             (:name . "GET")
-             (:path . "/{string}/{string}")
-             (:file-pos .
-              ((:type . :module-public)
-               (:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
-               (:name . "getWithValues")
-               (:fq-name . "p1.RestControllerDefinition.getWithValues-java.lang.String-java.lang.String")
-               ,(cons :top-offset
-                      (convert-to-top-offset
-                        (merge-pathnames
-                          "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
-                        '((:line . 44) (:offset . 17)))))))
-            ((:type . :rest-server)
-             (:host . "8080")
-             (:name . "GET")
-             (:path . "/{string}")
-             (:file-pos .
-              ((:type . :module-public)
-               (:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
-               (:name . "getWithValues")
-               (:fq-name . "p1.RestControllerDefinition.getWithValues-java.lang.String-java.lang.String")
-               ,(cons :top-offset
-                      (convert-to-top-offset
-                        (merge-pathnames
-                          "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
-                        '((:line . 44) (:offset . 17))))))))
-          (find-definitions
-            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 44))))))
-
-(test find-definitions-for-spring-rest-post-method
-  (with-fixture jvm-context (*java-path* 'ast-index-disk)
-    (is (equal
-          `(((:type . :rest-server)
-             (:host . "8080")
-             (:name . "POST")
-             (:path . "/")
-             (:file-pos .
-              ((:type . :module-public)
-               (:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
-               (:name . "create")
-               (:fq-name . "p1.RestControllerDefinition.create")
-               ,(cons :top-offset
-                      (convert-to-top-offset
-                        (merge-pathnames
-                          "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
-                        '((:line . 24) (:offset . 17))))))))
-          (find-definitions
-            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 24))))))
-
-(test find-definitions-for-spring-rest-put-method
-  (with-fixture jvm-context (*java-path* 'ast-index-disk)
-    (is (equal
-          `(((:type . :rest-server)
-             (:host . "8080")
-             (:name . "PUT")
-             (:path . "/{string}")
-             (:file-pos .
-              ((:type . :module-public)
-               (:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
-               (:name . "update")
-               (:fq-name . "p1.RestControllerDefinition.update-java.lang.String")
-               ,(cons :top-offset
-                      (convert-to-top-offset
-                        (merge-pathnames
-                          "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
-                        '((:line . 28) (:offset . 17))))))))
-          (find-definitions
-            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 28))))))
-
-(test find-definitions-for-spring-rest-delete-method
-  (with-fixture jvm-context (*java-path* 'ast-index-disk)
-    (is (equal
-          `(((:type . :rest-server)
-             (:host . "8080")
-             (:name . "DELETE")
-             (:path . "/{string}")
-             (:file-pos .
-              ((:type . :module-public)
-               (:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
-               (:name . "delete")
-               (:fq-name . "p1.RestControllerDefinition.delete-java.lang.String")
-               ,(cons :top-offset
-                      (convert-to-top-offset
-                        (merge-pathnames
-                          "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
-                        '((:line . 32) (:offset . 17))))))))
-          (find-definitions
-            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 32))))))
 
 (test find-references-for-new-class
   (with-fixture jvm-context (*java-path* 'ast-index-disk)
