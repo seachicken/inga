@@ -49,9 +49,11 @@ jobs:
                                      (uiop:find-symbol* '#:java
                                                         :inga/test/main)
                                      (uiop:find-symbol* '#:java
-                                                        :inga/test/ast-analyzer/java)
+                                                        :inga/test/traversal/java)
                                      (uiop:find-symbol* '#:kotlin
-                                                        :inga/test/ast-analyzer/kotlin)
+                                                        :inga/test/traversal/kotlin)
+                                     (uiop:find-symbol* '#:java
+                                                        :inga/test/traversal/spring-java)
                                      (uiop:find-symbol* '#:java
                                                         :inga/test/plugin/jvm-helper)
                                      (uiop:find-symbol* '#:java
@@ -94,6 +96,6 @@ jobs:
                                    (uiop:find-symbol* '#:typescript
                                                       :inga/test/main)
                                    (uiop:find-symbol* '#:typescript
-                                                      :inga/test/ast-analyzer/typescript)))
+                                                      :inga/test/traversal/typescript)))
               (uiop:quit 1))\""
 
