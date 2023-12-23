@@ -17,10 +17,6 @@
                 #:get-ast)
   (:import-from #:inga/traversal/kotlin
                 #:traversal-kotlin)
-  (:import-from #:inga/traversal/spring-base
-                #:get-method-from-request-mapping
-                #:get-value-from-path-variable
-                #:get-values-from-request-mapping)
   (:import-from #:inga/file
                 #:get-file-type)
   (:import-from #:inga/plugin/jvm-dependency-loader
