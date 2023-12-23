@@ -34,9 +34,7 @@
               (equal (ast-value ast "type") "INTERFACE"))
       (let ((annotations (trav:get-asts ast '("MODIFIERS" "ANNOTATION"))))
         (unless (trav:filter-by-name annotations "RestController")
-          (format t "found rc~%")
           (return-from find-definitions-generic file-definitions))
-        (format t "???~%")
         (let ((request-mapping (first (trav:filter-by-name annotations "RequestMapping"))))
           (when request-mapping
             (setf rest-base-path
