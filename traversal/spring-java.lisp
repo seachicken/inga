@@ -1,5 +1,6 @@
 (defpackage #:inga/traversal/spring-java
   (:use #:cl
+        #:inga/traversal/base
         #:inga/traversal/java
         #:inga/traversal/spring-base
         #:inga/utils)
@@ -34,6 +35,7 @@
       (let ((annotations (trav:get-asts ast '("MODIFIERS" "ANNOTATION"))))
         (unless (trav:filter-by-name annotations "RestController")
           (return-from find-definitions-generic file-definitions))
+
         (let ((request-mapping (first (trav:filter-by-name annotations "RequestMapping"))))
           (when request-mapping
             (setf rest-base-path
@@ -56,6 +58,7 @@
                             (get-values-from-request-mapping :java mapping))))
         (unless mapping
           (return-from find-definitions-generic file-definitions))
+
         (labels ((to-general-path (path)
                    (loop for vn in (get-variable-names path)
                          with result = path

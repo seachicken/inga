@@ -134,3 +134,64 @@
                                '((:line . 9) (:offset . 5)) :key-offset "textOffset")
                      '("ANNOTATION_ENTRY"))))))))
 
+;; PathVariable
+;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/bind/annotation/PathVariable.html
+
+(test find-param-from-path-variable-with-no-value
+  (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
+    (find-ast "p1/server/spring/src/main/p1/PathVariableDefinition.kt"
+              '((:line . 11) (:offset . 38)) :key-offset "textOffset")
+    (is (equal
+          "v"
+          ;;           ↓
+          ;; fun method(@PathVariable v: String) {
+          (trav:ast-value
+            (find-param-from-path-variable
+              :kotlin
+              (find-ast "p1/server/spring/src/main/p1/PathVariableDefinition.kt"
+                        '((:line . 11) (:offset . 23)) :key-offset "textOffset")
+              "v")
+            "name")))))
+
+(test find-param-from-path-variable-with-single-member-annotation
+  (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
+    (is (equal
+          "a"
+          ;;           ↓
+          ;; fun method(@PathVariable("v") a: String) {
+          (trav:ast-value
+            (find-param-from-path-variable
+              :kotlin
+              (find-ast "p1/server/spring/src/main/p1/PathVariableDefinition.kt"
+                        '((:line . 15) (:offset . 28)) :key-offset "textOffset")
+              "v")
+            "name")))))
+
+(test find-param-from-path-variable-with-value
+  (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
+    (is (equal
+          "a"
+          ;;           ↓
+          ;; fun method(@PathVariable(value = "v") a: String) {
+          (trav:ast-value
+            (find-param-from-path-variable
+              :kotlin
+              (find-ast "p1/server/spring/src/main/p1/PathVariableDefinition.kt"
+                        '((:line . 19) (:offset . 21)) :key-offset "textOffset")
+              "v")
+            "name")))))
+
+(test find-param-from-path-variable-with-name
+  (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
+    (is (equal
+          "a"
+          ;;           ↓
+          ;; fun method(@PathVariable(name = "v") a: String) {
+          (trav:ast-value
+            (find-param-from-path-variable
+              :kotlin
+              (find-ast "p1/server/spring/src/main/p1/PathVariableDefinition.kt"
+                        '((:line . 23) (:offset . 20)) :key-offset "textOffset")
+              "v")
+            "name")))))
+

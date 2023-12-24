@@ -1,5 +1,6 @@
 (defpackage #:inga/traversal/spring-kotlin
   (:use #:cl
+        #:inga/traversal/base
         #:inga/traversal/kotlin
         #:inga/traversal/spring-base))
 (in-package #:inga/traversal/spring-kotlin)
@@ -47,10 +48,38 @@
                           method 
                           '("VALUE_ARGUMENT_NAME"
                             "VALUE_ARGUMENT") :direction :upward))))
-    (trav:debug-ast parent)
     (if (equal (trav:ast-value mapping "name") "RequestMapping")
         (trav:ast-value (second (trav:get-asts parent '("DOT_QUALIFIED_EXPRESSION"
                                                         "REFERENCE_EXPRESSION")))
                         "name")
         (to-http-method (trav:ast-value mapping "name")))))
+
+(defmethod find-param-from-path-variable ((type (eql :kotlin)) ast target-name)
+  (loop for param in (trav:get-asts ast '("VALUE_PARAMETER"))
+        do
+        (let* ((pv (trav:filter-by-name
+                     (trav:get-asts param '("MODIFIER_LIST"
+                                            "ANNOTATION_ENTRY"
+                                            "CONSTRUCTOR_CALLEE"
+                                            "TYPE_REFERENCE"
+                                            "USER_TYPE"
+                                            "REFERENCE_EXPRESSION"))
+                     "PathVariable"))
+               (values (trav:get-asts param '("MODIFIER_LIST"
+                                              "ANNOTATION_ENTRY"
+                                              "VALUE_ARGUMENT_LIST"
+                                              "VALUE_ARGUMENT"))))
+          (when pv
+            (return
+              (if values
+                  (loop for value in values
+                        do
+                        (when (equal (trav:ast-value
+                                       (first (trav:get-asts value '("STRING_TEMPLATE"
+                                                                     "LITERAL_STRING_TEMPLATE_ENTRY")))
+                                       "name")
+                                     target-name)
+                          (return param)))
+                  (when (equal (trav:ast-value param "name") target-name)
+                    param)))))))
 
