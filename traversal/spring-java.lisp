@@ -55,6 +55,8 @@
                                  "RequestMapping"))))
              (rest-paths (mapcar (lambda (v) (merge-paths rest-base-path v))
                             (get-values-from-request-mapping :java mapping))))
+        (unless mapping
+          (return-from find-definitions-generic file-definitions))
         (labels ((to-general-path (path)
                    (loop for vn in (get-variable-names path)
                          with result = path

@@ -54,7 +54,7 @@ jobs:
                                                         :inga/test/traversal/kotlin)
                                      (uiop:find-symbol* '#:java
                                                         :inga/test/traversal/spring-java)
-                                     (uiop:find-symbol* '#:java
+                                     (uiop:find-symbol* '#:kotlin
                                                         :inga/test/traversal/spring-kotlin)
                                      (uiop:find-symbol* '#:java
                                                         :inga/test/plugin/jvm-helper)
