@@ -23,27 +23,6 @@
                       '((:line . 4) (:offset . 5)))))) ;; FIXME: actual offset is 9
           (find-definitions (create-range "p1/PrimaryConstructorDefinition.kt" :line 4))))))
 
-(test find-definitions-for-spring-rest-get-method
-  (with-fixture jvm-context (*kotlin-path* 'ast-index-disk)
-    (is (equal
-          `(((:type . :rest-server)
-             (:host . "8080")
-             (:name . "GET")
-             (:path . "/{string}")
-             (:file-pos .
-              (;; TODO: add scope
-               ;;(:type . :module-public)
-               (:path . "p1/server/spring/src/main/p1/RestControllerDefinition.kt")
-               (:name . "get")
-               (:fq-name . "p1.RestControllerDefinition.get-java.lang.String")
-               ,(cons :top-offset
-                      (convert-to-top-offset
-                        (merge-pathnames
-                          "p1/server/spring/src/main/p1/RestControllerDefinition.kt" *kotlin-path*)
-                        '((:line . 14) (:offset . 5))))))))
-          (find-definitions
-            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.kt" :line 15))))))
-
 (test find-references-for-primary-constructor
   (with-fixture jvm-context (*kotlin-path* 'ast-index-disk)
     (is (equal

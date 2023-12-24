@@ -23,7 +23,8 @@
                 #:find-property)
   (:import-from #:inga/plugin/spring-helper
                 #:convert-to-http-method)
-  (:export #:traversal-kotlin))
+  (:export #:traversal-kotlin
+           #:find-fq-class-name))
 (in-package #:inga/traversal/kotlin)
 
 (defvar *package-index-groups* nil)
@@ -59,38 +60,10 @@
          results)
     (enqueue q root-ast)
     (loop
-      with entrypoint-name
       do
       (setf ast (dequeue q))
       (if (null ast) (return))
 
-      (when (equal (ast-value ast "type") "CLASS")
-        (let ((annotations (trav:get-asts ast '("MODIFIER_LIST" "ANNOTATION_ENTRY"))))
-          (when (trav:filter-by-name (trav:get-asts annotations '("CONSTRUCTOR_CALLEE"
-                                                                  "TYPE_REFERENCE"
-                                                                  "USER_TYPE"
-                                                                  "REFERENCE_EXPRESSION"))
-                               "RestController")
-            (let ((request-mapping
-                    (first (trav:filter-by-name (trav:get-asts annotations '("CONSTRUCTOR_CALLEE"
-                                                                             "TYPE_REFERENCE"
-                                                                             "USER_TYPE"
-                                                                             "REFERENCE_EXPRESSION"))
-                                          "RequestMapping"))))
-              (when request-mapping
-                (setf entrypoint-name
-                      (ast-value (first (trav:get-asts 
-                                          (ast-value
-                                            (first (trav:get-asts request-mapping '("USER_TYPE"
-                                                                                    "TYPE_REFERENCE"
-                                                                                    "CONSTRUCTOR_CALLEE")
-                                                            :direction :upward))
-                                            "parent")
-                                          '("VALUE_ARGUMENT_LIST"
-                                            "VALUE_ARGUMENT"
-                                            "STRING_TEMPLATE"
-                                            "LITERAL_STRING_TEMPLATE_ENTRY")))
-                                 "name")))))))
       (when (and
               (equal (ast-value ast "type") "FUN")
               (contains-offset (jsown:val (jsown:val ast "textRange") "startOffset")
@@ -105,59 +78,7 @@
                        (cons :top-offset (jsown:val (jsown:val ast "textRange") "startOffset")))))
             (when (assoc :origin range)
               (push (cons :origin (cdr (assoc :origin range))) pos))
-            (if entrypoint-name
-                (let* ((mapping (first (trav:filter-by-names
-                                         (trav:get-asts ast '("MODIFIER_LIST"
-                                                              "ANNOTATION_ENTRY"
-                                                              "CONSTRUCTOR_CALLEE"
-                                                              "TYPE_REFERENCE"
-                                                              "USER_TYPE"
-                                                              "REFERENCE_EXPRESSION"))
-                                         '("GetMapping" "PostMapping" "PutMapping" "DeleteMapping"))))
-                       (mapping-value (ast-value (first (trav:get-asts ast '("MODIFIER_LIST"
-                                                                             "ANNOTATION_ENTRY"
-                                                                             "VALUE_ARGUMENT_LIST"
-                                                                             "VALUE_ARGUMENT"
-                                                                             "STRING_TEMPLATE"
-                                                                             "LITERAL_STRING_TEMPLATE_ENTRY")))
-                                                 "name"))
-                       (port (find-property "server.port" src-path))
-                       (path (merge-paths entrypoint-name mapping-value)))
-                  (when (and mapping port)
-                    `((:type . :rest-server)
-                      (:host . ,port)
-                      (:name . ,(convert-to-http-method (ast-value mapping "name")))
-                      (:path .
-                       ,(loop for vn in (get-variable-names path)
-                              for i from 0
-                              with params = (trav:get-asts ast '("VALUE_PARAMETER_LIST" "VALUE_PARAMETER"))
-                              do
-                              (let* ((param (nth i params))
-                                     (pv (trav:filter-by-name
-                                           (trav:get-asts param '("MODIFIER_LIST"
-                                                                  "ANNOTATION_ENTRY"
-                                                                  "CONSTRUCTOR_CALLEE"
-                                                                  "TYPE_REFERENCE"
-                                                                  "USER_TYPE"
-                                                                  "REFERENCE_EXPRESSION"))
-                                           "PathVariable"))
-                                     (pv-name
-                                       (ast-value (first (trav:get-asts param '("MODIFIER_LIST"
-                                                                                "ANNOTATION_ENTRY"
-                                                                                "VALUE_ARGUMENT_LIST"
-                                                                                "VALUE_ARGUMENT"
-                                                                                "STRING_TEMPLATE"
-                                                                                "LITERAL_STRING_TEMPLATE_ENTRY")))
-                                                  "name")))
-                                (when (equal vn pv-name)
-                                  (setf path (replace-variable-name
-                                               path vn
-                                               (convert-to-json-type
-                                                 (find-fq-class-name
-                                                   (first (trav:get-asts param '("TYPE_REFERENCE")))))))))
-                              finally (return path)))
-                      (:file-pos . ,pos))))
-                pos))
+            pos)
           results))
 
       (loop for child in (jsown:val ast "children") do (enqueue q child)))
