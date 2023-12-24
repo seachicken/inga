@@ -51,18 +51,23 @@
   (loop for a in *analyzers* do (stop-traversal a)))
 
 (defmacro find-ast (path pos &key key-offset)
-  `(loop
-     with offset = (convert-to-top-offset (merge-pathnames ,path (ast-index-root-path *index*))
-                                          ,pos)
-     with stack = (list (get-ast *index* ,path))
-     with ast 
-     do
-     (setf ast (pop stack))
-     (when (or (null ast)
-               (eq (ast-value ast (or ,key-offset *key-offset*)) offset))
-       (return ast))
-     (loop for child in (ast-value ast "children")
-           do (setf stack (append stack (list child))))))
+  `(let ((result
+           (loop
+             with offset = (convert-to-top-offset
+                             (merge-pathnames ,path (ast-index-root-path *index*))
+                             ,pos)
+             with stack = (list (get-ast *index* ,path))
+             with ast 
+             do
+             (setf ast (pop stack))
+             (when (or (null ast)
+                       (eq (ast-value ast (or ,key-offset *key-offset*)) offset))
+               (return ast))
+             (loop for child in (ast-value ast "children")
+                   do (setf stack (append stack (list child)))))))
+     (if result
+         result
+         (error "ast not found"))))
 
 (defmacro create-range (path &key line (start line) (end start))
   `(list
