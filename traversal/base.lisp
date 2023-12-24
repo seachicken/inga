@@ -305,11 +305,10 @@
         finally (return results)))
 
 (defun debug-ast (ast &key (key-downward "children") (key-upward "parent"))
-  (format t "~&ast: ") 
+  (format t "~&ast:~%") 
   (loop for key in (remove-if (lambda (key)
                                 (or (equal key key-downward) (equal key key-upward)))
                               (jsown:keywords ast))
-        do (format t "(~a . ~a) " key (ast-value ast key)))
-  (format t "~%") 
+        do (format t " (~a . ~a)~%" key (ast-value ast key)))
   ast)
 
