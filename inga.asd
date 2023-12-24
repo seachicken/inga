@@ -21,6 +21,7 @@
                "inga/test/traversal/java"
                "inga/test/traversal/kotlin"
                "inga/test/traversal/spring-java"
+               "inga/test/traversal/spring-kotlin"
                "inga/test/plugin/jvm-helper"
                "inga/test/plugin/spring-property-loader"))
 
