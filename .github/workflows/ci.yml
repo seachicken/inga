@@ -44,22 +44,8 @@ jobs:
               (ql:quickload :inga)
               (unless (asdf:test-system :inga)
                 (uiop:quit 1))
-              (ql:quickload :inga/test-java)
-              (unless (fiveam:run! (list
-                                     (uiop:find-symbol* '#:java
-                                                        :inga/test/main)
-                                     (uiop:find-symbol* '#:java
-                                                        :inga/test/traversal/java)
-                                     (uiop:find-symbol* '#:kotlin
-                                                        :inga/test/traversal/kotlin)
-                                     (uiop:find-symbol* '#:java
-                                                        :inga/test/traversal/spring-java)
-                                     (uiop:find-symbol* '#:kotlin
-                                                        :inga/test/traversal/spring-kotlin)
-                                     (uiop:find-symbol* '#:java
-                                                        :inga/test/plugin/jvm-helper)
-                                     (uiop:find-symbol* '#:java
-                                                        :inga/test/plugin/spring-property-loader)))
+              (ql:quickload :inga/test-jvm)
+              (unless (asdf:test-system :inga/test-jvm)
                 (uiop:quit 1))\""
 
   test-typescript:
@@ -89,15 +75,12 @@ jobs:
             BASE_IMAGE=inga-typescript
       - name: Run tests
         run: |
-          docker run test-inga-typescript -c "ros -s fiveam -e \"
-            (ql:quickload :inga)
-            (unless (asdf:test-system :inga)
-              (uiop:quit 1))
-            (ql:quickload :inga/test-typescript)
-            (unless (fiveam:run! (list
-                                   (uiop:find-symbol* '#:typescript
-                                                      :inga/test/main)
-                                   (uiop:find-symbol* '#:typescript
-                                                      :inga/test/traversal/typescript)))
-              (uiop:quit 1))\""
+          docker run test-inga-typescript -c "
+            ros -s fiveam -e \"
+              (ql:quickload :inga)
+              (unless (asdf:test-system :inga)
+                (uiop:quit 1))
+              (ql:quickload :inga/test-node)
+              (unless (asdf:test-system :inga/test-node)
+                (uiop:quit 1))\""
 
