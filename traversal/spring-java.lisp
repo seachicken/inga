@@ -1,6 +1,5 @@
 (defpackage #:inga/traversal/spring-java
   (:use #:cl
-        #:inga/traversal/base
         #:inga/traversal/java
         #:inga/traversal/spring-base
         #:inga/utils)

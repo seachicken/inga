@@ -32,3 +32,25 @@
                              '("STRING_TEMPLATE"))))))))
       '("")))
 
+(defmethod get-method-from-request-mapping ((type (eql :kotlin)) ast)
+  (let* ((mapping (first (trav:get-asts ast '("CONSTRUCTOR_CALLEE"
+                                              "TYPE_REFERENCE"
+                                              "USER_TYPE"
+                                              "REFERENCE_EXPRESSION"))))
+         (method (first (trav:filter-by-name
+                          (trav:get-asts ast '("VALUE_ARGUMENT_LIST"
+                                               "VALUE_ARGUMENT"
+                                               "VALUE_ARGUMENT_NAME"
+                                               "REFERENCE_EXPRESSION"))
+                          "method")))
+         (parent (first (trav:get-asts
+                          method 
+                          '("VALUE_ARGUMENT_NAME"
+                            "VALUE_ARGUMENT") :direction :upward))))
+    (trav:debug-ast parent)
+    (if (equal (trav:ast-value mapping "name") "RequestMapping")
+        (trav:ast-value (second (trav:get-asts parent '("DOT_QUALIFIED_EXPRESSION"
+                                                        "REFERENCE_EXPRESSION")))
+                        "name")
+        (to-http-method (trav:ast-value mapping "name")))))
+
