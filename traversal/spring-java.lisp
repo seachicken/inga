@@ -119,7 +119,7 @@
                (value (first (or (trav:get-asts pv '("STRING_LITERAL"))
                                  (trav:get-asts
                                    (first (trav:filter-by-names
-                                            (trav:get-asts '("ASSIGNMENT" "IDENTIFIER"))
+                                            (trav:get-asts pv '("ASSIGNMENT" "IDENTIFIER"))
                                             '("value" "name")))
                                    '("STRING_LITERAL") :direction :horizontal)))))
           (when pv
