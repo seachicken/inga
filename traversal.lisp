@@ -4,5 +4,6 @@
                  #:inga/traversal/kotlin
                  #:inga/traversal/typescript
                  #:inga/traversal/spring-base
-                 #:inga/traversal/spring-java))
+                 #:inga/traversal/spring-java
+                 #:inga/traversal/spring-kotlin))
 

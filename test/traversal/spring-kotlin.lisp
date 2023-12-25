@@ -160,8 +160,6 @@
 
 (test find-param-from-path-variable-with-no-value
   (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
-    (find-ast "p1/server/spring/src/main/p1/PathVariableDefinition.kt"
-              '((:line . 11) (:offset . 38)) :key-offset "textOffset")
     (is (equal
           "v"
           ;;           ↓

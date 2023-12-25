@@ -1,6 +1,5 @@
 (defpackage #:inga/traversal/spring-base
-  (:use #:cl
-        #:inga/traversal/base)
+  (:use #:cl)
   (:import-from #:alexandria
                 #:switch)
   (:export #:get-values-from-request-mapping
