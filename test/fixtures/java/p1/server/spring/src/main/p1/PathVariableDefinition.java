@@ -12,14 +12,14 @@ public class PathVariableDefinition {
     }
 
     @GetMapping("/{v}")
-    public void getWithSingleMember(@PathVariable("v") String v) {
+    public void getWithSingleMember(@PathVariable("v") String a) {
     }
 
     @GetMapping("/{v}")
-    public void getWithValue(@PathVariable(value = "v") String v) {
+    public void getWithValue(@PathVariable(value = "v") String a) {
     }
 
     @GetMapping("/{v}")
-    public void getWithName(@PathVariable(name = "v") String v) {
+    public void getWithName(@PathVariable(name = "v") String a) {
     }
 }

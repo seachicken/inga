@@ -68,9 +68,7 @@
                                   result vn
                                   (convert-to-json-type
                                     (find-fq-class-name
-                                      (find-if (lambda (param)
-                                                 (equal (trav:ast-value param "name") vn))
-                                               (nthcdr 1 (trav:get-asts ast '("*"))))
+                                      (find-param-from-path-variable :java ast vn)
                                       path))))
                          finally (return result))))
           (return (mapcar
@@ -112,18 +110,21 @@
                       "name"))
     (to-http-method (trav:ast-value ast "name"))))
 
-(defmethod get-value-from-path-variable ((type (eql :java)) ast)
-  (if (trav:ast-value ast "children")
-      (or (trav:ast-value
-            (first (trav:get-asts ast '("STRING_LITERAL")))
-            "name")
-          (when (trav:filter-by-names
-                  (trav:get-asts ast '("ASSIGNMENT" "IDENTIFIER"))
-                  '("value" "name"))
-            (trav:ast-value
-              (first (trav:get-asts ast '("ASSIGNMENT" "STRING_LITERAL")))
-              "name")))
-      (trav:ast-value
-        (first (trav:get-asts ast '("MODIFIERS" "VARIABLE") :direction :upward))
-        "name")))
+(defmethod find-param-from-path-variable ((type (eql :java)) ast target-name)
+  (loop for param in (nthcdr 1 (trav:get-asts ast '("*")))
+        do
+        (let* ((pv (trav:filter-by-name
+                     (trav:get-asts param '("MODIFIERS" "ANNOTATION"))
+                     "PathVariable"))
+               (value (first (or (trav:get-asts pv '("STRING_LITERAL"))
+                                 (trav:get-asts
+                                   (first (trav:filter-by-names
+                                            (trav:get-asts '("ASSIGNMENT" "IDENTIFIER"))
+                                            '("value" "name")))
+                                   '("STRING_LITERAL") :direction :horizontal)))))
+          (when pv
+            (return (if (equal (trav:ast-value value "name") target-name)
+                        param
+                        (when (equal (trav:ast-value param "name") target-name)
+                          param)))))))
 

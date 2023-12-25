@@ -157,55 +157,59 @@
 ;; PathVariable
 ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/bind/annotation/PathVariable.html
 
-(test get-value-from-path-variable-with-no-value
+(test find-param-from-path-variable-with-no-value
   (with-fixture jvm-context (*java-path* 'ast-index-memory)
     (is (equal
           "v"
-          ;;                    ↓
+          ;;             ↓
           ;; public void method(@PathVariable String v) {
-          (get-value-from-path-variable
-            :java
-            (first (trav:get-asts
-                     (find-ast "p1/server/spring/src/main/p1/PathVariableDefinition.java"
-                               '((:line . 11) (:offset . 32)))
-                     '("ANNOTATION"))))))))
+          (trav:ast-value
+            (find-param-from-path-variable
+              :java
+              (find-ast "p1/server/spring/src/main/p1/PathVariableDefinition.java"
+                        '((:line . 11) (:offset . 17)))
+              "v")
+            "name")))))
 
-(test get-value-from-path-variable-with-single-member-annotation
+(test find-param-from-path-variable-with-single-member-annotation
   (with-fixture jvm-context (*java-path* 'ast-index-memory)
     (is (equal
-          "v"
-          ;;                    ↓
+          "a"
+          ;;             ↓
           ;; public void method(@PathVariable("v") String v) {
-          (get-value-from-path-variable
-            :java
-            (first (trav:get-asts
-                     (find-ast "p1/server/spring/src/main/p1/PathVariableDefinition.java"
-                               '((:line . 15) (:offset . 37)))
-                     '("ANNOTATION"))))))))
+          (trav:ast-value
+            (find-param-from-path-variable
+              :java
+              (find-ast "p1/server/spring/src/main/p1/PathVariableDefinition.java"
+                        '((:line . 15) (:offset . 17)))
+              "v")
+            "name")))))
 
-(test get-value-from-path-variable-with-value
+(test find-param-from-path-variable-with-value
   (with-fixture jvm-context (*java-path* 'ast-index-memory)
     (is (equal
-          "v"
-          ;;                    ↓
+          "a"
+          ;;             ↓
           ;; public void method(@PathVariable(value = "v") String v) {
-          (get-value-from-path-variable
-            :java
-            (first (trav:get-asts
-                     (find-ast "p1/server/spring/src/main/p1/PathVariableDefinition.java"
-                               '((:line . 19) (:offset . 30)))
-                     '("ANNOTATION"))))))))
+          (trav:ast-value
+            (find-param-from-path-variable
+              :java
+              (find-ast "p1/server/spring/src/main/p1/PathVariableDefinition.java"
+                        '((:line . 19) (:offset . 17)))
+              "v")
+            "name")))))
 
-(test get-value-from-path-variable-with-name
+(test find-param-from-path-variable-with-name
   (with-fixture jvm-context (*java-path* 'ast-index-memory)
     (is (equal
-          "v"
-          ;;                    ↓
+          "a"
+          ;;                   ↓
           ;; public void method(@PathVariable(name = "v") String v) {
-          (get-value-from-path-variable
-            :java
-            (first (trav:get-asts
-                     (find-ast "p1/server/spring/src/main/p1/PathVariableDefinition.java"
-                               '((:line . 23) (:offset . 29)))
-                     '("ANNOTATION"))))))))
+          (trav:ast-value
+            (find-param-from-path-variable
+              :java
+              (find-ast "p1/server/spring/src/main/p1/PathVariableDefinition.java"
+                        '((:line . 23) (:offset . 17)))
+              "v")
+            "name")))))
 
