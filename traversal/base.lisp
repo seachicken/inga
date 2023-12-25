@@ -31,6 +31,8 @@
            #:find-entrypoint-generic
            #:find-references
            #:find-reference
+           #:find-fq-class-name
+           #:find-fq-class-name-generic
            #:find-signature
            #:matches-signature
            #:find-class-hierarchy
@@ -69,7 +71,7 @@
   (:method (traversal)))
 
 (defun get-scoped-index-paths (pos index)
-  (let ((traversal (get-traversal (cdr (assoc :path pos)))))
+  (let ((traversal (get-traversal (cdr (assoc :path (or (cdr (assoc :file-pos pos)) pos))))))
     (if traversal
         (get-scoped-index-paths-generic traversal pos)
         (ast-index-paths index))))
@@ -122,6 +124,10 @@
           (loop for child in (jsown:val ast "children")
                 do (enqueue q child)))))
     results))
+
+(defun find-fq-class-name (ast path)
+  (find-fq-class-name-generic (get-traversal path) ast path))
+(defgeneric find-fq-class-name-generic (traversal ast path))
 
 (defun find-signature (fq-name find-signatures index)
   (when (or (null fq-name) (equal fq-name ""))
@@ -237,7 +243,10 @@
                       (cdr (assoc :top-offset pos))))))
 
 (defun get-traversal (path)
-  (cdr (assoc (get-file-type path) *traversals*)))
+  (let ((result (cdr (assoc (get-file-type path) *traversals*))))
+    (if result
+      result
+      (error (format nil "traversal not found. path: ~a" path)))))
 
 (defun contains-offset (a-start a-end b-start b-end)
   (and (<= a-start b-end) (>= a-end b-start)))

@@ -28,8 +28,7 @@
                 #:is-primitive-type)
   (:import-from #:inga/plugin/spring-property-loader
                 #:find-property)
-  (:export #:traversal-java
-           #:find-fq-class-name))
+  (:export #:traversal-java))
 (in-package #:inga/traversal/java)
 
 (defvar *package-index-groups* nil)
@@ -228,7 +227,7 @@
      (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
              (find-fq-class-name-by-class-name (ast-value ast "name") ast)
              (ast-value ast "name")
-             (mapcar (lambda (arg) (find-fq-class-name arg path index))
+             (mapcar (lambda (arg) (find-fq-class-name-java arg path index))
                        (trav:get-asts ast '("*")))))
     ("METHOD_INVOCATION"
      (if (trav:get-asts ast '("MEMBER_SELECT"))
@@ -264,16 +263,18 @@
                       (ast-value (first (trav:get-asts ast '("MEMBER_SELECT" "MEMBER_SELECT"))) "name")
                       ast)))
                  (ast-value (first (trav:get-asts ast '("*"))) "name")
-                 (mapcar (lambda (arg) (find-fq-class-name arg path index))
+                 (mapcar (lambda (arg) (find-fq-class-name-java arg path index))
                        (nthcdr 1 (trav:get-asts ast '("*")))))
          (format nil "~a~:[~;-~]~:*~{~a~^-~}"
                  (find-fq-name-for-definition
                    (ast-value (first (trav:get-asts ast '("IDENTIFIER"))) "name")
                    ast)
-                 (mapcar (lambda (arg) (find-fq-class-name arg path index))
+                 (mapcar (lambda (arg) (find-fq-class-name-java arg path index))
                          (nthcdr 1 (trav:get-asts ast '("*")))))))))
 
-(defun find-fq-class-name (ast path index)
+(defmethod find-fq-class-name-generic ((traversal traversal-java) ast path)
+  (find-fq-class-name-java ast path (traversal-index traversal)))
+(defun find-fq-class-name-java (ast path index)
   (if (uiop:string-suffix-p (ast-value ast "type") "_LITERAL")
       (if (equal (ast-value ast "type") "STRING_LITERAL")
           "java.lang.String"

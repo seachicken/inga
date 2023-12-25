@@ -59,9 +59,9 @@
         (unless mapping
           (return-from find-definitions-generic file-definitions))
 
-        (labels ((to-general-path (path)
-                   (loop for vn in (get-variable-names path)
-                         with result = path
+        (labels ((to-general-path (rest-path)
+                   (loop for vn in (get-variable-names rest-path)
+                         with result = rest-path
                          do
                          (setf result
                                (replace-variable-name
@@ -71,7 +71,7 @@
                                       (find-if (lambda (param)
                                                  (equal (trav:ast-value param "name") vn))
                                                (nthcdr 1 (trav:get-asts ast '("*"))))
-                                      path (traversal-index traversal)))))
+                                      path))))
                          finally (return result))))
           (return (mapcar
                     (lambda (rest-path)

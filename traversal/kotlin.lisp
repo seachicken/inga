@@ -23,8 +23,7 @@
                 #:find-property)
   (:import-from #:inga/plugin/spring-helper
                 #:convert-to-http-method)
-  (:export #:traversal-kotlin
-           #:find-fq-class-name))
+  (:export #:traversal-kotlin))
 (in-package #:inga/traversal/kotlin)
 
 (defvar *package-index-groups* nil)
@@ -106,7 +105,7 @@
                            'string
                            result
                            "-"
-                           (find-fq-class-name param)))))
+                           (find-fq-class-name-kotlin param)))))
 
     (loop for child in (ast-value ast "children")
           do (setf stack (append stack (list child))))))
@@ -183,12 +182,14 @@
                                                                        "CALL_EXPRESSION"
                                                                        "REFERENCE_EXPRESSION")))
                                           "name"))))
-                   (find-fq-class-name ast))
+                   (find-fq-class-name-kotlin ast))
                (ast-value (first (trav:get-asts ast '("REFERENCE_EXPRESSION"))) "name")
-               (mapcar (lambda (arg) (find-fq-class-name arg))
+               (mapcar (lambda (arg) (find-fq-class-name-kotlin arg))
                        (trav:get-asts ast '("VALUE_ARGUMENT_LIST" "VALUE_ARGUMENT" "*"))))))))
 
-(defun find-fq-class-name (ast)
+(defmethod find-fq-class-name-generic ((traversal traversal-kotlin) ast path)
+  (find-fq-class-name-kotlin ast))
+(defun find-fq-class-name-kotlin (ast)
   (alexandria:switch ((ast-value ast "type") :test #'equal)
     ("NULL"
      "NULL")

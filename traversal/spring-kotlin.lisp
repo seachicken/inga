@@ -74,9 +74,9 @@
         (unless mapping
           (return-from find-definitions-generic file-definitions))
 
-        (labels ((to-general-path (path)
-                   (loop for vn in (get-variable-names path)
-                         with result = path
+        (labels ((to-general-path (rest-path)
+                   (loop for vn in (get-variable-names rest-path)
+                         with result = rest-path
                          do
                          (setf result
                                (replace-variable-name
@@ -87,7 +87,8 @@
                                               (find-param-from-path-variable
                                                 :kotlin (first (trav:get-asts ast '("VALUE_PARAMETER_LIST")))
                                                 vn)
-                                              '("TYPE_REFERENCE")))))))
+                                              '("TYPE_REFERENCE")))
+                                     path))))
                          finally (return result))))
           (return (mapcar
                     (lambda (rest-path)

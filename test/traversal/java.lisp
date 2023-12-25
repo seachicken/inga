@@ -307,7 +307,9 @@
             `((:type . :rest-server)
               (:host . "8080")
               (:path . "/path")
-              (:name . "GET"))
+              (:name . "GET")
+              (:file-pos .
+               ((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java"))))
             *index*)))))
 
 (test find-references-for-rest-client-post-method
@@ -322,7 +324,9 @@
             `((:type . :rest-server)
               (:host . "8080")
               (:path . "/path")
-              (:name . "POST"))
+              (:name . "POST")
+              (:file-pos .
+               ((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java"))))
             *index*)))))
 
 (test find-references-for-kotlin-class
