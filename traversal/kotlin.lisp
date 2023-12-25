@@ -21,8 +21,6 @@
                 #:convert-to-json-type)
   (:import-from #:inga/plugin/spring-property-loader
                 #:find-property)
-  (:import-from #:inga/plugin/spring-helper
-                #:convert-to-http-method)
   (:export #:traversal-kotlin))
 (in-package #:inga/traversal/kotlin)
 
