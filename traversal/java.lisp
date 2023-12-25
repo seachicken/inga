@@ -333,11 +333,11 @@
                        fq-names)))))
 
        (when (equal (ast-value ast "type") "CLASS")
-         (push class-name fq-names)
          ;; for inner class
-         (when (or (trav:filter-by-name (trav:get-asts ast '("CLASS")) class-name)
-                   (trav:filter-by-name (trav:get-asts ast '("ENUM")) class-name))
-           (push (ast-value ast "name") fq-names)))
+         (if (or (trav:filter-by-name (trav:get-asts ast '("CLASS")) class-name)
+                 (trav:filter-by-name (trav:get-asts ast '("ENUM")) class-name))
+             (push (concatenate 'string (ast-value ast "name") "$" class-name) fq-names)
+             (push class-name fq-names)))
 
        (when (jsown:keyp ast "parent")
          (enqueue q (jsown:val ast "parent")))))))

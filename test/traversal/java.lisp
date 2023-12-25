@@ -21,7 +21,7 @@
           `(((:type . :module-public)
              (:path . "src/main/java/io/spring/application/CursorPager.java")
              (:name . "CursorPager")
-             (:fq-name . "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager.Direction-BOOLEAN")
+             (:fq-name . "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager$Direction-BOOLEAN")
              ,(cons :top-offset
                     (convert-to-top-offset
                       (merge-pathnames "src/main/java/io/spring/application/CursorPager.java" *spring-boot-path*)
@@ -209,7 +209,7 @@
           (find-references
             `((:path . "src/main/java/io/spring/application/CursorPager.java")
               (:name . "CursorPager")
-              (:fq-name . "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager.Direction-BOOLEAN"))
+              (:fq-name . "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager$Direction-BOOLEAN"))
             *index*)))))
 
 (test find-fq-name-for-reference-with-enum
@@ -228,7 +228,7 @@
   (with-fixture jvm-context (*spring-boot-path* 'ast-index-memory :include '("src/main/**"))
     (let ((path "src/main/java/io/spring/application/ArticleQueryService.java"))
       (is (equal
-            "io.spring.application.CursorPager.CursorPager-java.util.ArrayList-io.spring.application.CursorPager.Direction-BOOLEAN"
+            "io.spring.application.CursorPager.CursorPager-java.util.ArrayList-io.spring.application.CursorPager$Direction-BOOLEAN"
             ;;        ↓
             ;; return new CursorPager<>(new ArrayList<>(), page.getDirection(), false);
             (inga/traversal/java::find-fq-name-for-reference
@@ -285,7 +285,7 @@
   (with-fixture jvm-context (*spring-boot-path* 'ast-index-memory :include '("src/main/**"))
     (let ((path "src/main/java/io/spring/application/CursorPager.java"))
       (is (equal
-            "io.spring.application.CursorPager.Direction"
+            "io.spring.application.CursorPager$Direction"
             (inga/traversal/java::find-fq-class-name-by-class-name
               "Direction"
               (find-ast path '((:line . 12) (:offset . 46)))))))))
@@ -389,8 +389,8 @@
     (is (eq
           t
           (matches-signature
-            "io.spring.application.CursorPager.CursorPager-java.util.ArrayList-io.spring.application.CursorPager.Direction-BOOLEAN"
-            "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager.Direction-BOOLEAN"
+            "io.spring.application.CursorPager.CursorPager-java.util.ArrayList-io.spring.application.CursorPager$Direction-BOOLEAN"
+            "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager$Direction-BOOLEAN"
             *index*)))))
 
 (test matches-signature-with-object-array
