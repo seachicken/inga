@@ -47,7 +47,24 @@
                                  (format nil "{\"type\":\"METHODS\",\"fqcn\":\"~a\",\"from\":\"~a\"}"
                                          fq-class-name
                                          base-path))))
-      (when results (jsown:parse results)))))
+      (when results
+        (mapcar (lambda (method)
+                  (let* ((type (when (jsown:keyp method "returnType")
+                                 (jsown:val method "returnType")))
+                         (name (when (jsown:keyp type "name")
+                                 (jsown:val type "name"))))
+                    (when (find-if (lambda (type) (equal name type))
+                                   '("boolean"
+                                     "long"
+                                     "short"
+                                     "int"
+                                     "long"
+                                     "char"
+                                     "float"
+                                     "double"))
+                      (setf (jsown:val type "name") (string-upcase name)))
+                    method))
+                (jsown:parse results))))))
 
 (defun load-hierarchy (fq-class-name from)
   (unless (uiop:process-alive-p *jvm-dependency-loader*)
