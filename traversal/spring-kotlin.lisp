@@ -4,6 +4,7 @@
         #:inga/traversal/kotlin
         #:inga/traversal/spring-base
         #:inga/utils)
+  (:import-from #:quri)
   (:import-from #:inga/ast-index
                 #:get-ast)
   (:import-from #:inga/path
@@ -182,4 +183,56 @@
                           (return param)))
                   (when (equal (trav:ast-value param "name") target-name)
                     param)))))))
+
+(defmethod find-reference :around ((traversal traversal-kotlin) target-pos fq-name ast path)
+  (if (eq (cdr (assoc :type target-pos)) :rest-server)
+      (let ((rest-client (find-rest-client fq-name ast path (traversal-index traversal))))
+        (when (and
+                (equal (cdr (assoc :host rest-client)) (cdr (assoc :host target-pos)))
+                (equal (cdr (assoc :path rest-client)) (cdr (assoc :path target-pos)))
+                (equal (cdr (assoc :name rest-client)) (cdr (assoc :name target-pos))))
+          `((:path . ,path)
+            (:top-offset . ,(ast-value ast "textOffset")))))
+      (call-next-method)))
+
+;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/client/RestTemplate.html
+(defun find-rest-client (fq-name ast path index)
+  (cond
+    ((matches-signature
+       fq-name
+       "org.springframework.web.client.RestTemplate.exchange-java.lang.String-org.springframework.http.HttpMethod-NULL-java.lang.Class"
+       index)
+     `((:host . ,(find-api-host 0 ast))
+       (:name . ,(find-api-method-from-http-method (get-parameter 1 ast)))
+       (:path . ,(find-api-path 0 ast))))
+    ((matches-signature
+       fq-name
+       "org.springframework.web.client.RestTemplate.getForObject-java.lang.String-java.lang.Class"
+       index)
+     `((:host . ,(find-api-host 0 ast))
+       (:name . "GET")
+       (:path . ,(find-api-path 0 ast))))
+    ((matches-signature
+       fq-name
+       "org.springframework.web.client.RestTemplate.postForObject-java.lang.String-java.lang.Object-java.lang.Class"
+       index)
+     `((:host . ,(find-api-host 0 ast))
+       (:name . "POST")
+       (:path . ,(find-api-path 0 ast))))))
+
+(defun find-api-method-from-http-method (http-method)
+  (ast-value (nth 1 (trav:get-asts http-method '("REFERENCE_EXPRESSION"))) "name"))
+
+(defun find-api-host (arg-i ast)
+  (let ((url (first (trav:get-asts (get-parameter arg-i ast) '("LITERAL_STRING_TEMPLATE_ENTRY")))))
+    (when url
+      (format nil "~a" (quri:uri-port (quri:uri (ast-value url "name")))))))
+
+(defun find-api-path (arg-i ast)
+  (let ((url (first (trav:get-asts (get-parameter arg-i ast) '("LITERAL_STRING_TEMPLATE_ENTRY")))))
+    (when url
+      (quri:uri-path (quri:uri (ast-value url "name"))))))
+
+(defun get-parameter (idx ast)
+  (nth idx (trav:get-asts ast '("VALUE_ARGUMENT_LIST" "VALUE_ARGUMENT" "*"))))
 
