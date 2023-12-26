@@ -166,8 +166,6 @@
             (push (cons :origin (cdr (assoc :origin pos))) result))
           result)))))
 
-(defmethod find-reference ((traversal traversal-typescript) target-pos ast path))
-
 (defun find-component (traversal ast pos)
   (when (and (jsown:keyp ast "kindName")
              (or

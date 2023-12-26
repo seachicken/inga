@@ -4,11 +4,6 @@
         #:inga/utils)
   (:import-from #:alexandria
                 #:switch)
-  (:import-from #:quri)
-  (:import-from #:inga/path
-                #:merge-paths
-                #:get-variable-names
-                #:replace-variable-name)
   (:import-from #:inga/ast-index
                 #:ast-index-paths
                 #:ast-index-root-path
@@ -23,11 +18,8 @@
                 #:load-signatures
                 #:load-hierarchy)
   (:import-from #:inga/plugin/jvm-helper
-                #:convert-to-json-type
                 #:find-base-path
                 #:is-primitive-type)
-  (:import-from #:inga/plugin/spring-property-loader
-                #:find-property)
   (:export #:traversal-java))
 (in-package #:inga/traversal/java)
 
@@ -51,7 +43,7 @@
   (cdr (assoc :java *traversals*)))
 
 (defmethod stop-traversal ((traversal traversal-java))
-  (clean-index-groups (traversal-index traversal)) 
+  (clean-index-groups) 
   (clean-indexes (traversal-index traversal))
   (setf *traversals* nil))
 
@@ -75,7 +67,7 @@
                            *project-index-groups*)
                     (acons index-key (list path) *project-index-groups*))))))
 
-(defun clean-index-groups (index)
+(defun clean-index-groups ()
   (setf *package-index-groups* nil)
   (setf *project-index-groups* nil))
 
@@ -169,24 +161,11 @@
       ((find "PRIVATE" modifiers :test #'equal) :module-private)
       (t :module-default))))
 
-(defmethod find-reference ((traversal traversal-java) target-pos ast path)
-  (let ((fq-name (find-fq-name-for-reference ast path (traversal-index traversal))))
-    (unless fq-name (return-from find-reference))
-
-    (alexandria:switch ((cdr (assoc :type target-pos)))
-      (:rest-server
-        (let ((rest-client (find-rest-client fq-name ast path (traversal-index traversal))))
-          (when (and
-                  (equal (cdr (assoc :host rest-client)) (cdr (assoc :host target-pos)))
-                  (equal (cdr (assoc :path rest-client)) (cdr (assoc :path target-pos)))
-                  (equal (cdr (assoc :name rest-client)) (cdr (assoc :name target-pos))))
-            `((:path . ,path)
-              (:top-offset . ,(ast-value ast "startPos"))))))
-      (t
-        (when (matches-signature fq-name (cdr (assoc :fq-name target-pos))
-                                 (traversal-index traversal))
-          `((:path . ,path)
-            (:top-offset . ,(ast-value ast "startPos"))))))))
+(defmethod find-reference ((traversal traversal-java) target-pos fq-name ast path)
+  (when (matches-signature fq-name (cdr (assoc :fq-name target-pos))
+                           (traversal-index traversal))
+    `((:path . ,path)
+      (:top-offset . ,(ast-value ast "startPos")))))
 
 (defmethod find-class-hierarchy-generic ((traversal traversal-java)
                                          fq-class-name root-ast path index)
@@ -220,6 +199,9 @@
               '("java.lang.Object")))))
     (loop for child in (jsown:val ast "children")
           do (setf stack (append stack (list child))))))
+
+(defmethod find-fq-name ((traversal traversal-java) ast path)
+  (find-fq-name-for-reference ast path (traversal-index traversal)))
 
 (defun find-fq-name-for-reference (ast path index)
   (alexandria:switch ((ast-value ast "type") :test #'equal)
@@ -404,97 +386,6 @@
 
     (when (jsown:keyp ast "parent")
       (enqueue q (jsown:val ast "parent")))))
-
-(defun find-rest-client (fq-name ast path index)
-  ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/client/RestTemplate.html
-  (cond
-    ((matches-signature
-       fq-name
-       "org.springframework.web.client.RestTemplate.exchange-java.lang.String-org.springframework.http.HttpMethod-NULL-java.lang.Class"
-       index)
-     `((:host . ,(find-api-host 0 ast))
-       (:name . ,(find-api-method-from-http-method (nth 2 (trav:get-asts ast '("*")))))
-       (:path . ,(find-api-path 0 ast))))
-    ((matches-signature
-       fq-name
-       "org.springframework.web.client.RestTemplate.getForObject-java.lang.String-java.lang.Class"
-       index)
-     `((:host . ,(find-api-host 0 ast))
-       (:name . "GET")
-       (:path . ,(find-api-path 0 ast))))
-    ((matches-signature
-       fq-name
-       "org.springframework.web.client.RestTemplate.getForObject-java.net.URI-java.lang.Class"
-       index)
-     (let ((server (find-server-from-uri 0 ast path index)))
-       `((:host . ,(cdr (assoc :host server)))
-         (:name . "GET")
-         (:path . ,(cdr (assoc :path server))))))
-    ((matches-signature
-       fq-name
-       "org.springframework.web.client.RestTemplate.postForObject-java.lang.String-java.lang.Object-java.lang.Class"
-       index)
-     `((:host . ,(find-api-host 0 ast))
-       (:name . "POST")
-       (:path . ,(find-api-path 0 ast))))))
-
-(defun find-api-method-from-http-method (http-method)
-  (ast-value http-method "name"))
-
-(defun find-api-host (arg-i ast)
-  (let ((url (get-parameter arg-i ast)))
-    (when (equal (ast-value url "type") "STRING_LITERAL")
-      (format nil "~a" (quri:uri-port (quri:uri (ast-value url "name")))))))
-
-(defun find-api-path (arg-i ast)
-  (let ((url (get-parameter arg-i ast)))
-    (when (equal (ast-value url "type") "STRING_LITERAL")
-      (quri:uri-path (quri:uri (ast-value url "name"))))))
-
-(defun get-parameter (idx ast)
-  (nth (1+ idx) (trav:get-asts ast '("*"))))
-
-(defun find-server-from-uri (arg-i ast path index)
-  (let ((param-uri (nth (1+ arg-i) (trav:get-asts ast '("*")))))
-    (let ((variable-uri (find-variable (ast-value param-uri "name") param-uri))
-          found-path
-          host)
-      (labels ((find-uri-components-builder (ast path)
-                 (let ((fq-name (find-fq-name-for-reference ast path index)))
-                   (unless fq-name (return-from find-uri-components-builder))
-                   (cond
-                     ((equal
-                        fq-name
-                        "org.springframework.web.util.UriComponentsBuilder.path-java.lang.String")
-                      (setf found-path (format nil "/{~a}"
-                                               (convert-to-json-type
-                                                 (find-fq-class-name-by-variable-name
-                                                   (ast-value (get-parameter 0 ast) "name")
-                                                   ast path index)))))
-                     ((equal
-                        fq-name
-                        "org.springframework.web.util.UriComponentsBuilder.fromUriString-java.lang.String")
-                      (let ((v (find-variable (ast-value (get-parameter 0 ast) "name") ast)))
-                        (let ((value (first (trav:filter-by-name
-                                              (trav:get-asts v '("MODIFIERS"
-                                                                 "ANNOTATION"))
-                                              "Value"))))
-                          (setf host
-                                (write-to-string
-                                  (quri:uri-port
-                                    (quri:uri 
-                                      (find-property
-                                        (first (get-variable-names
-                                                 (ast-value (first (trav:get-asts value '("STRING_LITERAL"))) "name")))
-                                        path)))))))))
-                   (find-uri-components-builder
-                     (first (trav:get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION")))
-                     path))))
-        (find-uri-components-builder
-          (first (trav:get-asts variable-uri '("METHOD_INVOCATION")))
-          path))
-      `((:host . ,host)
-        (:path . ,found-path)))))
 
 (defun get-fq-name-of-declaration (root-ast top-offset)
   (let ((stack (list root-ast))

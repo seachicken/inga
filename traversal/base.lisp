@@ -31,6 +31,7 @@
            #:find-entrypoint-generic
            #:find-references
            #:find-reference
+           #:find-fq-name
            #:find-fq-class-name
            #:find-fq-class-name-generic
            #:find-signature
@@ -65,7 +66,7 @@
 
 (defgeneric start-traversal (kind include exclude path index)
   (:method (kind include exclude path index)
-   (error 'unknown-traversal :name kind)))
+   (error (format nil "unknown traversal. kind: ~a" kind))))
 
 (defgeneric stop-traversal (traversal)
   (:method (traversal)))
@@ -106,8 +107,6 @@
     :label "find-references"
     :args pos))
 
-(defgeneric find-reference (traversal target-pos ast path))
-
 (defun find-references-by-file (traversal path ast target-pos)
   (let ((q (make-queue))
         results)
@@ -116,7 +115,8 @@
       (let ((ast (dequeue q)))
         (when (null ast) (return))
 
-        (let ((ref (find-reference traversal target-pos ast path)))
+        (let* ((fq-name (find-fq-name traversal ast path))
+               (ref (when fq-name (find-reference traversal target-pos fq-name ast path))))
           (when ref
             (setf results (append results (list ref)))))
 
@@ -124,6 +124,14 @@
           (loop for child in (jsown:val ast "children")
                 do (enqueue q child)))))
     results))
+
+(defgeneric find-reference (traversal target-pos fq-name ast path)
+  (:method (traversal target-pos fq-name ast path)
+   (error (format nil "unknown traversal. path: ~a" path))))
+
+(defgeneric find-fq-name (traversal ast path)
+  (:method (traversal ast path)
+   (error (format nil "unknown traversal. path: ~a" path))))
 
 (defun find-fq-class-name (ast path)
   (find-fq-class-name-generic (get-traversal path) ast path))

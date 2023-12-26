@@ -147,24 +147,26 @@
     (loop for child in (jsown:val ast "children")
           do (setf stack (append stack (list child))))))
 
-(defmethod find-reference ((traversal traversal-kotlin) target-pos ast path)
-  (let ((fq-name (find-fq-name-for-reference ast path (traversal-index traversal))))
-    (unless fq-name (return-from find-reference))
+(defmethod find-reference ((traversal traversal-kotlin) target-pos fq-name ast path)
+  (unless fq-name (return-from find-reference))
 
-    (alexandria:switch ((cdr (assoc :type target-pos)))
-      (:rest-server
-        (let ((rest-client (find-rest-client fq-name ast path (traversal-index traversal))))
-          (when (and
-                  (equal (cdr (assoc :host rest-client)) (cdr (assoc :host target-pos)))
-                  (equal (cdr (assoc :path rest-client)) (cdr (assoc :path target-pos)))
-                  (equal (cdr (assoc :name rest-client)) (cdr (assoc :name target-pos))))
-            `((:path . ,path)
-              (:top-offset . ,(ast-value ast "textOffset"))))))
-      (t
-        (when (equal fq-name (cdr (assoc :fq-name target-pos)))
-          (list
-            (cons :path path)
-            (cons :top-offset (ast-value ast "textOffset"))))))))
+  (alexandria:switch ((cdr (assoc :type target-pos)))
+    (:rest-server
+      (let ((rest-client (find-rest-client fq-name ast path (traversal-index traversal))))
+        (when (and
+                (equal (cdr (assoc :host rest-client)) (cdr (assoc :host target-pos)))
+                (equal (cdr (assoc :path rest-client)) (cdr (assoc :path target-pos)))
+                (equal (cdr (assoc :name rest-client)) (cdr (assoc :name target-pos))))
+          `((:path . ,path)
+            (:top-offset . ,(ast-value ast "textOffset"))))))
+    (t
+      (when (equal fq-name (cdr (assoc :fq-name target-pos)))
+        (list
+          (cons :path path)
+          (cons :top-offset (ast-value ast "textOffset")))))))
+
+(defmethod find-fq-name ((traversal traversal-kotlin) ast path)
+  (find-fq-name-for-reference ast path (traversal-index traversal)))
 
 (defun find-fq-name-for-reference (ast path index)
   (alexandria:switch ((ast-value ast "type") :test #'equal)

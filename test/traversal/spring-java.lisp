@@ -11,7 +11,7 @@
 
 (defparameter *java-path* (merge-pathnames "test/fixtures/java/"))
 
-(test find-definitions-for-spring-rest-get-method
+(test find-definitions-for-rest-server-get-method
   (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (equal
           `(((:type . :rest-server)
@@ -30,6 +30,45 @@
                         '((:line . 20) (:offset . 17))))))))
           (find-definitions
             (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 20))))))
+
+(test find-references-for-rest-client-get-method
+  (with-fixture jvm-context (*java-path* 'ast-index-disk)
+    (is (equal
+          `(((:path . "p1/client/ClientRestTemplate.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames "p1/client/ClientRestTemplate.java" *java-path*)
+                      '((:line . 16) (:offset . 16)))))
+            ((:path . "p1/client/ClientRestTemplate.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames "p1/client/ClientRestTemplate.java" *java-path*)
+                      '((:line . 24) (:offset . 16))))))
+          (find-references
+            `((:type . :rest-server)
+              (:host . "8080")
+              (:path . "/path")
+              (:name . "GET")
+              (:file-pos .
+               ((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java"))))
+            *index*)))))
+
+(test find-references-for-rest-client-post-method
+  (with-fixture jvm-context (*java-path* 'ast-index-disk)
+    (is (equal
+          `(((:path . "p1/client/ClientRestTemplate.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames "p1/client/ClientRestTemplate.java" *java-path*)
+                      '((:line . 28) (:offset . 16))))))
+          (find-references
+            `((:type . :rest-server)
+              (:host . "8080")
+              (:path . "/path")
+              (:name . "POST")
+              (:file-pos .
+               ((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java"))))
+            *index*)))))
 
 ;; RequestMapping
 ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/bind/annotation/RequestMapping.html
