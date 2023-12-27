@@ -198,7 +198,28 @@
                       (merge-pathnames
                         "src/main/java/io/spring/application/ArticleQueryService.java"
                         *spring-boot-path*)
+                      '((:line . 76) (:offset . 14)))))
+            ((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames
+                        "src/main/java/io/spring/application/ArticleQueryService.java"
+                        *spring-boot-path*)
                       '((:line . 84) (:offset . 14)))))
+            ((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames
+                        "src/main/java/io/spring/application/ArticleQueryService.java"
+                        *spring-boot-path*)
+                      '((:line . 96) (:offset . 14)))))
+            ((:path . "src/main/java/io/spring/application/CommentQueryService.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames
+                        "src/main/java/io/spring/application/CommentQueryService.java"
+                        *spring-boot-path*)
+                      '((:line . 83) (:offset . 12))))) 
             ((:path . "src/main/java/io/spring/application/CommentQueryService.java")
              ,(cons :top-offset
                     (convert-to-top-offset

@@ -116,15 +116,10 @@
     (setf root-ast ast)
     (enqueue q ast)
     (loop
-      with class-name
-      with is-entrypoint-file
-      with entrypoint-name
       do
       (setf ast (dequeue q))
       (if (null ast) (return))
 
-      (when (equal (ast-value ast "type") "CLASS")
-        (setf class-name (jsown:val ast "name")))
       (when (and
               (or
                 ;; field reference
@@ -139,9 +134,7 @@
         (let ((pos (list
                      (cons :type (get-scope ast))
                      (cons :path src-path)
-                     (if (equal (jsown:val ast "name") "<init>")
-                         (cons :name class-name)
-                         (cons :name (jsown:val ast "name")))
+                     (cons :name (jsown:val ast "name"))
                      (cons :fq-name (get-fq-name-of-declaration
                                       root-ast
                                       (jsown:val ast "pos")))
@@ -378,10 +371,7 @@
                 (jsown:keyp ast "name")
                 (= (jsown:val ast "pos") top-offset))
           (setf result (format nil "~{~a~^.~}"
-                               (remove nil (list result
-                                                 (if (equal (jsown:val ast "name") "<init>")
-                                                     class-name
-                                                     (jsown:val ast "name"))))))
+                               (remove nil (list result (jsown:val ast "name")))))
           (when (equal (ast-value ast "type") "METHOD")
             (loop for child in (jsown:val ast "children")
                   do
