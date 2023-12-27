@@ -328,6 +328,9 @@
 (defun find-fq-class-name-by-variable-name (variable-name ast path index)
   (let ((variable (find-variable variable-name ast)))
     (cond
+      ((trav:get-asts variable '("PRIMITIVE_TYPE"))
+       (find-fq-class-name-by-class-name
+         (ast-value (first (trav:get-asts variable '("PRIMITIVE_TYPE"))) "name") variable))
       ((trav:get-asts variable '("IDENTIFIER"))
        (find-fq-class-name-by-class-name
          (ast-value (first (trav:get-asts variable '("IDENTIFIER"))) "name") variable))
