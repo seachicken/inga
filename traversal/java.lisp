@@ -256,6 +256,7 @@
 
 (defmethod find-fq-class-name-generic ((traversal traversal-java) ast path)
   (find-fq-class-name-java ast path (traversal-index traversal)))
+
 (defun find-fq-class-name-java (ast path index)
   (if (uiop:string-suffix-p (ast-value ast "type") "_LITERAL")
       (if (equal (ast-value ast "type") "STRING_LITERAL")

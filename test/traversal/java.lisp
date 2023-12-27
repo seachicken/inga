@@ -277,18 +277,19 @@
     (let ((path "src/main/java/io/spring/application/ArticleQueryService.java"))
       (is (equal
             "io.spring.application.CursorPager"
-            (inga/traversal/java::find-fq-class-name-by-class-name
-              "CursorPager"
-              (find-ast path '((:line . 63) (:offset . 14)))))))))
+            ;;        ↓
+            ;; return new CursorPager<>(new ArrayList<>(), page.getDirection(), false);
+            (find-fq-class-name (find-ast path '((:line . 63) (:offset . 14))) path))))))
 
 (test find-fq-class-name-for-inner-class
   (with-fixture jvm-context (*spring-boot-path* 'ast-index-memory :include '("src/main/**"))
     (let ((path "src/main/java/io/spring/application/CursorPager.java"))
       (is (equal
             "io.spring.application.CursorPager$Direction"
-            (inga/traversal/java::find-fq-class-name-by-class-name
-              "Direction"
-              (find-ast path '((:line . 12) (:offset . 46)))))))))
+            ;;                                            ↓
+            ;; public CursorPager(List<T> data, Direction direction, boolean hasExtra) {
+            (find-fq-class-name
+              (find-ast path '((:line . 12) (:offset . 46))) path))))))
 
 (test find-references-for-kotlin-class
   (with-fixture jvm-context (*java-path* 'ast-index-disk)
