@@ -32,6 +32,7 @@
            #:find-references
            #:find-reference
            #:find-fq-name
+           #:find-fq-name-generic
            #:find-fq-class-name
            #:find-fq-class-name-generic
            #:find-signature
@@ -115,7 +116,7 @@
       (let ((ast (dequeue q)))
         (when (null ast) (return))
 
-        (let* ((fq-name (find-fq-name traversal ast path))
+        (let* ((fq-name (find-fq-name ast path))
                (ref (when fq-name (find-reference traversal target-pos fq-name ast path))))
           (when ref
             (setf results (append results (list ref)))))
@@ -129,7 +130,9 @@
   (:method (traversal target-pos fq-name ast path)
    (error (format nil "unknown traversal. path: ~a" path))))
 
-(defgeneric find-fq-name (traversal ast path)
+(defun find-fq-name (ast path)
+  (find-fq-name-generic (get-traversal path) ast path))
+(defgeneric find-fq-name-generic (traversal ast path)
   (:method (traversal ast path)
    (error (format nil "unknown traversal. path: ~a" path))))
 

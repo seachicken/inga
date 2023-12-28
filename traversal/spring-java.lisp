@@ -35,7 +35,7 @@
               (equal (ast-value ast "type") "INTERFACE"))
       (let ((annotations (trav:get-asts ast '("MODIFIERS" "ANNOTATION"))))
         (unless (trav:filter-by-name annotations "RestController")
-          (return-from find-definitions-generic file-definitions))
+          (return file-definitions))
 
         (let ((request-mapping (first (trav:filter-by-name annotations "RequestMapping"))))
           (when request-mapping
@@ -58,7 +58,7 @@
              (rest-paths (mapcar (lambda (v) (merge-paths rest-base-path v))
                             (get-values-from-request-mapping :java mapping))))
         (unless mapping
-          (return-from find-definitions-generic file-definitions))
+          (return file-definitions))
 
         (labels ((to-general-path (rest-path)
                    (loop for vn in (get-variable-names rest-path)
@@ -83,6 +83,7 @@
                                                      (trav:ast-value ast "pos")))
                                    file-definitions))))
                     rest-paths)))))
+
     (loop for child in (jsown:val ast "children") do (enqueue q child))))
 
 (defmethod find-reference :around ((traversal traversal-java) target-pos fq-name ast path)
@@ -151,7 +152,7 @@
           found-path
           host)
       (labels ((find-uri-components-builder (ast path)
-                 (let ((fq-name (find-fq-name-for-reference ast path index)))
+                 (let ((fq-name (find-fq-name ast path)))
                    (unless fq-name (return-from find-uri-components-builder))
                    (cond
                      ((equal
@@ -159,9 +160,7 @@
                         "org.springframework.web.util.UriComponentsBuilder.path-java.lang.String")
                       (setf found-path (format nil "/{~a}"
                                                (convert-to-json-type
-                                                 (find-fq-class-name-by-variable-name
-                                                   (ast-value (get-parameter 0 ast) "name")
-                                                   ast path index)))))
+                                                 (find-fq-class-name (get-parameter 0 ast) path)))))
                      ((equal
                         fq-name
                         "org.springframework.web.util.UriComponentsBuilder.fromUriString-java.lang.String")

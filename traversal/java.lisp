@@ -20,7 +20,8 @@
   (:import-from #:inga/plugin/jvm-helper
                 #:find-base-path
                 #:is-primitive-type)
-  (:export #:traversal-java))
+  (:export #:traversal-java
+           #:find-variable))
 (in-package #:inga/traversal/java)
 
 (defvar *package-index-groups* nil)
@@ -160,7 +161,7 @@
     `((:path . ,path)
       (:top-offset . ,(ast-value ast "startPos")))))
 
-(defmethod find-fq-name ((traversal traversal-java) ast path)
+(defmethod find-fq-name-generic ((traversal traversal-java) ast path)
   (find-fq-name-for-reference ast path (traversal-index traversal)))
 
 (defun find-fq-name-for-reference (ast path index)

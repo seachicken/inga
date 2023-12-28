@@ -105,7 +105,7 @@
       (cons :path path)
       (cons :top-offset (ast-value ast "textOffset")))))
 
-(defmethod find-fq-name ((traversal traversal-kotlin) ast path)
+(defmethod find-fq-name-generic ((traversal traversal-kotlin) ast path)
   (find-fq-name-for-reference ast path))
 
 (defun find-fq-name-for-reference (ast path)

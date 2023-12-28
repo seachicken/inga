@@ -42,11 +42,11 @@ jobs:
 
             ros -s fiveam -e \"
               (ql:quickload :inga)
-              (unless (asdf:test-system :inga)
-                (uiop:quit 1))
+              (handler-case (asdf:test-system :inga)
+                (error () (uiop:quit 1)))
               (ql:quickload :inga/test-jvm)
-              (unless (asdf:test-system :inga/test-jvm)
-                (uiop:quit 1))\""
+              (handler-case (asdf:test-system :inga/test-jvm)
+                (error () (uiop:quit 1)))\""
 
   test-typescript:
     strategy:
@@ -78,9 +78,9 @@ jobs:
           docker run test-inga-typescript -c "
             ros -s fiveam -e \"
               (ql:quickload :inga)
-              (unless (asdf:test-system :inga)
-                (uiop:quit 1))
+              (handler-case (asdf:test-system :inga)
+                (error () (uiop:quit 1)))
               (ql:quickload :inga/test-node)
-              (unless (asdf:test-system :inga/test-node)
-                (uiop:quit 1))\""
+              (handler-case (asdf:test-system :inga/test-node)
+                (error () (uiop:quit 1)))\""
 
