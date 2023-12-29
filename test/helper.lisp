@@ -28,10 +28,12 @@
   (inga/plugin/spring-property-loader:start root-path)
   (setf *index* (make-instance index-type
                                :root-path root-path))
-  (start-traversal :java include nil root-path *index*)
-  (start-traversal :kotlin include nil root-path *index*)
-  (&body)
-  (loop for a in *traversals* do (stop-traversal a))
+  (let ((java (start-traversal :java include nil root-path *index*))
+        (kotlin (start-traversal :kotlin include nil root-path *index*)))
+
+    (&body)
+    (stop-traversal java)
+    (stop-traversal kotlin))
   (inga/plugin/spring-property-loader:stop)
   (inga/plugin/jvm-dependency-loader:stop))
 
@@ -40,9 +42,9 @@
   (defparameter *index* nil)
   (setf *index* (make-instance index-type
                                :root-path root-path))
-  (start-traversal :typescript include nil root-path *index*)
-  (&body)
-  (loop for a in *traversals* do (stop-traversal a)))
+  (let ((typescript (start-traversal :typescript include nil root-path *index*)))
+    (&body)
+    (stop-traversal typescript)))
 
 (defmacro find-ast (path pos &key key-offset)
   `(let ((result
