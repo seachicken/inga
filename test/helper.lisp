@@ -23,32 +23,26 @@
 (def-fixture jvm-context (root-path index-type &key (include '("**")))
   (defparameter *root-path* root-path)
   (defparameter *index* nil)
-  (defparameter *analyzers* nil)
   (defparameter *key-offset* "pos")
   (inga/plugin/jvm-dependency-loader:start root-path)
   (inga/plugin/spring-property-loader:start root-path)
   (setf *index* (make-instance index-type
                                :root-path root-path))
-  (setf *analyzers*
-        (list
-          (start-traversal :java include nil root-path *index*)
-          (start-traversal :kotlin include nil root-path *index*)))
+  (start-traversal :java include nil root-path *index*)
+  (start-traversal :kotlin include nil root-path *index*)
   (&body)
-  (loop for a in *analyzers* do (stop-traversal a))
+  (loop for a in *traversals* do (stop-traversal a))
   (inga/plugin/spring-property-loader:stop)
   (inga/plugin/jvm-dependency-loader:stop))
 
 (def-fixture node-context (root-path index-type &key (include '("**")))
   (defparameter *root-path* root-path)
   (defparameter *index* nil)
-  (defparameter *analyzers* nil)
   (setf *index* (make-instance index-type
                                :root-path root-path))
-  (setf *analyzers*
-        (list
-          (start-traversal :typescript include nil root-path *index*)))
+  (start-traversal :typescript include nil root-path *index*)
   (&body)
-  (loop for a in *analyzers* do (stop-traversal a)))
+  (loop for a in *traversals* do (stop-traversal a)))
 
 (defmacro find-ast (path pos &key key-offset)
   `(let ((result
