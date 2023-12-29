@@ -99,7 +99,7 @@
             (read-line (uiop:process-info-output process)) 
             (loop while (listen (uiop:process-info-error-output process))
                   do (format t "~a~%" (read-line (uiop:process-info-error-output process))))))
-        (error (e) (error 'inga-error-process-failed))))
+        (error () (error 'inga-error-process-failed))))
     :label "jvm-dependency-loader"
     :args cmd))
 

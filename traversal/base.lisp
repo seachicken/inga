@@ -82,8 +82,12 @@
    (ast-index-paths (traversal-index traversal))))
 
 (defun find-definitions (range)
-  (let ((traversal (get-traversal (cdr (assoc :path range)))))
-    (find-definitions-generic traversal range)))
+  (inga/utils::funtime
+    (lambda ()
+      (let ((traversal (get-traversal (cdr (assoc :path range)))))
+        (find-definitions-generic traversal range)))
+    :label "find-definitions"
+    :args range))
 (defgeneric find-definitions-generic (traversal range))
 
 (defun find-entrypoint (pos)
