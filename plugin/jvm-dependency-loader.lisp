@@ -6,6 +6,8 @@
   (:import-from #:inga/errors
                 #:inga-error-process-not-running
                 #:inga-error-process-failed)
+  (:import-from #:inga/logger
+                #:log-error)
   (:import-from #:inga/plugin/jvm-helper
                 #:find-base-path
                 #:is-primitive-type)
@@ -98,7 +100,7 @@
           (prog1
             (read-line (uiop:process-info-output process)) 
             (loop while (listen (uiop:process-info-error-output process))
-                  do (format t "~a~%" (read-line (uiop:process-info-error-output process))))))
+                  do (log-error (format nil "~a" (read-line (uiop:process-info-error-output process)))))))
         (error () (error 'inga-error-process-failed))))
     :label "jvm-dependency-loader"
     :args cmd))
