@@ -71,7 +71,11 @@
       (let* ((mapping (first (trav:get-asts ast '("MODIFIER_LIST"
                                                   "ANNOTATION_ENTRY"))))
              (rest-paths (mapcar (lambda (v) (merge-paths rest-base-path v))
-                                 (get-values-from-request-mapping :kotlin mapping))))
+                                 (get-values-from-request-mapping :kotlin mapping)))
+             (file-pos (find-if (lambda (def) (eq (cdr (assoc :top-offset def))
+                                                  (jsown:val (trav:ast-value ast "textRange")
+                                                             "startOffset")))
+                                file-definitions)))
         (unless mapping
           (return-from find-definitions-generic file-definitions))
 
@@ -97,11 +101,8 @@
                         (:host . ,(find-property "server.port" path))
                         (:name . ,(get-method-from-request-mapping :kotlin mapping))
                         (:path . ,(to-general-path rest-path))
-                        (:file-pos .
-                         ,(find-if (lambda (def) (eq (cdr (assoc :top-offset def))
-                                                     (jsown:val (trav:ast-value ast "textRange")
-                                                                "startOffset")))
-                                   file-definitions))))
+                        (:origin . ,(cdr (assoc :origin file-pos)))
+                        (:file-pos . ,file-pos)))
                     rest-paths)))))
 
     (loop for child in (jsown:val ast "children") do (enqueue q child))))

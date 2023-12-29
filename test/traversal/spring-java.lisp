@@ -18,6 +18,7 @@
              (:host . "8080")
              (:name . "GET")
              (:path . "/{string}")
+             (:origin)
              (:file-pos .
               ((:type . :module-public)
                (:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")

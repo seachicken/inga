@@ -99,47 +99,6 @@
           (find-definitions
             (create-range "p1/GenericTypeDefinition.java" :line 6))))))
 
-(test find-definitions-for-spring-rest-controller
-  (with-fixture jvm-context (*spring-boot-path* 'ast-index-disk)
-    (is (equal
-          `(((:type . :rest-server)
-             (:host . "8080")
-             (:name . "GET")
-             (:path . "/articles")
-             (:file-pos .
-              ((:type . :module-public)
-               (:path . "src/main/java/io/spring/api/ArticlesApi.java")
-               (:name . "getArticles")
-               (:fq-name . "io.spring.api.ArticlesApi.getArticles-INT-INT-java.lang.String-java.lang.String-java.lang.String-io.spring.core.user.User")
-               ,(cons :top-offset
-                      (convert-to-top-offset
-                        (merge-pathnames
-                          "src/main/java/io/spring/api/ArticlesApi.java"
-                          *spring-boot-path*)
-                        '((:line . 49) (:offset . 25))))))))
-          (find-definitions
-            (create-range "src/main/java/io/spring/api/ArticlesApi.java" :line 56))))))
-
-(test find-definitions-for-spring-rest-get-method-with-request-mapping
-  (with-fixture jvm-context (*java-path* 'ast-index-disk)
-    (is (equal
-          `(((:type . :rest-server)
-             (:host . "8080")
-             (:name . "GET")
-             (:path . "/request/{string}")
-             (:file-pos .
-              ((:type . :module-public)
-               (:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
-               (:name . "getWithRequest")
-               (:fq-name . "p1.RestControllerDefinition.getWithRequest-java.lang.String")
-               ,(cons :top-offset
-                      (convert-to-top-offset
-                        (merge-pathnames
-                          "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
-                        '((:line . 16) (:offset . 17))))))))
-          (find-definitions
-            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 16))))))
-
 (test find-references-for-new-class
   (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (equal

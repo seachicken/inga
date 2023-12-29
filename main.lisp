@@ -255,7 +255,7 @@
                                                    (:origin .
                                                     ,(convert-to-output-pos
                                                        (context-project-path ctx)
-                                                       (cdr (assoc :origin pos))))
+                                                       (cdr (assoc :file-pos pos))))
                                                    (:entrypoint .
                                                     ,(convert-to-output-pos
                                                        (context-project-path ctx)

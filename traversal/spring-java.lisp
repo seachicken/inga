@@ -56,7 +56,10 @@
                                '("GetMapping" "PostMapping" "PutMapping" "DeleteMapping"
                                  "RequestMapping"))))
              (rest-paths (mapcar (lambda (v) (merge-paths rest-base-path v))
-                            (get-values-from-request-mapping :java mapping))))
+                            (get-values-from-request-mapping :java mapping)))
+             (file-pos (find-if (lambda (def) (eq (cdr (assoc :top-offset def))
+                                                  (trav:ast-value ast "pos")))
+                                file-definitions)))
         (unless mapping
           (return file-definitions))
 
@@ -78,10 +81,8 @@
                         (:host . ,(find-property "server.port" path))
                         (:name . ,(get-method-from-request-mapping :java mapping))
                         (:path . ,(to-general-path rest-path))
-                        (:file-pos .
-                         ,(find-if (lambda (def) (eq (cdr (assoc :top-offset def))
-                                                     (trav:ast-value ast "pos")))
-                                   file-definitions))))
+                        (:origin . ,(cdr (assoc :origin file-pos)))
+                        (:file-pos . ,file-pos)))
                     rest-paths)))))
 
     (loop for child in (jsown:val ast "children") do (enqueue q child))))
