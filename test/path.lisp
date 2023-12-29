@@ -10,7 +10,17 @@
 (test merge-paths
   (is (equal
         "/a"
+        (merge-paths "/" "a"))))
+
+(test merge-paths-with-combined-slashes
+  (is (equal
+        "/a"
         (merge-paths "/" "/a"))))
+
+(test merge-paths-with-slash-added
+  (is (equal
+        "/a/b"
+        (merge-paths "/a" "b"))))
 
 (test get-variable-names
   (is (equal

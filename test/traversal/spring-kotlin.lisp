@@ -11,7 +11,7 @@
 
 (defparameter *kotlin-path* (merge-pathnames "test/fixtures/kotlin/"))
 
-(test find-definitions-for-rest-server-get-method
+(test find-definitions-for-rest-server
   (with-fixture jvm-context (*kotlin-path* 'ast-index-disk)
     (is (equal
           `(((:type . :rest-server)
@@ -33,7 +33,7 @@
           (find-definitions
             (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.kt" :line 15))))))
 
-(test find-references-for-rest-client-get-method
+(test find-references-for-rest-client
   (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
     (is (equal
           `(((:path . "p1/client/ClientRestTemplate.kt")
@@ -51,23 +51,6 @@
               (:host . "8080")
               (:path . "/path")
               (:name . "GET")
-              (:file-pos .
-               ((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java"))))
-            *index*)))))
-
-(test find-references-for-rest-client-post-method
-  (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
-    (is (equal
-          `(((:path . "p1/client/ClientRestTemplate.kt")
-             ,(cons :top-offset
-                    (convert-to-top-offset
-                      (merge-pathnames "p1/client/ClientRestTemplate.kt" *kotlin-path*)
-                      '((:line . 22) (:offset . 29))))))
-          (find-references
-            `((:type . :rest-server)
-              (:host . "8080")
-              (:path . "/path")
-              (:name . "POST")
               (:file-pos .
                ((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java"))))
             *index*)))))

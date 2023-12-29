@@ -6,9 +6,13 @@
 (in-package #:inga/path)
 
 (defun merge-paths (a b)
-  (if (and (uiop:string-suffix-p "/" a) (uiop:string-prefix-p "/" b))
-      (concatenate 'string a (subseq b 1))
-      (concatenate 'string a b)))
+  (cond
+    ((and (uiop:string-suffix-p "/" a) (uiop:string-prefix-p "/" b))
+     (concatenate 'string a (subseq b 1)))
+    ((and (not (uiop:string-suffix-p "/" a)) (not (uiop:string-prefix-p "/" b)))
+     (concatenate 'string a "/" b))
+    (t
+     (concatenate 'string a b))))
 
 (defun get-variable-names (sequence)
   (loop for c across sequence

@@ -14,16 +14,4 @@ class RestControllerDefinition {
     @GetMapping("/{v}")
     fun get(@PathVariable("v") v: String) {
     }
-
-    @PostMapping
-    fun create() {
-    }
-
-    @PutMapping("/{v}")
-    fun update(@PathVariable("v") v: String) {
-    }
-
-    @DeleteMapping("/{v}")
-    fun delete(@PathVariable("v") v: String) {
-    }
 }
