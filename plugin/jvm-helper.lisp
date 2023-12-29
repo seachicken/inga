@@ -30,7 +30,21 @@
                      ) :test 'equal))
 
 (defun convert-to-json-type (type)
-  (alexandria:switch (type :test #'equal)
-    ("java.lang.String" "string")
-    ("INT" "number")))
+  (cond
+    ((or (equal type "BOOLEAN")
+         (equal type "java.lang.Boolean"))
+     "boolean")
+    ((or (equal type "INT")
+         (equal type "LONG")
+         (equal type "FLOAT")
+         (equal type "DOUBLE")
+         (equal type "java.lang.Integer")
+         (equal type "java.lang.Long") 
+         (equal type "java.lang.Float")
+         (equal type "java.lang.Double"))
+     "number")
+    ((equal type "java.lang.String")
+     "string")
+    (t
+     (error (format nil "unexpected type: ~a" type)))))
 
