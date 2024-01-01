@@ -48,7 +48,7 @@
 (defparameter *lightrun-path*
   (truename (uiop:merge-pathnames* "test/fixtures/spring-tutorials/lightrun/")))
 
-(test analyze-by-range-for-entry-points
+(test analyze-by-range-for-entrypoints
   (let ((ctx (inga/main::start *back-path* '(:java) :exclude '("src/test/**"))))
     (is (equal
           '(((:path . "src/main/java/io/spring/api/ArticlesApi.java")

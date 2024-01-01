@@ -15,9 +15,6 @@
   (:export #:traversal-kotlin))
 (in-package #:inga/traversal/kotlin)
 
-(defvar *package-index-groups* nil)
-(defvar *project-index-groups* nil)
-
 (defparameter *include-kotlin* '("*.kt"))
 
 (defclass traversal-kotlin (traversal)
@@ -31,11 +28,17 @@
                               :index index)
                *traversals*))
   (create-indexes index include *include-kotlin* exclude)
+  (create-index-groups (cdr (assoc :kotlin *traversals*)))
   (cdr (assoc :kotlin *traversals*)))
 
 (defmethod stop-traversal ((traversal traversal-kotlin))
   (clean-indexes (traversal-index traversal))
   (setf *traversals* nil))
+
+(defun create-index-groups (traversal)
+  (loop for path in (remove-if-not (lambda (p) (eq (get-file-type p) :kotlin))
+                                   (ast-index-paths (traversal-index traversal)))
+        do (set-index-group traversal path)))
 
 (defmethod find-definitions-generic ((traversal traversal-kotlin) range)
   (let* ((q (make-queue))

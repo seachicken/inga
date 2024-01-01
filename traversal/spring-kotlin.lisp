@@ -17,6 +17,21 @@
                 #:find-property))
 (in-package #:inga/traversal/spring-kotlin)
 
+(defmethod set-index-group :after ((traversal traversal-kotlin) path)
+  (when (is-rest-client (get-ast (traversal-index traversal) path))
+    (push path (gethash :rest-client *file-index*))))
+
+(defun is-rest-client (ast)
+  (trav:filter-by-name
+    (trav:get-asts ast '("IMPORT_LIST" "IMPORT_DIRECTIVE"))
+    "org.springframework.web.client.RestTemplate"
+    :key-name "fqName"))
+
+(defmethod get-scoped-index-paths-generic :around ((traversal traversal-kotlin) pos)
+  (if (eq (cdr (assoc :type pos)) :rest-server)
+      (gethash :rest-client *file-index*)
+      (call-next-method)))
+
 (defmethod find-definitions-generic :around ((traversal traversal-kotlin) range)
   (loop
     with q = (make-queue)

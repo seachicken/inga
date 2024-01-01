@@ -52,7 +52,7 @@
               (:path . "/path")
               (:name . "GET")
               (:file-pos .
-               ((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java"))))
+               ((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.kt"))))
             *index*)))))
 
 ;; RequestMapping

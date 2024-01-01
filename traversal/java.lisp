@@ -24,9 +24,6 @@
            #:find-variable))
 (in-package #:inga/traversal/java)
 
-(defvar *package-index-groups* nil)
-(defvar *project-index-groups* nil)
-
 (defparameter *include-java* '("*.java"))
 
 (defclass traversal-java (traversal)
@@ -40,50 +37,41 @@
                               :index index)
                *traversals*))
   (create-indexes index include *include-java* exclude)
-  (create-index-groups index)
+  (create-index-groups (cdr (assoc :java *traversals*)))
   (cdr (assoc :java *traversals*)))
 
 (defmethod stop-traversal ((traversal traversal-java))
-  (clean-index-groups) 
   (clean-indexes (traversal-index traversal))
   (setf *traversals* nil))
 
-(defun create-index-groups (index)
+(defun create-index-groups (traversal)
   (loop for path in (remove-if-not (lambda (p) (eq (get-file-type p) :java))
-                                   (ast-index-paths index))
-        do
-        (let ((index-key (find-package-index-key (get-ast index path))))
-          (setf *package-index-groups*
-                (if (assoc index-key *package-index-groups*)
-                    (acons index-key
-                           (append (list path) (cdr (assoc index-key *package-index-groups*)))
-                           *package-index-groups*)
-                    (acons index-key (list path) *package-index-groups*))))
-        (let ((index-key (find-project-index-key
-                           (merge-pathnames path (ast-index-root-path index)))))
-          (setf *project-index-groups*
-                (if (assoc index-key *project-index-groups*)
-                    (acons index-key
-                           (append (list path) (cdr (assoc index-key *project-index-groups*)))
-                           *project-index-groups*)
-                    (acons index-key (list path) *project-index-groups*))))))
+                                   (ast-index-paths (traversal-index traversal)))
+        do (set-index-group traversal path)))
 
-(defun clean-index-groups ()
-  (setf *package-index-groups* nil)
-  (setf *project-index-groups* nil))
+(defmethod set-index-group ((traversal traversal-java) path)
+  (let ((index-key (find-package-index-key (get-ast (traversal-index traversal) path))))
+    (unless (gethash :package *file-index*)
+      (setf (gethash :package *file-index*) (make-hash-table)))
+    (push path (gethash index-key (gethash :package *file-index*))))
+  (let ((index-key (find-project-index-key
+                      (merge-pathnames path (ast-index-root-path (traversal-index traversal))))))
+    (unless (gethash :module *file-index*)
+      (setf (gethash :module *file-index*) (make-hash-table)))
+    (push path (gethash index-key (gethash :module *file-index*)))))
 
 (defmethod get-scoped-index-paths-generic ((traversal traversal-java) pos)
   (cond
     ((eq (cdr (assoc :type pos)) :module-private)
      (list (cdr (assoc :path pos))))
     ((eq (cdr (assoc :type pos)) :module-default)
-     (cdr (assoc
-            (find-package-index-key (get-ast (traversal-index traversal) (cdr (assoc :path pos))))
-            *package-index-groups*)))
+     (gethash (find-package-index-key (get-ast (traversal-index traversal)
+                                               (cdr (assoc :path pos))))
+              (gethash :package *file-index*)))
     ((eq (cdr (assoc :type pos)) :module-public)
-     (cdr (assoc
-            (find-project-index-key (merge-pathnames (cdr (assoc :path pos)) (traversal-path traversal)))
-            *project-index-groups*)))
+     (gethash (find-project-index-key (merge-pathnames (cdr (assoc :path pos))
+                                                       (traversal-path traversal)))
+              (gethash :module *file-index*)))
     (t
      (ast-index-paths (traversal-index traversal)))))
 
@@ -92,7 +80,7 @@
     with stack = (list ast)
     do
     (setf ast (pop stack))
-    (if (null ast) (return))
+    (unless ast (return))
 
     (when (equal (ast-value ast "type") "PACKAGE")
       (return-from find-package-index-key (intern (ast-value ast "packageName"))))

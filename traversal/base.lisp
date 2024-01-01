@@ -19,12 +19,14 @@
                 #:get-ast) 
   (:export #:traversal
            #:*traversals*
+           #:*file-index*
            #:traversal-path
            #:traversal-index
            #:start-traversal
            #:stop-traversal
            #:get-scoped-index-paths
            #:get-scoped-index-paths-generic
+           #:set-index-group
            #:find-definitions
            #:find-definitions-generic
            #:find-entrypoint
@@ -56,6 +58,7 @@
 
 (defparameter *index-path* (uiop:merge-pathnames* #p"inga_temp/"))
 (defparameter *traversals* nil)
+(defparameter *file-index* (make-hash-table))
 
 (defclass traversal ()
   ((path
@@ -72,6 +75,9 @@
 (defgeneric stop-traversal (traversal)
   (:method (traversal)))
 
+(defmethod stop-traversal :after (traversal)
+  (clrhash *file-index*))
+
 (defun get-scoped-index-paths (pos index)
   (let ((traversal (get-traversal (cdr (assoc :path (or (cdr (assoc :file-pos pos)) pos))))))
     (if traversal
@@ -80,6 +86,9 @@
 (defgeneric get-scoped-index-paths-generic (traversal pos)
   (:method (traversal pos)
    (ast-index-paths (traversal-index traversal))))
+
+(defgeneric set-index-group (traversal path)
+  (:method (traversal path)))
 
 (defun find-definitions (range)
   (inga/utils::funtime

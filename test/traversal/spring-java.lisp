@@ -11,6 +11,19 @@
 
 (defparameter *java-path* (merge-pathnames "test/fixtures/java/"))
 
+(test get-index-group-for-rest-client
+  (with-fixture jvm-context (*java-path* 'ast-index-disk)
+    (is (equal
+          '("p1/client/ClientRestTemplate.java")
+          (get-scoped-index-paths
+            `((:type . :rest-server)
+              (:host . "8080")
+              (:path . "/path")
+              (:name . "GET")
+              (:file-pos .
+               ((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java"))))
+            *index*)))))
+
 (test find-definitions-for-rest-server
   (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (equal
