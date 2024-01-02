@@ -200,11 +200,12 @@
             do
             (when (and (< i (length api-arg-names)) (is-array (nth i api-arg-names)))
               (setf array-arg (subseq (nth i api-arg-names) 0 (- (length (nth i api-arg-names)) 2))))
-            (unless (find-if (lambda (super-class-name)
-                               (or
-                                 (equal super-class-name (nth i api-arg-names))
-                                 (equal super-class-name array-arg)))
-                             (find-class-hierarchy target-arg-name index))
+            (unless (or (equal target-arg-name "NULL")
+                        (find-if (lambda (super-class-name)
+                                   (or
+                                     (equal super-class-name (nth i api-arg-names))
+                                     (equal super-class-name array-arg)))
+                                 (find-class-hierarchy target-arg-name index)))
               (return-from matches-signature)))))
   t)
 

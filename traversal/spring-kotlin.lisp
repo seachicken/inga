@@ -216,7 +216,7 @@
   (cond
     ((matches-signature
        fq-name
-       "org.springframework.web.client.RestTemplate.exchange-java.lang.String-org.springframework.http.HttpMethod-NULL-java.lang.Class"
+       "org.springframework.web.client.RestTemplate.exchange-java.lang.String-org.springframework.http.HttpMethod-org.springframework.http.HttpEntity-java.lang.Class"
        index)
      `((:host . ,(find-api-host 0 ast))
        (:name . ,(find-api-method-from-http-method (get-parameter 1 ast)))
