@@ -64,7 +64,13 @@
           (prog1
             (read-line (uiop:process-info-output process))  
             (loop while (listen (uiop:process-info-error-output process))
-                  do (log-error (format nil "~a~%" (read-line (uiop:process-info-error-output process)))))))
+                  with results = ""
+                  do (setf results
+                           (format nil "~a~a~%"
+                                   results 
+                                   (read-line (uiop:process-info-error-output process))))
+                  finally (unless (equal results "")
+                            (log-error (format nil "~a, cmd: ~a" results cmd))))))
         (error (e) (error 'inga-error-process-failed))))
     :label "spring-property-loader"
     :args cmd))
