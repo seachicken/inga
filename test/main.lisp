@@ -8,15 +8,15 @@
 
 ;; NOTE: To run this test file, execute `(asdf:test-system :inga)' in your Lisp.
 
-(defparameter *build-path* (uiop:merge-pathnames* "test/fixtures/build/"))
+(defparameter *build-path* (merge-pathnames "test/fixtures/build/"))
 
 (def-suite typescript)
 (in-suite typescript)
 
 (defparameter *front-path*
-  (truename (uiop:merge-pathnames* "test/fixtures/react-typescript-todo/")))
+  (truename (merge-pathnames "test/fixtures/react-typescript-todo/")))
 (defparameter *nestjs-path*
-  (truename (uiop:merge-pathnames* "test/fixtures/nestjs-realworld-example-app-prisma/")))
+  (truename (merge-pathnames "test/fixtures/nestjs-realworld-example-app-prisma/")))
 
 (test analyze-by-range-for-react-components
   (let ((ctx (inga/main::start *front-path* '(:typescript) :exclude '("**/*.test.(ts|tsx)"))))

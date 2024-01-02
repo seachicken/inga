@@ -9,7 +9,7 @@
 (def-suite kotlin)
 (in-suite kotlin)
 
-(defparameter *kotlin-path* (merge-pathnames #p"test/fixtures/kotlin/"))
+(defparameter *kotlin-path* (merge-pathnames "test/fixtures/kotlin/"))
 
 (test find-definitions-for-method
   (with-fixture jvm-context (*kotlin-path* 'ast-index-disk)

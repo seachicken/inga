@@ -9,9 +9,8 @@
 (def-suite java)
 (in-suite java)
 
-(defparameter *java-path* (merge-pathnames #p"test/fixtures/java/"))
-(defparameter *spring-boot-path*
-  (truename (uiop:merge-pathnames* "test/fixtures/spring-boot-realworld-example-app/")))
+(defparameter *java-path* (merge-pathnames "test/fixtures/java/"))
+(defparameter *spring-boot-path* (merge-pathnames "test/fixtures/spring-boot-realworld-example-app/"))
 (defparameter *lightrun-path* (merge-pathnames "test/fixtures/spring-tutorials/lightrun/"))
 (defparameter *guava-modules* (merge-pathnames "test/fixtures/spring-tutorials/guava-modules/"))
 
