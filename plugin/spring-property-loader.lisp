@@ -71,7 +71,7 @@
                                    (read-line (uiop:process-info-error-output process))))
                   finally (unless (equal results "")
                             (log-error (format nil "~a, cmd: ~a" results cmd))))))
-        (error (e) (error 'inga-error-process-failed))))
+        (error () (error 'inga-error-process-failed))))
     :label "spring-property-loader"
     :args cmd))
 

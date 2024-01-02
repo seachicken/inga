@@ -46,7 +46,7 @@
 
 (defun command (&rest argv)
   (handler-case
-    (destructuring-bind (&key root-path include exclude github-token base-commit) (parse-argv argv)
+    (destructuring-bind (&key root-path include exclude base-commit) (parse-argv argv)
       (let ((diffs (get-diff root-path base-commit)))
         (let ((ctx (start root-path
                           (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
@@ -66,7 +66,6 @@
   (loop with root-path = "."
         with include
         with exclude
-        with github-token
         with base-commit
         for option = (pop argv)
         while option
@@ -81,8 +80,6 @@
               (setf include (split-trim-comma (pop argv))))
              ("--exclude"
               (setf exclude (split-trim-comma (pop argv))))
-             ("--github-token"
-              (setf github-token (pop argv)))
              ("--base-commit"
               (setf base-commit (pop argv)))
              (t (error 'inga-error-option-not-found)))
@@ -91,8 +88,6 @@
                     (list :root-path (truename (uiop:merge-pathnames* root-path)))
                     (list :include include)
                     (list :exclude exclude)
-                    (when github-token
-                      (list :github-token github-token))
                     (when base-commit
                       (list :base-commit base-commit))))))
 

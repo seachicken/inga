@@ -134,7 +134,7 @@
        fq-name
        "org.springframework.web.client.RestTemplate.getForObject-java.net.URI-java.lang.Class"
        index)
-     (let ((server (find-server-from-uri 0 ast path index)))
+     (let ((server (find-server-from-uri 0 ast path)))
        `((:host . ,(cdr (assoc :host server)))
          (:name . "GET")
          (:path . ,(cdr (assoc :path server))))))
@@ -162,7 +162,7 @@
 (defun get-parameter (idx ast)
   (nth (1+ idx) (trav:get-asts ast '("*"))))
 
-(defun find-server-from-uri (arg-i ast path index)
+(defun find-server-from-uri (arg-i ast path)
   (let ((param-uri (nth (1+ arg-i) (trav:get-asts ast '("*")))))
     (let ((variable-uri (find-variable (ast-value param-uri "name") param-uri))
           found-path

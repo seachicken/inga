@@ -202,7 +202,7 @@
 
 (defmethod find-reference :around ((traversal traversal-kotlin) target-pos fq-name ast path)
   (if (eq (cdr (assoc :type target-pos)) :rest-server)
-      (let ((rest-client (find-rest-client fq-name ast path (traversal-index traversal))))
+      (let ((rest-client (find-rest-client fq-name ast (traversal-index traversal))))
         (when (and
                 (equal (cdr (assoc :host rest-client)) (cdr (assoc :host target-pos)))
                 (equal (cdr (assoc :path rest-client)) (cdr (assoc :path target-pos)))
@@ -212,7 +212,7 @@
       (call-next-method)))
 
 ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/client/RestTemplate.html
-(defun find-rest-client (fq-name ast path index)
+(defun find-rest-client (fq-name ast index)
   (cond
     ((matches-signature
        fq-name

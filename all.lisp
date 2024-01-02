@@ -3,6 +3,7 @@
   (:use-reexport
     #:inga/ast-parser
     #:inga/ast-index
+    #:inga/cache
     #:inga/errors
     #:inga/file
     #:inga/git
