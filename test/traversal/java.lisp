@@ -278,6 +278,22 @@
             ;; public CursorPager(List<T> data, Direction direction, boolean hasExtra) {
             (find-fq-class-name (find-ast path '((:line . 12) (:offset . 46))) path))))))
 
+(test find-fq-class-name-for-type-inference-in-lambda
+  (with-fixture jvm-context (*java-path* 'ast-index-memory)
+    (let ((path "p1/TypeInferenceReference.java"))
+      (is (equal
+            "java.lang.String"
+            ;;                                              ↓
+            ;; List.of("a").forEach(v -> System.out.println(v));
+            (find-fq-class-name (find-ast path '((:line . 7) (:offset . 54))) path))))))
+
+(test find-fq-class-name-for-reference-type-inference-in-lambda
+  (with-fixture jvm-context (*java-path* 'ast-index-memory)
+    (let ((path "p1/TypeInferenceReference.java"))
+      (is (equal
+            "java.lang.String"
+            (find-fq-class-name (find-ast path '((:line . 12) (:offset . 46))) path))))))
+
 (test find-references-for-kotlin-class
   (with-fixture jvm-context (*java-path* 'ast-index-disk)
     (is (equal

@@ -159,32 +159,28 @@
              (find-fq-class-name-by-class-name (ast-value ast "name") ast)
              (ast-value ast "name")
              (mapcar (lambda (arg) (find-fq-class-name-java arg path index))
-                       (trav:get-asts ast '("*")))))
+                     (trav:get-asts ast '("*")))))
     ("METHOD_INVOCATION"
      (if (trav:get-asts ast '("MEMBER_SELECT"))
          (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
-                 ;; if method chain
                  (cond
+                   ;; if method chain
                    ((trav:get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
-                    (let ((fq-name (find-fq-name-for-reference
-                                     (first (trav:get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION")))
-                                     path index)))
-                      (when fq-name
-                        (let ((method (find-signature
-                                        fq-name
-                                        #'(lambda (fq-class-name)
-                                            (load-signatures fq-class-name path))
-                                        index)))
-                          (when method
-                            (jsown:val (jsown:val method "returnType") "name"))))))
+                    (let* ((fq-name (find-fq-name-for-reference
+                                      (first (trav:get-asts ast '("MEMBER_SELECT"
+                                                                  "METHOD_INVOCATION")))
+                                      path index))
+                           (method (find-signature
+                                     fq-name
+                                     #'(lambda (fqcn) (load-signatures fqcn path))
+                                     index))
+                           (return-type (when method
+                                          (jsown:val (jsown:val method "returnType") "name"))))
+                      return-type))
                    ((trav:get-asts ast '("MEMBER_SELECT" "IDENTIFIER"))
-                    (or (find-fq-class-name-by-variable-name
-                          (ast-value (first (trav:get-asts ast '("MEMBER_SELECT" "IDENTIFIER"))) "name")
-                          ast path index)
-                        (find-fq-class-name-by-class-name
-                          ;; IDENTIFIER is class name
-                          (ast-value (first (trav:get-asts ast '("MEMBER_SELECT" "IDENTIFIER"))) "name")
-                          ast)))
+                    (find-fq-class-name-java
+                      (first (trav:get-asts ast '("MEMBER_SELECT" "IDENTIFIER")))
+                      path index))
                    ((trav:get-asts ast '("MEMBER_SELECT" "NEW_CLASS"))
                     (find-fq-class-name-by-class-name
                       (ast-value (first (trav:get-asts ast '("MEMBER_SELECT" "NEW_CLASS"))) "name")
@@ -195,7 +191,7 @@
                       ast)))
                  (ast-value (first (trav:get-asts ast '("*"))) "name")
                  (mapcar (lambda (arg) (find-fq-class-name-java arg path index))
-                       (nthcdr 1 (trav:get-asts ast '("*")))))
+                         (nthcdr 1 (trav:get-asts ast '("*")))))
          (format nil "~a~:[~;-~]~:*~{~a~^-~}"
                  (find-fq-name-for-definition
                    (ast-value (first (trav:get-asts ast '("IDENTIFIER"))) "name")
@@ -222,15 +218,23 @@
         ("VARIABLE"
          (find-fq-class-name-by-variable-name (ast-value ast "name") ast path index))
         ("IDENTIFIER"
-         (find-fq-class-name-by-variable-name (ast-value ast "name") ast path index))
+         (or
+           (find-fq-class-name-by-variable-name (ast-value ast "name") ast path index)
+           (find-fq-class-name-by-class-name (ast-value ast "name") ast)))
         ("METHOD_INVOCATION"
-         (let ((fq-name (find-fq-name-for-reference ast path index)))
-           (let ((method (find-signature
-                           fq-name
-                           #'(lambda (fq-class-name)
-                               (load-signatures fq-class-name path))
-                           index)))
-             (when method (jsown:val (jsown:val method "returnType") "name"))))))))
+         (let* ((fq-name (cond
+                           ((trav:get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
+                            (find-fq-name-for-reference
+                              (first (trav:get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION")))
+                              path index))
+                           ((trav:get-asts ast '("MEMBER_SELECT" "IDENTIFIER"))
+                            (find-fq-name-for-reference ast path index))))
+                (method (find-signature fq-name
+                                        #'(lambda (fqcn) (load-signatures fqcn path))
+                                        index))
+                (return-type (when method
+                               (jsown:val (jsown:val method "returnType") "name"))))
+           return-type)))))
 
 (defun find-fq-class-name-by-class-name (class-name ast)
   (unless class-name
@@ -287,14 +291,41 @@
        (find-fq-class-name-by-class-name
          (ast-value (first (trav:get-asts variable '("PARAMETERIZED_TYPE"))) "name") variable))
       ((trav:get-asts variable '("METHOD_INVOCATION"))
-       (let ((fq-name (find-fq-name-for-reference
-                        (first (trav:get-asts variable '("METHOD_INVOCATION"))) path index)))
-         (let ((method (find-signature
+       (let* ((fq-name (find-fq-name-for-reference
+                         (first (trav:get-asts variable '("METHOD_INVOCATION"))) path index))
+              (method (find-signature
                          fq-name
                          #'(lambda (fq-class-name) (load-signatures fq-class-name path))
-                         index)))
-           (when method
-             (jsown:val (jsown:val method "returnType") "name"))))))))
+                         index))
+              (return-type (when method
+                             (jsown:val (jsown:val method "returnType") "name"))))
+         return-type))
+      ((trav:get-asts variable '("LAMBDA_EXPRESSION") :direction :upward)
+       (let* ((root (find-chain-root (first (trav:get-asts variable '("LAMBDA_EXPRESSION"
+                                                                      "METHOD_INVOCATION")
+                                                           :direction :upward))))
+              (fq-name (if (find-fq-class-name-by-variable-name
+                             (trav:ast-value
+                               (first (trav:get-asts root '("MEMBER_SELECT" "IDENTIFIER")))
+                               "name")
+                             root path index)
+                           (let ((variable (find-variable
+                                             (trav:ast-value
+                                               (first (trav:get-asts root '("MEMBER_SELECT" "IDENTIFIER")))
+                                               "name")
+                                             root)))
+                             (find-fq-name-for-reference
+                               (first (trav:get-asts variable '("METHOD_INVOCATION")))
+                               path index))
+                           (find-fq-name-for-reference root path index)))
+              (split-fq-names (split #\- fq-name)))
+         ;; get first type of arguments
+         (second split-fq-names))))))
+
+(defun find-chain-root (ast)
+  (if (trav:get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
+      (find-chain-root (first (trav:get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))))
+      ast))
 
 (defun find-variable (variable-name ast)
   (unless variable-name

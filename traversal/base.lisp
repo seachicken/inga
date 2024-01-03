@@ -17,6 +17,8 @@
                 #:clean-indexes
                 #:create-indexes
                 #:get-ast) 
+  (:import-from #:inga/logger
+                #:log-debug)
   (:export #:traversal
            #:*traversals*
            #:*file-index*
@@ -175,9 +177,12 @@
               (push method matched-methods)))
           finally
           (return (if (> (length matched-methods) 1)
-                      (loop for method in matched-methods
-                            do (unless (jsown:val (jsown:val method "returnType") "isInterface")
-                                 (return method)))
+                      (or (loop for method in matched-methods
+                                do (unless (jsown:val (jsown:val method "returnType") "isInterface")
+                                     (return method)))
+                          (progn
+                            (log-debug (format nil "get an unexpected ambiguous signature!~%  methods: ~a" matched-methods))
+                            (first matched-methods)))
                       (first matched-methods))))))
 
 (defun matches-signature (target-fq-name api-fq-name index)
