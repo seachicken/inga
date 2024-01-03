@@ -7,6 +7,8 @@
                 #:clean-indexes
                 #:create-indexes
                 #:get-ast)
+  (:import-from #:inga/file
+                #:get-file-type)
   (:import-from #:inga/traversal
                 #:traversal-java 
                 #:ast-value
@@ -23,7 +25,6 @@
 (def-fixture jvm-context (root-path index-type &key (include '("**")))
   (defparameter *root-path* root-path)
   (defparameter *index* nil)
-  (defparameter *key-offset* "pos")
   (inga/plugin/jvm-dependency-loader:start root-path)
   (inga/plugin/spring-property-loader:start root-path)
   (setf *index* (make-instance index-type
@@ -48,18 +49,25 @@
       (&body)
       (stop-traversal typescript))))
 
-(defmacro find-ast (path pos &key key-offset)
+(defmacro find-ast (path pos)
   `(let ((result
            (loop
              with offset = (convert-to-top-offset
                              (merge-pathnames ,path (ast-index-root-path *index*))
                              ,pos)
              with stack = (list (get-ast *index* ,path))
+             with key-offset = (let ((file-type (get-file-type ,path)))
+                                 (cond
+                                   ((eq file-type :java)
+                                    "pos")
+                                   ((eq file-type :kotlin)
+                                    "textOffset")
+                                   ((t (error (format nil "unexpected file type: ~a" file-type))))))
              with ast 
              do
              (setf ast (pop stack))
              (when (or (null ast)
-                       (eq (ast-value ast (or ,key-offset *key-offset*)) offset))
+                       (eq (ast-value ast key-offset) offset))
                (return ast))
              (loop for child in (ast-value ast "children")
                    do (setf stack (append stack (list child)))))))

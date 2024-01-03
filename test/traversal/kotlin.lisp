@@ -73,7 +73,7 @@
             (inga/traversal/kotlin::find-fq-name-for-reference
               ;;                     ↓
               ;; return restTemplate.getForObject("http://localhost:8080/path", String::class.java)
-              (find-ast path '((:line . 10) (:offset . 29)) :key-offset "textOffset")
+              (find-ast path '((:line . 10) (:offset . 29)))
               path))))))
 
 (test find-fq-name-for-reference-with-enum
@@ -84,7 +84,7 @@
             (inga/traversal/kotlin::find-fq-name-for-reference
               ;;                     ↓
               ;; return restTemplate.exchange("http://localhost:8080/path", HttpMethod.GET, null, String::class.java)
-              (find-ast path '((:line . 18) (:offset . 29)) :key-offset "textOffset")
+              (find-ast path '((:line . 18) (:offset . 29)))
               path))))))
 
 (test find-fq-name-for-reference-with-new-class
@@ -95,7 +95,7 @@
             (inga/traversal/kotlin::find-fq-name-for-reference
               ;;                     ↓
               ;; return restTemplate.postForObject(
-              (find-ast path '((:line . 22) (:offset . 29)) :key-offset "textOffset")
+              (find-ast path '((:line . 22) (:offset . 29)))
               path))))))
 
 (test get-dot-expressions-with-zero-dot
@@ -106,7 +106,7 @@
             (inga/traversal/kotlin::get-dot-expressions
               ;;         ↓
               ;; package p1
-              (find-ast path '((:line . 1) (:offset . 9)) :key-offset "textOffset")))))))
+              (find-ast path '((:line . 1) (:offset . 9)))))))))
 
 (test get-dot-expressions-with-one-dot
   (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
@@ -116,5 +116,5 @@
             (inga/traversal/kotlin::get-dot-expressions
               ;;         ↓
               ;; package p1.client
-              (find-ast path '((:line . 1) (:offset . 9)) :key-offset "textOffset")))))))
+              (find-ast path '((:line . 1) (:offset . 9)))))))))
 
