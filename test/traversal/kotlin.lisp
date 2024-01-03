@@ -20,7 +20,7 @@
              ,(cons :top-offset
                     (convert-to-top-offset
                       (merge-pathnames "p1/PrimaryConstructorDefinition.kt" *kotlin-path*)
-                      '((:line . 4) (:offset . 5)))))) ;; FIXME: actual offset is 9
+                      '((:line . 4) (:offset . 5))))))
           (find-definitions (create-range "p1/PrimaryConstructorDefinition.kt" :line 4))))))
 
 (test find-references-for-primary-constructor
@@ -70,7 +70,7 @@
     (let ((path "p1/client/ClientRestTemplate.kt"))
       (is (equal
             "org.springframework.web.client.RestTemplate.getForObject-java.lang.String-java.lang.Class"
-            (inga/traversal/kotlin::find-fq-name-for-reference
+            (find-fq-name
               ;;                     ↓
               ;; return restTemplate.getForObject("http://localhost:8080/path", String::class.java)
               (find-ast path '((:line . 10) (:offset . 29)))
@@ -81,7 +81,7 @@
     (let ((path "p1/client/ClientRestTemplate.kt"))
       (is (equal
             "org.springframework.web.client.RestTemplate.exchange-java.lang.String-org.springframework.http.HttpMethod-NULL-java.lang.Class"
-            (inga/traversal/kotlin::find-fq-name-for-reference
+            (find-fq-name
               ;;                     ↓
               ;; return restTemplate.exchange("http://localhost:8080/path", HttpMethod.GET, null, String::class.java)
               (find-ast path '((:line . 18) (:offset . 29)))
@@ -92,10 +92,58 @@
     (let ((path "p1/client/ClientRestTemplate.kt"))
       (is (equal
             "org.springframework.web.client.RestTemplate.postForObject-java.lang.String-java.lang.String-java.lang.Class"
-            (inga/traversal/kotlin::find-fq-name-for-reference
+            (find-fq-name
               ;;                     ↓
               ;; return restTemplate.postForObject(
               (find-ast path '((:line . 22) (:offset . 29)))
+              path))))))
+
+(test find-fq-name-for-method-chain-first
+  (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
+    (let ((path "p1/TypeInferenceReference.kt"))
+      (is (equal
+            "kotlin.collections.CollectionsKt.listOf-java.lang.String"
+            (find-fq-name
+              ;; ↓
+              ;; listOf("a").forEach { println(it) }
+              (first (trav:get-asts
+                       (find-ast path '((:line . 5) (:offset . 9)))
+                       '("CALL_EXPRESSION")))
+              path))))))
+
+(test find-fq-name-for-method-chain-second
+  (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
+    (let ((path "p1/TypeInferenceReference.kt"))
+      (is (equal
+            "kotlin.collections.CollectionsKt.forEach-FUNCTION_LITERAL"
+            (find-fq-name
+              ;;             ↓
+              ;; listOf("a").forEach { println(it) }
+              (find-ast path '((:line . 5) (:offset . 21)))
+              path))))))
+
+(test find-fq-class-name-for-type-inference-in-lambda
+  (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
+    (let ((path "p1/TypeInferenceReference.kt"))
+      (is (equal
+            "java.lang.String"
+            ;;                               ↓
+            ;; listOf("a").forEach { println(it) }
+            (find-fq-class-name
+              (first (trav:get-asts
+                       (find-ast path '((:line . 5) (:offset . 39)))
+                       '("REFERENCE_EXPRESSION")))
+              path))))))
+
+(test find-fq-class-name-for-reference-type-inference-in-lambda
+  (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
+    (let ((path "p1/TypeInferenceReference.kt"))
+      (is (equal
+            "java.lang.String"
+            (find-fq-class-name
+              (first (trav:get-asts
+                       (find-ast path '((:line . 10) (:offset . 32)))
+                       '("REFERENCE_EXPRESSION")))
               path))))))
 
 (test get-dot-expressions-with-zero-dot
@@ -117,4 +165,11 @@
               ;;         ↓
               ;; package p1.client
               (find-ast path '((:line . 1) (:offset . 9)))))))))
+
+(test find-signature-for-stdlib
+  (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
+    (let* ((path "p1/client/ClientRestTemplate.kt")
+           (actual (inga/traversal/kotlin::find-signature-for-stdlib "listOf" path)))
+      (is (and (equal "kotlin.collections.CollectionsKt" (jsown:val actual "fqcn"))
+               (equal "listOf" (jsown:val actual "name")))))))
 

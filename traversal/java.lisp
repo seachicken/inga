@@ -15,8 +15,8 @@
   (:import-from #:inga/file
                 #:get-file-type)
   (:import-from #:inga/plugin/jvm-dependency-loader
-                #:load-signatures
-                #:load-hierarchy)
+                #:load-hierarchy 
+                #:load-signatures)
   (:import-from #:inga/plugin/jvm-helper
                 #:find-base-path
                 #:is-primitive-type)
@@ -243,6 +243,7 @@
   (cond
     ((is-primitive-type class-name)
      class-name)
+    ;; FIXME: support for all types
     ((find class-name '("Long" "String") :test 'equal)
      (concatenate 'string "java.lang." class-name))
     ((equal class-name "class")
