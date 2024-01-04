@@ -171,7 +171,10 @@
           do
           (let ((api-name (format nil "~a~:[~;-~]~:*~{~a~^-~}"
                               (jsown:val method "name")
-                              (mapcar (lambda (type) (jsown:val type "name"))
+                              (mapcar (lambda (type)
+                                        (if (jsown:val type "isArray")
+                                            (concatenate 'string (jsown:val type "name") "[]")
+                                            (jsown:val type "name")))
                                       (jsown:val method "parameterTypes")))))
             (when (matches-signature target-name api-name index)
               (push method matched-methods)))

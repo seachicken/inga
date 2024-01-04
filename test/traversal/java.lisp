@@ -210,22 +210,20 @@
             "io.spring.application.CursorPager.CursorPager-java.util.ArrayList-io.spring.application.CursorPager$Direction-BOOLEAN"
             ;;        ↓
             ;; return new CursorPager<>(new ArrayList<>(), page.getDirection(), false);
-            (inga/traversal/java::find-fq-name-for-reference
+            (find-fq-name
               (find-ast path '((:line . 63) (:offset . 14)))
-              path
-              *index*))))))
+              path))))))
 
 (test find-fq-name-for-reference-with-lib-args
   (with-fixture jvm-context (*lightrun-path* 'ast-index-memory)
     (let ((path "api-service/src/main/java/com/baeldung/apiservice/adapters/users/UserRepository.java"))
       (is (equal
             "org.springframework.web.client.RestTemplate.getForObject-java.net.URI-java.lang.Class"
-            (inga/traversal/java::find-fq-name-for-reference
+            (find-fq-name
               ;;                                 ↓
               ;; return restTemplate.getForObject(uri, User.class);
               (find-ast path '((:line . 25) (:offset . 45)))
-              path
-              *index*))))))
+              path))))))
 
 (test find-fq-name-for-reference-with-member_select-member_select
   (with-fixture jvm-context (*lightrun-path* 'ast-index-memory)
@@ -234,22 +232,29 @@
             "java.lang.Class.getCanonicalName"
             ;;                                                  ↓
             ;; MDC.put(RequestIdGenerator.class.getCanonicalName(), requestId);
-            (inga/traversal/java::find-fq-name-for-reference
+            (find-fq-name
               (find-ast path '((:line . 19) (:offset . 58)))
-              path
-              *index*))))))
+              path))))))
 
-;;(test find-fq-name-for-reference-with-array-args
-;;  (with-fixture jvm-context (*guava-modules* 'ast-index-memory)
-;;    (let ((path "guava-collections/src/test/java/com/baeldung/guava/ordering/GuavaOrderingExamplesUnitTest.java"))
-;;      (is (equal
-;;            "com.google.common.collect.Ordering.explicit-java.util.ArrayList"
-;;            ;;                  ↓
-;;            ;; Ordering.explicit(Lists.newArrayList("b", "zz", "aa", "ccc"));
-;;            (inga/traversal/java::find-fq-name-for-reference
-;;              (find-ast path '((:line . 104) (:offset . 65)))
-;;              path
-;;              *index*))))))
+(test find-fq-name-for-reference-with-array-args
+  (with-fixture jvm-context (*guava-modules* 'ast-index-memory)
+    (let ((path "guava-collections/src/test/java/com/baeldung/guava/ordering/GuavaOrderingExamplesUnitTest.java"))
+      (is (equal
+            "com.google.common.collect.Ordering.explicit-java.util.ArrayList"
+            ;;                  ↓
+            ;; Ordering.explicit(Lists.newArrayList("b", "zz", "aa", "ccc"));
+            (find-fq-name
+              (find-ast path '((:line . 104) (:offset . 65)))
+              path))))))
+
+(test find-fq-name-for-factory-method
+  (with-fixture jvm-context (*java-path* 'ast-index-memory)
+    (let ((path "p1/TypeInferenceReference.java"))
+      (is (equal
+            "java.util.List.of-java.lang.String"
+            ;;        ↓
+            ;; List.of("a").forEach(v -> System.out.println(v));
+            (find-fq-name (find-ast path '((:line . 7) (:offset . 16))) path))))))
 
 (test find-fq-class-name-for-new-class
   (with-fixture jvm-context (*spring-boot-path* 'ast-index-memory :include '("src/main/**"))
