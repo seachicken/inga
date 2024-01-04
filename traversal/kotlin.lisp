@@ -152,7 +152,7 @@
          ((equal class-name "Int")
           "INT"))))
     ("REFERENCE_EXPRESSION"
-     (or (find-class-name-by-variable-name (ast-value ast "name") ast path index)
+     (or (find-fq-class-name-by-variable-name (ast-value ast "name") ast path index)
          (find-fq-class-name-by-class-name (ast-value ast "name") ast)))
     ("DOT_QUALIFIED_EXPRESSION"
      (cond
@@ -175,13 +175,13 @@
              (let ((parent (first (trav:get-asts ast
                                                  '("DOT_QUALIFIED_EXPRESSION")
                                                  :direction :upward))))
-               (find-fq-class-name-by-class-name
                  (if parent
-                     (find-class-name-by-variable-name
+                     (find-fq-class-name-by-variable-name
                        (ast-value (first (trav:get-asts parent '("REFERENCE_EXPRESSION"))) "name")
                        ast path index)
-                     (ast-value (first (trav:get-asts ast '("REFERENCE_EXPRESSION"))) "name"))
-                 ast))))))
+                     (find-fq-class-name-by-class-name
+                       (ast-value (first (trav:get-asts ast '("REFERENCE_EXPRESSION"))) "name")
+                       ast)))))))
     (t
       (ast-value ast "type"))))
 
@@ -209,9 +209,9 @@
 
     (enqueue q (ast-value ast "parent"))))
 
-(defun find-class-name-by-variable-name (variable-name ast path index)
+(defun find-fq-class-name-by-variable-name (variable-name ast path index)
   (unless variable-name
-    (return-from find-class-name-by-variable-name))
+    (return-from find-fq-class-name-by-variable-name))
 
   (loop
     with q = (make-queue)
@@ -221,15 +221,35 @@
     (unless ast (return))
 
     (when (equal (ast-value ast "type") "CLASS")
-      (let ((variable (first (trav:filter-by-name (trav:get-asts ast '("PRIMARY_CONSTRUCTOR"
-                                                                       "VALUE_PARAMETER_LIST"
-                                                                       "VALUE_PARAMETER"))
-                                            variable-name))))
-        (return-from find-class-name-by-variable-name
-                     (ast-value (first (trav:get-asts variable '("TYPE_REFERENCE"
-                                                                 "USER_TYPE"
-                                                                 "REFERENCE_EXPRESSION")))
-                                "name"))))
+      (let* ((v (first (trav:filter-by-name (trav:get-asts ast '("PRIMARY_CONSTRUCTOR"
+                                                                 "VALUE_PARAMETER_LIST"
+                                                                 "VALUE_PARAMETER"))
+                                            variable-name)))
+             (fq-name (when v (find-fq-class-name-by-class-name
+                                (ast-value (first (trav:get-asts v '("TYPE_REFERENCE"
+                                                                     "USER_TYPE"
+                                                                     "REFERENCE_EXPRESSION")))
+                                           "name")
+                                ast))))
+        (when fq-name
+          (return-from find-fq-class-name-by-variable-name fq-name))))
+
+    (when (equal (ast-value ast "type") "FUN")
+      (let* ((v (first (trav:filter-by-name (trav:get-asts ast '("VALUE_PARAMETER_LIST"
+                                                                 "VALUE_PARAMETER"))
+                                            variable-name)))
+             (fq-name (when v (find-fq-class-name-by-class-name
+                                (ast-value (first (or (trav:get-asts v '("TYPE_REFERENCE"
+                                                                         "USER_TYPE"
+                                                                         "REFERENCE_EXPRESSION"))
+                                                      (trav:get-asts v '("TYPE_REFERENCE"
+                                                                         "NULLABLE_TYPE"
+                                                                         "USER_TYPE"
+                                                                         "REFERENCE_EXPRESSION"))))
+                                           "name")
+                                ast))))
+        (when fq-name
+          (return-from find-fq-class-name-by-variable-name fq-name))))
 
     (when (and (equal variable-name "it")
                (equal (ast-value ast "type") "LAMBDA_EXPRESSION"))

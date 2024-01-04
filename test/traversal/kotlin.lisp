@@ -98,6 +98,32 @@
               (find-ast path '((:line . 22) (:offset . 29)))
               path))))))
 
+(test find-fq-name-for-reference-with-not-null-parameter
+  (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
+    (let ((path "p1/ParameterReference.kt"))
+      (is (equal
+            "p1.PrimaryConstructorHelper.method"
+            (find-fq-name
+              ;; fun method(v: PrimaryConstructorHelper) {
+              ;;     ↓
+              ;;   v.method()
+              ;; }
+              (find-ast path '((:line . 7) (:offset . 11)))
+              path))))))
+
+(test find-fq-name-for-reference-with-nullable-parameter
+  (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
+    (let ((path "p1/ParameterReference.kt"))
+      (is (equal
+            "p1.PrimaryConstructorHelper.method"
+            (find-fq-name
+              ;; fun method(v: PrimaryConstructorHelper?) {
+              ;;     ↓
+              ;;   v.method()
+              ;; }
+              (find-ast path '((:line . 11) (:offset . 11)))
+              path))))))
+
 (test find-fq-name-for-method-chain-first
   (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
     (let ((path "p1/TypeInferenceReference.kt"))
