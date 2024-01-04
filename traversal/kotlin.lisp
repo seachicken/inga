@@ -168,8 +168,8 @@
        (let* ((name (trav:ast-value
                       (first (trav:get-asts ast '("REFERENCE_EXPRESSION")))
                       "name"))
-              (sig (find-signature-for-stdlib name path))
-              (fqcn (when sig (jsown:val sig "fqcn"))))
+              (std-sig (find-signature-for-stdlib name path))
+              (fqcn (when std-sig (jsown:val std-sig "fqcn"))))
          (if fqcn
              fqcn
              (let ((parent (first (trav:get-asts ast
