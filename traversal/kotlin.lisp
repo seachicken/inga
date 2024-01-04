@@ -47,10 +47,9 @@
          (path (cdr (assoc :path range)))
          (start-offset (cdr (assoc :start-offset range)))
          (end-offset (cdr (assoc :end-offset range)))
-         (root-ast (get-ast (traversal-index traversal) path))
-         ast
+         (ast (get-ast (traversal-index traversal) path)) 
          results)
-    (enqueue q root-ast)
+    (enqueue q ast)
     (loop
       do
       (setf ast (dequeue q))
@@ -66,7 +65,8 @@
           (let ((pos (list
                        (cons :path src-path)
                        (cons :name (jsown:val ast "name"))
-                       (cons :fq-name (find-fq-name-for-definition ast root-ast
+                       (cons :fq-name (find-fq-name-for-definition (trav:ast-value ast "name")
+                                                                   ast
                                                                    path (traversal-index traversal)))
                        (cons :top-offset (jsown:val (jsown:val ast "textRange") "startOffset")))))
             (when (assoc :origin range)
@@ -77,32 +77,34 @@
       (loop for child in (jsown:val ast "children") do (enqueue q child)))
     results))
 
-(defun find-fq-name-for-definition (target-ast root-ast path index)
+(defun find-fq-name-for-definition (fun-name ast path index)
   (loop
-    with stack = (list root-ast)
-    with ast
-    with result
+    with q = (make-queue)
+    with fq-class-names
+    with fq-param-names
+    initially (enqueue q ast)
     do
-    (setf ast (pop stack))
-    (unless ast (return result))
+    (setf ast (dequeue q))
+    (unless ast (return (format nil "~{~a~^.~}~:[~;-~]~:*~{~a~^-~}" fq-class-names fq-param-names)))
     
-    (when (equal (ast-value ast "type") "PACKAGE_DIRECTIVE")
-      (setf result (format nil "~{~a~^.~}" (get-dot-expressions (first (ast-value ast "children"))))))
-    (when (equal (ast-value ast "type") "CLASS")
-      (setf result (concatenate 'string result "." (ast-value ast "name"))))
-    (when (and (eq ast target-ast)
-               (equal (ast-value ast "type") "FUN"))
-      (setf result (concatenate 'string result "." (ast-value ast "name"))) 
-      (loop for param in (trav:get-asts ast '("VALUE_PARAMETER_LIST" "VALUE_PARAMETER" "TYPE_REFERENCE"))
-            do
-            (setf result (concatenate
-                           'string
-                           result
-                           "-"
-                           (find-fq-class-name-kotlin param path index)))))
+    (when (equal (ast-value ast "type") "kotlin.FILE")
+      (setf fq-class-names
+            (append (get-dot-expressions (first (trav:get-asts ast '("PACKAGE_DIRECTIVE" "*"))))
+                    fq-class-names)))
 
-    (loop for child in (ast-value ast "children")
-          do (setf stack (append stack (list child))))))
+    (when (equal (ast-value ast "type") "CLASS")
+      (setf fq-class-names (append (list (ast-value ast "name")) fq-class-names)))
+
+    (when (and (equal (ast-value ast "type") "FUN")
+               (equal (ast-value ast "name") fun-name))
+      (setf fq-class-names (append (list (ast-value ast "name")) fq-class-names)) 
+      (loop for param in (trav:get-asts ast '("VALUE_PARAMETER_LIST"
+                                              "VALUE_PARAMETER"
+                                              "TYPE_REFERENCE"))
+            do (setf fq-param-names (append (list (find-fq-class-name-kotlin param path index))
+                                            fq-param-names))))
+
+    (enqueue q (trav:ast-value ast "parent"))))
 
 (defmethod find-reference ((traversal traversal-kotlin) target-pos fq-name ast path)
   (when (equal fq-name (cdr (assoc :fq-name target-pos)))
@@ -116,22 +118,38 @@
 (defun find-fq-name-for-reference (ast path index)
   (alexandria:switch ((ast-value ast "type") :test #'equal)
     ("CALL_EXPRESSION"
-     (let ((root (first (trav:get-asts ast '("DOT_QUALIFIED_EXPRESSION") :direction :upward))))
-       (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
-               (if (trav:get-asts root '("DOT_QUALIFIED_EXPRESSION"))
-                   (format nil "~{~a~^.~}"
-                           (append
-                             (get-dot-expressions (first (ast-value root "children")))
-                             (list
-                               (ast-value (first (trav:get-asts root '("DOT_QUALIFIED_EXPRESSION"
-                                                                       "CALL_EXPRESSION"
-                                                                       "REFERENCE_EXPRESSION")))
-                                          "name"))))
-                   (find-fq-class-name-kotlin ast path index))
-               (ast-value (first (trav:get-asts ast '("REFERENCE_EXPRESSION"))) "name")
-               (mapcar (lambda (arg) (find-fq-class-name-kotlin arg path index))
-                       (or (trav:get-asts ast '("VALUE_ARGUMENT_LIST" "VALUE_ARGUMENT" "*"))
-                           (trav:get-asts ast '("LAMBDA_ARGUMENT" "LAMBDA_EXPRESSION" "*")))))))))
+     (cond
+       ;; if private methods
+       ((and
+          ;; e.g. v.fun()
+          (not (trav:get-asts ast '("REFERENCE_EXPRESSION") :direction :horizontal))
+          ;; e.g. v.fun().fun()
+          (not (trav:get-asts ast '("DOT_QUALIFIED_EXPRESSION") :direction :horizontal))
+          (trav:get-asts ast '("REFERENCE_EXPRESSION"))
+          (trav:get-asts ast '("VALUE_ARGUMENT_LIST"))
+          (not (find-signature-for-stdlib
+                 (trav:ast-value (first (trav:get-asts ast '("REFERENCE_EXPRESSION"))) "name") path)))
+        (find-fq-name-for-definition (trav:ast-value
+                                       (first (trav:get-asts ast '("REFERENCE_EXPRESSION")))
+                                       "name")
+                                     ast path index))
+       (t
+        (let ((root (first (trav:get-asts ast '("DOT_QUALIFIED_EXPRESSION") :direction :upward))))
+          (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
+                  (if (trav:get-asts root '("DOT_QUALIFIED_EXPRESSION"))
+                      (format nil "~{~a~^.~}"
+                              (append
+                                (get-dot-expressions (first (ast-value root "children")))
+                                (list
+                                  (ast-value (first (trav:get-asts root '("DOT_QUALIFIED_EXPRESSION"
+                                                                          "CALL_EXPRESSION"
+                                                                          "REFERENCE_EXPRESSION")))
+                                             "name"))))
+                      (find-fq-class-name-kotlin ast path index))
+                  (ast-value (first (trav:get-asts ast '("REFERENCE_EXPRESSION"))) "name")
+                  (mapcar (lambda (arg) (find-fq-class-name-kotlin arg path index))
+                          (or (trav:get-asts ast '("VALUE_ARGUMENT_LIST" "VALUE_ARGUMENT" "*"))
+                              (trav:get-asts ast '("LAMBDA_ARGUMENT" "LAMBDA_EXPRESSION" "*")))))))))))
 
 (defmethod find-fq-class-name-generic ((traversal traversal-kotlin) ast path)
   (find-fq-class-name-kotlin ast path (traversal-index traversal)))
@@ -150,7 +168,9 @@
          ((find class-name '("String") :test 'equal)
           (concatenate 'string "java.lang." class-name))
          ((equal class-name "Int")
-          "INT"))))
+          "INT")
+         (t
+          (find-fq-class-name-by-class-name class-name ast)))))
     ("REFERENCE_EXPRESSION"
      (or (find-fq-class-name-by-variable-name (ast-value ast "name") ast path index)
          (find-fq-class-name-by-class-name (ast-value ast "name") ast)))
@@ -188,6 +208,7 @@
 (defun find-fq-class-name-by-class-name (class-name ast)
   (loop
     with q = (make-queue)
+    with self-class
     initially (enqueue q ast)
     do
     (setf ast (dequeue q))
@@ -200,12 +221,14 @@
                              :key-name "fqName"))))
         (return (if import
                     (ast-value import "fqName")
-                    (format nil "~{~a~^.~}"
-                            (append (mapcar (lambda (ast) (ast-value ast "name"))
-                                            (trav:get-asts ast '("PACKAGE_DIRECTIVE"
-                                                                 "DOT_QUALIFIED_EXPRESSION"
-                                                                 "REFERENCE_EXPRESSION")))
-                                    (list class-name)))))))
+                    (when self-class
+                      (format nil "~{~a~^.~}"
+                              (push class-name (get-dot-expressions
+                                                 (first (trav:get-asts ast '("PACKAGE_DIRECTIVE" "*")))))))))))
+
+    (when (and (equal (ast-value ast "type") "CLASS")
+               (equal (ast-value ast "name") class-name))
+      (setf self-class t))
 
     (enqueue q (ast-value ast "parent"))))
 
@@ -329,6 +352,7 @@
                                                           "REFERENCE_EXPRESSION"))))
                      target-package-name)
         (return-from find-class-hierarchy-generic)))
+
     (when (equal (ast-value ast "type") "CLASS")
       (unless (equal (ast-value ast "name") target-class-name)
         (return-from find-class-hierarchy-generic))
@@ -342,6 +366,7 @@
                           (list parent-fq-class-name)
                           (list fq-class-name))))
               '("java.lang.Object")))))
+
     (loop for child in (jsown:val ast "children")
           do (setf stack (append stack (list child))))))
 

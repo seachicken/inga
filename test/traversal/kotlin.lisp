@@ -102,9 +102,9 @@
   (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
     (let ((path "p1/ParameterReference.kt"))
       (is (equal
-            "p1.PrimaryConstructorHelper.method"
+            "p1.ParameterHelper.method"
             (find-fq-name
-              ;; fun method(v: PrimaryConstructorHelper) {
+              ;; fun method(v: Helper) {
               ;;     ↓
               ;;   v.method()
               ;; }
@@ -115,13 +115,26 @@
   (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
     (let ((path "p1/ParameterReference.kt"))
       (is (equal
-            "p1.PrimaryConstructorHelper.method"
+            "p1.ParameterHelper.method"
             (find-fq-name
-              ;; fun method(v: PrimaryConstructorHelper?) {
+              ;; fun method(v: Helper?) {
               ;;     ↓
               ;;   v.method()
               ;; }
               (find-ast path '((:line . 11) (:offset . 11)))
+              path))))))
+
+(test find-fq-name-for-reference-with-vararg
+  (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
+    (let ((path "p1/VarargReference.kt"))
+      (is (equal
+            "p1.VarargReference.method-p1.VarargHelper"
+            (find-fq-name
+              ;; fun method(vararg vs: Helper) {
+              ;;   ↓
+              ;;   method(vs)
+              ;; }
+              (find-ast path '((:line . 7) (:offset . 9)))
               path))))))
 
 (test find-fq-name-for-method-chain-first

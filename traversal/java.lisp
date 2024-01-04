@@ -196,6 +196,7 @@
                  (find-fq-name-for-definition
                    (ast-value (first (trav:get-asts ast '("IDENTIFIER"))) "name")
                    ast)
+                 ;; TODO: move to find-fq-name-for-definition, because params are fq name
                  (mapcar (lambda (arg) (find-fq-class-name-java arg path index))
                          (nthcdr 1 (trav:get-asts ast '("*")))))))))
 
@@ -354,7 +355,7 @@
     initially (enqueue q ast)
     do
     (setf ast (dequeue q))
-    (when (null ast) (return (format nil "~{~a~^.~}" fq-names)))
+    (unless ast (return (format nil "~{~a~^.~}" fq-names)))
 
     (when (trav:filter-by-name (trav:get-asts ast '("METHOD")) method-name)
       (setf fq-names (append fq-names (list method-name))))
