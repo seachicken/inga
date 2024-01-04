@@ -162,7 +162,11 @@
      "java.lang.String")
     ("TYPE_REFERENCE"
      (let ((class-name (ast-value
-                         (first (trav:get-asts ast '("USER_TYPE" "REFERENCE_EXPRESSION")))
+                         (first (or (trav:get-asts ast '("NULLABLE_TYPE"
+                                                         "USER_TYPE"
+                                                         "REFERENCE_EXPRESSION"))
+                                    (trav:get-asts ast '("USER_TYPE"
+                                                         "REFERENCE_EXPRESSION"))))
                          "name")))
        (cond
          ((find class-name '("String") :test 'equal)
@@ -248,12 +252,8 @@
                                                                  "VALUE_PARAMETER_LIST"
                                                                  "VALUE_PARAMETER"))
                                             variable-name)))
-             (fq-name (when v (find-fq-class-name-by-class-name
-                                (ast-value (first (trav:get-asts v '("TYPE_REFERENCE"
-                                                                     "USER_TYPE"
-                                                                     "REFERENCE_EXPRESSION")))
-                                           "name")
-                                ast))))
+             (fq-name (when v (find-fq-class-name-kotlin
+                                (first (trav:get-asts v '("TYPE_REFERENCE"))) path index))))
         (when fq-name
           (return-from find-fq-class-name-by-variable-name fq-name))))
 
@@ -261,16 +261,8 @@
       (let* ((v (first (trav:filter-by-name (trav:get-asts ast '("VALUE_PARAMETER_LIST"
                                                                  "VALUE_PARAMETER"))
                                             variable-name)))
-             (fq-name (when v (find-fq-class-name-by-class-name
-                                (ast-value (first (or (trav:get-asts v '("TYPE_REFERENCE"
-                                                                         "USER_TYPE"
-                                                                         "REFERENCE_EXPRESSION"))
-                                                      (trav:get-asts v '("TYPE_REFERENCE"
-                                                                         "NULLABLE_TYPE"
-                                                                         "USER_TYPE"
-                                                                         "REFERENCE_EXPRESSION"))))
-                                           "name")
-                                ast))))
+             (fq-name (when v (find-fq-class-name-kotlin
+                                (first (trav:get-asts v '("TYPE_REFERENCE"))) path index))))
         (when fq-name
           (return-from find-fq-class-name-by-variable-name fq-name))))
 
