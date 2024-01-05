@@ -145,8 +145,19 @@
             (find-fq-name
               ;; ↓
               ;; Thread(object : Runnable {
-              (first (trav:get-asts (find-ast path '((:line . 8) (:offset . 9)))
+              (first (trav:get-asts (find-ast path '((:line . 10) (:offset . 9)))
                                     '("CALL_EXPRESSION")))
+              path))))))
+
+(test find-fq-name-for-reference-with-anonymous-objects-super-call
+  (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
+    (let ((path "p1/AnonymousObjectReference.kt"))
+      (is (equal
+            "p1.AnonymousObjectHelper.method-org.springframework.core.ParameterizedTypeReference"
+            (find-fq-name
+              ;;   ↓
+              ;; v.method(object : ParameterizedTypeReference<T>() {})
+              (find-ast path '((:line . 17) (:offset . 11)))
               path))))))
 
 (test find-fq-name-for-method-chain-first

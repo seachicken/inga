@@ -186,10 +186,15 @@
           (find-fq-class-name-by-class-name class-name ast)))))
     ("OBJECT_LITERAL"
      (find-fq-class-name-kotlin
-       (first (trav:get-asts ast '("OBJECT_DECLARATION"
-                                   "SUPER_TYPE_LIST"
-                                   "SUPER_TYPE_ENTRY"
-                                   "TYPE_REFERENCE")))
+       (first (or (trav:get-asts ast '("OBJECT_DECLARATION"
+                                       "SUPER_TYPE_LIST"
+                                       "SUPER_TYPE_ENTRY"
+                                       "TYPE_REFERENCE"))
+                  (trav:get-asts ast '("OBJECT_DECLARATION"
+                                       "SUPER_TYPE_LIST"
+                                       "SUPER_TYPE_CALL_ENTRY"
+                                       "CONSTRUCTOR_CALLEE"
+                                       "TYPE_REFERENCE"))))
        path index))
     ("REFERENCE_EXPRESSION"
      (or (find-fq-class-name-by-variable-name (ast-value ast "name") ast path index)
