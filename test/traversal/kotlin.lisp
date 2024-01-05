@@ -137,6 +137,18 @@
               (find-ast path '((:line . 7) (:offset . 9)))
               path))))))
 
+(test find-fq-name-for-reference-with-anonymous-objects
+  (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
+    (let ((path "p1/AnonymousObjectReference.kt"))
+      (is (equal
+            "java.lang.Thread.Thread-java.lang.Runnable"
+            (find-fq-name
+              ;; ↓
+              ;; Thread(object : Runnable {
+              (first (trav:get-asts (find-ast path '((:line . 8) (:offset . 9)))
+                                    '("CALL_EXPRESSION")))
+              path))))))
+
 (test find-fq-name-for-method-chain-first
   (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
     (let ((path "p1/TypeInferenceReference.kt"))

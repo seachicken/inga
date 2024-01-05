@@ -115,20 +115,29 @@
 (defmethod find-fq-name-generic ((traversal traversal-kotlin) ast path)
   (find-fq-name-for-reference ast path (traversal-index traversal)))
 
+(defun is-member (ref-name ast)
+  (when (trav:get-asts ast '("DOT_QUALIFIED_EXPRESSION") :direction :upward)
+    (return-from is-member))
+
+  (loop
+    with q = (make-queue)
+    initially (enqueue q ast)
+    do
+    (setf ast (dequeue q))
+    (unless ast (return))
+    
+    (when (and (equal (ast-value ast "type") "FUN")
+               (equal (ast-value ast "name") ref-name))
+      (return t))
+
+    (enqueue q (trav:ast-value ast "parent"))))
+
 (defun find-fq-name-for-reference (ast path index)
   (alexandria:switch ((ast-value ast "type") :test #'equal)
     ("CALL_EXPRESSION"
      (cond
-       ;; if private methods
-       ((and
-          ;; e.g. v.fun()
-          (not (trav:get-asts ast '("REFERENCE_EXPRESSION") :direction :horizontal))
-          ;; e.g. v.fun().fun()
-          (not (trav:get-asts ast '("DOT_QUALIFIED_EXPRESSION") :direction :horizontal))
-          (trav:get-asts ast '("REFERENCE_EXPRESSION"))
-          (trav:get-asts ast '("VALUE_ARGUMENT_LIST"))
-          (not (find-signature-for-stdlib
-                 (trav:ast-value (first (trav:get-asts ast '("REFERENCE_EXPRESSION"))) "name") path)))
+       ((is-member
+          (trav:ast-value (first (trav:get-asts ast '("REFERENCE_EXPRESSION"))) "name") ast)
         (find-fq-name-for-definition (trav:ast-value
                                        (first (trav:get-asts ast '("REFERENCE_EXPRESSION")))
                                        "name")
@@ -175,6 +184,13 @@
           "INT")
          (t
           (find-fq-class-name-by-class-name class-name ast)))))
+    ("OBJECT_LITERAL"
+     (find-fq-class-name-kotlin
+       (first (trav:get-asts ast '("OBJECT_DECLARATION"
+                                   "SUPER_TYPE_LIST"
+                                   "SUPER_TYPE_ENTRY"
+                                   "TYPE_REFERENCE")))
+       path index))
     ("REFERENCE_EXPRESSION"
      (or (find-fq-class-name-by-variable-name (ast-value ast "name") ast path index)
          (find-fq-class-name-by-class-name (ast-value ast "name") ast)))
@@ -200,9 +216,12 @@
                                                  '("DOT_QUALIFIED_EXPRESSION")
                                                  :direction :upward))))
                  (if parent
-                     (find-fq-class-name-by-variable-name
-                       (ast-value (first (trav:get-asts parent '("REFERENCE_EXPRESSION"))) "name")
-                       ast path index)
+                     (or (find-fq-class-name-by-variable-name
+                           (ast-value (first (trav:get-asts parent '("REFERENCE_EXPRESSION"))) "name")
+                           ast path index)
+                         (find-fq-class-name-kotlin
+                           (first (trav:get-asts ast '("REFERENCE_EXPRESSION")))
+                           path index))
                      (find-fq-class-name-by-class-name
                        (ast-value (first (trav:get-asts ast '("REFERENCE_EXPRESSION"))) "name")
                        ast)))))))
