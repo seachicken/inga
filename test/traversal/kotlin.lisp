@@ -87,6 +87,15 @@
               (find-ast path '((:line . 18) (:offset . 29)))
               path))))))
 
+(test find-fq-name-for-reference-with-properties
+  (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
+    (let ((path "p1/PropertyReference.kt"))
+      (is (equal
+            "p1.PropertyHelper.method-java.lang.String"
+            (find-fq-name
+              (find-ast path '((:line . 9) (:offset . 11)))
+              path))))))
+
 (test find-fq-name-for-reference-with-new-class
   (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
     (let ((path "p1/client/ClientRestTemplate.kt"))

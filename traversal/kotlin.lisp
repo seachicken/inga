@@ -272,10 +272,13 @@
     (unless ast (return))
 
     (when (equal (ast-value ast "type") "CLASS")
-      (let* ((v (first (trav:filter-by-name (trav:get-asts ast '("PRIMARY_CONSTRUCTOR"
-                                                                 "VALUE_PARAMETER_LIST"
-                                                                 "VALUE_PARAMETER"))
-                                            variable-name)))
+      (let* ((v (first (or (trav:filter-by-name (trav:get-asts ast '("PRIMARY_CONSTRUCTOR"
+                                                                     "VALUE_PARAMETER_LIST"
+                                                                     "VALUE_PARAMETER"))
+                                                variable-name)
+                           (trav:filter-by-name (trav:get-asts ast '("CLASS_BODY"
+                                                                     "PROPERTY"))
+                                                variable-name))))
              (fq-name (when v (find-fq-class-name-kotlin
                                 (first (trav:get-asts v '("TYPE_REFERENCE"))) path index))))
         (when fq-name
