@@ -93,7 +93,7 @@
   (:method (traversal path)))
 
 (defun find-definitions (range)
-  (inga/utils::funtime
+  (funtime
     (lambda ()
       (let ((traversal (get-traversal (cdr (assoc :path range)))))
         (find-definitions-generic traversal range)))
@@ -107,18 +107,16 @@
   (:method (traversal pos)))
 
 (defunc find-references (pos index)
-  (inga/utils::funtime
+  (funtime
     (lambda ()
       (loop for path in (get-scoped-index-paths pos index)
             with results
-            with ast
             do
-            (let ((traversal (get-traversal (namestring path))))
-              (setf ast (get-ast (traversal-index traversal) path))
-
-              (let ((references (find-references-by-file traversal path ast pos)))
-                (when references
-                  (setf results (append results references)))))
+            (let* ((traversal (get-traversal path))
+                   (ast (get-ast (traversal-index traversal) path))
+                   (references (find-references-by-file traversal path ast pos)))
+              (when references
+                (setf results (append results references))))
             finally (return results)))
     :label "find-references"
     :args pos))

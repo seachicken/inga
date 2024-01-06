@@ -6,7 +6,8 @@
            #:enqueue
            #:dequeue
            #:split
-           #:split-trim-comma))
+           #:split-trim-comma
+           #:funtime))
 (in-package #:inga/utils)
 
 (defstruct queue
@@ -33,7 +34,6 @@
             (string-trim '(#\Space) str))
           (split #\, sequence)))
 
-;; for debug
 (defun funtime (func &key label args (max-sec 0.5))
   (let* ((start-time (get-internal-real-time))
          (result (funcall func))
