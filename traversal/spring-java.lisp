@@ -7,6 +7,8 @@
   (:import-from #:quri)
   (:import-from #:inga/ast-index
                 #:get-ast)
+  (:import-from #:inga/logger
+                #:log-error)
   (:import-from #:inga/path
                 #:get-variable-names
                 #:merge-paths  
@@ -151,7 +153,12 @@
        index)
      `((:host . ,(find-api-host 0 ast))
        (:name . "POST")
-       (:path . ,(find-api-path 0 ast))))))
+       (:path . ,(find-api-path 0 ast))))
+    ((matches-signature
+       fq-name
+       "org.springframework.web.client.RestTemplate.*"
+       index)
+     (log-error (format nil "unexpected signature of RestTemplate. fq-name: ~a" fq-name)))))
 
 (defun find-api-method-from-http-method (http-method)
   (ast-value http-method "name"))

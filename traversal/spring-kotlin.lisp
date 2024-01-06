@@ -11,6 +11,8 @@
                 #:get-variable-names
                 #:merge-paths  
                 #:replace-variable-name)
+  (:import-from #:inga/logger
+                #:log-error)
   (:import-from #:inga/plugin/jvm-helper
                 #:convert-to-json-type)
   (:import-from #:inga/plugin/spring-property-loader
@@ -241,7 +243,12 @@
        index)
      `((:host . ,(find-api-host 0 ast))
        (:name . "POST")
-       (:path . ,(find-api-path 0 ast))))))
+       (:path . ,(find-api-path 0 ast))))
+    ((matches-signature
+       fq-name
+       "org.springframework.web.client.RestTemplate.*"
+       index)
+     (log-error (format nil "unexpected signature of RestTemplate. fq-name: ~a" fq-name)))))
 
 (defun find-api-method-from-http-method (http-method)
   (ast-value (nth 1 (trav:get-asts http-method '("REFERENCE_EXPRESSION"))) "name"))

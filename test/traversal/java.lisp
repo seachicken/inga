@@ -390,6 +390,15 @@
             "java.lang.Object-equals-java.lang.Object"
             *index*)))))
 
+(test matches-signature-with-wild-card
+  (with-fixture jvm-context (*java-path* 'ast-index-memory)
+    (is (eq
+          t
+          (matches-signature
+            "java.lang.Object.wait-LONG-INT"
+            "java.lang.Object.*"
+            *index*)))))
+
 (test find-class-hierarchy-with-standard-class
   (with-fixture jvm-context (*lightrun-path* 'ast-index-disk)
     (is (equal
