@@ -79,8 +79,8 @@
           (get-values-from-request-mapping
             :java
             (first (trav:get-asts
-                     (find-ast "p1/server/spring/src/main/p1/RequestMappingDefinition.java"
-                               '((:line . 8) (:offset . 1)))
+                     (ast '((:path . "p1/server/spring/src/main/p1/RequestMappingDefinition.java")
+                            (:line . 8) (:offset . 1)))
                      '("ANNOTATION"))))))))
 
 (test get-value-from-request-mapping-with-no-value
@@ -92,8 +92,8 @@
           (get-values-from-request-mapping
             :java
             (first (trav:get-asts
-                     (find-ast "p1/server/spring/src/main/p1/RequestMappingDefinition.java"
-                               '((:line . 11) (:offset . 5)))
+                     (ast '((:path . "p1/server/spring/src/main/p1/RequestMappingDefinition.java")
+                            (:line . 11) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
 (test get-value-from-request-mapping-with-value
@@ -105,8 +105,8 @@
           (get-values-from-request-mapping
             :java
             (first (trav:get-asts
-                     (find-ast "p1/server/spring/src/main/p1/RequestMappingDefinition.java"
-                               '((:line . 15) (:offset . 5)))
+                     (ast '((:path . "p1/server/spring/src/main/p1/RequestMappingDefinition.java")
+                            (:line . 15) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
 (test get-values-from-request-mapping-with-value
@@ -118,8 +118,8 @@
           (get-values-from-request-mapping
             :java
             (first (trav:get-asts
-                     (find-ast "p1/server/spring/src/main/p1/RequestMappingDefinition.java"
-                               '((:line . 19) (:offset . 5)))
+                     (ast '((:path . "p1/server/spring/src/main/p1/RequestMappingDefinition.java")
+                            (:line . 19) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
 (test get-value-from-request-mapping-with-path
@@ -131,8 +131,8 @@
           (get-values-from-request-mapping
             :java
             (first (trav:get-asts
-                     (find-ast "p1/server/spring/src/main/p1/RequestMappingDefinition.java"
-                               '((:line . 23) (:offset . 5)))
+                     (ast '((:path . "p1/server/spring/src/main/p1/RequestMappingDefinition.java")
+                            (:line . 23) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
 (test get-values-from-request-mapping-with-path
@@ -144,8 +144,8 @@
           (get-values-from-request-mapping
             :java
             (first (trav:get-asts
-                     (find-ast "p1/server/spring/src/main/p1/RequestMappingDefinition.java"
-                               '((:line . 27) (:offset . 5)))
+                     (ast '((:path . "p1/server/spring/src/main/p1/RequestMappingDefinition.java")
+                            (:line . 27) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
 (test get-method-from-request-mapping
@@ -157,8 +157,8 @@
           (get-method-from-request-mapping
             :java
             (first (trav:get-asts
-                     (find-ast "p1/server/spring/src/main/p1/RequestMappingDefinition.java"
-                               '((:line . 15) (:offset . 5)))
+                     (ast '((:path . "p1/server/spring/src/main/p1/RequestMappingDefinition.java")
+                            (:line . 15) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
 ;; GetMapping
@@ -173,8 +173,8 @@
           (get-values-from-request-mapping
             :java
             (first (trav:get-asts
-                     (find-ast "p1/server/spring/src/main/p1/GetMappingDefinition.java"
-                               '((:line . 13) (:offset . 5)))
+                     (ast '((:path . "p1/server/spring/src/main/p1/GetMappingDefinition.java")
+                            (:line . 13) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
 (test get-method-from-get-mapping
@@ -186,8 +186,8 @@
           (get-method-from-request-mapping
             :java
             (first (trav:get-asts
-                     (find-ast "p1/server/spring/src/main/p1/GetMappingDefinition.java"
-                               '((:line . 9) (:offset . 5)))
+                     (ast '((:path . "p1/server/spring/src/main/p1/GetMappingDefinition.java")
+                            (:line . 9) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
 ;; PathVariable
@@ -202,8 +202,8 @@
           (trav:ast-value
             (find-param-from-path-variable
               :java
-              (find-ast "p1/server/spring/src/main/p1/PathVariableDefinition.java"
-                        '((:line . 11) (:offset . 17)))
+              (ast '((:path . "p1/server/spring/src/main/p1/PathVariableDefinition.java")
+                     (:line . 11) (:offset . 17)))
               "v")
             "name")))))
 
@@ -216,8 +216,8 @@
           (trav:ast-value
             (find-param-from-path-variable
               :java
-              (find-ast "p1/server/spring/src/main/p1/PathVariableDefinition.java"
-                        '((:line . 15) (:offset . 17)))
+              (ast '((:path . "p1/server/spring/src/main/p1/PathVariableDefinition.java")
+                     (:line . 15) (:offset . 17)))
               "v")
             "name")))))
 
@@ -230,8 +230,8 @@
           (trav:ast-value
             (find-param-from-path-variable
               :java
-              (find-ast "p1/server/spring/src/main/p1/PathVariableDefinition.java"
-                        '((:line . 19) (:offset . 17)))
+              (ast '((:path . "p1/server/spring/src/main/p1/PathVariableDefinition.java")
+                     (:line . 19) (:offset . 17)))
               "v")
             "name")))))
 
@@ -244,8 +244,8 @@
           (trav:ast-value
             (find-param-from-path-variable
               :java
-              (find-ast "p1/server/spring/src/main/p1/PathVariableDefinition.java"
-                        '((:line . 23) (:offset . 17)))
+              (ast '((:path . "p1/server/spring/src/main/p1/PathVariableDefinition.java")
+                     (:line . 23) (:offset . 17)))
               "v")
             "name")))))
 

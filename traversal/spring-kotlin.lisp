@@ -204,32 +204,46 @@
 
 (defmethod find-reference :around ((traversal traversal-kotlin) target-pos fq-name ast path)
   (if (eq (cdr (assoc :type target-pos)) :rest-server)
-      (let ((rest-client (find-rest-client fq-name ast (traversal-index traversal))))
-        (when (and
-                (equal (cdr (assoc :host rest-client)) (cdr (assoc :host target-pos)))
-                (equal (cdr (assoc :path rest-client)) (cdr (assoc :path target-pos)))
-                (equal (cdr (assoc :name rest-client)) (cdr (assoc :name target-pos))))
-          `((:path . ,path)
-            (:top-offset . ,(ast-value ast "textOffset")))))
+      (or (let ((pos (find-if (lambda (rest-client)
+                                (and (equal (cdr (assoc :host rest-client))
+                                            (cdr (assoc :host target-pos)))
+                                     (equal (cdr (assoc :path rest-client))
+                                            (cdr (assoc :path target-pos)))
+                                     (equal (cdr (assoc :name rest-client))
+                                            (cdr (assoc :name target-pos)))))
+                              (find-rest-clients traversal fq-name ast path))))
+            (when pos
+              `((:path . ,(cdr (assoc :path (cdr (assoc :file-pos pos)))))
+                (:top-offset . ,(cdr (assoc :top-offset (cdr (assoc :file-pos pos))))))))
+          (let ((rest-client (find-rest-client fq-name ast (traversal-index traversal))))
+            (when (and
+                    (equal (cdr (assoc :host rest-client)) (cdr (assoc :host target-pos)))
+                    (equal (cdr (assoc :path rest-client)) (cdr (assoc :path target-pos)))
+                    (equal (cdr (assoc :name rest-client)) (cdr (assoc :name target-pos))))
+              `((:path . ,path)
+                (:top-offset . ,(ast-value ast "textOffset"))))))
       (call-next-method)))
 
+(defmethod find-rest-clients ((traversal traversal-kotlin) fq-name ast path)
+  (let* ((rest-template-apis (gethash :rest-template *rest-client-apis*))
+         (matched-api (find-if (lambda (api)
+                                 (matches-signature fq-name
+                                                    (cdr (assoc :fq-name api))
+                                                    (traversal-index traversal)))
+                               rest-template-apis)))
+    (when matched-api
+      (mapcar (lambda (pos)
+                `((:host . ,(find-api-host 0 ast))
+                  (:path . ,(quri:uri-path (quri:uri (cdr (assoc :name pos)))))
+                  (:name . ,(find-api-method-from-http-method
+                              (get-parameter (cdr (assoc :method-i matched-api)) ast)))
+                  (:file-pos . ,pos)))
+              (find-reference-to-literal (get-parameter (cdr (assoc :path-i matched-api)) ast) path)))))
+
+;; TODO: remove this function
 ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/client/RestTemplate.html
 (defun find-rest-client (fq-name ast index)
   (cond
-    ((matches-signature
-       fq-name
-       "org.springframework.web.client.RestTemplate.exchange-java.lang.String-org.springframework.http.HttpMethod-org.springframework.http.HttpEntity-org.springframework.core.ParameterizedTypeReference-java.lang.Object"
-       index)
-     `((:host . ,(find-api-host 0 ast))
-       (:name . ,(find-api-method-from-http-method (get-parameter 1 ast)))
-       (:path . ,(find-api-path 0 ast))))
-    ((matches-signature
-       fq-name
-       "org.springframework.web.client.RestTemplate.exchange-java.lang.String-org.springframework.http.HttpMethod-org.springframework.http.HttpEntity-java.lang.Class"
-       index)
-     `((:host . ,(find-api-host 0 ast))
-       (:name . ,(find-api-method-from-http-method (get-parameter 1 ast)))
-       (:path . ,(find-api-path 0 ast))))
     ((matches-signature
        fq-name
        "org.springframework.web.client.RestTemplate.getForObject-java.lang.String-java.lang.Class"

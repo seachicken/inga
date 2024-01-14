@@ -73,7 +73,7 @@
             (find-fq-name
               ;;                     ↓
               ;; return restTemplate.getForObject("http://localhost:8080/path", String::class.java)
-              (find-ast path '((:line . 10) (:offset . 29)))
+              (ast `((:path . ,path) (:line . 10) (:offset . 29)))
               path))))))
 
 (test find-fq-name-for-reference-with-enum
@@ -84,7 +84,7 @@
             (find-fq-name
               ;;                     ↓
               ;; return restTemplate.exchange("http://localhost:8080/path", HttpMethod.GET, null, String::class.java)
-              (find-ast path '((:line . 18) (:offset . 29)))
+              (ast `((:path . ,path) (:line . 18) (:offset . 29)))
               path))))))
 
 (test find-fq-name-for-reference-with-properties
@@ -93,7 +93,7 @@
       (is (equal
             "p1.PropertyHelper.method-java.lang.String"
             (find-fq-name
-              (find-ast path '((:line . 9) (:offset . 11)))
+              (ast `((:path . ,path) (:line . 9) (:offset . 11)))
               path))))))
 
 (test find-fq-name-for-reference-with-new-class
@@ -104,7 +104,7 @@
             (find-fq-name
               ;;                     ↓
               ;; return restTemplate.postForObject(
-              (find-ast path '((:line . 22) (:offset . 29)))
+              (ast `((:path . ,path) (:line . 22) (:offset . 29)))
               path))))))
 
 (test find-fq-name-for-reference-with-not-null-parameter
@@ -117,7 +117,7 @@
               ;;     ↓
               ;;   v.method()
               ;; }
-              (find-ast path '((:line . 7) (:offset . 11)))
+              (ast `((:path . ,path) (:line . 7) (:offset . 11)))
               path))))))
 
 (test find-fq-name-for-reference-with-nullable-parameter
@@ -130,7 +130,7 @@
               ;;     ↓
               ;;   v.method()
               ;; }
-              (find-ast path '((:line . 11) (:offset . 11)))
+              (ast `((:path . ,path) (:line . 11) (:offset . 11)))
               path))))))
 
 (test find-fq-name-for-reference-with-vararg
@@ -143,7 +143,7 @@
               ;;   ↓
               ;;   method(vs)
               ;; }
-              (find-ast path '((:line . 7) (:offset . 9)))
+              (ast `((:path . ,path) (:line . 7) (:offset . 9)))
               path))))))
 
 (test find-fq-name-for-reference-with-anonymous-objects
@@ -154,7 +154,7 @@
             (find-fq-name
               ;; ↓
               ;; Thread(object : Runnable {
-              (first (trav:get-asts (find-ast path '((:line . 10) (:offset . 9)))
+              (first (trav:get-asts (ast `((:path . ,path) (:line . 10) (:offset . 9)))
                                     '("CALL_EXPRESSION")))
               path))))))
 
@@ -166,7 +166,7 @@
             (find-fq-name
               ;;   ↓
               ;; v.method(object : ParameterizedTypeReference<T>() {})
-              (find-ast path '((:line . 17) (:offset . 11)))
+              (ast `((:path . ,path) (:line . 17) (:offset . 11)))
               path))))))
 
 (test find-fq-name-for-method-chain-first
@@ -178,7 +178,7 @@
               ;; ↓
               ;; listOf("a").forEach { println(it) }
               (first (trav:get-asts
-                       (find-ast path '((:line . 5) (:offset . 9)))
+                       (ast `((:path . ,path) (:line . 5) (:offset . 9)))
                        '("CALL_EXPRESSION")))
               path))))))
 
@@ -190,7 +190,7 @@
             (find-fq-name
               ;;             ↓
               ;; listOf("a").forEach { println(it) }
-              (find-ast path '((:line . 5) (:offset . 21)))
+              (ast `((:path . ,path) (:line . 5) (:offset . 21)))
               path))))))
 
 (test find-fq-class-name-for-type-inference-in-lambda
@@ -202,7 +202,7 @@
             ;; listOf("a").forEach { println(it) }
             (find-fq-class-name
               (first (trav:get-asts
-                       (find-ast path '((:line . 5) (:offset . 39)))
+                       (ast `((:path . ,path) (:line . 5) (:offset . 39)))
                        '("REFERENCE_EXPRESSION")))
               path))))))
 
@@ -213,7 +213,7 @@
             "java.lang.String"
             (find-fq-class-name
               (first (trav:get-asts
-                       (find-ast path '((:line . 10) (:offset . 32)))
+                       (ast `((:path . ,path) (:line . 10) (:offset . 32)))
                        '("REFERENCE_EXPRESSION")))
               path))))))
 
@@ -225,7 +225,7 @@
             (inga/traversal/kotlin::get-dot-expressions
               ;;         ↓
               ;; package p1
-              (find-ast path '((:line . 1) (:offset . 9)))))))))
+              (ast `((:path . ,path) (:line . 1) (:offset . 9)))))))))
 
 (test get-dot-expressions-with-one-dot
   (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)
@@ -235,7 +235,7 @@
             (inga/traversal/kotlin::get-dot-expressions
               ;;         ↓
               ;; package p1.client
-              (find-ast path '((:line . 1) (:offset . 9)))))))))
+              (ast `((:path . ,path) (:line . 1) (:offset . 9)))))))))
 
 (test find-signature-for-stdlib
   (with-fixture jvm-context (*kotlin-path* 'ast-index-memory)

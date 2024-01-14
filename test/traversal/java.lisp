@@ -196,10 +196,10 @@
     (let ((path "p1/client/ClientRestTemplate.java"))
       (is (equal
             "org.springframework.web.client.RestTemplate.exchange-java.lang.String-org.springframework.http.HttpMethod-NULL-java.lang.Class"
+            ;;                             ↓
+            ;; return restTemplate.exchange("http://localhost:8080/path", HttpMethod.GET, null, String.class);
             (inga/traversal/java::find-fq-name-for-reference
-              ;;                             ↓
-              ;; return restTemplate.exchange("http://localhost:8080/path", HttpMethod.GET, null, String.class);
-              (find-ast path '((:line . 24) (:offset . 37)))
+              (ast `((:path . ,path) (:line . 24) (:offset . 37)))
               path
               *index*))))))
 
@@ -211,7 +211,7 @@
             ;;        ↓
             ;; return new CursorPager<>(new ArrayList<>(), page.getDirection(), false);
             (find-fq-name
-              (find-ast path '((:line . 63) (:offset . 14)))
+              (ast `((:path . ,path) (:line . 63) (:offset . 14)))
               path))))))
 
 (test find-fq-name-for-reference-with-lib-args
@@ -222,7 +222,7 @@
             (find-fq-name
               ;;                                 ↓
               ;; return restTemplate.getForObject(uri, User.class);
-              (find-ast path '((:line . 25) (:offset . 45)))
+              (ast `((:path . ,path) (:line . 25) (:offset . 45)))
               path))))))
 
 (test find-fq-name-for-reference-with-member_select-member_select
@@ -233,7 +233,7 @@
             ;;                                                  ↓
             ;; MDC.put(RequestIdGenerator.class.getCanonicalName(), requestId);
             (find-fq-name
-              (find-ast path '((:line . 19) (:offset . 58)))
+              (ast `((:path . ,path) (:line . 19) (:offset . 58)))
               path))))))
 
 (test find-fq-name-for-reference-with-array-args
@@ -244,7 +244,7 @@
             ;;                  ↓
             ;; Ordering.explicit(Lists.newArrayList("b", "zz", "aa", "ccc"));
             (find-fq-name
-              (find-ast path '((:line . 104) (:offset . 65)))
+              (ast `((:path . ,path) (:line . 104) (:offset . 65)))
               path))))))
 
 (test find-fq-name-for-factory-method
@@ -254,7 +254,7 @@
             "java.util.List.of-java.lang.String"
             ;;        ↓
             ;; List.of("a").forEach(v -> System.out.println(v));
-            (find-fq-name (find-ast path '((:line . 7) (:offset . 16))) path))))))
+            (find-fq-name (ast `((:path . ,path) (:line . 7) (:offset . 16))) path))))))
 
 (test find-fq-class-name-for-new-class
   (with-fixture jvm-context (*spring-boot-path* 'ast-index-memory :include '("src/main/**"))
@@ -263,7 +263,7 @@
             "io.spring.application.CursorPager"
             ;;        ↓
             ;; return new CursorPager<>(new ArrayList<>(), page.getDirection(), false);
-            (find-fq-class-name (find-ast path '((:line . 63) (:offset . 14))) path))))))
+            (find-fq-class-name (ast `((:path . ,path) (:line . 63) (:offset . 14))) path))))))
 
 (test find-fq-class-name-for-primitive-parameter
   (with-fixture jvm-context (*spring-boot-path* 'ast-index-memory :include '("src/main/**"))
@@ -272,7 +272,7 @@
             "BOOLEAN"
             ;;                                                               ↓
             ;; public CursorPager(List<T> data, Direction direction, boolean hasExtra) {
-            (find-fq-class-name (find-ast path '((:line . 12) (:offset . 65))) path))))))
+            (find-fq-class-name (ast `((:path . ,path) (:line . 12) (:offset . 65))) path))))))
 
 (test find-fq-class-name-for-inner-class-parameter
   (with-fixture jvm-context (*spring-boot-path* 'ast-index-memory :include '("src/main/**"))
@@ -281,7 +281,7 @@
             "io.spring.application.CursorPager$Direction"
             ;;                                            ↓
             ;; public CursorPager(List<T> data, Direction direction, boolean hasExtra) {
-            (find-fq-class-name (find-ast path '((:line . 12) (:offset . 46))) path))))))
+            (find-fq-class-name (ast `((:path . ,path) (:line . 12) (:offset . 46))) path))))))
 
 (test find-fq-class-name-for-type-inference-in-lambda
   (with-fixture jvm-context (*java-path* 'ast-index-memory)
@@ -290,14 +290,14 @@
             "java.lang.String"
             ;;                                              ↓
             ;; List.of("a").forEach(v -> System.out.println(v));
-            (find-fq-class-name (find-ast path '((:line . 7) (:offset . 54))) path))))))
+            (find-fq-class-name (ast `((:path . ,path) (:line . 7) (:offset . 54))) path))))))
 
 (test find-fq-class-name-for-reference-type-inference-in-lambda
   (with-fixture jvm-context (*java-path* 'ast-index-memory)
     (let ((path "p1/TypeInferenceReference.java"))
       (is (equal
             "java.lang.String"
-            (find-fq-class-name (find-ast path '((:line . 12) (:offset . 46))) path))))))
+            (find-fq-class-name (ast `((:path . ,path) (:line . 12) (:offset . 46))) path))))))
 
 (test find-references-for-kotlin-class
   (with-fixture jvm-context (*java-path* 'ast-index-disk)

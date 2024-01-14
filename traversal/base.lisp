@@ -22,6 +22,7 @@
   (:export #:traversal
            #:*traversals*
            #:*file-index*
+           #:*rest-client-apis*
            #:traversal-path
            #:traversal-index
            #:start-traversal
@@ -35,10 +36,13 @@
            #:find-entrypoint-generic
            #:find-references
            #:find-reference
+           #:find-rest-clients
            #:find-fq-name
            #:find-fq-name-generic
            #:find-fq-class-name
            #:find-fq-class-name-generic
+           #:find-reference-to-literal
+           #:find-reference-to-literal-generic
            #:find-signature
            #:matches-signature
            #:find-class-hierarchy
@@ -55,12 +59,14 @@
            #:filter-by-name
            #:filter-by-names
            #:ast-find-suffix
+           #:find-ast
            #:debug-ast))
 (in-package #:inga/traversal/base)
 
 (defparameter *index-path* (uiop:merge-pathnames* #p"inga_temp/"))
 (defparameter *traversals* nil)
 (defparameter *file-index* (make-hash-table))
+(defparameter *rest-client-apis* (make-hash-table))
 
 (defclass traversal ()
   ((path
@@ -78,7 +84,8 @@
   (:method (traversal)))
 
 (defmethod stop-traversal :after (traversal)
-  (clrhash *file-index*))
+  (clrhash *file-index*)
+  (clrhash *rest-client-apis*))
 
 (defun get-scoped-index-paths (pos index)
   (let ((traversal (get-traversal (cdr (assoc :path (or (cdr (assoc :file-pos pos)) pos))))))
@@ -143,6 +150,16 @@
   (:method (traversal target-pos fq-name ast path)
    (error (format nil "unknown traversal. path: ~a" path))))
 
+(defgeneric find-rest-clients (traversal fq-name ast path)
+  (:method (traversal fq-name ast path)
+   (error (format nil "unknown traversal. path: ~a" path))))
+
+(defmethod find-rest-clients :around (traversal fq-name ast path)
+  (funtime
+    (lambda () (call-next-method))
+    :label "find-rest-clients"
+    :args path))
+
 (defun find-fq-name (ast path)
   (find-fq-name-generic (get-traversal path) ast path))
 (defgeneric find-fq-name-generic (traversal ast path)
@@ -152,6 +169,12 @@
 (defun find-fq-class-name (ast path)
   (find-fq-class-name-generic (get-traversal path) ast path))
 (defgeneric find-fq-class-name-generic (traversal ast path))
+
+(defun find-reference-to-literal (ast path)
+  (find-reference-to-literal-generic (get-traversal path) ast path))
+(defgeneric find-reference-to-literal-generic (traversal ast path)
+  (:method (traversal ast path)
+   (error (format nil "unknown traversal. path: ~a" path))))
 
 (defun find-signature (fq-name find-signatures index)
   (when (or (null fq-name) (equal fq-name ""))
@@ -347,6 +370,27 @@
                 (uiop:string-suffix-p (jsown:val node key-name) suffix))
           (setf results (append results (list node))))
         finally (return results)))
+
+(defun find-ast (pos index)
+  (loop
+    with q = (make-queue)
+    with path = (cdr (assoc :path pos))
+    with key-offset = (let ((file-type (get-file-type path)))
+                        (cond
+                          ((eq file-type :java)
+                           "pos")
+                          ((eq file-type :kotlin)
+                           "textOffset")
+                          ((t (error (format nil "unexpected file type: ~a" file-type))))))
+    with ast 
+    initially (enqueue q (get-ast index path))
+    do
+    (setf ast (dequeue q))
+    (when (or (null ast)
+              (eq (trav:ast-value ast key-offset) (cdr (assoc :top-offset pos))))
+      (return ast))
+
+    (loop for child in (ast-value ast "children") do (enqueue q child))))
 
 (defun debug-ast (ast &key (key-downward "children") (key-upward "parent"))
   (format t "~&ast:~%") 

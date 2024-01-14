@@ -10,6 +10,7 @@
   (:import-from #:inga/file
                 #:get-file-type)
   (:import-from #:inga/traversal
+                #:find-ast
                 #:traversal-java 
                 #:ast-value
                 #:convert-to-top-offset
@@ -18,7 +19,7 @@
   (:export #:*index*
            #:jvm-context
            #:node-context
-           #:find-ast
+           #:ast
            #:create-range))
 (in-package #:inga/test/helper)
 
@@ -49,28 +50,14 @@
       (&body)
       (stop-traversal typescript))))
 
-(defmacro find-ast (path pos)
-  `(let ((result
-           (loop
-             with offset = (convert-to-top-offset
-                             (merge-pathnames ,path (ast-index-root-path *index*))
-                             ,pos)
-             with stack = (list (get-ast *index* ,path))
-             with key-offset = (let ((file-type (get-file-type ,path)))
-                                 (cond
-                                   ((eq file-type :java)
-                                    "pos")
-                                   ((eq file-type :kotlin)
-                                    "textOffset")
-                                   ((t (error (format nil "unexpected file type: ~a" file-type))))))
-             with ast 
-             do
-             (setf ast (pop stack))
-             (when (or (null ast)
-                       (eq (ast-value ast key-offset) offset))
-               (return ast))
-             (loop for child in (ast-value ast "children")
-                   do (setf stack (append stack (list child)))))))
+(defmacro ast (readable-pos)
+  `(let* ((path (cdr (assoc :path ,readable-pos)))
+          (pos (list (cons :path path)
+                     (cons :top-offset
+                           (convert-to-top-offset
+                             (merge-pathnames path (ast-index-root-path *index*))
+                             ,readable-pos))))
+          (result (trav:find-ast pos *index*)))
      (if result
          result
          (error "ast not found"))))

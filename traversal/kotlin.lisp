@@ -53,27 +53,34 @@
     (loop
       do
       (setf ast (dequeue q))
-      (if (null ast) (return))
+      (unless ast (return))
 
-      (when (and
-              (equal (ast-value ast "type") "FUN")
-              (contains-offset (jsown:val (jsown:val ast "textRange") "startOffset")
-                               (jsown:val (jsown:val ast "textRange") "endOffset")            
-                               start-offset
-                               end-offset))
-        (push
-          (let ((pos (list
-                       (cons :path src-path)
-                       (cons :name (jsown:val ast "name"))
-                       (cons :fq-name (find-fq-name-for-definition (trav:ast-value ast "name")
-                                                                   ast
-                                                                   path (traversal-index traversal)))
-                       (cons :top-offset (jsown:val (jsown:val ast "textRange") "startOffset")))))
-            (when (assoc :origin range)
-              (push (cons :origin (cdr (assoc :origin range))) pos))
-            pos)
-          results))
+      (when (and (or (equal(ast-value ast "type") "FUN")
+                     (equal (ast-value ast "type") "PRIMARY_CONSTRUCTOR"))
+                 (contains-offset (jsown:val (jsown:val ast "textRange") "startOffset")
+                                  (jsown:val (jsown:val ast "textRange") "endOffset")            
+                                  start-offset
+                                  end-offset))
+        (let ((method-name (trav:ast-value
+                             (if (equal (ast-value ast "type") "PRIMARY_CONSTRUCTOR")
+                                 (first (trav:get-asts ast '("CLASS") :direction :upward))
+                                 ast)
+                             "name")))
+          (push
+            (let ((pos (list
+                         (cons :path src-path)
+                         (cons :name method-name)
+                         (cons :fq-name (find-fq-name-for-definition
+                                          method-name ast path (traversal-index traversal)))
+                         (cons :top-offset (jsown:val (jsown:val ast "textRange") "startOffset")))))
+              (when (assoc :origin range)
+                (push (cons :origin (cdr (assoc :origin range))) pos))
+              pos)
+            results)))
 
+      (when (equal (ast-value ast "type") "CLASS")
+        (loop for inner-class in (trav:get-asts ast '("CLASS_BODY" "CLASS"))
+              do (enqueue q inner-class)))
       (loop for child in (jsown:val ast "children") do (enqueue q child)))
     results))
 
@@ -93,7 +100,16 @@
                     fq-class-names)))
 
     (when (equal (ast-value ast "type") "CLASS")
-      (setf fq-class-names (append (list (ast-value ast "name")) fq-class-names)))
+      (setf fq-class-names (append (list (ast-value ast "name")) fq-class-names))
+
+      ;; if constructor
+      (when (equal (ast-value ast "name") fun-name)
+        (setf fq-class-names (append (list (ast-value ast "name")) fq-class-names))
+        (loop for param in (trav:get-asts ast '("PRIMARY_CONSTRUCTOR"
+                                                "VALUE_PARAMETER_LIST"
+                                                "VALUE_PARAMETER"))
+              do (setf fq-param-names (append (list (find-fq-class-name-kotlin param path index))
+                                              fq-param-names)))))
 
     (when (and (equal (ast-value ast "type") "FUN")
                (equal (ast-value ast "name") fun-name))
@@ -196,6 +212,8 @@
                                        "CONSTRUCTOR_CALLEE"
                                        "TYPE_REFERENCE"))))
        path index))
+    ("VALUE_PARAMETER"
+     (find-fq-class-name-by-variable-name (trav:ast-value ast "name") ast path index))
     ("REFERENCE_EXPRESSION"
      (or (find-fq-class-name-by-variable-name (ast-value ast "name") ast path index)
          (find-fq-class-name-by-class-name (ast-value ast "name") ast)))
@@ -303,7 +321,7 @@
                             (let* ((vn (trav:ast-value
                                          (first (trav:get-asts root '("REFERENCE_EXPRESSION")))
                                          "name"))
-                                   (v (find-variable vn root)))
+                                   (v (find-definition vn root)))
                               (first (trav:get-asts v '("CALL_EXPRESSION"))))
                             path index)
                           (find-fq-name-for-reference
@@ -315,9 +333,45 @@
 
     (enqueue q (ast-value ast "parent"))))
 
-(defun find-variable (variable-name ast)
+(defmethod find-reference-to-literal-generic ((trav traversal-kotlin) ast path)
+  (cond
+    ((trav:get-asts ast '("LITERAL_STRING_TEMPLATE_ENTRY"))
+     `(((:path . ,path)
+        (:name .
+         ,(trav:ast-value (first (trav:get-asts ast '("LITERAL_STRING_TEMPLATE_ENTRY"))) "name"))
+        (:top-offset . ,(ast-value ast "textOffset")))))
+    ((equal (trav:ast-value ast "type") "STRING_TEMPLATE")
+     (loop for entry in (trav:get-asts ast '("LONG_STRING_TEMPLATE_ENTRY"))
+       do
+       (multiple-value-bind (v vi) (find-definition
+                                     (trav:ast-value
+                                       (first (trav:get-asts entry '("DOT_QUALIFIED_EXPRESSION"
+                                                                     "REFERENCE_EXPRESSION")))
+                                       "name")
+                                     entry)
+         (let* ((defs
+                  (when v (find-definitions
+                            `((:path . ,path)
+                              (:start-offset .
+                               ,(trav:ast-value (trav:ast-value v "textRange") "startOffset"))
+                              (:end-offset .
+                               ,(trav:ast-value (trav:ast-value v "textRange") "endOffset"))))))
+                (refs (mapcan (lambda (d) (find-references d (traversal-index trav))) defs)))
+           (when refs
+             (return (mapcan (lambda (ref-pos)
+                               (let ((ast (nth vi (trav:get-asts (trav:find-ast
+                                                                   ref-pos (traversal-index trav))
+                                                                 '("CALL_EXPRESSION"
+                                                                   "VALUE_ARGUMENT_LIST"
+                                                                   "VALUE_ARGUMENT"
+                                                                   "STRING_TEMPLATE")))))
+                                 (find-reference-to-literal-generic
+                                   trav ast (cdr (assoc :path ref-pos)))))
+                             refs)))))))))
+
+(defun find-definition (variable-name ast)
   (unless variable-name
-    (return-from find-variable))
+    (return-from find-definition))
 
   (loop
     with q = (make-queue)
@@ -326,10 +380,26 @@
     (setf ast (dequeue q))
     (unless ast (return))
 
-    (let ((variable (first (trav:filter-by-name
-                             (trav:get-asts ast '("PROPERTY") :direction :horizontal)
-                             variable-name))))
-      (return variable))
+    (when (equal (ast-value ast "type") "CLASS")
+      (loop for inner-class in (trav:get-asts ast '("CLASS_BODY" "CLASS"))
+        do (enqueue q inner-class))
+
+      (loop for param in (trav:get-asts ast '("PRIMARY_CONSTRUCTOR"
+                                              "VALUE_PARAMETER_LIST"
+                                              "VALUE_PARAMETER"))
+            and index from 0
+            do (when (equal (trav:ast-value param "name") variable-name)
+                 (return-from find-definition (values param index))))
+
+      (let ((v (first (trav:filter-by-name (trav:get-asts ast '("CLASS_BODY"
+                                                                "PROPERTY"))
+                                           variable-name))))
+        (when v (return v))))
+
+    (let ((v (first (trav:filter-by-name
+                      (trav:get-asts ast '("PROPERTY") :direction :horizontal)
+                      variable-name))))
+      (when v (return v)))
 
     (enqueue q (ast-value ast "parent"))))
 
