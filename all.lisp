@@ -9,5 +9,6 @@
     #:inga/git
     #:inga/logger  
     #:inga/main
+    #:inga/plugin/spring/traversal
     #:inga/traversal))
 

@@ -24,7 +24,7 @@
   (:import-from #:inga/plugin/jvm-dependency-loader)
   (:import-from #:inga/plugin/jvm-helper
                 #:find-base-path)
-  (:import-from #:inga/plugin/spring-property-loader)
+  (:import-from #:inga/plugin/spring/spring-property-loader)
   (:import-from #:inga/utils
                 #:split-trim-comma)
   (:import-from #:inga/errors
@@ -119,7 +119,7 @@
                                                         (or include *include-java*)
                                                         exclude root-path index))
                    :processes (list
-                                (inga/plugin/spring-property-loader:start root-path)
+                                (inga/plugin/spring/spring-property-loader:start root-path)
                                 (inga/plugin/jvm-dependency-loader:start root-path))))
                (t (error 'inga-error-context-not-found)))))
     (start-client (context-lc ctx))

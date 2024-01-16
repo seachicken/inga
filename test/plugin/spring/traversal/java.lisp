@@ -1,10 +1,11 @@
-(defpackage #:inga/test/traversal/spring-java
+(defpackage #:inga/test/plugin/spring/traversal/java
   (:use #:cl
         #:fiveam
-        #:inga/traversal
         #:inga/ast-index
-        #:inga/test/helper))
-(in-package #:inga/test/traversal/spring-java)
+        #:inga/plugin/spring/traversal
+        #:inga/test/helper  
+        #:inga/traversal))
+(in-package #:inga/test/plugin/spring/traversal/java)
 
 (def-suite java)
 (in-suite java)

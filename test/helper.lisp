@@ -27,7 +27,7 @@
   (defparameter *root-path* root-path)
   (defparameter *index* nil)
   (inga/plugin/jvm-dependency-loader:start root-path)
-  (inga/plugin/spring-property-loader:start root-path)
+  (inga/plugin/spring/spring-property-loader:start root-path)
   (setf *index* (make-instance index-type
                                :root-path root-path))
   (let ((java (start-traversal :java include nil root-path *index*))
@@ -37,7 +37,7 @@
       (progn
         (stop-traversal java)
         (stop-traversal kotlin)
-        (inga/plugin/spring-property-loader:stop)
+        (inga/plugin/spring/spring-property-loader:stop)
         (inga/plugin/jvm-dependency-loader:stop)))))
 
 (def-fixture node-context (root-path index-type &key (include '("**")))

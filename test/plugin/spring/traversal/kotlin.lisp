@@ -1,10 +1,11 @@
-(defpackage #:inga/test/traversal/spring-kotlin
+(defpackage #:inga/test/plugin/spring/traversal/kotlin
   (:use #:cl
         #:fiveam
-        #:inga/traversal
         #:inga/ast-index
-        #:inga/test/helper))
-(in-package #:inga/test/traversal/spring-kotlin)
+        #:inga/plugin/spring/traversal
+        #:inga/test/helper
+        #:inga/traversal))
+(in-package #:inga/test/plugin/spring/traversal/kotlin)
 
 (def-suite kotlin)
 (in-suite kotlin)

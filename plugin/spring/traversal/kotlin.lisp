@@ -1,8 +1,7 @@
-(defpackage #:inga/traversal/spring-kotlin
+(defpackage #:inga/plugin/spring/traversal/kotlin
   (:use #:cl
-        #:inga/traversal/base
-        #:inga/traversal/kotlin
-        #:inga/traversal/spring-base
+        #:inga/plugin/spring/traversal/base
+        #:inga/traversal
         #:inga/utils)
   (:import-from #:quri)
   (:import-from #:inga/ast-index
@@ -15,9 +14,9 @@
                 #:log-error)
   (:import-from #:inga/plugin/jvm-helper
                 #:convert-to-json-type)
-  (:import-from #:inga/plugin/spring-property-loader
+  (:import-from #:inga/plugin/spring/spring-property-loader
                 #:find-property))
-(in-package #:inga/traversal/spring-kotlin)
+(in-package #:inga/plugin/spring/traversal/kotlin)
 
 (defmethod set-index-group :after ((traversal traversal-kotlin) path)
   (when (is-rest-client (get-ast (traversal-index traversal) path))

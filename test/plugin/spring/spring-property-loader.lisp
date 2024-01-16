@@ -1,8 +1,8 @@
-(defpackage #:inga/test/plugin/spring-property-loader
+(defpackage #:inga/test/plugin/spring/spring-property-loader
   (:use #:cl
         #:fiveam
-        #:inga/plugin/spring-property-loader))
-(in-package #:inga/test/plugin/spring-property-loader)
+        #:inga/plugin/spring/spring-property-loader))
+(in-package #:inga/test/plugin/spring/spring-property-loader)
 
 (def-suite java)
 (in-suite java)

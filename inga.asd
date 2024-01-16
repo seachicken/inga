@@ -19,10 +19,10 @@
                "inga/test/main"
                "inga/test/traversal/java"
                "inga/test/traversal/kotlin"
-               "inga/test/traversal/spring-java"
-               "inga/test/traversal/spring-kotlin"
                "inga/test/plugin/jvm-helper"
-               "inga/test/plugin/spring-property-loader")
+               "inga/test/plugin/spring/spring-property-loader"
+               "inga/test/plugin/spring/traversal/java"
+               "inga/test/plugin/spring/traversal/kotlin")
   :perform (test-op (o c)
                     (unless (uiop:symbol-call
                               :fiveam '#:run!
@@ -34,13 +34,13 @@
                                 (uiop:find-symbol* '#:kotlin
                                                    :inga/test/traversal/kotlin)
                                 (uiop:find-symbol* '#:java
-                                                   :inga/test/traversal/spring-java)
-                                (uiop:find-symbol* '#:kotlin
-                                                   :inga/test/traversal/spring-kotlin)
-                                (uiop:find-symbol* '#:java
                                                    :inga/test/plugin/jvm-helper)
                                 (uiop:find-symbol* '#:java
-                                                   :inga/test/plugin/spring-property-loader)))
+                                                   :inga/test/plugin/spring/spring-property-loader)
+                                (uiop:find-symbol* '#:java
+                                                   :inga/test/plugin/spring/traversal/java)
+                                (uiop:find-symbol* '#:kotlin
+                                                   :inga/test/plugin/spring/traversal/kotlin)))
                       (error "Tests failed"))))
 
 (defsystem "inga/test-node"

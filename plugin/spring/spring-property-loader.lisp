@@ -1,4 +1,4 @@
-(defpackage #:inga/plugin/spring-property-loader
+(defpackage #:inga/plugin/spring/spring-property-loader
   (:use #:cl)
   (:import-from #:jsown)
   (:import-from #:inga/cache
@@ -13,7 +13,7 @@
   (:export #:start
            #:stop
            #:find-property))
-(in-package #:inga/plugin/spring-property-loader)
+(in-package #:inga/plugin/spring/spring-property-loader)
 
 (defparameter *spring-property-loader* nil)
 (defparameter *root-path* nil)

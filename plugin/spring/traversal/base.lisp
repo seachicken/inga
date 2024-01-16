@@ -1,4 +1,4 @@
-(defpackage #:inga/traversal/spring-base
+(defpackage #:inga/plugin/spring/traversal/base
   (:use #:cl)
   (:import-from #:alexandria
                 #:switch)
@@ -9,7 +9,7 @@
            #:get-method-from-request-mapping
            #:find-param-from-path-variable
            #:to-http-method))
-(in-package #:inga/traversal/spring-base)
+(in-package #:inga/plugin/spring/traversal/base)
 
 (defmethod start-traversal :after (kind include exclude path index)
   ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/client/RestTemplate.html

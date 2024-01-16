@@ -1,8 +1,7 @@
-(defpackage #:inga/traversal/spring-java
+(defpackage #:inga/plugin/spring/traversal/java
   (:use #:cl
-        #:inga/traversal/base
-        #:inga/traversal/java
-        #:inga/traversal/spring-base
+        #:inga/traversal
+        #:inga/plugin/spring/traversal/base
         #:inga/utils)
   (:import-from #:quri)
   (:import-from #:inga/ast-index
@@ -15,9 +14,9 @@
                 #:replace-variable-name)
   (:import-from #:inga/plugin/jvm-helper
                 #:convert-to-json-type)
-  (:import-from #:inga/plugin/spring-property-loader
+  (:import-from #:inga/plugin/spring/spring-property-loader
                 #:find-property))
-(in-package #:inga/traversal/spring-java)
+(in-package #:inga/plugin/spring/traversal/java)
 
 (defmethod set-index-group :after ((traversal traversal-java) path)
   (when (is-rest-client (get-ast (traversal-index traversal) path))
