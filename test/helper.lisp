@@ -17,13 +17,13 @@
                 #:start-traversal
                 #:stop-traversal)
   (:export #:*index*
-           #:jvm-context
-           #:node-context
-           #:ast
+           #:jvm-ctx
+           #:node-ctx
+           #:find-ast-in-ctx
            #:create-range))
 (in-package #:inga/test/helper)
 
-(def-fixture jvm-context (root-path index-type &key (include '("**")))
+(def-fixture jvm-ctx (root-path index-type &key (include '("**")))
   (defparameter *root-path* root-path)
   (defparameter *index* nil)
   (inga/plugin/jvm-dependency-loader:start root-path)
@@ -40,7 +40,7 @@
         (inga/plugin/spring/spring-property-loader:stop)
         (inga/plugin/jvm-dependency-loader:stop)))))
 
-(def-fixture node-context (root-path index-type &key (include '("**")))
+(def-fixture node-ctx (root-path index-type &key (include '("**")))
   (defparameter *root-path* root-path)
   (defparameter *index* nil)
   (setf *index* (make-instance index-type
@@ -50,7 +50,7 @@
       (&body)
       (stop-traversal typescript))))
 
-(defmacro ast (readable-pos)
+(defmacro find-ast-in-ctx (readable-pos)
   `(let* ((path (cdr (assoc :path ,readable-pos)))
           (pos (list (cons :path path)
                      (cons :top-offset
