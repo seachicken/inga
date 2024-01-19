@@ -356,7 +356,8 @@
                                ,(trav:ast-value (trav:ast-value v "textRange") "startOffset"))
                               (:end-offset .
                                ,(trav:ast-value (trav:ast-value v "textRange") "endOffset"))))))
-                (refs (mapcan (lambda (d) (find-references d (traversal-index trav))) defs)))
+                (refs (mapcan (lambda (d) (find-references d (traversal-index trav)))
+                              (remove-duplicates defs :test #'equal))))
            (when refs
              (return (mapcan (lambda (ref-pos)
                                (let ((ast (nth vi (trav:get-asts (trav:find-ast
