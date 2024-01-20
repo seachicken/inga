@@ -82,6 +82,9 @@
     (unless base-path
       (return-from load-hierarchy))
 
+    (when (uiop:string-suffix-p fq-class-name "[]")
+      (setf fq-class-name (string-right-trim "[]" fq-class-name)))
+
     (mapcar (lambda (h) (jsown:val h "name"))
             (let ((results (exec-command
                              *jvm-dependency-loader*

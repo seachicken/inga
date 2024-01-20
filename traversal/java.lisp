@@ -210,10 +210,15 @@
           (ppcre:regex-replace-all "_LITERAL" (ast-value ast "type") ""))
       (switch ((ast-value ast "type") :test #'equal)
         ("MEMBER_SELECT"
-         (if (trav:filter-by-name (list ast) "class")
-             "java.lang.Class"
-             (find-fq-class-name-by-class-name
-               (ast-value (first (trav:get-asts ast '("IDENTIFIER"))) "name") ast)))
+         (cond
+           ((equal (ast-value ast "name") "class")
+            "java.lang.Class")
+           ;; if array length
+           ((equal (ast-value ast "name") "length")
+            "INT")
+           (t
+            (find-fq-class-name-by-class-name
+              (ast-value (first (trav:get-asts ast '("IDENTIFIER"))) "name") ast))))
         ("NEW_CLASS"
          (find-fq-class-name-by-class-name (ast-value ast "name") ast))
         ("VARIABLE"
@@ -289,6 +294,11 @@
       ((trav:get-asts variable '("IDENTIFIER"))
        (find-fq-class-name-by-class-name
          (ast-value (first (trav:get-asts variable '("IDENTIFIER"))) "name") variable))
+      ((trav:get-asts variable '("ARRAY_TYPE"))
+       (concatenate 'string
+                    (find-fq-class-name-by-class-name
+                      (ast-value (first (trav:get-asts variable '("ARRAY_TYPE"))) "name") variable)
+                    "[]"))
       ((trav:get-asts variable '("PARAMETERIZED_TYPE"))
        (find-fq-class-name-by-class-name
          (ast-value (first (trav:get-asts variable '("PARAMETERIZED_TYPE"))) "name") variable))

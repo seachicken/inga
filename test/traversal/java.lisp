@@ -256,6 +256,15 @@
             ;; List.of("a").forEach(v -> System.out.println(v));
             (find-fq-name (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 16))) path))))))
 
+(test find-fq-name-for-array
+  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+    (let ((path "p1/ArrayReference.java"))
+      (is (equal
+            "java.util.Arrays.copyOfRange-java.lang.String[]-INT-INT"
+            ;;                   ↓
+            ;; Arrays.copyOfRange(array, 1, array.length);
+            (find-fq-name (find-ast-in-ctx `((:path . ,path) (:line . 8) (:offset . 27))) path))))))
+
 (test find-fq-class-name-for-new-class
   (with-fixture jvm-ctx (*spring-boot-path* 'ast-index-memory :include '("src/main/**"))
     (let ((path "src/main/java/io/spring/application/ArticleQueryService.java"))
