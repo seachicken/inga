@@ -30,7 +30,7 @@
              ,(cons :top-offset
                     (convert-to-top-offset
                       (merge-pathnames "src/main/kotlin/p1/PrimaryConstructorReference.kt" *kotlin-path*)
-                      '((:line . 7) (:offset . 11))))))
+                      '((:line . 5) (:offset . 11))))))
           (find-references
             '((:path . "src/main/kotlin/p1/PrimaryConstructorHelper.kt")
               (:name . "method")
@@ -58,7 +58,7 @@
              ,(cons :top-offset
                     (convert-to-top-offset
                       (merge-pathnames "src/main/kotlin/p1/JavaReference.kt" *kotlin-path*)
-                      '((:line . 7) (:offset . 11))))))
+                      '((:line . 5) (:offset . 11))))))
           (find-references
             '((:path . "src/main/kotlin/p1/KotlinReference.java")
               (:name . "method")
@@ -73,7 +73,7 @@
             (find-fq-name
               ;;   ↓
               ;; v.method(Enum.A)
-              (find-ast-in-ctx `((:path . ,path) (:line . 8) (:offset . 11)))
+              (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 11)))
               path))))))
 
 (test find-fq-name-for-reference-with-properties
@@ -82,7 +82,7 @@
       (is (equal
             "p1.PropertyHelper.method-java.lang.String"
             (find-fq-name
-              (find-ast-in-ctx `((:path . ,path) (:line . 9) (:offset . 11)))
+              (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 11)))
               path))))))
 
 (test find-fq-name-for-reference-with-not-null-parameter
@@ -95,7 +95,7 @@
               ;;     ↓
               ;;   v.method()
               ;; }
-              (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 11)))
+              (find-ast-in-ctx `((:path . ,path) (:line . 5) (:offset . 11)))
               path))))))
 
 (test find-fq-name-for-reference-with-nullable-parameter
@@ -108,7 +108,7 @@
               ;;     ↓
               ;;   v.method()
               ;; }
-              (find-ast-in-ctx `((:path . ,path) (:line . 11) (:offset . 11)))
+              (find-ast-in-ctx `((:path . ,path) (:line . 9) (:offset . 11)))
               path))))))
 
 (test find-fq-name-for-reference-with-vararg
@@ -121,7 +121,7 @@
               ;;   ↓
               ;;   method(vs)
               ;; }
-              (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 9)))
+              (find-ast-in-ctx `((:path . ,path) (:line . 5) (:offset . 9)))
               path))))))
 
 (test find-fq-name-for-reference-with-anonymous-objects
@@ -132,7 +132,7 @@
             (find-fq-name
               ;; ↓
               ;; Thread(object : Runnable {
-              (first (trav:get-asts (find-ast-in-ctx `((:path . ,path) (:line . 10) (:offset . 9)))
+              (first (trav:get-asts (find-ast-in-ctx `((:path . ,path) (:line . 9) (:offset . 9)))
                                     '("CALL_EXPRESSION")))
               path))))))
 
@@ -144,7 +144,7 @@
             (find-fq-name
               ;;   ↓
               ;; v.method(object : ParameterizedTypeReference<T>() {})
-              (find-ast-in-ctx `((:path . ,path) (:line . 17) (:offset . 11)))
+              (find-ast-in-ctx `((:path . ,path) (:line . 16) (:offset . 11)))
               path))))))
 
 (test find-fq-name-for-method-chain-first

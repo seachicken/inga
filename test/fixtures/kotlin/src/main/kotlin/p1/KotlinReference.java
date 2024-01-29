@@ -1,9 +1,7 @@
 package p1;
 
-import p1.JavaReference;
-
 public class KotlinReference {
-    private JavaReference v = new JavaReference();
+    private JavaReference v = new JavaReference(this);
 
     public void method() {
         v.method();

@@ -1,9 +1,7 @@
 package p1
 
-import p1.PropertyHelper
-
 class PropertyReference {
-    val p: String
+    private val p: String = "a"
 
     fun method(h: PropertyHelper) {
         h.method(p)

@@ -254,7 +254,6 @@
 (defun find-fq-class-name-by-class-name (class-name ast)
   (loop
     with q = (make-queue)
-    with self-class
     initially (enqueue q ast)
     do
     (setf ast (dequeue q))
@@ -267,14 +266,10 @@
                              :key-name "fqName"))))
         (return (if import
                     (ast-value import "fqName")
-                    (when self-class
-                      (format nil "~{~a~^.~}"
-                              (push class-name (get-dot-expressions
-                                                 (first (trav:get-asts ast '("PACKAGE_DIRECTIVE" "*")))))))))))
-
-    (when (and (equal (ast-value ast "type") "CLASS")
-               (equal (ast-value ast "name") class-name))
-      (setf self-class t))
+                    (format nil "~{~a~^.~}"
+                            (append (get-dot-expressions
+                                      (first (trav:get-asts ast '("PACKAGE_DIRECTIVE" "*"))))
+                                    (list class-name)))))))
 
     (enqueue q (ast-value ast "parent"))))
 
