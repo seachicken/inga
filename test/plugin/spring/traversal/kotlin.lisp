@@ -41,7 +41,7 @@
              ,(cons :top-offset
                     (convert-to-top-offset
                       (merge-pathnames "p1/client/ClientRestTemplate.kt" *kotlin-path*)
-                      '((:line . 10) (:offset . 29)))))
+                      '((:line . 10) (:offset . 42)))))
             ((:path . "p1/client/ClientRestTemplate.kt")
              ,(cons :top-offset
                     (convert-to-top-offset
