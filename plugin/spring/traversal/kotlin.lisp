@@ -242,11 +242,6 @@
     (when url
       (format nil "~a" (quri:uri-port (quri:uri (ast-value url "name")))))))
 
-(defun find-api-path (arg-i ast)
-  (let ((url (first (trav:get-asts (get-parameter arg-i ast) '("LITERAL_STRING_TEMPLATE_ENTRY")))))
-    (when url
-      (quri:uri-path (quri:uri (ast-value url "name"))))))
-
 (defun get-parameter (idx ast)
   (nth idx (trav:get-asts ast '("VALUE_ARGUMENT_LIST" "VALUE_ARGUMENT" "*"))))
 
