@@ -186,6 +186,9 @@
                                   (if (>= (length (split #\- fq-name)) 2)
                                       (first (butlast (split #\- fq-name)))
                                       fq-name))))))
+    (when (uiop:string-suffix-p fq-class-name "[]")
+      (setf fq-class-name (string-right-trim "[]" fq-class-name)))
+
     (loop for method in (funcall find-signatures fq-class-name)
           with target-name = (subseq (ppcre:regex-replace-all fq-class-name fq-name "") 1)
           with matched-methods

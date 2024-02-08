@@ -45,6 +45,9 @@
     (unless base-path
       (return-from load-signatures))
 
+    (when (uiop:string-suffix-p fq-class-name "[]")
+      (setf fq-class-name (string-right-trim "[]" fq-class-name)))
+
     (let ((results (exec-command *jvm-dependency-loader*
                                  (format nil "{\"type\":\"METHODS\",\"fqcn\":\"~a\",\"from\":\"~a\"}"
                                          fq-class-name
