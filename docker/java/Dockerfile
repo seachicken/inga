@@ -10,7 +10,7 @@ FROM eclipse-temurin:17-jdk-jammy
 
 ENV JAVAPARSER 0.3.3
 ENV KTPARSRER 0.1.5
-ENV SPRING_PROPERTY_LOADER 0.3.0
+ENV SPRING_PROPERTY_LOADER 0.3.1
 ENV JVM_DEPENDENCY_LOADER 0.4.1
 
 COPY --from=build /inga/roswell/inga /usr/local/bin/
