@@ -50,7 +50,6 @@
     (when (or (equal (ast-value ast "type") "CLASS")
               (equal (ast-value ast "type") "INTERFACE"))
       (let ((annotations (trav:get-asts ast '("MODIFIER_LIST" "ANNOTATION_ENTRY"))))
-
         (unless (trav:filter-by-name (trav:get-asts annotations '("CONSTRUCTOR_CALLEE"
                                                                   "TYPE_REFERENCE"
                                                                   "USER_TYPE"

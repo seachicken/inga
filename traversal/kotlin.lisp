@@ -84,7 +84,7 @@
      (gethash (find-project-index-key (merge-pathnames (cdr (assoc :path pos)) (traversal-path trav)))
               (gethash :module *file-index*)))
     (t
-     (log-error "unexpected visibility modifiers. type: ~a" (cdr (assoc :type pos)))
+     (log-error (format nil "unexpected visibility modifiers. type: ~a" (cdr (assoc :type pos))))
      (ast-index-paths (traversal-index trav)))))
 
 (defmethod find-definitions-generic ((traversal traversal-kotlin) range)

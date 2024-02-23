@@ -21,8 +21,7 @@
              (:path . "/{string}")
              (:origin)
              (:file-pos .
-              (;; TODO: add scope
-               ;;(:type . :module-public)
+              ((:type . :module-default)
                (:path . "p1/server/spring/src/main/p1/RestControllerDefinition.kt")
                (:name . "get")
                (:fq-name . "p1.RestControllerDefinition.get-java.lang.String")
