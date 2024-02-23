@@ -60,21 +60,6 @@
       (setf (gethash :module *file-index*) (make-hash-table)))
     (push path (gethash index-key (gethash :module *file-index*)))))
 
-(defmethod get-scoped-index-paths-generic ((traversal traversal-java) pos)
-  (cond
-    ((eq (cdr (assoc :type pos)) :module-private)
-     (list (cdr (assoc :path pos))))
-    ((eq (cdr (assoc :type pos)) :module-default)
-     (gethash (find-package-index-key (get-ast (traversal-index traversal)
-                                               (cdr (assoc :path pos))))
-              (gethash :package *file-index*)))
-    ((eq (cdr (assoc :type pos)) :module-public)
-     (gethash (find-project-index-key (merge-pathnames (cdr (assoc :path pos))
-                                                       (traversal-path traversal)))
-              (gethash :module *file-index*)))
-    (t
-     (ast-index-paths (traversal-index traversal)))))
-
 (defun find-package-index-key (ast)
   (loop
     with stack = (list ast)
@@ -91,6 +76,21 @@
 (defun find-project-index-key (path)
   (let ((base-path (find-base-path path)))
     (when base-path (intern (namestring base-path)))))
+
+(defmethod get-scoped-index-paths-generic ((traversal traversal-java) pos)
+  (cond
+    ((eq (cdr (assoc :type pos)) :module-private)
+     (list (cdr (assoc :path pos))))
+    ((eq (cdr (assoc :type pos)) :module-default)
+     (gethash (find-package-index-key (get-ast (traversal-index traversal)
+                                               (cdr (assoc :path pos))))
+              (gethash :package *file-index*)))
+    ((eq (cdr (assoc :type pos)) :module-public)
+     (gethash (find-project-index-key (merge-pathnames (cdr (assoc :path pos))
+                                                       (traversal-path traversal)))
+              (gethash :module *file-index*)))
+    (t
+     (ast-index-paths (traversal-index traversal)))))
 
 (defmethod find-definitions-generic ((traversal traversal-java) range)
   (let ((q (make-queue))

@@ -14,7 +14,8 @@
 (test find-definitions-for-method
   (with-fixture jvm-ctx (*kotlin-path* 'ast-index-disk)
     (is (equal
-          `(((:path . "src/main/kotlin/p1/PrimaryConstructorDefinition.kt")
+          `(((:type . :module-default)
+             (:path . "src/main/kotlin/p1/PrimaryConstructorDefinition.kt")
              (:name . "method")
              (:fq-name . "p1.PrimaryConstructorDefinition.method-INT")
              ,(cons :top-offset
@@ -195,6 +196,16 @@
                        '("REFERENCE_EXPRESSION")))
               path))))))
 
+(test get-scope-with-private
+  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+    (let ((path "src/main/kotlin/p1/VisibilityPrivateDefinition.kt"))
+      (is (equal
+            :module-private
+            (inga/traversal/kotlin::get-scope
+              ;;             ↓
+              ;; private void method() {
+              (find-ast-in-ctx `((:path . ,path) (:line . 4) (:offset . 17)))))))))
+
 (test get-dot-expressions-with-zero-dot
   (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
     (let ((path "src/main/kotlin/p1/PrimaryConstructorDefinition.kt"))
@@ -203,6 +214,16 @@
             (inga/traversal/kotlin::get-dot-expressions
               ;;         ↓
               ;; package p1
+              (find-ast-in-ctx `((:path . ,path) (:line . 1) (:offset . 9)))))))))
+
+(test get-dot-expressions-with-two-dots
+  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+    (let ((path "src/main/kotlin/p1/p2/p3/PackageDefinition.kt"))
+      (is (equal
+            '("p1" "p2" "p3")
+            (inga/traversal/kotlin::get-dot-expressions
+              ;;         ↓
+              ;; package p1.p2.p3
               (find-ast-in-ctx `((:path . ,path) (:line . 1) (:offset . 9)))))))))
 
 (test find-signature-for-stdlib

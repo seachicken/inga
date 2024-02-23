@@ -47,10 +47,6 @@
            #:matches-signature
            #:find-class-hierarchy
            #:find-class-hierarchy-generic
-           #:find-package-index-key
-           #:find-package-index-key-generic
-           #:find-project-index-key
-           #:find-project-index-key-generic
            #:convert-to-top-offset
            #:convert-to-pos
            #:contains-offset

@@ -10,9 +10,13 @@
                 #:get-ast)
   (:import-from #:inga/file
                 #:get-file-type)
+  (:import-from #:inga/logger
+                #:log-error)
   (:import-from #:inga/plugin/jvm-dependency-loader
                 #:load-hierarchy 
                 #:load-signatures)
+  (:import-from #:inga/plugin/jvm-helper
+                #:find-base-path)
   (:export #:traversal-kotlin))
 (in-package #:inga/traversal/kotlin)
 
@@ -41,6 +45,48 @@
                                    (ast-index-paths (traversal-index traversal)))
         do (set-index-group traversal path)))
 
+(defmethod set-index-group ((trav traversal-kotlin) path)
+  (let ((index-key (find-package-index-key (get-ast (traversal-index trav) path))))
+    (unless (gethash :package *file-index*)
+      (setf (gethash :package *file-index*) (make-hash-table)))
+    (push path (gethash index-key (gethash :package *file-index*))))
+  (let ((index-key (find-project-index-key
+                      (merge-pathnames path (ast-index-root-path (traversal-index trav))))))
+    (unless (gethash :module *file-index*)
+      (setf (gethash :module *file-index*) (make-hash-table)))
+    (push path (gethash index-key (gethash :module *file-index*)))))
+
+(defun find-package-index-key (ast)
+  (loop
+    with q = (make-queue)
+    initially (enqueue q ast)
+    do
+    (setf ast (dequeue q))
+    (unless ast (return))
+
+    (when (equal (ast-value ast "type") "kotlin.FILE")
+      (return-from find-package-index-key
+                   (intern (format nil "~{~a~^.~}"
+                                   (get-dot-expressions
+                                     (first (get-asts ast '("PACKAGE_DIRECTIVE" "*"))))))))
+
+    (loop for child in (jsown:val ast "children") do (enqueue q child))))
+
+(defun find-project-index-key (path)
+  (let ((base-path (find-base-path path)))
+    (when base-path (intern (namestring base-path)))))
+
+(defmethod get-scoped-index-paths-generic ((trav traversal-kotlin) pos)
+  (cond
+    ((eq (cdr (assoc :type pos)) :module-private)
+     (list (cdr (assoc :path pos))))
+    ((eq (cdr (assoc :type pos)) :module-default)
+     (gethash (find-project-index-key (merge-pathnames (cdr (assoc :path pos)) (traversal-path trav)))
+              (gethash :module *file-index*)))
+    (t
+     (log-error "unexpected visibility modifiers. type: ~a" (cdr (assoc :type pos)))
+     (ast-index-paths (traversal-index trav)))))
+
 (defmethod find-definitions-generic ((traversal traversal-kotlin) range)
   (let* ((q (make-queue))
          (src-path (cdr (assoc :path range)))
@@ -68,6 +114,7 @@
                              "name")))
           (push
             (let ((pos (list
+                         (cons :type (get-scope ast))
                          (cons :path src-path)
                          (cons :name method-name)
                          (cons :fq-name (find-fq-name-for-definition
@@ -83,6 +130,12 @@
               do (enqueue q inner-class)))
       (loop for child in (jsown:val ast "children") do (enqueue q child)))
     results))
+
+(defun get-scope (ast)
+  (let ((visibility (ast-value (first (get-asts ast '("MODIFIER_LIST" "*"))) "type")))
+    (cond
+      ((equal visibility "private") :module-private)
+      (t :module-default))))
 
 (defun find-fq-name-for-definition (fun-name ast path index)
   (loop
@@ -406,13 +459,17 @@
     ((equal (ast-value ast "type") "DOT_QUALIFIED_EXPRESSION")
      (let ((results))
        (labels ((get-names (ast)
-                  (loop for child in (trav:get-asts ast '("REFERENCE_EXPRESSION"))
+                  (loop for child in (get-asts ast '("REFERENCE_EXPRESSION"))
                         with names
                         do
                         (setf names (append names (get-names child)))
                         (setf names (append names (list (ast-value child "name"))))
                         finally (return names))))
-         (setf results (append (get-names ast) results))) results))))
+         (when (get-asts ast '("DOT_QUALIFIED_EXPRESSION"))
+           (setf results (append (get-dot-expressions
+                                   (first (get-asts ast '("DOT_QUALIFIED_EXPRESSION")))))))
+         (setf results (append results (get-names ast))))
+       results))))
 
 (defmethod find-class-hierarchy-generic ((traversal traversal-kotlin)
                                          fq-class-name root-ast path index)
