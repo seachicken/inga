@@ -386,7 +386,7 @@
     do
     (setf ast (dequeue q))
     (when (or (null ast)
-              (eq (trav:ast-value ast key-offset) (cdr (assoc :top-offset pos))))
+              (eq (ast-value ast key-offset) (cdr (assoc :top-offset pos))))
       (return ast))
 
     (loop for child in (ast-value ast "children") do (enqueue q child))))

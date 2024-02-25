@@ -10,23 +10,23 @@
 (def-suite java)
 (in-suite java)
 
-(defparameter *java-path* (merge-pathnames "test/fixtures/java/"))
+(defparameter *spring-path* (merge-pathnames "test/plugin/spring/fixtures/general/"))
 
 (test get-index-group-for-rest-client
-  (with-fixture jvm-ctx (*java-path* 'ast-index-disk)
+  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
     (is (equal
-          '("p1/client/ClientRestTemplate.java")
+          '("src/main/java/inga/client/ClientRestTemplate.java")
           (get-scoped-index-paths
             `((:type . :rest-server)
               (:host . "8080")
               (:path . "/path")
               (:name . "GET")
               (:file-pos .
-               ((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java"))))
+               ((:path . "src/main/java/inga/server/RestControllerDefinition.java"))))
             *index*)))))
 
 (test find-definitions-for-rest-server
-  (with-fixture jvm-ctx (*java-path* 'ast-index-disk)
+  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
     (is (equal
           `(((:type . :rest-server)
              (:host . "8080")
@@ -35,29 +35,29 @@
              (:origin)
              (:file-pos .
               ((:type . :module-public)
-               (:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java")
+               (:path . "src/main/java/inga/server/RestControllerDefinition.java")
                (:name . "get")
-               (:fq-name . "p1.RestControllerDefinition.get-java.lang.String")
+               (:fq-name . "inga.server.RestControllerDefinition.get-java.lang.String")
                ,(cons :top-offset
                       (convert-to-top-offset
                         (merge-pathnames
-                          "p1/server/spring/src/main/p1/RestControllerDefinition.java" *java-path*)
+                          "src/main/java/inga/server/RestControllerDefinition.java" *spring-path*)
                         '((:line . 12) (:offset . 17))))))))
           (find-definitions
-            (create-range "p1/server/spring/src/main/p1/RestControllerDefinition.java" :line 12))))))
+            (create-range "src/main/java/inga/server/RestControllerDefinition.java" :line 12))))))
 
 (test find-references-for-rest-client
-  (with-fixture jvm-ctx (*java-path* 'ast-index-disk)
+  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
     (is (equal
-          `(((:path . "p1/client/ClientRestTemplate.java")
+          `(((:path . "src/main/java/inga/client/ClientRestTemplate.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      (merge-pathnames "p1/client/ClientRestTemplate.java" *java-path*)
+                      (merge-pathnames "src/main/java/inga/client/ClientRestTemplate.java" *spring-path*)
                       '((:line . 16) (:offset . 16)))))
-            ((:path . "p1/client/ClientRestTemplate.java")
+            ((:path . "src/main/java/inga/client/ClientRestTemplate.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      (merge-pathnames "p1/client/ClientRestTemplate.java" *java-path*)
+                      (merge-pathnames "src/main/java/inga/client/ClientRestTemplate.java" *spring-path*)
                       '((:line . 24) (:offset . 16))))))
           (find-references
             `((:type . :rest-server)
@@ -65,14 +65,14 @@
               (:path . "/path")
               (:name . "GET")
               (:file-pos .
-               ((:path . "p1/server/spring/src/main/p1/RestControllerDefinition.java"))))
+               ((:path . "src/main/java/inga/server/RestControllerDefinition.java"))))
             *index*)))))
 
 ;; RequestMapping
 ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/bind/annotation/RequestMapping.html
 
 (test get-value-from-request-mapping-with-single-member-annotation
-  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
     (is (equal
           '("/mapping")
           ;; ↓
@@ -81,12 +81,12 @@
             :java
             (first (trav:get-asts
                      (find-ast-in-ctx
-                       '((:path . "p1/server/spring/src/main/p1/RequestMappingDefinition.java")
+                       '((:path . "src/main/java/inga/server/RequestMappingDefinition.java")
                          (:line . 8) (:offset . 1)))
                      '("ANNOTATION"))))))))
 
 (test get-value-from-request-mapping-with-no-value
-  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
     (is (equal
           '("")
           ;; ↓
@@ -95,12 +95,12 @@
             :java
             (first (trav:get-asts
                      (find-ast-in-ctx
-                       '((:path . "p1/server/spring/src/main/p1/RequestMappingDefinition.java")
+                       '((:path . "src/main/java/inga/server/RequestMappingDefinition.java")
                          (:line . 11) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
 (test get-value-from-request-mapping-with-value
-  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
     (is (equal
           '("/{v}")
           ;; ↓
@@ -109,12 +109,12 @@
             :java
             (first (trav:get-asts
                      (find-ast-in-ctx
-                       '((:path . "p1/server/spring/src/main/p1/RequestMappingDefinition.java")
+                       '((:path . "src/main/java/inga/server/RequestMappingDefinition.java")
                          (:line . 15) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
 (test get-values-from-request-mapping-with-value
-  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
     (is (equal
           '("/{v1}" "/{v1}/{v2}")
           ;; ↓
@@ -123,12 +123,12 @@
             :java
             (first (trav:get-asts
                      (find-ast-in-ctx
-                       '((:path . "p1/server/spring/src/main/p1/RequestMappingDefinition.java")
+                       '((:path . "src/main/java/inga/server/RequestMappingDefinition.java")
                          (:line . 19) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
 (test get-value-from-request-mapping-with-path
-  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
     (is (equal
           '("/{v}")
           ;; ↓
@@ -137,12 +137,12 @@
             :java
             (first (trav:get-asts
                      (find-ast-in-ctx
-                       '((:path . "p1/server/spring/src/main/p1/RequestMappingDefinition.java")
+                       '((:path . "src/main/java/inga/server/RequestMappingDefinition.java")
                          (:line . 23) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
 (test get-values-from-request-mapping-with-path
-  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
     (is (equal
           '("/{v1}" "/{v1}/{v2}")
           ;; ↓
@@ -151,12 +151,12 @@
             :java
             (first (trav:get-asts
                      (find-ast-in-ctx
-                       '((:path . "p1/server/spring/src/main/p1/RequestMappingDefinition.java")
+                       '((:path . "src/main/java/inga/server/RequestMappingDefinition.java")
                          (:line . 27) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
 (test get-method-from-request-mapping
-  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
     (is (equal
           "GET"
           ;; ↓
@@ -165,7 +165,7 @@
             :java
             (first (trav:get-asts
                      (find-ast-in-ctx
-                       '((:path . "p1/server/spring/src/main/p1/RequestMappingDefinition.java")
+                       '((:path . "src/main/java/inga/server/RequestMappingDefinition.java")
                          (:line . 15) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
@@ -173,7 +173,7 @@
 ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/bind/annotation/GetMapping.html
 
 (test get-value-from-get-mapping-with-single-member-annotation
-  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
     (is (equal
           '("/{v}")
           ;; ↓
@@ -182,12 +182,12 @@
             :java
             (first (trav:get-asts
                      (find-ast-in-ctx
-                       '((:path . "p1/server/spring/src/main/p1/GetMappingDefinition.java")
+                       '((:path . "src/main/java/inga/server/GetMappingDefinition.java")
                          (:line . 13) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
 (test get-method-from-get-mapping
-  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
     (is (equal
           "GET"
           ;; ↓
@@ -196,7 +196,7 @@
             :java
             (first (trav:get-asts
                      (find-ast-in-ctx
-                       '((:path . "p1/server/spring/src/main/p1/GetMappingDefinition.java")
+                       '((:path . "src/main/java/inga/server/GetMappingDefinition.java")
                          (:line . 9) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
@@ -204,7 +204,7 @@
 ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/bind/annotation/PathVariable.html
 
 (test find-param-from-path-variable-with-no-value
-  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
     (is (equal
           "v"
           ;;             ↓
@@ -213,13 +213,13 @@
             (find-param-from-path-variable
               :java
               (find-ast-in-ctx
-                '((:path . "p1/server/spring/src/main/p1/PathVariableDefinition.java")
+                '((:path . "src/main/java/inga/server/PathVariableDefinition.java")
                   (:line . 11) (:offset . 17)))
               "v")
             "name")))))
 
 (test find-param-from-path-variable-with-single-member-annotation
-  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
     (is (equal
           "a"
           ;;             ↓
@@ -228,13 +228,13 @@
             (find-param-from-path-variable
               :java
               (find-ast-in-ctx
-                '((:path . "p1/server/spring/src/main/p1/PathVariableDefinition.java")
+                '((:path . "src/main/java/inga/server/PathVariableDefinition.java")
                   (:line . 15) (:offset . 17)))
               "v")
             "name")))))
 
 (test find-param-from-path-variable-with-value
-  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
     (is (equal
           "a"
           ;;             ↓
@@ -243,13 +243,13 @@
             (find-param-from-path-variable
               :java
               (find-ast-in-ctx
-                '((:path . "p1/server/spring/src/main/p1/PathVariableDefinition.java")
+                '((:path . "src/main/java/inga/server/PathVariableDefinition.java")
                   (:line . 19) (:offset . 17)))
               "v")
             "name")))))
 
 (test find-param-from-path-variable-with-name
-  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
     (is (equal
           "a"
           ;;                   ↓
@@ -258,7 +258,7 @@
             (find-param-from-path-variable
               :java
               (find-ast-in-ctx
-                '((:path . "p1/server/spring/src/main/p1/PathVariableDefinition.java")
+                '((:path . "src/main/java/inga/server/PathVariableDefinition.java")
                   (:line . 23) (:offset . 17)))
               "v")
             "name")))))

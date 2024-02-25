@@ -193,13 +193,14 @@
 
 (test find-fq-name-for-reference-with-enum
   (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
-    (let ((path "p1/client/ClientRestTemplate.java"))
+    (let ((path "p1/EnumReference.java"))
       (is (equal
-            "org.springframework.web.client.RestTemplate.exchange-java.lang.String-org.springframework.http.HttpMethod-NULL-java.lang.Class"
-            ;;                             ↓
-            ;; return restTemplate.exchange("http://localhost:8080/path", HttpMethod.GET, null, String.class);
+            "p1.EnumHelper.EnumHelper-p1.EnumHelper.Enum"
+            ;; ↓
+            ;; new EnumHelper(Enum.A);
             (inga/traversal/java::find-fq-name-for-reference
-              (find-ast-in-ctx `((:path . ,path) (:line . 24) (:offset . 37)))
+              (first (trav:get-asts (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 9)))
+                                    '("NEW_CLASS")))
               path
               *index*))))))
 

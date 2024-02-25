@@ -1,4 +1,4 @@
-package p1.client;
+package inga.client;
 
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
