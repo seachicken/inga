@@ -15,7 +15,8 @@
 (test get-index-group-for-rest-client
   (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
     (is (equal
-          '("src/main/java/inga/client/ClientRestTemplate.java")
+          '("src/main/java/inga/client/StringLiteralHelper.java"
+            "src/main/java/inga/client/ClientRestTemplate.java")
           (get-scoped-index-paths
             `((:type . :rest-server)
               (:host . "8080")
@@ -53,16 +54,35 @@
              ,(cons :top-offset
                     (convert-to-top-offset
                       (merge-pathnames "src/main/java/inga/client/ClientRestTemplate.java" *spring-path*)
-                      '((:line . 16) (:offset . 16)))))
+                      '((:line . 16) (:offset . 42)))))
             ((:path . "src/main/java/inga/client/ClientRestTemplate.java")
              ,(cons :top-offset
                     (convert-to-top-offset
                       (merge-pathnames "src/main/java/inga/client/ClientRestTemplate.java" *spring-path*)
-                      '((:line . 24) (:offset . 16))))))
+                      '((:line . 24) (:offset . 38))))))
           (find-references
             `((:type . :rest-server)
               (:host . "8080")
               (:path . "/path")
+              (:name . "GET")
+              (:file-pos .
+               ((:path . "src/main/java/inga/server/RestControllerDefinition.java"))))
+            *index*)))))
+
+(test find-references-with-literal-for-rest-client
+  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
+    (is (equal
+          `(((:path . "src/main/java/inga/client/StringLiteralReference.java")
+             ;;                                   ↓
+             ;; new StringLiteralHelper.WebClient("/string-literal-reference").get();
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames "src/main/java/inga/client/StringLiteralReference.java"
+                                       *spring-path*)
+                      '((:line . 5) (:offset . 43))))))
+          (find-references
+            `((:type . :rest-server)
+              (:path . "/string-literal-reference")
               (:name . "GET")
               (:file-pos .
                ((:path . "src/main/java/inga/server/RestControllerDefinition.java"))))

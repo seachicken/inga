@@ -120,6 +120,7 @@
               (contains-offset (jsown:val ast "startPos") (jsown:val ast "endPos")
                                start-offset end-offset)
               (jsown:keyp ast "name"))
+        ;; TODO: replace to ast-to-pos
         (let ((pos (list
                      (cons :type (get-scope ast))
                      (cons :path src-path)
@@ -135,6 +136,13 @@
       (loop for child in (jsown:val ast "children") do (enqueue q child)))
     results))
 
+(defun ast-to-pos (ast index path)
+  `((:type . ,(get-scope ast))
+    (:path . ,path)
+    (:name . ,(jsown:val ast "name"))
+    (:fq-name . ,(get-fq-name-of-declaration (get-ast index path) (jsown:val ast "pos")))
+    (:top-offset . ,(jsown:val ast "pos"))))
+
 (defun get-scope (ast)
   (let ((modifiers (split-trim-comma (ast-value (first (trav:get-asts ast '("MODIFIERS"))) "name"))))
     (cond
@@ -144,8 +152,7 @@
       (t :module-default))))
 
 (defmethod find-reference ((traversal traversal-java) target-pos fq-name ast path)
-  (when (matches-signature fq-name (cdr (assoc :fq-name target-pos))
-                           (traversal-index traversal))
+  (when (matches-signature fq-name (cdr (assoc :fq-name target-pos)) (traversal-index traversal))
     `((:path . ,path)
       (:top-offset . ,(ast-value ast "startPos")))))
 
@@ -154,10 +161,13 @@
 
 (defun find-fq-name-for-reference (ast path index)
   (alexandria:switch ((ast-value ast "type") :test #'equal)
+    ("VARIABLE"
+     (find-fq-name-for-definition (ast-value ast "name") ast))
     ("NEW_CLASS"
      (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
              (find-fq-class-name-by-class-name (ast-value ast "name") ast)
-             (ast-value ast "name")
+             ;; get inner class name
+             (first (last (split #\. (ast-value ast "name"))))
              (mapcar (lambda (arg) (find-fq-class-name-java arg path index))
                      (trav:get-asts ast '("*")))))
     ("METHOD_INVOCATION"
@@ -358,7 +368,64 @@
 
     (enqueue q (ast-value ast "parent"))))
 
-(defun find-fq-name-for-definition (method-name ast)
+(defmethod find-reference-to-literal-generic ((trav traversal-java) ast path)
+  (cond
+    ((equal (ast-value ast "type") "STRING_LITERAL")
+     `(((:path . ,path)
+        (:name . ,(ast-value ast "name"))
+        (:top-offset . ,(ast-value ast "pos")))))
+    ((or (equal (ast-value ast "type") "IDENTIFIER")
+         (equal (ast-value ast "type") "VARIABLE"))
+     (loop
+       with q = (make-queue)
+       with variable-name = (ast-value ast "name")
+       initially (enqueue q ast)
+       do
+       (setf ast (dequeue q))
+       (unless ast (return))
+       
+       (when (equal (ast-value ast "type") "CLASS")
+         (let* ((v (first (filter-by-name (get-asts ast '("VARIABLE")) variable-name)))
+                (refs (when v (find-references (ast-to-pos v (traversal-index trav) path)
+                                               (traversal-index trav)))))
+           (return-from
+             find-reference-to-literal-generic
+             (loop for ref in refs
+                   do
+                   (let* ((defs (find-definitions
+                                  `((:path . ,path)
+                                    (:start-offset . ,(cdr (assoc :top-offset ref)))
+                                    (:end-offset . ,(cdr (assoc :top-offset ref))))))
+                          (refs (remove-if (lambda (r) (equal r ref))
+                                           (mapcan (lambda (d)
+                                                     (find-references d (traversal-index trav))) defs)))) 
+                     (return (mapcan (lambda (ref)
+                                       (find-reference-to-literal-generic
+                                         trav
+                                         (first (get-asts (find-ast ref (traversal-index trav))
+                                                          '("VARIABLE") :direction :upward))
+                                         (cdr (assoc :path ref))))
+                                     refs)))))))
+       (when (and (equal (ast-value ast "type") "METHOD")
+                  (filter-by-name (get-asts ast '("VARIABLE")) variable-name))
+         (let ((refs (find-references (ast-to-pos ast (traversal-index trav) path)
+                                      (traversal-index trav))))
+           (return-from
+             find-reference-to-literal-generic
+             (mapcan (lambda (ref)
+                       (find-reference-to-literal-generic
+                         trav
+                         (first (get-asts (find-ast ref (traversal-index trav))
+                                          '("METHOD_INVOCATION"
+                                            "MEMBER_SELECT"
+                                            "NEW_CLASS"
+                                            "STRING_LITERAL")))
+                         (cdr (assoc :path ref))))
+                     refs))))
+
+    (enqueue q (ast-value ast "parent"))))))
+
+(defun find-fq-name-for-definition (target-name ast)
   (loop
     with q = (make-queue)
     with fq-names
@@ -367,8 +434,11 @@
     (setf ast (dequeue q))
     (unless ast (return (format nil "~{~a~^.~}" fq-names)))
 
-    (when (trav:filter-by-name (trav:get-asts ast '("METHOD")) method-name)
-      (setf fq-names (append fq-names (list method-name))))
+    (when (or (trav:filter-by-name (trav:get-asts ast '("METHOD")) target-name)
+              (and
+                (filter-by-name (get-asts ast '("VARIABLE")) target-name)
+                (equal (ast-value (jsown:val ast "parent") "type") "CLASS")))
+      (setf fq-names (append fq-names (list target-name))))
     (when (and
             fq-names
             (equal (ast-value ast "type") "CLASS"))

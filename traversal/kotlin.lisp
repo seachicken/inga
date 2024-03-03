@@ -440,8 +440,7 @@
             do (when (equal (trav:ast-value param "name") variable-name)
                  (return-from find-definition (values param index))))
 
-      (let ((v (first (trav:filter-by-name (trav:get-asts ast '("CLASS_BODY"
-                                                                "PROPERTY"))
+      (let ((v (first (trav:filter-by-name (trav:get-asts ast '("CLASS_BODY" "PROPERTY"))
                                            variable-name))))
         (when v (return v))))
 

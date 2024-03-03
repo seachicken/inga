@@ -105,14 +105,44 @@
 
 (defmethod find-reference :around ((traversal traversal-java) target-pos fq-name ast path)
   (if (eq (cdr (assoc :type target-pos)) :rest-server)
-      (let ((rest-client (find-rest-client fq-name ast path (traversal-index traversal))))
-        (when (and
-                (equal (cdr (assoc :host rest-client)) (cdr (assoc :host target-pos)))
-                (equal (cdr (assoc :path rest-client)) (cdr (assoc :path target-pos)))
-                (equal (cdr (assoc :name rest-client)) (cdr (assoc :name target-pos))))
-          `((:path . ,path)
-            (:top-offset . ,(ast-value ast "startPos")))))
+      (or (let ((pos (find-if (lambda (rest-client)
+                                (and (equal (cdr (assoc :host rest-client))
+                                            (cdr (assoc :host target-pos)))
+                                     (equal (cdr (assoc :path rest-client))
+                                            (cdr (assoc :path target-pos)))
+                                     (equal (cdr (assoc :name rest-client))
+                                            (cdr (assoc :name target-pos)))))
+                              (find-rest-clients traversal fq-name ast path))))
+            (when pos
+              `((:path . ,(cdr (assoc :path (cdr (assoc :file-pos pos)))))
+                (:top-offset . ,(cdr (assoc :top-offset (cdr (assoc :file-pos pos))))))))
+          ;; TODO: remove deprecated call
+          (let ((rest-client (find-rest-client fq-name ast path (traversal-index traversal))))
+            (when (and
+                    (equal (cdr (assoc :host rest-client)) (cdr (assoc :host target-pos)))
+                    (equal (cdr (assoc :path rest-client)) (cdr (assoc :path target-pos)))
+                    (equal (cdr (assoc :name rest-client)) (cdr (assoc :name target-pos))))
+              `((:path . ,path)
+                (:top-offset . ,(ast-value ast "startPos"))))))
       (call-next-method)))
+
+(defmethod find-rest-clients ((traversal traversal-java) fq-name ast path)
+  (let* ((rest-template-apis (gethash :rest-template *rest-client-apis*))
+         (matched-api (find-if (lambda (api)
+                                 (matches-signature fq-name
+                                                    (cdr (assoc :fq-name api))
+                                                    (traversal-index traversal)))
+                               rest-template-apis)))
+    (when matched-api
+      (mapcar (lambda (pos)
+                `((:host . ,(find-api-host 0 ast))
+                  (:path . ,(quri:uri-path (quri:uri (cdr (assoc :name pos)))))
+                  (:name . ,(if (assoc :method matched-api)
+                                (cdr (assoc :method matched-api))
+                                (find-api-method-from-http-method
+                                  (get-parameter (cdr (assoc :method-i matched-api)) ast))))
+                  (:file-pos . ,pos)))
+              (find-reference-to-literal (get-parameter (cdr (assoc :path-i matched-api)) ast) path)))))
 
 ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/client/RestTemplate.html
 (defun find-rest-client (fq-name ast path index)
