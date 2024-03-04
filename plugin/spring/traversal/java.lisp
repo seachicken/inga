@@ -115,15 +115,7 @@
                               (find-rest-clients traversal fq-name ast path))))
             (when pos
               `((:path . ,(cdr (assoc :path (cdr (assoc :file-pos pos)))))
-                (:top-offset . ,(cdr (assoc :top-offset (cdr (assoc :file-pos pos))))))))
-          ;; TODO: remove deprecated call
-          (let ((rest-client (find-rest-client fq-name ast path (traversal-index traversal))))
-            (when (and
-                    (equal (cdr (assoc :host rest-client)) (cdr (assoc :host target-pos)))
-                    (equal (cdr (assoc :path rest-client)) (cdr (assoc :path target-pos)))
-                    (equal (cdr (assoc :name rest-client)) (cdr (assoc :name target-pos))))
-              `((:path . ,path)
-                (:top-offset . ,(ast-value ast "startPos"))))))
+                (:top-offset . ,(cdr (assoc :top-offset (cdr (assoc :file-pos pos)))))))))
       (call-next-method)))
 
 (defmethod find-rest-clients ((traversal traversal-java) fq-name ast path)
@@ -134,60 +126,29 @@
                                                     (traversal-index traversal)))
                                rest-template-apis)))
     (when matched-api
-      (mapcar (lambda (pos)
-                `((:host . ,(find-api-host 0 ast))
-                  (:path . ,(quri:uri-path (quri:uri (cdr (assoc :name pos)))))
-                  (:name . ,(if (assoc :method matched-api)
-                                (cdr (assoc :method matched-api))
-                                (find-api-method-from-http-method
-                                  (get-parameter (cdr (assoc :method-i matched-api)) ast))))
-                  (:file-pos . ,pos)))
-              (find-reference-to-literal (get-parameter (cdr (assoc :path-i matched-api)) ast) path)))))
+      (let* ((split-fq-names (split #\- (cdr (assoc :fq-name matched-api))))
+             (path-type (nth (1+ (cdr (assoc :path-i matched-api))) split-fq-names)))
+        (cond
+          ((equal path-type "java.lang.String")
+           (mapcar (lambda (pos)
+                     `((:host . ,(find-api-host 0 ast))
+                       (:path . ,(quri:uri-path (quri:uri (cdr (assoc :name pos)))))
+                       (:name . ,(get-method matched-api ast))
+                       (:file-pos . ,pos)))
+                   (find-reference-to-literal (get-parameter (cdr (assoc :path-i matched-api)) ast) path)))
+          ((equal path-type "java.net.URI")
+           (let ((server (find-server-from-uri 0 ast path)))
+             `(((:host . ,(cdr (assoc :host server)))
+                (:path . ,(cdr (assoc :path server)))        
+                (:name . ,(get-method matched-api ast))
+                (:file-pos . ((:path . ,path)
+                              (:name . ,(ast-value ast "name"))
+                              (:top-offset . ,(ast-value ast "pos")))))))))))))
 
-;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/client/RestTemplate.html
-(defun find-rest-client (fq-name ast path index)
-  (cond
-    ((matches-signature
-       fq-name
-       "org.springframework.web.client.RestTemplate.exchange-java.lang.String-org.springframework.http.HttpMethod-org.springframework.http.HttpEntity-org.springframework.core.ParameterizedTypeReference-java.lang.Object"
-       index)
-     `((:host . ,(find-api-host 0 ast))
-       (:name . ,(find-api-method-from-http-method (nth 2 (trav:get-asts ast '("*")))))
-       (:path . ,(find-api-path 0 ast))))
-    ((matches-signature
-       fq-name
-       "org.springframework.web.client.RestTemplate.exchange-java.lang.String-org.springframework.http.HttpMethod-org.springframework.http.HttpEntity-java.lang.Class"
-       index)
-     `((:host . ,(find-api-host 0 ast))
-       (:name . ,(find-api-method-from-http-method (nth 2 (trav:get-asts ast '("*")))))
-       (:path . ,(find-api-path 0 ast))))
-    ((matches-signature
-       fq-name
-       "org.springframework.web.client.RestTemplate.getForObject-java.lang.String-java.lang.Class"
-       index)
-     `((:host . ,(find-api-host 0 ast))
-       (:name . "GET")
-       (:path . ,(find-api-path 0 ast))))
-    ((matches-signature
-       fq-name
-       "org.springframework.web.client.RestTemplate.getForObject-java.net.URI-java.lang.Class"
-       index)
-     (let ((server (find-server-from-uri 0 ast path)))
-       `((:host . ,(cdr (assoc :host server)))
-         (:name . "GET")
-         (:path . ,(cdr (assoc :path server))))))
-    ((matches-signature
-       fq-name
-       "org.springframework.web.client.RestTemplate.postForObject-java.lang.String-java.lang.Object-java.lang.Class"
-       index)
-     `((:host . ,(find-api-host 0 ast))
-       (:name . "POST")
-       (:path . ,(find-api-path 0 ast))))
-    ((matches-signature
-       fq-name
-       "org.springframework.web.client.RestTemplate.*"
-       index)
-     (log-error (format nil "unexpected signature of RestTemplate. fq-name: ~a" fq-name)))))
+(defun get-method (api ast)
+  (if (assoc :method api)
+      (cdr (assoc :method api))
+      (find-api-method-from-http-method (get-parameter (cdr (assoc :method-i api)) ast))))
 
 (defun find-api-method-from-http-method (http-method)
   (ast-value http-method "name"))
@@ -196,11 +157,6 @@
   (let ((url (get-parameter arg-i ast)))
     (when (equal (ast-value url "type") "STRING_LITERAL")
       (format nil "~a" (quri:uri-port (quri:uri (ast-value url "name")))))))
-
-(defun find-api-path (arg-i ast)
-  (let ((url (get-parameter arg-i ast)))
-    (when (equal (ast-value url "type") "STRING_LITERAL")
-      (quri:uri-path (quri:uri (ast-value url "name"))))))
 
 (defun get-parameter (idx ast)
   (nth (1+ idx) (trav:get-asts ast '("*"))))
