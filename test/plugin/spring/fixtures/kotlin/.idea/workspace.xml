@@ -4,20 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="05e27921-e74d-4fd0-9517-f43f19b1f863" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/../general/.idea/vcs.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/p1/client/ClientRestTemplate.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../general/src/main/kotlin/inga/client/ClientRestTemplate.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/p1/client/StringLiteralHelper.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../general/src/main/kotlin/inga/client/StringLiteralHelper.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/p1/client/StringLiteralReference.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../general/src/main/kotlin/inga/client/StringLiteralReference.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/p1/server/spring/pom.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/p1/server/spring/resources/application.properties" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/p1/server/spring/src/main/p1/GetMappingDefinition.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../general/src/main/kotlin/inga/server/GetMappingDefinition.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/p1/server/spring/src/main/p1/PathVariableDefinition.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../general/src/main/kotlin/inga/server/PathVariableDefinition.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/p1/server/spring/src/main/p1/RequestMappingDefinition.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../general/src/main/kotlin/inga/server/RequestMappingDefinition.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/p1/server/spring/src/main/p1/RestControllerDefinition.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../general/src/main/kotlin/inga/server/RestControllerDefinition.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../traversal/kotlin.lisp" beforeDir="false" afterPath="$PROJECT_DIR$/../../traversal/kotlin.lisp" afterDir="false" />
-    </list>
+    <list default="true" id="05e27921-e74d-4fd0-9517-f43f19b1f863" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />

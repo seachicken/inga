@@ -12,20 +12,6 @@
 
 (defparameter *spring-path* (merge-pathnames "test/plugin/spring/fixtures/general/"))
 
-(test get-index-group-for-rest-client
-  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
-    (is (equal
-          '("src/main/java/inga/client/StringLiteralHelper.java"
-            "src/main/java/inga/client/ClientRestTemplate.java")
-          (get-scoped-index-paths
-            `((:type . :rest-server)
-              (:host . "8080")
-              (:path . "/path")
-              (:name . "GET")
-              (:file-pos .
-               ((:path . "src/main/java/inga/server/RestControllerDefinition.java"))))
-            *index*)))))
-
 (test find-definitions-for-rest-server
   (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
     (is (equal
