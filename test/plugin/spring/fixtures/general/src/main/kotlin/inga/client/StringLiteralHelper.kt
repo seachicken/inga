@@ -1,4 +1,4 @@
-package p1.client
+package inga.client
 
 import org.springframework.http.HttpMethod
 import org.springframework.web.client.RestTemplate
@@ -6,6 +6,7 @@ import org.springframework.web.client.RestTemplate
 class StringLiteralHelper(
     val restTemplate: RestTemplate
 ) {
+    @JvmInline
     value class WebClient(val path: String)
 
     fun WebClient.get() {

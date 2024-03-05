@@ -1,4 +1,4 @@
-package p1
+package inga.server
 
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
@@ -21,7 +21,7 @@ class RequestMappingDefinition {
     }
 
     @RequestMapping(path = "/{v}", method = RequestMethod.GET)
-    fun getWithPath(@PathVariable String v) {
+    fun getWithPath(@PathVariable v: String) {
     }
 
     @RequestMapping(path = ["/{v1}", "/{v1}/{v2}"], method = RequestMethod.GET)
