@@ -34,7 +34,7 @@
             (:obj
               ("type" . "B")
               ("children" . nil)))
-          (trav:get-asts ast '("B"))))))
+          (get-asts ast '("B"))))))
 
 (test get-nodes-in-upward-direction
   (let ((ast (attach-parent
@@ -46,8 +46,8 @@
                                  (:obj
                                    ("type" . "B")
                                    ("children" . nil))))))))
-    (setf ast (first (trav:get-asts ast '("B"))))
-    (let ((actual (trav:get-asts ast '("A") :direction :upward)))
+    (setf ast (first (get-asts ast '("B"))))
+    (let ((actual (get-asts ast '("A") :direction :upward)))
       (is (and
             (eq 1 (length actual))
             (equal
@@ -66,8 +66,8 @@
                                    ("type" . "B")
                                    ("name" . "b2")
                                    ("children" . nil))))))))
-    (setf ast (first (trav:get-asts ast '("B"))))
-    (let ((actual (first (trav:get-asts ast '("B") :direction :horizontal))))
+    (setf ast (first (get-asts ast '("B"))))
+    (let ((actual (first (get-asts ast '("B") :direction :horizontal))))
       (is (equal
             "b2"
             (ast-value actual "name"))))))
@@ -84,10 +84,10 @@
                                    ("type" . "B")
                                    ("name" . "b2")
                                    ("children" . nil))))))))
-    (setf ast (first (trav:get-asts ast '("B"))))
+    (setf ast (first (get-asts ast '("B"))))
     (is (equal
           nil
-          (trav:get-asts ast '("C") :direction :horizontal)))))
+          (get-asts ast '("C") :direction :horizontal)))))
 
 (test get-nodes-with-asts
   (let ((ast '(:obj
@@ -105,7 +105,7 @@
             (:obj
               ("type" . "B")
               ("children" . nil)))
-          (trav:get-asts (list ast) '("B"))))))
+          (get-asts (list ast) '("B"))))))
 
 (test get-nested-nodes
   (let ((ast '(:obj
@@ -119,7 +119,7 @@
           '((:obj
               ("type" . "C")
               ("children" . nil)))
-          (trav:get-asts ast '("B" "C"))))))
+          (get-asts ast '("B" "C"))))))
 
 (test get-nodes-by-wild-card
   (let ((ast '(:obj
@@ -137,7 +137,7 @@
             (:obj
               ("type" . "C")
               ("children" . nil)))
-          (trav:get-asts ast '("*"))))))
+          (get-asts ast '("*"))))))
 
 (test find-name
   (let ((nodes '((:obj
@@ -149,7 +149,7 @@
               ("type" . "A")
               ("name" . "a")
               ("children" . nil)))
-          (trav:filter-by-name nodes "a")))))
+          (filter-by-name nodes "a")))))
 
 (test does-not-find-a-name
   (let ((nodes '((:obj
@@ -158,7 +158,7 @@
                    ("children" . nil)))))
     (is (equal
           nil
-          (trav:filter-by-name nodes "b")))))
+          (filter-by-name nodes "b")))))
 
 (test does-not-contains-a-name
   (let ((nodes '((:obj
@@ -166,7 +166,7 @@
                    ("children" . nil)))))
     (is (equal
           nil
-          (trav:filter-by-name nodes "a")))))
+          (filter-by-name nodes "a")))))
 
 (test find-names
   (let ((nodes '((:obj
@@ -186,7 +186,7 @@
               ("type" . "B")
               ("name" . "b")
               ("children" . nil)))
-          (trav:filter-by-names nodes '("a" "b"))))))
+          (filter-by-names nodes '("a" "b"))))))
 
 (test find-suffix
   (let ((nodes '((:obj

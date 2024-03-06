@@ -1,5 +1,4 @@
 (defpackage #:inga/traversal/base
-  (:nicknames #:trav)
   (:use #:cl
         #:inga/utils)
   (:import-from #:alexandria

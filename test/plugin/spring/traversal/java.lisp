@@ -85,7 +85,7 @@
           ;; @RequestMapping("/")
           (get-values-from-request-mapping
             :java
-            (first (trav:get-asts
+            (first (get-asts
                      (find-ast-in-ctx
                        '((:path . "src/main/java/inga/server/RequestMappingDefinition.java")
                          (:line . 8) (:offset . 1)))
@@ -99,7 +99,7 @@
           ;; @RequestMapping
           (get-values-from-request-mapping
             :java
-            (first (trav:get-asts
+            (first (get-asts
                      (find-ast-in-ctx
                        '((:path . "src/main/java/inga/server/RequestMappingDefinition.java")
                          (:line . 11) (:offset . 5)))
@@ -113,7 +113,7 @@
           ;; @RequestMapping(value = "/{v}", method = RequestMethod.GET)
           (get-values-from-request-mapping
             :java
-            (first (trav:get-asts
+            (first (get-asts
                      (find-ast-in-ctx
                        '((:path . "src/main/java/inga/server/RequestMappingDefinition.java")
                          (:line . 15) (:offset . 5)))
@@ -127,7 +127,7 @@
           ;; @RequestMapping(value = {"/{v1}", "/{v1}/{v2}"}, method = RequestMethod.GET)
           (get-values-from-request-mapping
             :java
-            (first (trav:get-asts
+            (first (get-asts
                      (find-ast-in-ctx
                        '((:path . "src/main/java/inga/server/RequestMappingDefinition.java")
                          (:line . 19) (:offset . 5)))
@@ -141,7 +141,7 @@
           ;; @RequestMapping(path = "/{v}", method = RequestMethod.GET)
           (get-values-from-request-mapping
             :java
-            (first (trav:get-asts
+            (first (get-asts
                      (find-ast-in-ctx
                        '((:path . "src/main/java/inga/server/RequestMappingDefinition.java")
                          (:line . 23) (:offset . 5)))
@@ -155,7 +155,7 @@
           ;; @RequestMapping(path = {"/{v1}", "/{v1}/{v2}"}, method = RequestMethod.GET)
           (get-values-from-request-mapping
             :java
-            (first (trav:get-asts
+            (first (get-asts
                      (find-ast-in-ctx
                        '((:path . "src/main/java/inga/server/RequestMappingDefinition.java")
                          (:line . 27) (:offset . 5)))
@@ -169,7 +169,7 @@
           ;; @RequestMapping(value = "/{v}", method = RequestMethod.GET)
           (get-method-from-request-mapping
             :java
-            (first (trav:get-asts
+            (first (get-asts
                      (find-ast-in-ctx
                        '((:path . "src/main/java/inga/server/RequestMappingDefinition.java")
                          (:line . 15) (:offset . 5)))
@@ -186,7 +186,7 @@
           ;; @GetMapping("/{v}")
           (get-values-from-request-mapping
             :java
-            (first (trav:get-asts
+            (first (get-asts
                      (find-ast-in-ctx
                        '((:path . "src/main/java/inga/server/GetMappingDefinition.java")
                          (:line . 13) (:offset . 5)))
@@ -200,7 +200,7 @@
           ;; @GetMapping
           (get-method-from-request-mapping
             :java
-            (first (trav:get-asts
+            (first (get-asts
                      (find-ast-in-ctx
                        '((:path . "src/main/java/inga/server/GetMappingDefinition.java")
                          (:line . 9) (:offset . 5)))
@@ -215,7 +215,7 @@
           "v"
           ;;             ↓
           ;; public void method(@PathVariable String v) {
-          (trav:ast-value
+          (ast-value
             (find-param-from-path-variable
               :java
               (find-ast-in-ctx
@@ -230,7 +230,7 @@
           "a"
           ;;             ↓
           ;; public void method(@PathVariable("v") String v) {
-          (trav:ast-value
+          (ast-value
             (find-param-from-path-variable
               :java
               (find-ast-in-ctx
@@ -245,7 +245,7 @@
           "a"
           ;;             ↓
           ;; public void method(@PathVariable(value = "v") String v) {
-          (trav:ast-value
+          (ast-value
             (find-param-from-path-variable
               :java
               (find-ast-in-ctx
@@ -260,7 +260,7 @@
           "a"
           ;;                   ↓
           ;; public void method(@PathVariable(name = "v") String v) {
-          (trav:ast-value
+          (ast-value
             (find-param-from-path-variable
               :java
               (find-ast-in-ctx

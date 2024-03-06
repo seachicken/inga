@@ -57,7 +57,7 @@
                            (convert-to-top-offset
                              (merge-pathnames path (ast-index-root-path *index*))
                              ,readable-pos))))
-          (result (trav:find-ast pos *index*)))
+          (result (find-ast pos *index*)))
      (if result
          result
          (error "ast not found"))))

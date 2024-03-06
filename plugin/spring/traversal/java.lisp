@@ -23,8 +23,8 @@
     (push path (gethash :rest-client *file-index*))))
 
 (defun is-rest-client (ast)
-  (trav:filter-by-name
-    (trav:get-asts ast '("COMPILATION_UNIT" "IMPORT"))
+  (filter-by-name
+    (get-asts ast '("COMPILATION_UNIT" "IMPORT"))
     "org.springframework.web.client.RestTemplate"
     :key-name "fqName"))
 
@@ -49,32 +49,32 @@
 
     (when (or (equal (ast-value ast "type") "CLASS")
               (equal (ast-value ast "type") "INTERFACE"))
-      (let ((annotations (trav:get-asts ast '("MODIFIERS" "ANNOTATION"))))
-        (unless (trav:filter-by-name annotations "RestController")
+      (let ((annotations (get-asts ast '("MODIFIERS" "ANNOTATION"))))
+        (unless (filter-by-name annotations "RestController")
           (return file-definitions))
 
-        (let ((request-mapping (first (trav:filter-by-name annotations "RequestMapping"))))
+        (let ((request-mapping (first (filter-by-name annotations "RequestMapping"))))
           (when request-mapping
             (setf rest-base-path
                   (or
                     (ast-value
-                      (first (trav:get-asts request-mapping '("STRING_LITERAL")))
+                      (first (get-asts request-mapping '("STRING_LITERAL")))
                       "name")
                     (ast-value
-                      (first (trav:get-asts request-mapping '("ASSIGNMENT" "STRING_LITERAL")))
+                      (first (get-asts request-mapping '("ASSIGNMENT" "STRING_LITERAL")))
                       "name")))))))
 
     (when (and (equal (ast-value ast "type") "METHOD")
                (contains-offset (jsown:val ast "startPos") (jsown:val ast "endPos")
                                 start-offset end-offset))
-      (let* ((mapping (first (trav:filter-by-names
-                               (trav:get-asts ast '("MODIFIERS" "ANNOTATION"))
+      (let* ((mapping (first (filter-by-names
+                               (get-asts ast '("MODIFIERS" "ANNOTATION"))
                                '("GetMapping" "PostMapping" "PutMapping" "DeleteMapping"
                                  "RequestMapping"))))
              (rest-paths (mapcar (lambda (v) (merge-paths rest-base-path v))
                             (get-values-from-request-mapping :java mapping)))
              (file-pos (find-if (lambda (def) (eq (cdr (assoc :top-offset def))
-                                                  (trav:ast-value ast "pos")))
+                                                  (ast-value ast "pos")))
                                 file-definitions)))
         (unless mapping
           (return file-definitions))
@@ -159,10 +159,10 @@
       (format nil "~a" (quri:uri-port (quri:uri (ast-value url "name")))))))
 
 (defun get-parameter (idx ast)
-  (nth (1+ idx) (trav:get-asts ast '("*"))))
+  (nth (1+ idx) (get-asts ast '("*"))))
 
 (defun find-server-from-uri (arg-i ast path)
-  (let ((param-uri (nth (1+ arg-i) (trav:get-asts ast '("*")))))
+  (let ((param-uri (nth (1+ arg-i) (get-asts ast '("*")))))
     (let ((variable-uri (find-variable (ast-value param-uri "name") param-uri))
           found-path
           host)
@@ -180,9 +180,8 @@
                         fq-name
                         "org.springframework.web.util.UriComponentsBuilder.fromUriString-java.lang.String")
                       (let ((v (find-variable (ast-value (get-parameter 0 ast) "name") ast)))
-                        (let ((value (first (trav:filter-by-name
-                                              (trav:get-asts v '("MODIFIERS"
-                                                                 "ANNOTATION"))
+                        (let ((value (first (filter-by-name
+                                              (get-asts v '("MODIFIERS" "ANNOTATION"))
                                               "Value"))))
                           (setf host
                                 (write-to-string
@@ -190,58 +189,57 @@
                                     (quri:uri 
                                       (find-property
                                         (first (get-variable-names
-                                                 (ast-value (first (trav:get-asts value '("STRING_LITERAL"))) "name")))
+                                                 (ast-value (first (get-asts value '("STRING_LITERAL"))) "name")))
                                         path)))))))))
                    (find-uri-components-builder
-                     (first (trav:get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION")))
+                     (first (get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION")))
                      path))))
         (find-uri-components-builder
-          (first (trav:get-asts variable-uri '("METHOD_INVOCATION")))
+          (first (get-asts variable-uri '("METHOD_INVOCATION")))
           path))
       `((:host . ,host)
         (:path . ,found-path)))))
 
 (defmethod get-values-from-request-mapping ((type (eql :java)) ast)
-  (let* ((values (trav:filter-by-names
-                   (trav:get-asts ast '("ASSIGNMENT" "IDENTIFIER"))
+  (let* ((values (filter-by-names
+                   (get-asts ast '("ASSIGNMENT" "IDENTIFIER"))
                    '("value" "path")))
-         (values (mapcar (lambda (ast) (trav:ast-value ast "name"))
-                         (or (trav:get-asts ast '("STRING_LITERAL"))
+         (values (mapcar (lambda (ast) (ast-value ast "name"))
+                         (or (get-asts ast '("STRING_LITERAL"))
                              (apply #'append
                                     (mapcar (lambda (v)
-                                              (or (trav:get-asts v '("STRING_LITERAL")
-                                                                 :direction :horizontal)
-                                                  (trav:get-asts
-                                                    (first (trav:get-asts v '("NEW_ARRAY")
-                                                                          :direction :horizontal))
+                                              (or (get-asts v '("STRING_LITERAL")
+                                                            :direction :horizontal)
+                                                  (get-asts
+                                                    (first (get-asts v '("NEW_ARRAY")
+                                                                     :direction :horizontal))
                                                     '("STRING_LITERAL"))))
                                             values))))))
     (or values '(""))))
 
 (defmethod get-method-from-request-mapping ((type (eql :java)) ast)
-  (if (equal (trav:ast-value ast "name") "RequestMapping")
-    (let ((method (first (trav:filter-by-name
-                           (trav:get-asts ast '("ASSIGNMENT" "IDENTIFIER"))
+  (if (equal (ast-value ast "name") "RequestMapping")
+    (let ((method (first (filter-by-name
+                           (get-asts ast '("ASSIGNMENT" "IDENTIFIER"))
                            "method"))))
-      (trav:ast-value (first (trav:get-asts method '("MEMBER_SELECT") :direction :horizontal))
-                      "name"))
-    (to-http-method (trav:ast-value ast "name"))))
+      (ast-value (first (get-asts method '("MEMBER_SELECT") :direction :horizontal)) "name"))
+    (to-http-method (ast-value ast "name"))))
 
 (defmethod find-param-from-path-variable ((type (eql :java)) ast target-name)
-  (loop for param in (nthcdr 1 (trav:get-asts ast '("*")))
+  (loop for param in (nthcdr 1 (get-asts ast '("*")))
         do
-        (let* ((pv (trav:filter-by-name
-                     (trav:get-asts param '("MODIFIERS" "ANNOTATION"))
+        (let* ((pv (filter-by-name
+                     (get-asts param '("MODIFIERS" "ANNOTATION"))
                      "PathVariable"))
-               (value (first (or (trav:get-asts pv '("STRING_LITERAL"))
-                                 (trav:get-asts
-                                   (first (trav:filter-by-names
-                                            (trav:get-asts pv '("ASSIGNMENT" "IDENTIFIER"))
+               (value (first (or (get-asts pv '("STRING_LITERAL"))
+                                 (get-asts
+                                   (first (filter-by-names
+                                            (get-asts pv '("ASSIGNMENT" "IDENTIFIER"))
                                             '("value" "name")))
                                    '("STRING_LITERAL") :direction :horizontal)))))
           (when pv
-            (return (if (equal (trav:ast-value value "name") target-name)
+            (return (if (equal (ast-value value "name") target-name)
                         param
-                        (when (equal (trav:ast-value param "name") target-name)
+                        (when (equal (ast-value param "name") target-name)
                           param)))))))
 

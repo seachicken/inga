@@ -133,7 +133,7 @@
             (find-fq-name
               ;; ↓
               ;; Thread(object : Runnable {
-              (first (trav:get-asts (find-ast-in-ctx `((:path . ,path) (:line . 9) (:offset . 9)))
+              (first (get-asts (find-ast-in-ctx `((:path . ,path) (:line . 9) (:offset . 9)))
                                     '("CALL_EXPRESSION")))
               path))))))
 
@@ -156,7 +156,7 @@
             (find-fq-name
               ;; ↓
               ;; listOf("a").forEach { println(it) }
-              (first (trav:get-asts
+              (first (get-asts
                        (find-ast-in-ctx `((:path . ,path) (:line . 5) (:offset . 9)))
                        '("CALL_EXPRESSION")))
               path))))))
@@ -180,7 +180,7 @@
             ;;                               ↓
             ;; listOf("a").forEach { println(it) }
             (find-fq-class-name
-              (first (trav:get-asts
+              (first (get-asts
                        (find-ast-in-ctx `((:path . ,path) (:line . 5) (:offset . 39)))
                        '("REFERENCE_EXPRESSION")))
               path))))))
@@ -191,7 +191,7 @@
       (is (equal
             "java.lang.String"
             (find-fq-class-name
-              (first (trav:get-asts
+              (first (get-asts
                        (find-ast-in-ctx `((:path . ,path) (:line . 10) (:offset . 32)))
                        '("REFERENCE_EXPRESSION")))
               path))))))

@@ -84,7 +84,7 @@
           ;; @RequestMapping("/")
           (get-values-from-request-mapping
             :kotlin
-            (first (trav:get-asts
+            (first (get-asts
                      (find-ast-in-ctx
                        '((:path . "src/main/kotlin/inga/server/RequestMappingDefinition.kt")
                          (:line . 8) (:offset . 1)))
@@ -98,7 +98,7 @@
           ;; @RequestMapping
           (get-values-from-request-mapping
             :kotlin
-            (first (trav:get-asts
+            (first (get-asts
                      (find-ast-in-ctx
                        '((:path . "src/main/kotlin/inga/server/RequestMappingDefinition.kt")
                          (:line . 11) (:offset . 5)))
@@ -112,7 +112,7 @@
           ;; @RequestMapping(value = "/{v}", method = RequestMethod.GET)
           (get-values-from-request-mapping
             :kotlin
-            (first (trav:get-asts
+            (first (get-asts
                      (find-ast-in-ctx
                        '((:path . "src/main/kotlin/inga/server/RequestMappingDefinition.kt")
                          (:line . 15) (:offset . 5)))
@@ -126,7 +126,7 @@
           ;; @RequestMapping(value = ["/{v1}", "/{v1}/{v2}"], method = RequestMethod.GET)
           (get-values-from-request-mapping
             :kotlin
-            (first (trav:get-asts
+            (first (get-asts
                      (find-ast-in-ctx
                        '((:path . "src/main/kotlin/inga/server/RequestMappingDefinition.kt")
                          (:line . 19) (:offset . 5)))
@@ -140,7 +140,7 @@
           ;; @RequestMapping(path = "/{v}", method = RequestMethod.GET)
           (get-values-from-request-mapping
             :kotlin
-            (first (trav:get-asts
+            (first (get-asts
                      (find-ast-in-ctx
                        '((:path . "src/main/kotlin/inga/server/RequestMappingDefinition.kt")
                          (:line . 23) (:offset . 5)))
@@ -154,7 +154,7 @@
           ;; @RequestMapping(path = ["/{v1}", "/{v1}/{v2}"], method = RequestMethod.GET)
           (get-values-from-request-mapping
             :kotlin
-            (first (trav:get-asts
+            (first (get-asts
                      (find-ast-in-ctx
                        '((:path . "src/main/kotlin/inga/server/RequestMappingDefinition.kt")
                          (:line . 27) (:offset . 5)))
@@ -168,7 +168,7 @@
           ;; @RequestMapping(value = "/{v}", method = RequestMethod.GET)
           (get-method-from-request-mapping
             :kotlin
-            (first (trav:get-asts
+            (first (get-asts
                      (find-ast-in-ctx
                        '((:path . "src/main/kotlin/inga/server/RequestMappingDefinition.kt")
                          (:line . 15) (:offset . 5)))
@@ -185,7 +185,7 @@
           ;; @GetMapping("/{v}")
           (get-values-from-request-mapping
             :kotlin
-            (first (trav:get-asts
+            (first (get-asts
                      (find-ast-in-ctx
                        '((:path . "src/main/kotlin/inga/server/GetMappingDefinition.kt")
                          (:line . 14) (:offset . 5)))
@@ -199,7 +199,7 @@
           ;; @GetMapping
           (get-method-from-request-mapping
             :kotlin
-            (first (trav:get-asts
+            (first (get-asts
                      (find-ast-in-ctx
                        '((:path . "src/main/kotlin/inga/server/GetMappingDefinition.kt")
                          (:line . 10) (:offset . 5)))
@@ -214,7 +214,7 @@
           "v"
           ;;           ↓
           ;; fun method(@PathVariable v: String) {
-          (trav:ast-value
+          (ast-value
             (find-param-from-path-variable
               :kotlin
               (find-ast-in-ctx
@@ -229,7 +229,7 @@
           "a"
           ;;           ↓
           ;; fun method(@PathVariable("v") a: String) {
-          (trav:ast-value
+          (ast-value
             (find-param-from-path-variable
               :kotlin
               (find-ast-in-ctx
@@ -244,7 +244,7 @@
           "a"
           ;;           ↓
           ;; fun method(@PathVariable(value = "v") a: String) {
-          (trav:ast-value
+          (ast-value
             (find-param-from-path-variable
               :kotlin
               (find-ast-in-ctx
@@ -259,7 +259,7 @@
           "a"
           ;;           ↓
           ;; fun method(@PathVariable(name = "v") a: String) {
-          (trav:ast-value
+          (ast-value
             (find-param-from-path-variable
               :kotlin
               (find-ast-in-ctx

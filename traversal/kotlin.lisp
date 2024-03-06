@@ -107,9 +107,9 @@
                                   (jsown:val (jsown:val ast "textRange") "endOffset")            
                                   start-offset
                                   end-offset))
-        (let ((method-name (trav:ast-value
+        (let ((method-name (ast-value
                              (if (equal (ast-value ast "type") "PRIMARY_CONSTRUCTOR")
-                                 (first (trav:get-asts ast '("CLASS") :direction :upward))
+                                 (first (get-asts ast '("CLASS") :direction :upward))
                                  ast)
                              "name")))
           (push
@@ -126,7 +126,7 @@
             results)))
 
       (when (equal (ast-value ast "type") "CLASS")
-        (loop for inner-class in (trav:get-asts ast '("CLASS_BODY" "CLASS"))
+        (loop for inner-class in (get-asts ast '("CLASS_BODY" "CLASS"))
               do (enqueue q inner-class)))
       (loop for child in (jsown:val ast "children") do (enqueue q child)))
     results))
@@ -149,7 +149,7 @@
     
     (when (equal (ast-value ast "type") "kotlin.FILE")
       (setf fq-class-names
-            (append (get-dot-expressions (first (trav:get-asts ast '("PACKAGE_DIRECTIVE" "*"))))
+            (append (get-dot-expressions (first (get-asts ast '("PACKAGE_DIRECTIVE" "*"))))
                     fq-class-names)))
 
     (when (equal (ast-value ast "type") "CLASS")
@@ -158,22 +158,22 @@
       ;; if constructor
       (when (equal (ast-value ast "name") fun-name)
         (setf fq-class-names (append (list (ast-value ast "name")) fq-class-names))
-        (loop for param in (trav:get-asts ast '("PRIMARY_CONSTRUCTOR"
-                                                "VALUE_PARAMETER_LIST"
-                                                "VALUE_PARAMETER"))
+        (loop for param in (get-asts ast '("PRIMARY_CONSTRUCTOR"
+                                           "VALUE_PARAMETER_LIST"
+                                           "VALUE_PARAMETER"))
               do (setf fq-param-names (append (list (find-fq-class-name-kotlin param path index))
                                               fq-param-names)))))
 
     (when (and (equal (ast-value ast "type") "FUN")
                (equal (ast-value ast "name") fun-name))
       (setf fq-class-names (append (list (ast-value ast "name")) fq-class-names)) 
-      (loop for param in (trav:get-asts ast '("VALUE_PARAMETER_LIST"
-                                              "VALUE_PARAMETER"
-                                              "TYPE_REFERENCE"))
+      (loop for param in (get-asts ast '("VALUE_PARAMETER_LIST"
+                                         "VALUE_PARAMETER"
+                                         "TYPE_REFERENCE"))
             do (setf fq-param-names (append (list (find-fq-class-name-kotlin param path index))
                                             fq-param-names))))
 
-    (enqueue q (trav:ast-value ast "parent"))))
+    (enqueue q (ast-value ast "parent"))))
 
 (defmethod find-reference ((traversal traversal-kotlin) target-pos fq-name ast path)
   (when (equal fq-name (cdr (assoc :fq-name target-pos)))
@@ -185,7 +185,7 @@
   (find-fq-name-for-reference ast path (traversal-index traversal)))
 
 (defun is-member (ref-name ast)
-  (when (trav:get-asts ast '("DOT_QUALIFIED_EXPRESSION") :direction :upward)
+  (when (get-asts ast '("DOT_QUALIFIED_EXPRESSION") :direction :upward)
     (return-from is-member))
 
   (loop
@@ -199,35 +199,35 @@
                (equal (ast-value ast "name") ref-name))
       (return t))
 
-    (enqueue q (trav:ast-value ast "parent"))))
+    (enqueue q (ast-value ast "parent"))))
 
 (defun find-fq-name-for-reference (ast path index)
   (alexandria:switch ((ast-value ast "type") :test #'equal)
     ("CALL_EXPRESSION"
      (cond
        ((is-member
-          (trav:ast-value (first (trav:get-asts ast '("REFERENCE_EXPRESSION"))) "name") ast)
-        (find-fq-name-for-definition (trav:ast-value
-                                       (first (trav:get-asts ast '("REFERENCE_EXPRESSION")))
+          (ast-value (first (get-asts ast '("REFERENCE_EXPRESSION"))) "name") ast)
+        (find-fq-name-for-definition (ast-value
+                                       (first (get-asts ast '("REFERENCE_EXPRESSION")))
                                        "name")
                                      ast path index))
        (t
-        (let ((root (first (trav:get-asts ast '("DOT_QUALIFIED_EXPRESSION") :direction :upward))))
+        (let ((root (first (get-asts ast '("DOT_QUALIFIED_EXPRESSION") :direction :upward))))
           (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
-                  (if (trav:get-asts root '("DOT_QUALIFIED_EXPRESSION"))
+                  (if (get-asts root '("DOT_QUALIFIED_EXPRESSION"))
                       (format nil "~{~a~^.~}"
                               (append
                                 (get-dot-expressions (first (ast-value root "children")))
                                 (list
-                                  (ast-value (first (trav:get-asts root '("DOT_QUALIFIED_EXPRESSION"
-                                                                          "CALL_EXPRESSION"
-                                                                          "REFERENCE_EXPRESSION")))
+                                  (ast-value (first (get-asts root '("DOT_QUALIFIED_EXPRESSION"
+                                                                     "CALL_EXPRESSION"
+                                                                     "REFERENCE_EXPRESSION")))
                                              "name"))))
                       (find-fq-class-name-kotlin ast path index))
-                  (ast-value (first (trav:get-asts ast '("REFERENCE_EXPRESSION"))) "name")
+                  (ast-value (first (get-asts ast '("REFERENCE_EXPRESSION"))) "name")
                   (mapcar (lambda (arg) (find-fq-class-name-kotlin arg path index))
-                          (or (trav:get-asts ast '("VALUE_ARGUMENT_LIST" "VALUE_ARGUMENT" "*"))
-                              (trav:get-asts ast '("LAMBDA_ARGUMENT" "LAMBDA_EXPRESSION" "*")))))))))))
+                          (or (get-asts ast '("VALUE_ARGUMENT_LIST" "VALUE_ARGUMENT" "*"))
+                              (get-asts ast '("LAMBDA_ARGUMENT" "LAMBDA_EXPRESSION" "*")))))))))))
 
 (defmethod find-fq-class-name-generic ((traversal traversal-kotlin) ast path)
   (find-fq-class-name-kotlin ast path (traversal-index traversal)))
@@ -240,11 +240,11 @@
      "java.lang.String")
     ("TYPE_REFERENCE"
      (let ((class-name (ast-value
-                         (first (or (trav:get-asts ast '("NULLABLE_TYPE"
-                                                         "USER_TYPE"
-                                                         "REFERENCE_EXPRESSION"))
-                                    (trav:get-asts ast '("USER_TYPE"
-                                                         "REFERENCE_EXPRESSION"))))
+                         (first (or (get-asts ast '("NULLABLE_TYPE"
+                                                    "USER_TYPE"
+                                                    "REFERENCE_EXPRESSION"))
+                                    (get-asts ast '("USER_TYPE"
+                                                    "REFERENCE_EXPRESSION"))))
                          "name")))
        (cond
          ((find class-name '("String") :test 'equal)
@@ -255,51 +255,51 @@
           (find-fq-class-name-by-class-name class-name ast)))))
     ("OBJECT_LITERAL"
      (find-fq-class-name-kotlin
-       (first (or (trav:get-asts ast '("OBJECT_DECLARATION"
-                                       "SUPER_TYPE_LIST"
-                                       "SUPER_TYPE_ENTRY"
-                                       "TYPE_REFERENCE"))
-                  (trav:get-asts ast '("OBJECT_DECLARATION"
-                                       "SUPER_TYPE_LIST"
-                                       "SUPER_TYPE_CALL_ENTRY"
-                                       "CONSTRUCTOR_CALLEE"
-                                       "TYPE_REFERENCE"))))
+       (first (or (get-asts ast '("OBJECT_DECLARATION"
+                                  "SUPER_TYPE_LIST"
+                                  "SUPER_TYPE_ENTRY"
+                                  "TYPE_REFERENCE"))
+                  (get-asts ast '("OBJECT_DECLARATION"
+                                  "SUPER_TYPE_LIST"
+                                  "SUPER_TYPE_CALL_ENTRY"
+                                  "CONSTRUCTOR_CALLEE"
+                                  "TYPE_REFERENCE"))))
        path index))
     ("VALUE_PARAMETER"
-     (find-fq-class-name-by-variable-name (trav:ast-value ast "name") ast path index))
+     (find-fq-class-name-by-variable-name (ast-value ast "name") ast path index))
     ("REFERENCE_EXPRESSION"
      (or (find-fq-class-name-by-variable-name (ast-value ast "name") ast path index)
          (find-fq-class-name-by-class-name (ast-value ast "name") ast)))
     ("DOT_QUALIFIED_EXPRESSION"
      (cond
-       ((trav:get-asts ast '("CLASS_LITERAL_EXPRESSION"))
+       ((get-asts ast '("CLASS_LITERAL_EXPRESSION"))
         "java.lang.Class")
        ;; change to self call?
-       ((trav:get-asts ast '("REFERENCE_EXPRESSION"))
+       ((get-asts ast '("REFERENCE_EXPRESSION"))
         (find-fq-class-name-by-class-name
-          (ast-value (first (trav:get-asts ast '("REFERENCE_EXPRESSION"))) "name")
+          (ast-value (first (get-asts ast '("REFERENCE_EXPRESSION"))) "name")
           ast))))
     ("CALL_EXPRESSION"
-     (when (trav:get-asts ast '("REFERENCE_EXPRESSION"))
-       (let* ((name (trav:ast-value
-                      (first (trav:get-asts ast '("REFERENCE_EXPRESSION")))
+     (when (get-asts ast '("REFERENCE_EXPRESSION"))
+       (let* ((name (ast-value
+                      (first (get-asts ast '("REFERENCE_EXPRESSION")))
                       "name"))
               (std-sig (find-signature-for-stdlib name path))
               (fqcn (when std-sig (jsown:val std-sig "fqcn"))))
          (if fqcn
              fqcn
-             (let ((parent (first (trav:get-asts ast
-                                                 '("DOT_QUALIFIED_EXPRESSION")
-                                                 :direction :upward))))
+             (let ((parent (first (get-asts ast
+                                            '("DOT_QUALIFIED_EXPRESSION")
+                                            :direction :upward))))
                  (if parent
                      (or (find-fq-class-name-by-variable-name
-                           (ast-value (first (trav:get-asts parent '("REFERENCE_EXPRESSION"))) "name")
+                           (ast-value (first (get-asts parent '("REFERENCE_EXPRESSION"))) "name")
                            ast path index)
                          (find-fq-class-name-kotlin
-                           (first (trav:get-asts ast '("REFERENCE_EXPRESSION")))
+                           (first (get-asts ast '("REFERENCE_EXPRESSION")))
                            path index))
                      (find-fq-class-name-by-class-name
-                       (ast-value (first (trav:get-asts ast '("REFERENCE_EXPRESSION"))) "name")
+                       (ast-value (first (get-asts ast '("REFERENCE_EXPRESSION"))) "name")
                        ast)))))))
     (t
       (ast-value ast "type"))))
@@ -314,14 +314,14 @@
 
     (when (equal (ast-value ast "type") "kotlin.FILE")
       (let ((import (first (ast-find-suffix
-                             (trav:get-asts ast '("IMPORT_LIST" "IMPORT_DIRECTIVE"))
+                             (get-asts ast '("IMPORT_LIST" "IMPORT_DIRECTIVE"))
                              (concatenate 'string "." class-name)
                              :key-name "fqName"))))
         (return (if import
                     (ast-value import "fqName")
                     (format nil "~{~a~^.~}"
                             (append (get-dot-expressions
-                                      (first (trav:get-asts ast '("PACKAGE_DIRECTIVE" "*"))))
+                                      (first (get-asts ast '("PACKAGE_DIRECTIVE" "*"))))
                                     (list class-name)))))))
 
     (enqueue q (ast-value ast "parent"))))
@@ -338,42 +338,41 @@
     (unless ast (return))
 
     (when (equal (ast-value ast "type") "CLASS")
-      (let* ((v (first (or (trav:filter-by-name (trav:get-asts ast '("PRIMARY_CONSTRUCTOR"
-                                                                     "VALUE_PARAMETER_LIST"
-                                                                     "VALUE_PARAMETER"))
-                                                variable-name)
-                           (trav:filter-by-name (trav:get-asts ast '("CLASS_BODY"
-                                                                     "PROPERTY"))
-                                                variable-name))))
+      (let* ((v (first (or (filter-by-name (get-asts ast '("PRIMARY_CONSTRUCTOR"
+                                                           "VALUE_PARAMETER_LIST"
+                                                           "VALUE_PARAMETER"))
+                                           variable-name)
+                           (filter-by-name (get-asts ast '("CLASS_BODY" "PROPERTY"))
+                                           variable-name))))
              (fq-name (when v (find-fq-class-name-kotlin
-                                (first (trav:get-asts v '("TYPE_REFERENCE"))) path index))))
+                                (first (get-asts v '("TYPE_REFERENCE"))) path index))))
         (when fq-name
           (return-from find-fq-class-name-by-variable-name fq-name))))
 
     (when (equal (ast-value ast "type") "FUN")
-      (let* ((v (first (trav:filter-by-name (trav:get-asts ast '("VALUE_PARAMETER_LIST"
-                                                                 "VALUE_PARAMETER"))
-                                            variable-name)))
+      (let* ((v (first (filter-by-name (get-asts ast '("VALUE_PARAMETER_LIST"
+                                                       "VALUE_PARAMETER"))
+                                       variable-name)))
              (fq-name (when v (find-fq-class-name-kotlin
-                                (first (trav:get-asts v '("TYPE_REFERENCE"))) path index))))
+                                (first (get-asts v '("TYPE_REFERENCE"))) path index))))
         (when fq-name
           (return-from find-fq-class-name-by-variable-name fq-name))))
 
     (when (and (equal variable-name "it")
                (equal (ast-value ast "type") "LAMBDA_EXPRESSION"))
-      (let* ((root (first (trav:get-asts ast '("LAMBDA_ARGUMENT"
-                                               "CALL_EXPRESSION"
-                                               "DOT_QUALIFIED_EXPRESSION")
-                                         :direction :upward)))
+      (let* ((root (first (get-asts ast '("LAMBDA_ARGUMENT"
+                                          "CALL_EXPRESSION"
+                                          "DOT_QUALIFIED_EXPRESSION")
+                                    :direction :upward)))
              (fq-name (or (find-fq-name-for-reference
-                            (let* ((vn (trav:ast-value
-                                         (first (trav:get-asts root '("REFERENCE_EXPRESSION")))
+                            (let* ((vn (ast-value
+                                         (first (get-asts root '("REFERENCE_EXPRESSION")))
                                          "name"))
                                    (v (find-definition vn root)))
-                              (first (trav:get-asts v '("CALL_EXPRESSION"))))
+                              (first (get-asts v '("CALL_EXPRESSION"))))
                             path index)
                           (find-fq-name-for-reference
-                            (first (trav:get-asts root '("CALL_EXPRESSION")))
+                            (first (get-asts root '("CALL_EXPRESSION")))
                             path index)))
              (split-fq-names (split #\- fq-name)))
         ;; get first type of arguments
@@ -383,37 +382,36 @@
 
 (defmethod find-reference-to-literal-generic ((trav traversal-kotlin) ast path)
   (cond
-    ((trav:get-asts ast '("LITERAL_STRING_TEMPLATE_ENTRY"))
+    ((get-asts ast '("LITERAL_STRING_TEMPLATE_ENTRY"))
      `(((:path . ,path)
         (:name .
-         ,(trav:ast-value (first (trav:get-asts ast '("LITERAL_STRING_TEMPLATE_ENTRY"))) "name"))
+         ,(ast-value (first (get-asts ast '("LITERAL_STRING_TEMPLATE_ENTRY"))) "name"))
         (:top-offset . ,(ast-value ast "textOffset")))))
-    ((equal (trav:ast-value ast "type") "STRING_TEMPLATE")
-     (loop for entry in (trav:get-asts ast '("LONG_STRING_TEMPLATE_ENTRY"))
+    ((equal (ast-value ast "type") "STRING_TEMPLATE")
+     (loop for entry in (get-asts ast '("LONG_STRING_TEMPLATE_ENTRY"))
        do
        (multiple-value-bind (v vi) (find-definition
-                                     (trav:ast-value
-                                       (first (trav:get-asts entry '("DOT_QUALIFIED_EXPRESSION"
-                                                                     "REFERENCE_EXPRESSION")))
+                                     (ast-value
+                                       (first (get-asts entry '("DOT_QUALIFIED_EXPRESSION"
+                                                                "REFERENCE_EXPRESSION")))
                                        "name")
                                      entry)
          (let* ((defs
                   (when v (find-definitions
                             `((:path . ,path)
                               (:start-offset .
-                               ,(trav:ast-value (trav:ast-value v "textRange") "startOffset"))
+                               ,(ast-value (ast-value v "textRange") "startOffset"))
                               (:end-offset .
-                               ,(trav:ast-value (trav:ast-value v "textRange") "endOffset"))))))
+                               ,(ast-value (ast-value v "textRange") "endOffset"))))))
                 (refs (mapcan (lambda (d) (find-references d (traversal-index trav)))
                               (remove-duplicates defs :test #'equal))))
            (when refs
              (return (mapcan (lambda (ref-pos)
-                               (let ((ast (nth vi (trav:get-asts (trav:find-ast
-                                                                   ref-pos (traversal-index trav))
-                                                                 '("CALL_EXPRESSION"
-                                                                   "VALUE_ARGUMENT_LIST"
-                                                                   "VALUE_ARGUMENT"
-                                                                   "STRING_TEMPLATE")))))
+                               (let ((ast (nth vi (get-asts (find-ast ref-pos (traversal-index trav))
+                                                            '("CALL_EXPRESSION"
+                                                              "VALUE_ARGUMENT_LIST"
+                                                              "VALUE_ARGUMENT"
+                                                              "STRING_TEMPLATE")))))
                                  (find-reference-to-literal-generic
                                    trav ast (cdr (assoc :path ref-pos)))))
                              refs)))))))))
@@ -430,22 +428,22 @@
     (unless ast (return))
 
     (when (equal (ast-value ast "type") "CLASS")
-      (loop for inner-class in (trav:get-asts ast '("CLASS_BODY" "CLASS"))
+      (loop for inner-class in (get-asts ast '("CLASS_BODY" "CLASS"))
         do (enqueue q inner-class))
 
-      (loop for param in (trav:get-asts ast '("PRIMARY_CONSTRUCTOR"
-                                              "VALUE_PARAMETER_LIST"
-                                              "VALUE_PARAMETER"))
+      (loop for param in (get-asts ast '("PRIMARY_CONSTRUCTOR"
+                                         "VALUE_PARAMETER_LIST"
+                                         "VALUE_PARAMETER"))
             and index from 0
-            do (when (equal (trav:ast-value param "name") variable-name)
+            do (when (equal (ast-value param "name") variable-name)
                  (return-from find-definition (values param index))))
 
-      (let ((v (first (trav:filter-by-name (trav:get-asts ast '("CLASS_BODY" "PROPERTY"))
-                                           variable-name))))
+      (let ((v (first (filter-by-name (get-asts ast '("CLASS_BODY" "PROPERTY"))
+                                      variable-name))))
         (when v (return v))))
 
-    (let ((v (first (trav:filter-by-name
-                      (trav:get-asts ast '("PROPERTY") :direction :horizontal)
+    (let ((v (first (filter-by-name
+                      (get-asts ast '("PROPERTY") :direction :horizontal)
                       variable-name))))
       (when v (return v)))
 
@@ -488,9 +486,9 @@
     (when (equal (ast-value ast "type") "kotlin.FILE")
       (unless (equal (format nil "~{~a~^.~}"
                              (mapcar (lambda (ast) (ast-value ast "name"))
-                                     (trav:get-asts ast '("PACKAGE_DIRECTIVE"
-                                                          "DOT_QUALIFIED_EXPRESSION"
-                                                          "REFERENCE_EXPRESSION"))))
+                                     (get-asts ast '("PACKAGE_DIRECTIVE"
+                                                     "DOT_QUALIFIED_EXPRESSION"
+                                                     "REFERENCE_EXPRESSION"))))
                      target-package-name)
         (return-from find-class-hierarchy-generic)))
 
@@ -499,7 +497,7 @@
         (return-from find-class-hierarchy-generic))
       (return-from find-class-hierarchy-generic
         ;; TODO: fix parent class get
-        (let ((parent-class-name (ast-value (first (trav:get-asts ast '("IDENTIFIER"))) "name")))
+        (let ((parent-class-name (ast-value (first (get-asts ast '("IDENTIFIER"))) "name")))
           (if parent-class-name
               (let ((parent-fq-class-name (find-fq-class-name-by-class-name parent-class-name ast)))
                 (when parent-fq-class-name

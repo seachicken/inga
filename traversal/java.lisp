@@ -144,7 +144,7 @@
     (:top-offset . ,(jsown:val ast "pos"))))
 
 (defun get-scope (ast)
-  (let ((modifiers (split-trim-comma (ast-value (first (trav:get-asts ast '("MODIFIERS"))) "name"))))
+  (let ((modifiers (split-trim-comma (ast-value (first (get-asts ast '("MODIFIERS"))) "name"))))
     (cond
       ((find "PUBLIC" modifiers :test #'equal) :module-public)
       ((find "PROTECTED" modifiers :test #'equal) :module-protected)
@@ -169,16 +169,15 @@
              ;; get inner class name
              (first (last (split #\. (ast-value ast "name"))))
              (mapcar (lambda (arg) (find-fq-class-name-java arg path index))
-                     (trav:get-asts ast '("*")))))
+                     (get-asts ast '("*")))))
     ("METHOD_INVOCATION"
-     (if (trav:get-asts ast '("MEMBER_SELECT"))
+     (if (get-asts ast '("MEMBER_SELECT"))
          (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
                  (cond
                    ;; if method chain
-                   ((trav:get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
+                   ((get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
                     (let* ((fq-name (find-fq-name-for-reference
-                                      (first (trav:get-asts ast '("MEMBER_SELECT"
-                                                                  "METHOD_INVOCATION")))
+                                      (first (get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION")))
                                       path index))
                            (method (find-signature
                                      fq-name
@@ -187,28 +186,28 @@
                            (return-type (when method
                                           (jsown:val (jsown:val method "returnType") "name"))))
                       return-type))
-                   ((trav:get-asts ast '("MEMBER_SELECT" "IDENTIFIER"))
+                   ((get-asts ast '("MEMBER_SELECT" "IDENTIFIER"))
                     (find-fq-class-name-java
-                      (first (trav:get-asts ast '("MEMBER_SELECT" "IDENTIFIER")))
+                      (first (get-asts ast '("MEMBER_SELECT" "IDENTIFIER")))
                       path index))
-                   ((trav:get-asts ast '("MEMBER_SELECT" "NEW_CLASS"))
+                   ((get-asts ast '("MEMBER_SELECT" "NEW_CLASS"))
                     (find-fq-class-name-by-class-name
-                      (ast-value (first (trav:get-asts ast '("MEMBER_SELECT" "NEW_CLASS"))) "name")
+                      (ast-value (first (get-asts ast '("MEMBER_SELECT" "NEW_CLASS"))) "name")
                       ast))
-                   ((trav:get-asts ast '("MEMBER_SELECT" "MEMBER_SELECT"))
+                   ((get-asts ast '("MEMBER_SELECT" "MEMBER_SELECT"))
                     (find-fq-class-name-by-class-name
-                      (ast-value (first (trav:get-asts ast '("MEMBER_SELECT" "MEMBER_SELECT"))) "name")
+                      (ast-value (first (get-asts ast '("MEMBER_SELECT" "MEMBER_SELECT"))) "name")
                       ast)))
-                 (ast-value (first (trav:get-asts ast '("*"))) "name")
+                 (ast-value (first (get-asts ast '("*"))) "name")
                  (mapcar (lambda (arg) (find-fq-class-name-java arg path index))
-                         (nthcdr 1 (trav:get-asts ast '("*")))))
+                         (nthcdr 1 (get-asts ast '("*")))))
          (format nil "~a~:[~;-~]~:*~{~a~^-~}"
                  (find-fq-name-for-definition
-                   (ast-value (first (trav:get-asts ast '("IDENTIFIER"))) "name")
+                   (ast-value (first (get-asts ast '("IDENTIFIER"))) "name")
                    ast)
                  ;; TODO: move to find-fq-name-for-definition, because params are fq name
                  (mapcar (lambda (arg) (find-fq-class-name-java arg path index))
-                         (nthcdr 1 (trav:get-asts ast '("*")))))))))
+                         (nthcdr 1 (get-asts ast '("*")))))))))
 
 (defmethod find-fq-class-name-generic ((traversal traversal-java) ast path)
   (find-fq-class-name-java ast path (traversal-index traversal)))
@@ -228,7 +227,7 @@
             "INT")
            (t
             (find-fq-class-name-by-class-name
-              (ast-value (first (trav:get-asts ast '("IDENTIFIER"))) "name") ast))))
+              (ast-value (first (get-asts ast '("IDENTIFIER"))) "name") ast))))
         ("NEW_CLASS"
          (find-fq-class-name-by-class-name (ast-value ast "name") ast))
         ("VARIABLE"
@@ -239,11 +238,11 @@
            (find-fq-class-name-by-class-name (ast-value ast "name") ast)))
         ("METHOD_INVOCATION"
          (let* ((fq-name (cond
-                           ((trav:get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
+                           ((get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
                             (find-fq-name-for-reference
-                              (first (trav:get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION")))
+                              (first (get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION")))
                               path index))
-                           ((trav:get-asts ast '("MEMBER_SELECT" "IDENTIFIER"))
+                           ((get-asts ast '("MEMBER_SELECT" "IDENTIFIER"))
                             (find-fq-name-for-reference ast path index))))
                 (method (find-signature fq-name
                                         #'(lambda (fqcn) (load-signatures fqcn path))
@@ -275,20 +274,20 @@
 
        (when (equal (ast-value ast "type") "COMPILATION_UNIT")
          (let ((import (first (ast-find-suffix
-                                (trav:get-asts ast '("IMPORT"))
+                                (get-asts ast '("IMPORT"))
                                 (concatenate 'string "." class-name)
                                 :key-name "fqName"))))
            (setf fq-names
                  (if import
                      (list (ast-value import "fqName"))
                      (append
-                       (list (ast-value (first (trav:get-asts ast '("PACKAGE"))) "packageName"))
+                       (list (ast-value (first (get-asts ast '("PACKAGE"))) "packageName"))
                        fq-names)))))
 
        (when (equal (ast-value ast "type") "CLASS")
          ;; for inner class
-         (if (or (trav:filter-by-name (trav:get-asts ast '("CLASS")) class-name)
-                 (trav:filter-by-name (trav:get-asts ast '("ENUM")) class-name))
+         (if (or (filter-by-name (get-asts ast '("CLASS")) class-name)
+                 (filter-by-name (get-asts ast '("ENUM")) class-name))
              (push (concatenate 'string (ast-value ast "name") "$" class-name) fq-names)
              (push class-name fq-names)))
 
@@ -298,23 +297,23 @@
 (defun find-fq-class-name-by-variable-name (variable-name ast path index)
   (let ((variable (find-variable variable-name ast)))
     (cond
-      ((trav:get-asts variable '("PRIMITIVE_TYPE"))
+      ((get-asts variable '("PRIMITIVE_TYPE"))
        (find-fq-class-name-by-class-name
-         (ast-value (first (trav:get-asts variable '("PRIMITIVE_TYPE"))) "name") variable))
-      ((trav:get-asts variable '("IDENTIFIER"))
+         (ast-value (first (get-asts variable '("PRIMITIVE_TYPE"))) "name") variable))
+      ((get-asts variable '("IDENTIFIER"))
        (find-fq-class-name-by-class-name
-         (ast-value (first (trav:get-asts variable '("IDENTIFIER"))) "name") variable))
-      ((trav:get-asts variable '("ARRAY_TYPE"))
+         (ast-value (first (get-asts variable '("IDENTIFIER"))) "name") variable))
+      ((get-asts variable '("ARRAY_TYPE"))
        (concatenate 'string
                     (find-fq-class-name-by-class-name
-                      (ast-value (first (trav:get-asts variable '("ARRAY_TYPE"))) "name") variable)
+                      (ast-value (first (get-asts variable '("ARRAY_TYPE"))) "name") variable)
                     "[]"))
-      ((trav:get-asts variable '("PARAMETERIZED_TYPE"))
+      ((get-asts variable '("PARAMETERIZED_TYPE"))
        (find-fq-class-name-by-class-name
-         (ast-value (first (trav:get-asts variable '("PARAMETERIZED_TYPE"))) "name") variable))
-      ((trav:get-asts variable '("METHOD_INVOCATION"))
+         (ast-value (first (get-asts variable '("PARAMETERIZED_TYPE"))) "name") variable))
+      ((get-asts variable '("METHOD_INVOCATION"))
        (let* ((fq-name (find-fq-name-for-reference
-                         (first (trav:get-asts variable '("METHOD_INVOCATION"))) path index))
+                         (first (get-asts variable '("METHOD_INVOCATION"))) path index))
               (method (find-signature
                          fq-name
                          #'(lambda (fq-class-name) (load-signatures fq-class-name path))
@@ -322,22 +321,22 @@
               (return-type (when method
                              (jsown:val (jsown:val method "returnType") "name"))))
          return-type))
-      ((trav:get-asts variable '("LAMBDA_EXPRESSION") :direction :upward)
-       (let* ((root (find-chain-root (first (trav:get-asts variable '("LAMBDA_EXPRESSION"
-                                                                      "METHOD_INVOCATION")
-                                                           :direction :upward))))
+      ((get-asts variable '("LAMBDA_EXPRESSION") :direction :upward)
+       (let* ((root (find-chain-root (first (get-asts variable '("LAMBDA_EXPRESSION"
+                                                                 "METHOD_INVOCATION")
+                                                      :direction :upward))))
               (fq-name (if (find-fq-class-name-by-variable-name
-                             (trav:ast-value
-                               (first (trav:get-asts root '("MEMBER_SELECT" "IDENTIFIER")))
+                             (ast-value
+                               (first (get-asts root '("MEMBER_SELECT" "IDENTIFIER")))
                                "name")
                              root path index)
                            (let ((variable (find-variable
-                                             (trav:ast-value
-                                               (first (trav:get-asts root '("MEMBER_SELECT" "IDENTIFIER")))
+                                             (ast-value
+                                               (first (get-asts root '("MEMBER_SELECT" "IDENTIFIER")))
                                                "name")
                                              root)))
                              (find-fq-name-for-reference
-                               (first (trav:get-asts variable '("METHOD_INVOCATION")))
+                               (first (get-asts variable '("METHOD_INVOCATION")))
                                path index))
                            (find-fq-name-for-reference root path index)))
               (split-fq-names (split #\- fq-name)))
@@ -345,8 +344,8 @@
          (second split-fq-names))))))
 
 (defun find-chain-root (ast)
-  (if (trav:get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
-      (find-chain-root (first (trav:get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))))
+  (if (get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
+      (find-chain-root (first (get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))))
       ast))
 
 (defun find-variable (variable-name ast)
@@ -361,8 +360,8 @@
     (when (null ast) (return))
 
     (let ((variable (first (if (equal (ast-value ast "type") "VARIABLE")
-                               (trav:filter-by-name (list ast) variable-name)
-                               (trav:filter-by-name (trav:get-asts ast '("VARIABLE")) variable-name)))))
+                               (filter-by-name (list ast) variable-name)
+                               (filter-by-name (get-asts ast '("VARIABLE")) variable-name)))))
       (when variable
         (return variable)))
 
@@ -434,7 +433,7 @@
     (setf ast (dequeue q))
     (unless ast (return (format nil "~{~a~^.~}" fq-names)))
 
-    (when (or (trav:filter-by-name (trav:get-asts ast '("METHOD")) target-name)
+    (when (or (filter-by-name (get-asts ast '("METHOD")) target-name)
               (and
                 (filter-by-name (get-asts ast '("VARIABLE")) target-name)
                 (equal (ast-value (jsown:val ast "parent") "type") "CLASS")))
@@ -447,7 +446,7 @@
             fq-names
             (equal (ast-value ast "type") "COMPILATION_UNIT"))
       (setf fq-names (append 
-                       (list (ast-value (first (trav:get-asts ast '("PACKAGE"))) "packageName"))
+                       (list (ast-value (first (get-asts ast '("PACKAGE"))) "packageName"))
                        fq-names)))
 
     (when (jsown:keyp ast "parent")
@@ -514,7 +513,7 @@
       (unless (equal (ast-value ast "name") target-class-name)
         (return-from find-class-hierarchy-generic))
       (return-from find-class-hierarchy-generic
-        (let ((parent-class-name (ast-value (first (trav:get-asts ast '("IDENTIFIER"))) "name")))
+        (let ((parent-class-name (ast-value (first (get-asts ast '("IDENTIFIER"))) "name")))
           (if parent-class-name
               (let ((parent-fq-class-name (find-fq-class-name-by-class-name parent-class-name ast)))
                 (when parent-fq-class-name

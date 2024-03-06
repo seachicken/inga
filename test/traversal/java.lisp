@@ -199,8 +199,8 @@
             ;; ↓
             ;; new EnumHelper(Enum.A);
             (inga/traversal/java::find-fq-name-for-reference
-              (first (trav:get-asts (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 9)))
-                                    '("NEW_CLASS")))
+              (first (get-asts (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 9)))
+                               '("NEW_CLASS")))
               path
               *index*))))))
 
