@@ -6,12 +6,12 @@ RUN ros && \
   ros build /inga/roswell/inga.ros
 
 
-FROM eclipse-temurin:17-jdk-jammy
+FROM eclipse-temurin:21-jdk-jammy
 
-ENV JAVAPARSER 0.3.3
+ENV JAVAPARSER 0.3.4
 ENV KTPARSRER 0.1.6
 ENV SPRING_PROPERTY_LOADER 0.3.1
-ENV JVM_DEPENDENCY_LOADER 0.4.1
+ENV JVM_DEPENDENCY_LOADER 0.5.1
 
 COPY --from=build /inga/roswell/inga /usr/local/bin/
 

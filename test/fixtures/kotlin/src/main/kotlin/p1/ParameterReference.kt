@@ -6,7 +6,7 @@ class ParameterReference {
     }
 
     fun method2(v: ParameterHelper?) {
-        v.method()
+        v?.method()
     }
 }
 

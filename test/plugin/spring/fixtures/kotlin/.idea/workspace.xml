@@ -5,12 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="05e27921-e74d-4fd0-9517-f43f19b1f863" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/../general/src/main/kotlin/inga/client/ClientRestTemplate.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../general/src/main/kotlin/inga/client/ClientKotlinRestTemplate.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../general/src/main/kotlin/inga/client/StringLiteralHelper.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../general/src/main/kotlin/inga/client/StringLiteralKotlinHelper.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../general/src/main/kotlin/inga/client/StringLiteralReference.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../general/src/main/kotlin/inga/client/StringLiteralKotlinReference.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../general/src/main/kotlin/inga/server/RequestMappingDefinition.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../general/src/main/kotlin/inga/server/RequestMappingDefinition.kt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../traversal/kotlin.lisp" beforeDir="false" afterPath="$PROJECT_DIR$/../../traversal/kotlin.lisp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../fixtures/kotlin/src/main/kotlin/p1/KotlinReference.java" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../fixtures/kotlin/src/main/java/p1/KotlinReference.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../fixtures/kotlin/src/main/kotlin/p1/ParameterReference.kt" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../fixtures/kotlin/src/main/kotlin/p1/ParameterReference.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../../../traversal/kotlin.lisp" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../traversal/kotlin.lisp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../../../../traversal/kotlin.lisp" beforeDir="false" afterPath="$PROJECT_DIR$/../../../../../traversal/kotlin.lisp" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -30,14 +27,14 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "jdk21",
+    "kotlin-language-version-configured": "true"
   }
-}</component>
+}]]></component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
