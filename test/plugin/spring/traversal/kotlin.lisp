@@ -36,15 +36,15 @@
 (test find-references-for-rest-client
   (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
     (is (equal
-          `(((:path . "src/main/kotlin/inga/client/ClientRestTemplate.kt")
+          `(((:path . "src/main/kotlin/inga/client/ClientKotlinRestTemplate.kt")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      (merge-pathnames "src/main/kotlin/inga/client/ClientRestTemplate.kt" *spring-path*)
+                      (merge-pathnames "src/main/kotlin/inga/client/ClientKotlinRestTemplate.kt" *spring-path*)
                       '((:line . 10) (:offset . 42)))))
-            ((:path . "src/main/kotlin/inga/client/ClientRestTemplate.kt")
+            ((:path . "src/main/kotlin/inga/client/ClientKotlinRestTemplate.kt")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      (merge-pathnames "src/main/kotlin/inga/client/ClientRestTemplate.kt" *spring-path*)
+                      (merge-pathnames "src/main/kotlin/inga/client/ClientKotlinRestTemplate.kt" *spring-path*)
                       '((:line . 18) (:offset . 38))))))
           (find-references
             `((:type . :rest-server)
@@ -52,25 +52,25 @@
               (:path . "/kotlin/path")
               (:name . "GET")
               (:file-pos .
-               ((:path . "src/main/kotlin/inga/server/RestControllerDefinition.kt"))))
+               ((:path . "src/main/kotlin/inga/server/RestControllerKotlinDefinition.kt"))))
             *index*)))))
 
 (test find-references-with-literal-for-rest-client
   (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
     (is (equal
-          `(((:path . "src/main/kotlin/inga/client/StringLiteralReference.kt")
+          `(((:path . "src/main/kotlin/inga/client/StringLiteralKotlinReference.kt")
              ;;           ↓
-             ;; WebClient("/string-literal-reference").get()
+             ;; WebClient("/kotlin/string-literal-reference").get()
              ,(cons :top-offset
                     (convert-to-top-offset
-                      (merge-pathnames "src/main/kotlin/inga/client/StringLiteralReference.kt" *spring-path*)
-                      '((:line . 11) (:offset . 19))))))
+                      (merge-pathnames "src/main/kotlin/inga/client/StringLiteralKotlinReference.kt" *spring-path*)
+                      '((:line . 13) (:offset . 19))))))
           (find-references
             `((:type . :rest-server)
               (:path . "/kotlin/string-literal-reference")
               (:name . "GET")
               (:file-pos .
-               ((:path . "src/main/kotlin/inga/server/RestControllerDefinition.kt"))))
+               ((:path . "src/main/kotlin/inga/server/RestControllerKotlinDefinition.kt"))))
             *index*)))))
 
 ;; RequestMapping

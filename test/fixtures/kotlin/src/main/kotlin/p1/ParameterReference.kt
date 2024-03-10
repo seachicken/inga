@@ -5,7 +5,7 @@ class ParameterReference {
         v.method()
     }
 
-    fun method(v: ParameterHelper?) {
+    fun method2(v: ParameterHelper?) {
         v.method()
     }
 }

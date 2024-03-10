@@ -1,8 +1,10 @@
 package inga.client
 
-import inga.client.StringLiteralHelper.WebClient
+import org.springframework.web.client.RestTemplate
 
-class StringLiteralReference {
+class StringLiteralKotlinReference(
+    restTemplate: RestTemplate
+) : StringLiteralKotlinHelper(restTemplate) {
     fun get() {
         WebClient("/kotlin/dummy").post()
     }

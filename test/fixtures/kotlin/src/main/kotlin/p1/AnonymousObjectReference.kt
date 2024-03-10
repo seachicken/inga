@@ -2,7 +2,6 @@ package p1
 
 import java.lang.Runnable
 import java.lang.Thread
-import org.springframework.core.ParameterizedTypeReference
 
 class AnonymousObjectReference {
     fun method() {
@@ -12,7 +11,10 @@ class AnonymousObjectReference {
         }).start()
     }
 
-    fun methodWithSuperTypeCall(v: AnonymousObjectHelper) {
-        v.method(object : ParameterizedTypeReference<T>() {})
+    fun methodWithSuperTypeCall() {
+        anonymousMethod(object : AnonymousObjectHelper() {})
+    }
+
+    private fun anonymousMethod(v: AnonymousObjectHelper) {
     }
 }

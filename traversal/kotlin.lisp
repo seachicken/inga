@@ -14,7 +14,8 @@
                 #:log-error)
   (:import-from #:inga/plugin/jvm-dependency-loader
                 #:load-hierarchy 
-                #:load-signatures)
+                #:load-signatures
+                #:load-structure)
   (:import-from #:inga/plugin/jvm-helper
                 #:find-base-path)
   (:export #:traversal-kotlin))
@@ -124,12 +125,12 @@
                 (push (cons :origin (cdr (assoc :origin range))) pos))
               pos)
             results)))
-
       (when (equal (ast-value ast "type") "CLASS")
         (loop for inner-class in (get-asts ast '("CLASS_BODY" "CLASS"))
               do (enqueue q inner-class)))
+
       (loop for child in (jsown:val ast "children") do (enqueue q child)))
-    results))
+    (remove-duplicates results :test #'equal)))
 
 (defun get-scope (ast)
   (let ((visibility (ast-value (first (get-asts ast '("MODIFIER_LIST" "*"))) "type")))
@@ -141,11 +142,16 @@
   (loop
     with q = (make-queue)
     with fq-class-names
+    with inner-class-names
+    with method
     with fq-param-names
     initially (enqueue q ast)
     do
     (setf ast (dequeue q))
-    (unless ast (return (format nil "~{~a~^.~}~:[~;-~]~:*~{~a~^-~}" fq-class-names fq-param-names)))
+    (unless ast
+      (pop inner-class-names)
+      (return (format nil "~{~a~^.~}~{$~a~^$~}.~a~:[~;-~]~:*~{~a~^-~}"
+                      fq-class-names inner-class-names method fq-param-names)))
     
     (when (equal (ast-value ast "type") "kotlin.FILE")
       (setf fq-class-names
@@ -153,25 +159,29 @@
                     fq-class-names)))
 
     (when (equal (ast-value ast "type") "CLASS")
+      (when inner-class-names
+        (setf fq-class-names (butlast fq-class-names)))
       (setf fq-class-names (append (list (ast-value ast "name")) fq-class-names))
+      (setf inner-class-names (append (list (ast-value ast "name")) inner-class-names))
 
       ;; if constructor
       (when (equal (ast-value ast "name") fun-name)
-        (setf fq-class-names (append (list (ast-value ast "name")) fq-class-names))
+        (setf method (ast-value ast "name"))
         (loop for param in (get-asts ast '("PRIMARY_CONSTRUCTOR"
                                            "VALUE_PARAMETER_LIST"
                                            "VALUE_PARAMETER"))
               do (setf fq-param-names (append (list (find-fq-class-name-kotlin param path index))
+                                              fq-param-names))))
+      
+      (when (filter-by-name (get-asts ast '("CLASS_BODY" "FUN")) fun-name)
+        (setf method fun-name)
+        (loop for param in (get-asts ast '("CLASS_BODY"
+                                           "FUN"
+                                           "VALUE_PARAMETER_LIST"
+                                           "VALUE_PARAMETER"
+                                           "TYPE_REFERENCE"))
+              do (setf fq-param-names (append (list (find-fq-class-name-kotlin param path index))
                                               fq-param-names)))))
-
-    (when (and (equal (ast-value ast "type") "FUN")
-               (equal (ast-value ast "name") fun-name))
-      (setf fq-class-names (append (list (ast-value ast "name")) fq-class-names)) 
-      (loop for param in (get-asts ast '("VALUE_PARAMETER_LIST"
-                                         "VALUE_PARAMETER"
-                                         "TYPE_REFERENCE"))
-            do (setf fq-param-names (append (list (find-fq-class-name-kotlin param path index))
-                                            fq-param-names))))
 
     (enqueue q (ast-value ast "parent"))))
 
@@ -195,9 +205,9 @@
     (setf ast (dequeue q))
     (unless ast (return))
     
-    (when (and (equal (ast-value ast "type") "FUN")
-               (equal (ast-value ast "name") ref-name))
-      (return t))
+    (when (and (equal (ast-value ast "type") "CLASS")
+               (filter-by-name (get-asts ast '("CLASS_BODY" "FUN")) ref-name)
+               (return t)))
 
     (enqueue q (ast-value ast "parent"))))
 
@@ -205,8 +215,7 @@
   (alexandria:switch ((ast-value ast "type") :test #'equal)
     ("CALL_EXPRESSION"
      (cond
-       ((is-member
-          (ast-value (first (get-asts ast '("REFERENCE_EXPRESSION"))) "name") ast)
+       ((is-member (ast-value (first (get-asts ast '("REFERENCE_EXPRESSION"))) "name") ast)
         (find-fq-name-for-definition (ast-value
                                        (first (get-asts ast '("REFERENCE_EXPRESSION")))
                                        "name")
@@ -252,7 +261,7 @@
          ((equal class-name "Int")
           "INT")
          (t
-          (find-fq-class-name-by-class-name class-name ast)))))
+          (find-fq-class-name-by-class-name class-name ast path index)))))
     ("OBJECT_LITERAL"
      (find-fq-class-name-kotlin
        (first (or (get-asts ast '("OBJECT_DECLARATION"
@@ -269,7 +278,7 @@
      (find-fq-class-name-by-variable-name (ast-value ast "name") ast path index))
     ("REFERENCE_EXPRESSION"
      (or (find-fq-class-name-by-variable-name (ast-value ast "name") ast path index)
-         (find-fq-class-name-by-class-name (ast-value ast "name") ast)))
+         (find-fq-class-name-by-class-name (ast-value ast "name") ast path index)))
     ("DOT_QUALIFIED_EXPRESSION"
      (cond
        ((get-asts ast '("CLASS_LITERAL_EXPRESSION"))
@@ -278,7 +287,7 @@
        ((get-asts ast '("REFERENCE_EXPRESSION"))
         (find-fq-class-name-by-class-name
           (ast-value (first (get-asts ast '("REFERENCE_EXPRESSION"))) "name")
-          ast))))
+          ast path index))))
     ("CALL_EXPRESSION"
      (when (get-asts ast '("REFERENCE_EXPRESSION"))
        (let* ((name (ast-value
@@ -291,20 +300,20 @@
              (let ((parent (first (get-asts ast
                                             '("DOT_QUALIFIED_EXPRESSION")
                                             :direction :upward))))
-                 (if parent
-                     (or (find-fq-class-name-by-variable-name
-                           (ast-value (first (get-asts parent '("REFERENCE_EXPRESSION"))) "name")
-                           ast path index)
-                         (find-fq-class-name-kotlin
-                           (first (get-asts ast '("REFERENCE_EXPRESSION")))
-                           path index))
-                     (find-fq-class-name-by-class-name
-                       (ast-value (first (get-asts ast '("REFERENCE_EXPRESSION"))) "name")
-                       ast)))))))
+               (if parent
+                   (or (find-fq-class-name-by-variable-name
+                         (ast-value (first (get-asts parent '("REFERENCE_EXPRESSION"))) "name")
+                         ast path index)
+                       (find-fq-class-name-kotlin
+                         (first (get-asts ast '("REFERENCE_EXPRESSION")))
+                         path index))
+                   (find-fq-class-name-by-class-name
+                     (ast-value (first (get-asts ast '("REFERENCE_EXPRESSION"))) "name")
+                     ast path index)))))))
     (t
       (ast-value ast "type"))))
 
-(defun find-fq-class-name-by-class-name (class-name ast)
+(defun find-fq-class-name-by-class-name (class-name ast path index)
   (loop
     with q = (make-queue)
     initially (enqueue q ast)
@@ -319,11 +328,38 @@
                              :key-name "fqName"))))
         (return (if import
                     (ast-value import "fqName")
-                    (format nil "~{~a~^.~}"
-                            (append (get-dot-expressions
-                                      (first (get-asts ast '("PACKAGE_DIRECTIVE" "*"))))
-                                    (list class-name)))))))
-
+                    (if (get-asts ast '("CLASS" "SUPER_TYPE_LIST"))
+                        (loop for super in (get-asts ast '("CLASS"
+                                                           "SUPER_TYPE_LIST"
+                                                           "SUPER_TYPE_CALL_ENTRY"
+                                                           "CONSTRUCTOR_CALLEE"
+                                                           "TYPE_REFERENCE"
+                                                           "USER_TYPE"
+                                                           "REFERENCE_EXPRESSION"))
+                              do
+                              (return (if (equal (ast-value super "name") class-name)
+                                          (format nil "~{~a~^.~}"
+                                                  (append (get-dot-expressions
+                                                            (first (get-asts
+                                                                     ast
+                                                                     '("PACKAGE_DIRECTIVE" "*"))))
+                                                          (list class-name)))
+                                          (let ((fq-class-name
+                                                  (find-if (lambda (name)
+                                                             (equal (first (last (split #\$ (jsown:val name "name"))))
+                                                                    class-name))
+                                                           (mapcan (lambda (fqcn)
+                                                                     (load-structure fqcn path))
+                                                                   (find-class-hierarchy
+                                                                     (find-fq-class-name-by-class-name
+                                                                       (ast-value super "name")
+                                                                       super path index)
+                                                                     index)))))
+                                            (when fq-class-name (jsown:val fq-class-name "name"))))))
+                        (format nil "~{~a~^.~}"
+                                (append (get-dot-expressions
+                                          (first (get-asts ast '("PACKAGE_DIRECTIVE" "*"))))
+                                        (list class-name))))))))
     (enqueue q (ast-value ast "parent"))))
 
 (defun find-fq-class-name-by-variable-name (variable-name ast path index)
@@ -499,7 +535,8 @@
         ;; TODO: fix parent class get
         (let ((parent-class-name (ast-value (first (get-asts ast '("IDENTIFIER"))) "name")))
           (if parent-class-name
-              (let ((parent-fq-class-name (find-fq-class-name-by-class-name parent-class-name ast)))
+              (let ((parent-fq-class-name (find-fq-class-name-by-class-name parent-class-name
+                                                                            ast path index)))
                 (when parent-fq-class-name
                   (append (find-class-hierarchy parent-fq-class-name index)
                           (list parent-fq-class-name)

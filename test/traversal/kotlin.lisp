@@ -24,6 +24,19 @@
                       '((:line . 4) (:offset . 5))))))
           (find-definitions (create-range "src/main/kotlin/p1/PrimaryConstructorDefinition.kt" :line 4))))))
 
+(test find-definitions-for-value-class
+  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+    (is (equal
+          `(((:type . :module-default)
+             (:path . "src/main/kotlin/p1/ValueClassDefinition.kt")
+             (:name . "ValueClass")
+             (:fq-name . "p1.ValueClassDefinition$ValueClass.ValueClass-java.lang.String")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames "src/main/kotlin/p1/ValueClassDefinition.kt" *kotlin-path*)
+                      '((:line . 5) (:offset . 27))))))
+          (find-definitions (create-range "src/main/kotlin/p1/ValueClassDefinition.kt" :line 5))))))
+
 (test find-references-for-primary-constructor
   (with-fixture jvm-ctx (*kotlin-path* 'ast-index-disk)
     (is (equal
@@ -133,19 +146,19 @@
             (find-fq-name
               ;; ↓
               ;; Thread(object : Runnable {
-              (first (get-asts (find-ast-in-ctx `((:path . ,path) (:line . 9) (:offset . 9)))
-                                    '("CALL_EXPRESSION")))
+              (first (get-asts (find-ast-in-ctx `((:path . ,path) (:line . 8) (:offset . 9)))
+                               '("CALL_EXPRESSION")))
               path))))))
 
 (test find-fq-name-for-reference-with-anonymous-objects-super-call
   (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
     (let ((path "src/main/kotlin/p1/AnonymousObjectReference.kt"))
       (is (equal
-            "p1.AnonymousObjectHelper.method-org.springframework.core.ParameterizedTypeReference"
+            "p1.AnonymousObjectReference.anonymousMethod-p1.AnonymousObjectHelper"
             (find-fq-name
-              ;;   ↓
-              ;; v.method(object : ParameterizedTypeReference<T>() {})
-              (find-ast-in-ctx `((:path . ,path) (:line . 16) (:offset . 11)))
+              ;; ↓
+              ;; anonymousMethod(object : AnonymousObjectHelper() {})
+              (find-ast-in-ctx `((:path . ,path) (:line . 15) (:offset . 9)))
               path))))))
 
 (test find-fq-name-for-method-chain-first
@@ -159,6 +172,17 @@
               (first (get-asts
                        (find-ast-in-ctx `((:path . ,path) (:line . 5) (:offset . 9)))
                        '("CALL_EXPRESSION")))
+              path))))))
+
+(test find-fq-name-for-value-class
+  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+    (let ((path "src/main/kotlin/p1/ValueClassReference.kt"))
+      (is (equal
+            "p1.ValueClassReferenceHelper$ValueClass.ValueClass-java.lang.String"
+            (find-fq-name
+              ;; ↓
+              ;; ValueClass("a")
+              (find-ast-in-ctx `((:path . ,path) (:line . 5) (:offset . 9)))
               path))))))
 
 (test find-fq-name-for-method-chain-second

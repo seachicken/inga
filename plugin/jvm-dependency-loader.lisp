@@ -14,6 +14,7 @@
   (:export #:start
            #:stop
            #:load-hierarchy
+           #:load-structure
            #:load-signatures))
 (in-package #:inga/plugin/jvm-dependency-loader)
 
@@ -70,6 +71,26 @@
                       (setf (jsown:val type "name") (string-upcase name)))
                     method))
                 (jsown:parse results))))))
+
+(defun load-structure (fq-class-name from)
+  (unless (uiop:process-alive-p *jvm-dependency-loader*)
+    (error 'inga-error-process-not-running))
+  (when (or (null fq-class-name) (equal fq-class-name "")
+            ;; TODO: remove NIL check when correctly got fq-class-name
+            (equal fq-class-name "NIL"))
+    (return-from load-structure))
+
+  (let ((base-path (find-base-path (merge-pathnames from *root-path*))))
+    (unless base-path
+      (return-from load-structure))
+    
+    (when (uiop:string-suffix-p fq-class-name "[]")
+      (setf fq-class-name (string-right-trim "[]" fq-class-name)))
+
+    (let ((results (exec-command *jvm-dependency-loader*
+                                 (format nil "{\"type\":\"CLASSES\",\"fqcn\":\"~a\",\"from\":\"~a\"}"
+                                         fq-class-name base-path))))
+      (when results (jsown:parse results)))))
 
 (defun load-hierarchy (fq-class-name from)
   (unless (uiop:process-alive-p *jvm-dependency-loader*)
