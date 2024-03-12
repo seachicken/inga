@@ -19,6 +19,26 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
+      - name: Set up JDK 17 for test fixtures
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Compile tests with JDK 17
+        run: |
+          (cd ./test/fixtures/spring-boot-realworld-example-app && ./gradlew compileJava)
+          (cd ./test/fixtures/spring-tutorials/guava-modules && mvn compile)
+          (cd ./test/fixtures/spring-tutorials/lightrun && mvn compile)
+      - name: Set up JDK 21 for test fixtures
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+      - name: Compile tests with JDK 21
+        run: |
+          (cd ./test/fixtures/java && mvn compile)
+          (cd ./test/fixtures/kotlin && mvn compile)
+          (cd ./test/plugin/spring/fixtures/general && mvn compile)
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
@@ -36,13 +56,6 @@ jobs:
       - name: Run tests
         run: |
           docker run test-inga-java -c "
-            (cd /inga/test/fixtures/java && mvn compile)
-            (cd /inga/test/fixtures/kotlin && mvn compile)
-            (cd /inga/test/fixtures/spring-boot-realworld-example-app && ./gradlew compileJava)
-            (cd /inga/test/fixtures/spring-tutorials/lightrun && mvn compile)
-            (cd /inga/test/fixtures/spring-tutorials/guava-modules && mvn compile)
-            (cd /inga/test/plugin/spring/fixtures/general && mvn compile)
-
             ros -s fiveam -e \"
               (ql:quickload :inga)
               (handler-case (asdf:test-system :inga)

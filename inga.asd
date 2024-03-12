@@ -29,7 +29,9 @@
                               (list
                                 (uiop:find-symbol* '#:java
                                                    :inga/test/main)
-                                (uiop:find-symbol* '#:java
+                                (uiop:find-symbol* '#:jdk21
+                                                   :inga/test/traversal/java)
+                                (uiop:find-symbol* '#:jdk17
                                                    :inga/test/traversal/java)
                                 (uiop:find-symbol* '#:kotlin
                                                    :inga/test/traversal/kotlin)

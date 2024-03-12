@@ -7,26 +7,12 @@
 (in-package #:inga/test/traversal/java)
 
 (def-suite java)
-(in-suite java)
+
+(def-suite jdk21
+           :in java)
+(in-suite jdk21)
 
 (defparameter *java-path* (merge-pathnames "test/fixtures/java/"))
-(defparameter *spring-boot-path* (merge-pathnames "test/fixtures/spring-boot-realworld-example-app/"))
-(defparameter *lightrun-path* (merge-pathnames "test/fixtures/spring-tutorials/lightrun/"))
-(defparameter *guava-modules* (merge-pathnames "test/fixtures/spring-tutorials/guava-modules/"))
-
-(test find-definitions-with-inner-class-and-primitive
-  (with-fixture jvm-ctx (*spring-boot-path* 'ast-index-disk)
-    (is (equal
-          `(((:type . :module-public)
-             (:path . "src/main/java/io/spring/application/CursorPager.java")
-             (:name . "CursorPager")
-             (:fq-name . "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager$Direction-BOOLEAN")
-             ,(cons :top-offset
-                    (convert-to-top-offset
-                      (merge-pathnames "src/main/java/io/spring/application/CursorPager.java" *spring-boot-path*)
-                      '((:line . 12) (:offset . 10))))))
-          (find-definitions
-            (create-range "src/main/java/io/spring/application/CursorPager.java" :line 12))))))
 
 (test find-definitions-for-constructor
   (with-fixture jvm-ctx (*java-path* 'ast-index-disk)
@@ -140,6 +126,128 @@
               (:fq-name . "p1.PrivateMethodReference.method2"))
             *index*)))))
 
+(test find-fq-name-for-reference-with-enum
+  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+    (let ((path "p1/EnumReference.java"))
+      (is (equal
+            "p1.EnumHelper.EnumHelper-p1.EnumHelper.Enum"
+            ;; ↓
+            ;; new EnumHelper(Enum.A);
+            (inga/traversal/java::find-fq-name-for-reference
+              (first (get-asts (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 9)))
+                               '("NEW_CLASS")))
+              path
+              *index*))))))
+
+(test find-fq-name-for-factory-method
+  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+    (let ((path "p1/TypeInferenceReference.java"))
+      (is (equal
+            "java.util.List.of-java.lang.String"
+            ;;        ↓
+            ;; List.of("a").forEach(v -> System.out.println(v));
+            (find-fq-name (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 16))) path))))))
+
+(test find-fq-name-for-array
+  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+    (let ((path "p1/ArrayReference.java"))
+      (is (equal
+            "java.util.Arrays.copyOfRange-java.lang.String[]-INT-INT"
+            ;;                   ↓
+            ;; Arrays.copyOfRange(array, 1, array.length);
+            (find-fq-name (find-ast-in-ctx `((:path . ,path) (:line . 8) (:offset . 27))) path))))))
+
+(test find-fq-class-name-for-type-inference-in-lambda
+  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+    (let ((path "p1/TypeInferenceReference.java"))
+      (is (equal
+            "java.lang.String"
+            ;;                                              ↓
+            ;; List.of("a").forEach(v -> System.out.println(v));
+            (find-fq-class-name
+              (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 54)))
+              path))))))
+
+(test find-fq-class-name-for-reference-type-inference-in-lambda
+  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+    (let ((path "p1/TypeInferenceReference.java"))
+      (is (equal
+            "java.lang.String"
+            (find-fq-class-name
+              (find-ast-in-ctx `((:path . ,path) (:line . 12) (:offset . 46)))
+              path))))))
+
+(test find-references-for-kotlin-class
+  (with-fixture jvm-ctx (*java-path* 'ast-index-disk)
+    (is (equal
+          `(((:path . "p1/KotlinReference.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames "p1/KotlinReference.java" *java-path*)
+                      '((:line . 9) (:offset . 9))))))
+          (find-references
+            '((:path . "p1/JavaReference.kt")
+              (:name . "method")
+              (:fq-name . "p1.JavaReference.method"))
+            *index*)))))
+
+(test matches-signature
+  (with-fixture jvm-ctx (*java-path* 'ast-index-disk)
+    (is (eq
+          t
+          (matches-signature
+            "p2.ApiSignature-p2.ChildClass"
+            "p2.ApiSignature-p2.ParentClass"
+            *index*)))))
+
+(test matches-signature-with-null
+  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+    (is (eq
+          t
+          (matches-signature
+            "java.lang.Object-equals-NULL"
+            "java.lang.Object-equals-java.lang.Object"
+            *index*)))))
+
+(test matches-signature-with-wild-card
+  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+    (is (eq
+          t
+          (matches-signature
+            "java.lang.Object.wait-LONG-INT"
+            "java.lang.Object.*"
+            *index*)))))
+
+(test find-class-hierarchy-with-app-class
+  (with-fixture jvm-ctx (*java-path* 'ast-index-disk)
+    (is (equal
+          '("java.lang.Object"
+            "p2.ParentClass"
+            "p2.ChildClass")
+          (find-class-hierarchy "p2.ChildClass" *index*)))))
+
+(def-suite jdk17
+           :in java)
+(in-suite jdk17)
+
+(defparameter *spring-boot-path* (merge-pathnames "test/fixtures/spring-boot-realworld-example-app/"))
+(defparameter *lightrun-path* (merge-pathnames "test/fixtures/spring-tutorials/lightrun/"))
+(defparameter *guava-modules* (merge-pathnames "test/fixtures/spring-tutorials/guava-modules/"))
+
+(test find-definitions-with-inner-class-and-primitive
+  (with-fixture jvm-ctx (*spring-boot-path* 'ast-index-disk)
+    (is (equal
+          `(((:type . :module-public)
+             (:path . "src/main/java/io/spring/application/CursorPager.java")
+             (:name . "CursorPager")
+             (:fq-name . "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager$Direction-BOOLEAN")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames "src/main/java/io/spring/application/CursorPager.java" *spring-boot-path*)
+                      '((:line . 12) (:offset . 10))))))
+          (find-definitions
+            (create-range "src/main/java/io/spring/application/CursorPager.java" :line 12))))))
+
 (test find-references-with-sub-class-args
   (with-fixture jvm-ctx (*spring-boot-path* 'ast-index-disk :include '("src/main/**"))
     (is (equal
@@ -191,19 +299,6 @@
               (:fq-name . "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager$Direction-BOOLEAN"))
             *index*)))))
 
-(test find-fq-name-for-reference-with-enum
-  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
-    (let ((path "p1/EnumReference.java"))
-      (is (equal
-            "p1.EnumHelper.EnumHelper-p1.EnumHelper.Enum"
-            ;; ↓
-            ;; new EnumHelper(Enum.A);
-            (inga/traversal/java::find-fq-name-for-reference
-              (first (get-asts (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 9)))
-                               '("NEW_CLASS")))
-              path
-              *index*))))))
-
 (test find-fq-name-for-reference-with-new-class
   (with-fixture jvm-ctx (*spring-boot-path* 'ast-index-memory :include '("src/main/**"))
     (let ((path "src/main/java/io/spring/application/ArticleQueryService.java"))
@@ -248,24 +343,6 @@
               (find-ast-in-ctx `((:path . ,path) (:line . 104) (:offset . 65)))
               path))))))
 
-(test find-fq-name-for-factory-method
-  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
-    (let ((path "p1/TypeInferenceReference.java"))
-      (is (equal
-            "java.util.List.of-java.lang.String"
-            ;;        ↓
-            ;; List.of("a").forEach(v -> System.out.println(v));
-            (find-fq-name (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 16))) path))))))
-
-(test find-fq-name-for-array
-  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
-    (let ((path "p1/ArrayReference.java"))
-      (is (equal
-            "java.util.Arrays.copyOfRange-java.lang.String[]-INT-INT"
-            ;;                   ↓
-            ;; Arrays.copyOfRange(array, 1, array.length);
-            (find-fq-name (find-ast-in-ctx `((:path . ,path) (:line . 8) (:offset . 27))) path))))))
-
 (test find-fq-class-name-for-new-class
   (with-fixture jvm-ctx (*spring-boot-path* 'ast-index-memory :include '("src/main/**"))
     (let ((path "src/main/java/io/spring/application/ArticleQueryService.java"))
@@ -299,40 +376,6 @@
               (find-ast-in-ctx `((:path . ,path) (:line . 12) (:offset . 46)))
               path))))))
 
-(test find-fq-class-name-for-type-inference-in-lambda
-  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
-    (let ((path "p1/TypeInferenceReference.java"))
-      (is (equal
-            "java.lang.String"
-            ;;                                              ↓
-            ;; List.of("a").forEach(v -> System.out.println(v));
-            (find-fq-class-name
-              (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 54)))
-              path))))))
-
-(test find-fq-class-name-for-reference-type-inference-in-lambda
-  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
-    (let ((path "p1/TypeInferenceReference.java"))
-      (is (equal
-            "java.lang.String"
-            (find-fq-class-name
-              (find-ast-in-ctx `((:path . ,path) (:line . 12) (:offset . 46)))
-              path))))))
-
-(test find-references-for-kotlin-class
-  (with-fixture jvm-ctx (*java-path* 'ast-index-disk)
-    (is (equal
-          `(((:path . "p1/KotlinReference.java")
-             ,(cons :top-offset
-                    (convert-to-top-offset
-                      (merge-pathnames "p1/KotlinReference.java" *java-path*)
-                      '((:line . 9) (:offset . 9))))))
-          (find-references
-            '((:path . "p1/JavaReference.kt")
-              (:name . "method")
-              (:fq-name . "p1.JavaReference.method"))
-            *index*)))))
-
 (test get-scoped-index-paths-with-module-private
   (with-fixture jvm-ctx (*lightrun-path* 'ast-index-disk)
     (is (equal
@@ -354,15 +397,6 @@
                 (:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/users/UserRepository.java")
                 (:fq-name . "com.baeldung.apiservice.adapters.users.UserRepository.getUserById-java.lang.String"))
               *index*))))))
-
-(test matches-signature
-  (with-fixture jvm-ctx (*java-path* 'ast-index-disk)
-    (is (eq
-          t
-          (matches-signature
-            "p2.ApiSignature-p2.ChildClass"
-            "p2.ApiSignature-p2.ParentClass"
-            *index*)))))
 
 (test not-matches-signature-with-no-args
   (with-fixture jvm-ctx (*lightrun-path* 'ast-index-disk)
@@ -401,24 +435,6 @@
             "build-java.lang.Object[]"
             *index*)))))
 
-(test matches-signature-with-null
-  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
-    (is (eq
-          t
-          (matches-signature
-            "java.lang.Object-equals-NULL"
-            "java.lang.Object-equals-java.lang.Object"
-            *index*)))))
-
-(test matches-signature-with-wild-card
-  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
-    (is (eq
-          t
-          (matches-signature
-            "java.lang.Object.wait-LONG-INT"
-            "java.lang.Object.*"
-            *index*)))))
-
 (test find-class-hierarchy-with-standard-class
   (with-fixture jvm-ctx (*lightrun-path* 'ast-index-disk)
     (is (equal
@@ -430,12 +446,4 @@
             "java.lang.Object"
             "java.lang.String")
           (find-class-hierarchy "java.lang.String" *index*)))))
-
-(test find-class-hierarchy-with-app-class
-  (with-fixture jvm-ctx (*java-path* 'ast-index-disk)
-    (is (equal
-          '("java.lang.Object"
-            "p2.ParentClass"
-            "p2.ChildClass")
-          (find-class-hierarchy "p2.ChildClass" *index*)))))
 
