@@ -160,9 +160,12 @@
                                           "REFERENCE_EXPRESSION"))
                           "method")))
          (parent (first (get-asts method 
-                                  '("VALUE_ARGUMENT_NAME" "VALUE_ARGUMENT") :direction :upward))))
+                                  '("VALUE_ARGUMENT_NAME"
+                                    "VALUE_ARGUMENT")
+                                  :direction :upward))))
     (if (equal (ast-value mapping "name") "RequestMapping")
-        (ast-value (second (get-asts parent '("DOT_QUALIFIED_EXPRESSION"
+        (ast-value (second (get-asts parent '("COLLECTION_LITERAL_EXPRESSION"
+                                              "DOT_QUALIFIED_EXPRESSION"
                                               "REFERENCE_EXPRESSION")))
                    "name")
         (to-http-method (ast-value mapping "name")))))

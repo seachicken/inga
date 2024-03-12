@@ -161,20 +161,18 @@
                      '("ANNOTATION_ENTRY"))))))))
 
 (test get-method-from-request-mapping
-  (if t
-      (skip "TODO: fix tests")
-      (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
-        (is (equal
-              "GET"
-              ;; ↓
-              ;; @RequestMapping(value = "/{v}", method = RequestMethod.GET)
-              (get-method-from-request-mapping
-                :kotlin
-                (first (get-asts
-                         (find-ast-in-ctx
-                           '((:path . "src/main/kotlin/inga/server/RequestMappingDefinition.kt")
-                             (:line . 15) (:offset . 5)))
-                         '("ANNOTATION_ENTRY")))))))))
+  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
+    (is (equal
+          "GET"
+          ;; ↓
+          ;; @RequestMapping(value = "/{v}", method = RequestMethod.GET)
+          (get-method-from-request-mapping
+            :kotlin
+            (first (get-asts
+                     (find-ast-in-ctx
+                       '((:path . "src/main/kotlin/inga/server/RequestMappingDefinition.kt")
+                         (:line . 15) (:offset . 5)))
+                     '("ANNOTATION_ENTRY"))))))))
 
 ;; GetMapping
 ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/bind/annotation/GetMapping.html
