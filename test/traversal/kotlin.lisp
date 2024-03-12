@@ -66,20 +66,18 @@
             *index*)))))
 
 (test find-references-for-java-class
-  (if t
-      (skip "TODO: fix tests")
-      (with-fixture jvm-ctx (*kotlin-path* 'ast-index-disk)
-        (is (equal
-              `(((:path . "src/main/kotlin/p1/JavaReference.kt")
-                 ,(cons :top-offset
-                        (convert-to-top-offset
-                          (merge-pathnames "src/main/kotlin/p1/JavaReference.kt" *kotlin-path*)
-                          '((:line . 5) (:offset . 11))))))
-              (find-references
-                '((:path . "src/main/kotlin/p1/KotlinReference.java")
-                  (:name . "method")
-                  (:fq-name . "p1.KotlinReference.method"))
-                *index*))))))
+  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-disk)
+    (is (equal
+          `(((:path . "src/main/kotlin/p1/JavaReference.kt")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames "src/main/kotlin/p1/JavaReference.kt" *kotlin-path*)
+                      '((:line . 5) (:offset . 11))))))
+          (find-references
+            '((:path . "src/main/kotlin/p1/KotlinReference.java")
+              (:name . "method")
+              (:fq-name . "p1.KotlinReference.method"))
+            *index*)))))
 
 (test find-fq-name-for-reference-with-enum
   (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
