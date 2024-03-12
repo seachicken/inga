@@ -115,19 +115,17 @@
               path))))))
 
 (test find-fq-name-for-reference-with-nullable-parameter
-  (if t
-      (skip "TODO: fix tests")
-      (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
-        (let ((path "src/main/kotlin/p1/ParameterReference.kt"))
-          (is (equal
-                "p1.ParameterHelper.method"
-                (find-fq-name
-                  ;; fun method(v: Helper?) {
-                  ;;      ↓
-                  ;;   v?.method()
-                  ;; }
-                  (find-ast-in-ctx `((:path . ,path) (:line . 9) (:offset . 12)))
-                  path)))))))
+  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+    (let ((path "src/main/kotlin/p1/ParameterReference.kt"))
+      (is (equal
+            "p1.ParameterHelper.method"
+            (find-fq-name
+              ;; fun method(v: Helper?) {
+              ;;      ↓
+              ;;   v?.method()
+              ;; }
+              (find-ast-in-ctx `((:path . ,path) (:line . 9) (:offset . 12)))
+              path))))))
 
 (test find-fq-name-for-reference-with-vararg
   (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)

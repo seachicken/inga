@@ -194,23 +194,6 @@
 (defmethod find-fq-name-generic ((traversal traversal-kotlin) ast path)
   (find-fq-name-for-reference ast path (traversal-index traversal)))
 
-(defun is-member (ref-name ast)
-  (when (get-asts ast '("DOT_QUALIFIED_EXPRESSION") :direction :upward)
-    (return-from is-member))
-
-  (loop
-    with q = (make-queue)
-    initially (enqueue q ast)
-    do
-    (setf ast (dequeue q))
-    (unless ast (return))
-    
-    (when (and (equal (ast-value ast "type") "CLASS")
-               (filter-by-name (get-asts ast '("CLASS_BODY" "FUN")) ref-name)
-               (return t)))
-
-    (enqueue q (ast-value ast "parent"))))
-
 (defun find-fq-name-for-reference (ast path index)
   (alexandria:switch ((ast-value ast "type") :test #'equal)
     ("CALL_EXPRESSION"
@@ -237,6 +220,24 @@
                   (mapcar (lambda (arg) (find-fq-class-name-kotlin arg path index))
                           (or (get-asts ast '("VALUE_ARGUMENT_LIST" "VALUE_ARGUMENT" "*"))
                               (get-asts ast '("LAMBDA_ARGUMENT" "LAMBDA_EXPRESSION" "*")))))))))))
+
+(defun is-member (ref-name ast)
+  (when (or (get-asts ast '("DOT_QUALIFIED_EXPRESSION") :direction :upward)
+            (get-asts ast '("SAFE_ACCESS_EXPRESSION") :direction :upward))
+    (return-from is-member))
+
+  (loop
+    with q = (make-queue)
+    initially (enqueue q ast)
+    do
+    (setf ast (dequeue q))
+    (unless ast (return))
+    
+    (when (and (equal (ast-value ast "type") "CLASS")
+               (filter-by-name (get-asts ast '("CLASS_BODY" "FUN")) ref-name)
+               (return t)))
+
+    (enqueue q (ast-value ast "parent"))))
 
 (defmethod find-fq-class-name-generic ((traversal traversal-kotlin) ast path)
   (find-fq-class-name-kotlin ast path (traversal-index traversal)))
@@ -297,9 +298,8 @@
               (fqcn (when std-sig (jsown:val std-sig "fqcn"))))
          (if fqcn
              fqcn
-             (let ((parent (first (get-asts ast
-                                            '("DOT_QUALIFIED_EXPRESSION")
-                                            :direction :upward))))
+             (let ((parent (or (first (get-asts ast '("DOT_QUALIFIED_EXPRESSION") :direction :upward))
+                               (first (get-asts ast '("SAFE_ACCESS_EXPRESSION") :direction :upward)))))
                (if parent
                    (or (find-fq-class-name-by-variable-name
                          (ast-value (first (get-asts parent '("REFERENCE_EXPRESSION"))) "name")
