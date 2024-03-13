@@ -349,7 +349,12 @@
                                                              (equal (first (last (split #\$ (jsown:val name "name"))))
                                                                     class-name))
                                                            (mapcan (lambda (fqcn)
-                                                                     (load-structure fqcn path))
+                                                                     (loop for path in (gethash (intern 
+                                                                                                  (get-package-name fqcn))
+                                                                                                (gethash :package *file-index*))
+                                                                           do
+                                                                           (let ((s (load-structure fqcn path)))
+                                                                             (when s (return s)))))
                                                                    (find-class-hierarchy
                                                                      (find-fq-class-name-by-class-name
                                                                        (ast-value super "name")
@@ -509,7 +514,7 @@
   (loop
     with stack = (list root-ast)
     with ast
-    with target-package-name = (format nil "~{~a~^.~}" (butlast (split #\. fq-class-name)))
+    with target-package-name = (get-package-name fq-class-name)
     with target-class-name = (first (last (split #\. fq-class-name)))
     initially
     (let ((hierarchy (load-hierarchy fq-class-name path)))
@@ -545,6 +550,9 @@
 
     (loop for child in (jsown:val ast "children")
           do (setf stack (append stack (list child))))))
+
+(defun get-package-name (fq-class-name)
+  (format nil "~{~a~^.~}" (butlast (split #\. fq-class-name))))
 
 (defun find-signature-for-stdlib (target-name path)
   ;; FIXME: support for all stdlib classes

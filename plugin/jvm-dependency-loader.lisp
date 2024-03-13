@@ -77,7 +77,8 @@
     (error 'inga-error-process-not-running))
   (when (or (null fq-class-name) (equal fq-class-name "")
             ;; TODO: remove NIL check when correctly got fq-class-name
-            (equal fq-class-name "NIL"))
+            (equal fq-class-name "NIL")
+            (null from))
     (return-from load-structure))
 
   (let ((base-path (find-base-path (merge-pathnames from *root-path*))))
