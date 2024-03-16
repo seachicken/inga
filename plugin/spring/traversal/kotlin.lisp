@@ -202,14 +202,17 @@
 (defmethod find-reference :around ((traversal traversal-kotlin) target-pos fq-name ast path)
   (if (eq (cdr (assoc :type target-pos)) :rest-server)
       (let ((pos (find-if (lambda (rest-client)
-                            (and (equal (cdr (assoc :path rest-client))
+                            (and (or (null (cdr (assoc :host rest-client)))
+                                     (equal (cdr (assoc :host rest-client))
+                                            (cdr (assoc :host target-pos))))
+                                 (equal (cdr (assoc :path rest-client))
                                         (cdr (assoc :path target-pos)))
                                  (equal (cdr (assoc :name rest-client))
                                         (cdr (assoc :name target-pos)))))
                           (find-rest-clients traversal fq-name ast path))))
-            (when pos
-              `((:path . ,(cdr (assoc :path (cdr (assoc :file-pos pos)))))
-                (:top-offset . ,(cdr (assoc :top-offset (cdr (assoc :file-pos pos))))))))
+        (when pos
+          `((:path . ,(cdr (assoc :path (cdr (assoc :file-pos pos)))))
+            (:top-offset . ,(cdr (assoc :top-offset (cdr (assoc :file-pos pos))))))))
       (call-next-method)))
 
 (defmethod find-rest-clients ((traversal traversal-kotlin) fq-name ast path)
