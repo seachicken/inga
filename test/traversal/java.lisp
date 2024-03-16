@@ -12,7 +12,7 @@
            :in java)
 (in-suite jdk21)
 
-(defparameter *java-path* (merge-pathnames "test/fixtures/java/"))
+(defparameter *java-path* (merge-pathnames "test/fixtures/general/"))
 
 (test find-definitions-for-constructor
   (with-fixture jvm-ctx (*java-path* 'ast-index-disk)

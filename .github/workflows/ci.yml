@@ -36,8 +36,7 @@ jobs:
           distribution: 'temurin'
       - name: Compile tests with JDK 21
         run: |
-          (cd ./test/fixtures/java && mvn compile)
-          (cd ./test/fixtures/kotlin && mvn compile)
+          (cd ./test/fixtures/general && mvn compile)
           (cd ./test/plugin/spring/fixtures/general && mvn compile)
       - name: Build Docker image
         uses: docker/build-push-action@v5

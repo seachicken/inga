@@ -9,7 +9,7 @@
 (def-suite kotlin)
 (in-suite kotlin)
 
-(defparameter *kotlin-path* (merge-pathnames "test/fixtures/kotlin/"))
+(defparameter *kotlin-path* (merge-pathnames "test/fixtures/general/"))
 
 (test find-definitions-for-method
   (with-fixture jvm-ctx (*kotlin-path* 'ast-index-disk)
@@ -74,7 +74,7 @@
                       (merge-pathnames "src/main/kotlin/p1/JavaReference.kt" *kotlin-path*)
                       '((:line . 5) (:offset . 11))))))
           (find-references
-            '((:path . "src/main/kotlin/p1/KotlinReference.java")
+            '((:path . "src/main/java/p1/KotlinReference.java")
               (:name . "method")
               (:fq-name . "p1.KotlinReference.method"))
             *index*)))))
