@@ -79,11 +79,11 @@
 
 (defmethod get-scoped-index-paths-generic ((trav traversal-kotlin) pos)
   (cond
+    ;; TODO: supports internal
     ((eq (cdr (assoc :type pos)) :module-private)
      (list (cdr (assoc :path pos))))
     ((eq (cdr (assoc :type pos)) :module-default)
-     (gethash (find-project-index-key (merge-pathnames (cdr (assoc :path pos)) (traversal-path trav)))
-              (gethash :module *file-index*)))
+     (ast-index-paths (traversal-index trav)))
     (t
      (log-error (format nil "unexpected visibility modifiers. type: ~a" (cdr (assoc :type pos))))
      (ast-index-paths (traversal-index trav)))))
