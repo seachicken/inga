@@ -118,7 +118,7 @@
           `(((:path . "src/main/java/p1/PrivateMethodReference.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      (merge-pathnames "p1/PrivateMethodReference.java" *java-path*)
+                      (merge-pathnames "src/main/java/p1/PrivateMethodReference.java" *java-path*)
                       '((:line . 5) (:offset . 9))))))
           (find-references
             `((:path . "src/main/java/p1/PrivateMethodReference.java")
