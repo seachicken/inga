@@ -18,82 +18,82 @@
   (with-fixture jvm-ctx (*java-path* 'ast-index-disk)
     (is (equal
           `(((:type . :module-public)
-             (:path . "p1/ConstructorDefinition.java")
+             (:path . "src/main/java/p1/ConstructorDefinition.java")
              (:name . "ConstructorDefinition")
              (:fq-name . "p1.ConstructorDefinition.ConstructorDefinition")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      (merge-pathnames "p1/ConstructorDefinition.java" *java-path*)
+                      (merge-pathnames "src/main/java/p1/ConstructorDefinition.java" *java-path*)
                       '((:line . 4) (:offset . 12))))))
           (find-definitions
-            (create-range "p1/ConstructorDefinition.java" :line 4))))))
+            (create-range "src/main/java/p1/ConstructorDefinition.java" :line 4))))))
 
 (test find-definitions-for-method
   (with-fixture jvm-ctx (*java-path* 'ast-index-disk)
     (is (equal
           `(((:type . :module-public)
-             (:path . "p1/MethodDefinition.java")
+             (:path . "src/main/java/p1/MethodDefinition.java")
              (:name . "method")
              (:fq-name . "p1.MethodDefinition.method-INT")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      (merge-pathnames "p1/MethodDefinition.java" *java-path*)
+                      (merge-pathnames "src/main/java/p1/MethodDefinition.java" *java-path*)
                       '((:line . 7) (:offset . 17))))))
           (find-definitions
-            (create-range "p1/MethodDefinition.java" :line 7))))))
+            (create-range "src/main/java/p1/MethodDefinition.java" :line 7))))))
 
 (test find-definitions-for-interface
   (with-fixture jvm-ctx (*java-path* 'ast-index-disk)
     (is (equal
           `(((:type . :module-default)
-             (:path . "p1/InterfaceDefinition.java")
+             (:path . "src/main/java/p1/InterfaceDefinition.java")
              (:name . "method")
              (:fq-name . "p1.InterfaceDefinition.method-INT")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      (merge-pathnames "p1/InterfaceDefinition.java" *java-path*)
+                      (merge-pathnames "src/main/java/p1/InterfaceDefinition.java" *java-path*)
                       '((:line . 6) (:offset . 10))))))
           (find-definitions
-            (create-range "p1/InterfaceDefinition.java" :line 6))))))
+            (create-range "src/main/java/p1/InterfaceDefinition.java" :line 6))))))
 
 (test find-definitions-for-instance-variable-annotation
   (with-fixture jvm-ctx (*java-path* 'ast-index-disk)
     (is (equal
           `(((:type . :module-public)
-             (:path . "p1/InstanceVariableAnnotationDefinition.java")
+             (:path . "src/main/java/p1/InstanceVariableAnnotationDefinition.java")
              (:name . "variable")
              (:fq-name . "p1.InstanceVariableAnnotationDefinition.variable")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      (merge-pathnames "p1/InstanceVariableAnnotationDefinition.java" *java-path*)
+                      (merge-pathnames "src/main/java/p1/InstanceVariableAnnotationDefinition.java" *java-path*)
                       '((:line . 7) (:offset . 19))))))
           (find-definitions
-            (create-range "p1/InstanceVariableAnnotationDefinition.java" :line 6))))))
+            (create-range "src/main/java/p1/InstanceVariableAnnotationDefinition.java" :line 6))))))
 
 (test find-definitions-for-generic-type
   (with-fixture jvm-ctx (*java-path* 'ast-index-disk)
     (is (equal
           `(((:type . :module-public)
-             (:path . "p1/GenericTypeDefinition.java")
+             (:path . "src/main/java/p1/GenericTypeDefinition.java")
              (:name . "GenericTypeDefinition")
              (:fq-name . "p1.GenericTypeDefinition.GenericTypeDefinition-java.util.List")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      (merge-pathnames "p1/GenericTypeDefinition.java" *java-path*)
+                      (merge-pathnames "src/main/java/p1/GenericTypeDefinition.java" *java-path*)
                       '((:line . 6) (:offset . 12))))))
           (find-definitions
-            (create-range "p1/GenericTypeDefinition.java" :line 6))))))
+            (create-range "src/main/java/p1/GenericTypeDefinition.java" :line 6))))))
 
 (test find-references-for-new-class
   (with-fixture jvm-ctx (*java-path* 'ast-index-disk)
     (is (equal
-          `(((:path . "p1/NewClassReference.java")
+          `(((:path . "src/main/java/p1/NewClassReference.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      (merge-pathnames "p1/NewClassReference.java" *java-path*)
+                      (merge-pathnames "src/main/java/p1/NewClassReference.java" *java-path*)
                       '((:line . 7) (:offset . 9))))))
           (find-references
-            `((:path . "p1/NewClassHelper.java")
+            `((:path . "src/main/java/p1/NewClassHelper.java")
               (:name . "method")
               (:fq-name . "p1.NewClassHelper.method"))
             *index*)))))
@@ -101,13 +101,13 @@
 (test find-references-for-constructor
   (with-fixture jvm-ctx (*java-path* 'ast-index-disk)
     (is (equal
-          `(((:path . "p1/ConstructorReference.java")
+          `(((:path . "src/main/java/p1/ConstructorReference.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      (merge-pathnames "p1/ConstructorReference.java" *java-path*)
+                      (merge-pathnames "src/main/java/p1/ConstructorReference.java" *java-path*)
                       '((:line . 7) (:offset . 9))))))
           (find-references
-            `((:path . "p1/ConstructorHelper.java")
+            `((:path . "src/main/java/p1/ConstructorHelper.java")
               (:name . "ConstructorHelper")
               (:fq-name . "p1.ConstructorHelper.ConstructorHelper-INT"))
             *index*)))))
@@ -115,20 +115,20 @@
 (test find-references-for-private-method
   (with-fixture jvm-ctx (*java-path* 'ast-index-disk)
     (is (equal
-          `(((:path . "p1/PrivateMethodReference.java")
+          `(((:path . "src/main/java/p1/PrivateMethodReference.java")
              ,(cons :top-offset
                     (convert-to-top-offset
                       (merge-pathnames "p1/PrivateMethodReference.java" *java-path*)
                       '((:line . 5) (:offset . 9))))))
           (find-references
-            `((:path . "p1/PrivateMethodReference.java")
+            `((:path . "src/main/java/p1/PrivateMethodReference.java")
               (:name . "method2")
               (:fq-name . "p1.PrivateMethodReference.method2"))
             *index*)))))
 
 (test find-fq-name-for-reference-with-enum
   (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
-    (let ((path "p1/EnumReference.java"))
+    (let ((path "src/main/java/p1/EnumReference.java"))
       (is (equal
             "p1.EnumHelper.EnumHelper-p1.EnumHelper.Enum"
             ;; ↓
@@ -141,7 +141,7 @@
 
 (test find-fq-name-for-factory-method
   (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
-    (let ((path "p1/TypeInferenceReference.java"))
+    (let ((path "src/main/java/p1/TypeInferenceReference.java"))
       (is (equal
             "java.util.List.of-java.lang.String"
             ;;        ↓
@@ -150,7 +150,7 @@
 
 (test find-fq-name-for-array
   (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
-    (let ((path "p1/ArrayReference.java"))
+    (let ((path "src/main/java/p1/ArrayReference.java"))
       (is (equal
             "java.util.Arrays.copyOfRange-java.lang.String[]-INT-INT"
             ;;                   ↓
@@ -159,7 +159,7 @@
 
 (test find-fq-class-name-for-type-inference-in-lambda
   (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
-    (let ((path "p1/TypeInferenceReference.java"))
+    (let ((path "src/main/java/p1/TypeInferenceReference.java"))
       (is (equal
             "java.lang.String"
             ;;                                              ↓
@@ -170,7 +170,7 @@
 
 (test find-fq-class-name-for-reference-type-inference-in-lambda
   (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
-    (let ((path "p1/TypeInferenceReference.java"))
+    (let ((path "src/main/java/p1/TypeInferenceReference.java"))
       (is (equal
             "java.lang.String"
             (find-fq-class-name
@@ -180,13 +180,13 @@
 (test find-references-for-kotlin-class
   (with-fixture jvm-ctx (*java-path* 'ast-index-disk)
     (is (equal
-          `(((:path . "p1/KotlinReference.java")
+          `(((:path . "src/main/java/p1/KotlinReference.java")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      (merge-pathnames "p1/KotlinReference.java" *java-path*)
-                      '((:line . 9) (:offset . 9))))))
+                      (merge-pathnames "src/main/java/p1/KotlinReference.java" *java-path*)
+                      '((:line . 7) (:offset . 9))))))
           (find-references
-            '((:path . "p1/JavaReference.kt")
+            '((:path . "src/main/java/p1/JavaReference.kt")
               (:name . "method")
               (:fq-name . "p1.JavaReference.method"))
             *index*)))))
