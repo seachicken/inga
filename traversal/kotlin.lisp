@@ -274,8 +274,13 @@
                                   "CONSTRUCTOR_CALLEE"
                                   "TYPE_REFERENCE"))))
        path index))
+    ("PROPERTY"
+     (find-fq-class-name-kotlin (first (get-asts ast '("TYPE_REFERENCE")))
+                                path index))
     ("VALUE_PARAMETER"
-     (find-fq-class-name-by-variable-name (ast-value ast "name") ast path index))
+     (find-fq-class-name-kotlin (or (first (get-asts ast '("REFERENCE_EXPRESSION")))
+                                    (first (get-asts ast '("TYPE_REFERENCE"))))
+                                path index))
     ("REFERENCE_EXPRESSION"
      (or (find-fq-class-name-by-variable-name (ast-value ast "name") ast path index)
          (find-fq-class-name-by-class-name (ast-value ast "name") ast path index)))
@@ -367,58 +372,8 @@
     (enqueue q (ast-value ast "parent"))))
 
 (defun find-fq-class-name-by-variable-name (variable-name ast path index)
-  (unless variable-name
-    (return-from find-fq-class-name-by-variable-name))
-
-  (loop
-    with q = (make-queue)
-    initially (enqueue q ast)
-    do
-    (setf ast (dequeue q))
-    (unless ast (return))
-
-    (when (equal (ast-value ast "type") "CLASS")
-      (let* ((v (first (or (filter-by-name (get-asts ast '("PRIMARY_CONSTRUCTOR"
-                                                           "VALUE_PARAMETER_LIST"
-                                                           "VALUE_PARAMETER"))
-                                           variable-name)
-                           (filter-by-name (get-asts ast '("CLASS_BODY" "PROPERTY"))
-                                           variable-name))))
-             (fq-name (when v (find-fq-class-name-kotlin
-                                (first (get-asts v '("TYPE_REFERENCE"))) path index))))
-        (when fq-name
-          (return-from find-fq-class-name-by-variable-name fq-name))))
-
-    (when (equal (ast-value ast "type") "FUN")
-      (let* ((v (first (filter-by-name (get-asts ast '("VALUE_PARAMETER_LIST"
-                                                       "VALUE_PARAMETER"))
-                                       variable-name)))
-             (fq-name (when v (find-fq-class-name-kotlin
-                                (first (get-asts v '("TYPE_REFERENCE"))) path index))))
-        (when fq-name
-          (return-from find-fq-class-name-by-variable-name fq-name))))
-
-    (when (and (equal variable-name "it")
-               (equal (ast-value ast "type") "LAMBDA_EXPRESSION"))
-      (let* ((root (first (get-asts ast '("LAMBDA_ARGUMENT"
-                                          "CALL_EXPRESSION"
-                                          "DOT_QUALIFIED_EXPRESSION")
-                                    :direction :upward)))
-             (fq-name (or (find-fq-name-for-reference
-                            (let* ((vn (ast-value
-                                         (first (get-asts root '("REFERENCE_EXPRESSION")))
-                                         "name"))
-                                   (v (find-definition vn root)))
-                              (first (get-asts v '("CALL_EXPRESSION"))))
-                            path index)
-                          (find-fq-name-for-reference
-                            (first (get-asts root '("CALL_EXPRESSION")))
-                            path index)))
-             (split-fq-names (split #\- fq-name)))
-        ;; get first type of arguments
-        (return (second split-fq-names))))
-
-    (enqueue q (ast-value ast "parent"))))
+  (when variable-name
+    (find-fq-class-name-kotlin (find-definition variable-name ast) path index)))
 
 (defmethod find-reference-to-literal-generic ((trav traversal-kotlin) ast path)
   (cond
@@ -481,6 +436,33 @@
       (let ((v (first (filter-by-name (get-asts ast '("CLASS_BODY" "PROPERTY"))
                                       variable-name))))
         (when v (return v))))
+
+    (when (equal (ast-value ast "type") "FUN")
+      (let ((v (first (filter-by-name (get-asts ast '("VALUE_PARAMETER_LIST"
+                                                      "VALUE_PARAMETER"))
+                                      variable-name))))
+        (when v (return v))))
+
+    (when (and (equal variable-name "it")
+               (equal (ast-value ast "type") "LAMBDA_EXPRESSION"))
+      (let ((root (first (get-asts ast '("LAMBDA_ARGUMENT"
+                                         "CALL_EXPRESSION"
+                                         "DOT_QUALIFIED_EXPRESSION")
+                                   :direction :upward))))
+        (return (if (get-asts root '("REFERENCE_EXPRESSION"))
+                    (let ((vn (ast-value
+                                (first (get-asts root '("REFERENCE_EXPRESSION")))
+                                "name")))
+                      (first (get-asts (find-definition vn root)
+                                       '("CALL_EXPRESSION"
+                                         "VALUE_ARGUMENT_LIST"
+                                         "VALUE_ARGUMENT"
+                                         "*"))))
+                    (first (get-asts root
+                                     '("CALL_EXPRESSION"
+                                       "VALUE_ARGUMENT_LIST"
+                                       "VALUE_ARGUMENT"
+                                       "*")))))))
 
     (let ((v (first (filter-by-name
                       (get-asts ast '("PROPERTY") :direction :horizontal)
