@@ -164,7 +164,7 @@
 
 (defun find-server-from-uri (arg-i ast path)
   (let ((param-uri (nth (1+ arg-i) (get-asts ast '("*")))))
-    (let ((variable-uri (find-variable (ast-value param-uri "name") param-uri))
+    (let ((variable-uri (find-definition (ast-value param-uri "name") param-uri))
           found-path
           host)
       (labels ((find-uri-components-builder (ast path)
@@ -180,7 +180,7 @@
                      ((equal
                         fq-name
                         "org.springframework.web.util.UriComponentsBuilder.fromUriString-java.lang.String")
-                      (let ((v (find-variable (ast-value (get-parameter 0 ast) "name") ast)))
+                      (let ((v (find-definition (ast-value (get-parameter 0 ast) "name") ast)))
                         (let ((value (first (filter-by-name
                                               (get-asts v '("MODIFIERS" "ANNOTATION"))
                                               "Value"))))

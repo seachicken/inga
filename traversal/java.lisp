@@ -21,7 +21,7 @@
                 #:find-base-path
                 #:is-primitive-type)
   (:export #:traversal-java
-           #:find-variable))
+           #:find-definition))
 (in-package #:inga/traversal/java)
 
 (defparameter *include-java* '("*.java"))
@@ -213,43 +213,49 @@
   (find-fq-class-name-java ast path (traversal-index traversal)))
 
 (defun find-fq-class-name-java (ast path index)
-  (if (uiop:string-suffix-p (ast-value ast "type") "_LITERAL")
-      (if (equal (ast-value ast "type") "STRING_LITERAL")
-          "java.lang.String"
-          (ppcre:regex-replace-all "_LITERAL" (ast-value ast "type") ""))
-      (switch ((ast-value ast "type") :test #'equal)
-        ("MEMBER_SELECT"
-         (cond
-           ((equal (ast-value ast "name") "class")
-            "java.lang.Class")
-           ;; if array length
-           ((equal (ast-value ast "name") "length")
-            "INT")
-           (t
-            (find-fq-class-name-by-class-name
-              (ast-value (first (get-asts ast '("IDENTIFIER"))) "name") ast))))
-        ("NEW_CLASS"
-         (find-fq-class-name-by-class-name (ast-value ast "name") ast))
-        ("VARIABLE"
-         (find-fq-class-name-by-variable-name (ast-value ast "name") ast path index))
-        ("IDENTIFIER"
-         (or
-           (find-fq-class-name-by-variable-name (ast-value ast "name") ast path index)
-           (find-fq-class-name-by-class-name (ast-value ast "name") ast)))
-        ("METHOD_INVOCATION"
-         (let* ((fq-name (cond
-                           ((get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
-                            (find-fq-name-for-reference
-                              (first (get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION")))
-                              path index))
-                           ((get-asts ast '("MEMBER_SELECT" "IDENTIFIER"))
-                            (find-fq-name-for-reference ast path index))))
-                (method (find-signature fq-name
-                                        #'(lambda (fqcn) (load-signatures fqcn path))
-                                        index))
-                (return-type (when method
-                               (jsown:val (jsown:val method "returnType") "name"))))
-           return-type)))))
+  (cond
+    ((uiop:string-suffix-p (ast-value ast "type") "_LITERAL")
+     (if (equal (ast-value ast "type") "STRING_LITERAL")
+         "java.lang.String"
+         (ppcre:regex-replace-all "_LITERAL" (ast-value ast "type") "")))
+    ((equal (ast-value ast "type") "PRIMITIVE_TYPE")
+     (find-fq-class-name-by-class-name (ast-value ast "name") ast))
+    ((equal (ast-value ast "type") "ARRAY_TYPE")
+     (concatenate 'string
+                  (find-fq-class-name-by-class-name (ast-value ast "name") ast)
+                  "[]"))
+    ((equal (ast-value ast "type") "PARAMETERIZED_TYPE")
+     (find-fq-class-name-by-class-name (ast-value ast "name") ast))
+    ((equal (ast-value ast "type") "MEMBER_SELECT")
+     (cond
+       ((equal (ast-value ast "name") "class")
+        "java.lang.Class")
+       ;; if array length
+       ((equal (ast-value ast "name") "length")
+        "INT")
+       (t
+        (find-fq-class-name-by-class-name
+          (ast-value (first (get-asts ast '("IDENTIFIER"))) "name") ast))))
+    ((equal (ast-value ast "type") "NEW_CLASS")
+     (find-fq-class-name-by-class-name (ast-value ast "name") ast))
+    ((equal (ast-value ast "type") "VARIABLE")
+     (find-fq-class-name-java (second (get-asts ast '("*"))) path index))
+    ((equal (ast-value ast "type") "IDENTIFIER")
+     (or
+       (find-fq-class-name-by-variable-name (ast-value ast "name") ast path index)
+       (find-fq-class-name-by-class-name (ast-value ast "name") ast)))
+    ((equal (ast-value ast "type") "METHOD_INVOCATION")
+     (let* ((fq-name (cond
+                       ((get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
+                        (find-fq-name-for-reference ast path index))
+                       ((get-asts ast '("MEMBER_SELECT" "IDENTIFIER"))
+                        (find-fq-name-for-reference ast path index))))
+            (method (find-signature fq-name
+                                    #'(lambda (fqcn) (load-signatures fqcn path))
+                                    index))
+            (return-type (when method
+                           (jsown:val (jsown:val method "returnType") "name"))))
+       return-type))))
 
 (defun find-fq-class-name-by-class-name (class-name ast)
   (unless class-name
@@ -295,62 +301,17 @@
          (enqueue q (jsown:val ast "parent")))))))
 
 (defun find-fq-class-name-by-variable-name (variable-name ast path index)
-  (let ((variable (find-variable variable-name ast)))
-    (cond
-      ((get-asts variable '("PRIMITIVE_TYPE"))
-       (find-fq-class-name-by-class-name
-         (ast-value (first (get-asts variable '("PRIMITIVE_TYPE"))) "name") variable))
-      ((get-asts variable '("IDENTIFIER"))
-       (find-fq-class-name-by-class-name
-         (ast-value (first (get-asts variable '("IDENTIFIER"))) "name") variable))
-      ((get-asts variable '("ARRAY_TYPE"))
-       (concatenate 'string
-                    (find-fq-class-name-by-class-name
-                      (ast-value (first (get-asts variable '("ARRAY_TYPE"))) "name") variable)
-                    "[]"))
-      ((get-asts variable '("PARAMETERIZED_TYPE"))
-       (find-fq-class-name-by-class-name
-         (ast-value (first (get-asts variable '("PARAMETERIZED_TYPE"))) "name") variable))
-      ((get-asts variable '("METHOD_INVOCATION"))
-       (let* ((fq-name (find-fq-name-for-reference
-                         (first (get-asts variable '("METHOD_INVOCATION"))) path index))
-              (method (find-signature
-                         fq-name
-                         #'(lambda (fq-class-name) (load-signatures fq-class-name path))
-                         index))
-              (return-type (when method
-                             (jsown:val (jsown:val method "returnType") "name"))))
-         return-type))
-      ((get-asts variable '("LAMBDA_EXPRESSION") :direction :upward)
-       (let* ((root (find-chain-root (first (get-asts variable '("LAMBDA_EXPRESSION"
-                                                                 "METHOD_INVOCATION")
-                                                      :direction :upward))))
-              (fq-name (if (find-fq-class-name-by-variable-name
-                             (ast-value
-                               (first (get-asts root '("MEMBER_SELECT" "IDENTIFIER")))
-                               "name")
-                             root path index)
-                           (let ((variable (find-variable
-                                             (ast-value
-                                               (first (get-asts root '("MEMBER_SELECT" "IDENTIFIER")))
-                                               "name")
-                                             root)))
-                             (find-fq-name-for-reference
-                               (first (get-asts variable '("METHOD_INVOCATION")))
-                               path index))
-                           (find-fq-name-for-reference root path index)))
-              (split-fq-names (split #\- fq-name)))
-         ;; get first type of arguments
-         (second split-fq-names))))))
+  (when variable-name
+    (find-fq-class-name-java (find-definition variable-name ast) path index)))
 
 (defun find-chain-root (ast)
   (if (get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
       (find-chain-root (first (get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))))
       ast))
 
-(defun find-variable (variable-name ast)
+(defun find-definition (variable-name ast)
   (unless variable-name
-    (return-from find-variable))
+    (return-from find-definition))
 
   (loop
     with q = (make-queue)
@@ -364,6 +325,17 @@
                                (filter-by-name (get-asts ast '("VARIABLE")) variable-name)))))
       (when variable
         (return variable)))
+
+    (when (get-asts ast '("LAMBDA_EXPRESSION") :direction :upward)
+      (let ((root (find-chain-root (first (get-asts ast '("LAMBDA_EXPRESSION"
+                                                          "METHOD_INVOCATION")
+                                                    :direction :upward)))))
+        (return (let ((v (find-definition
+                           (ast-value (first (get-asts root '("MEMBER_SELECT" "IDENTIFIER"))) "name")
+                           root)))
+                  (second (if v
+                              (get-asts v '("METHOD_INVOCATION" "*"))
+                              (get-asts root '("*"))))))))
 
     (enqueue q (ast-value ast "parent"))))
 
