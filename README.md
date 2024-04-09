@@ -4,8 +4,6 @@
 
 A static analysis tool that searches references from changed code to detect entry points that have a strong impact on the user.
 
-<img width="901" alt="image" src="https://user-images.githubusercontent.com/5178598/201501698-11030115-678b-47ab-a22b-b21e8fc84694.png">
-
 ## Why?
 
 Code changes daily, and it is always important to check the impact of changes.
