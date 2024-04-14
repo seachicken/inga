@@ -1,4 +1,4 @@
-FROM fukamachi/roswell:21.10.14.111-ubuntu AS build
+FROM fukamachi/roswell:23.10.14.114-ubuntu AS build
 
 COPY ../.. /inga
 RUN ros && \
