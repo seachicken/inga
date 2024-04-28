@@ -71,7 +71,7 @@
 
 (defun extract-json (stream)
   ;; Content-Length: 99
-  (let* ((input (read-line stream))
+  (let* ((input (read-line stream nil))
          (len (when (>= (length input) 16) (parse-integer (subseq input 16)))))
     ;;(format t "input: ~a, len: ~a~%" input len)
     (unless len (return-from extract-json))
