@@ -45,22 +45,45 @@
 (define-condition inga-error-context-not-found (inga-error) ())
 
 (defun command (&rest argv)
-  (handler-case
-    (destructuring-bind (&key root-path include exclude base-commit) (parse-argv argv)
-      (let ((diffs (get-diff root-path base-commit)))
-        (let ((ctx (start root-path
-                          (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
-                          :include include :exclude exclude)))
-          (let ((results (analyze ctx diffs)))
-            (ensure-directories-exist "reports/")
-            (with-open-file (out "reports/report.json"
-                                 :direction :output
-                                 :if-exists :supersede
-                                 :if-does-not-exist :create)
-              (format out "~a" (to-json results root-path)))
-            (format t "~%~a~%" (to-json results root-path)))
-          (stop ctx))))
-    (inga-error (e) (format t "~a~%" e))))
+  (let ((input (loop while *standard-input* do
+                     (let ((result (jsown:parse (extract-json *standard-input*))))
+                       (return result)))))
+    ;;(format t "input: ~a~%" input)
+    (format t "Content-Length: 20~C~%~C~%" #\return #\return)
+    (format t "{\"capabilities\": {}}")
+    (command argv)))
+  ;;(handler-case
+  ;;  (destructuring-bind (&key root-path include exclude base-commit) (parse-argv argv)
+  ;;    (let ((diffs (get-diff root-path base-commit)))
+  ;;      (let ((ctx (start root-path
+  ;;                        (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
+  ;;                        :include include :exclude exclude)))
+  ;;        (let ((results (analyze ctx diffs)))
+  ;;          (ensure-directories-exist "reports/")
+  ;;          (with-open-file (out "reports/report.json"
+  ;;                               :direction :output
+  ;;                               :if-exists :supersede
+  ;;                               :if-does-not-exist :create)
+  ;;            (format out "~a" (to-json results root-path)))
+  ;;          (format t "~%~a~%" (to-json results root-path)))
+  ;;        (stop ctx))))
+  ;;  (inga-error (e) (format t "~a~%" e))))
+
+(defun extract-json (stream)
+  ;; Content-Length: 99
+  (let* ((input (read-line stream))
+         (len (when (>= (length input) 16) (parse-integer (subseq input 16)))))
+    ;;(format t "input: ~a, len: ~a~%" input len)
+    (unless len (return-from extract-json))
+
+    ;; newline
+    (read-line stream)
+    ;; JSON
+    (loop
+      with buff = (make-array len :fill-pointer 0)
+      repeat len
+      do (vector-push (read-byte stream) buff)
+      finally (return (flexi-streams:octets-to-string buff :external-format :utf-8)))))
 
 (defun parse-argv (argv)
   (loop with root-path = "."

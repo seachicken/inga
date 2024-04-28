@@ -13,9 +13,5 @@ exec ros -Q -- $0 "$@"
 (in-package :ros.script.inga.3836648158)
 
 (defun main (&rest argv)
-  (let ((input (read-line *standard-input* nil)))
-    (format t "input: ~a~%" input)
-    (main argv))
-  ;;(apply #'inga:command argv))
-  )
+  (apply #'inga:command argv))
 ;;; vim: set ft=lisp lisp:
