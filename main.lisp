@@ -48,9 +48,9 @@
   (let ((input (loop while *standard-input* do
                      (let ((result (jsown:parse (extract-json *standard-input*))))
                        (return result)))))
-    ;;(format t "input: ~a~%" input)
-    (format t "Content-Length: 53~C~%~C~%" #\return #\return)
-    (format t "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{}}}")
+    (format t "input: ~a~%" input)
+    (format t "Content-Length: 53~C~%~C~%~a" #\return #\return
+            "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{}}}")
     (command argv)))
   ;;(handler-case
   ;;  (destructuring-bind (&key root-path include exclude base-commit) (parse-argv argv)
