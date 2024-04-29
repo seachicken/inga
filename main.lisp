@@ -45,14 +45,14 @@
 (define-condition inga-error-context-not-found (inga-error) ())
 
 (defun command (&rest argv)
-  (format t "enter command~%")
+  ;;(format t "enter command~%")
   (let ((input (loop while *standard-input* do
                      (let* ((json (extract-json *standard-input*))
                             (result (when json (jsown:parse json))))
                        (return result)))))
-    (format t "input: ~a~%" input)
     (when input
-      (format t "Content-Length: 53~C~%~C~%~a" #\return #\return
+      (format t "input: ~a~%" input)
+      (format t "Content-Length: 53~C~%~C~%~a~%" #\return #\return
               "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{}}}"))
     (command argv)))
   ;;(handler-case
@@ -76,7 +76,7 @@
   ;; Content-Length: 99
   (let* ((input (read-line stream nil))
          (len (when (>= (length input) 16) (parse-integer (subseq input 16)))))
-    (format t "input: ~a, len: ~a~%" input len)
+    ;;(format t "input: ~a, len: ~a~%" input len)
     (unless len (return-from extract-json))
 
     ;; newline
