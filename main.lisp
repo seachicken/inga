@@ -45,7 +45,7 @@
 (define-condition inga-error-context-not-found (inga-error) ())
 
 (defun command (&rest argv)
-  ;;(format t "enter command~%")
+  (format t "enter command~%")
   (let ((input (loop while *standard-input* do
                      (let* ((json (extract-json *standard-input*))
                             (result (when json (jsown:parse json))))
