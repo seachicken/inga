@@ -11,6 +11,8 @@
                 #:start-client
                 #:stop-client
                 #:references-client)
+  (:import-from #:inga/language-server
+                #:run)
   (:import-from #:inga/traversal
                 #:convert-to-pos
                 #:convert-to-top-offset
@@ -46,20 +48,25 @@
 
 (defun command (&rest argv)
   (handler-case
-    (destructuring-bind (&key root-path include exclude base-commit) (parse-argv argv)
-      (let ((diffs (get-diff root-path base-commit)))
-        (let ((ctx (start root-path
-                          (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
-                          :include include :exclude exclude)))
-          (let ((results (analyze ctx diffs)))
-            (ensure-directories-exist "reports/")
-            (with-open-file (out "reports/report.json"
-                                 :direction :output
-                                 :if-exists :supersede
-                                 :if-does-not-exist :create)
-              (format out "~a" (to-json results root-path)))
-            (format t "~%~a~%" (to-json results root-path)))
-          (stop ctx))))
+    (destructuring-bind (&key root-path include exclude base-commit mode) (parse-argv argv)
+      (cond
+        ((equal mode "cli")
+         (let ((diffs (get-diff root-path base-commit)))
+           (let ((ctx (start root-path
+                             (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
+                             :include include :exclude exclude)))
+             (let ((results (analyze ctx diffs)))
+               (ensure-directories-exist "reports/")
+               (with-open-file (out "reports/report.json"
+                                    :direction :output
+                                    :if-exists :supersede
+                                    :if-does-not-exist :create)
+                 (format out "~a" (to-json results root-path)))
+               (format t "~%~a~%" (to-json results root-path)))
+             (stop ctx))))
+        ((equal mode "server")
+         (inga/language-server:run))
+        (t (error 'unknown-server))))
     (inga-error (e) (format t "~a~%" e))))
 
 (defun parse-argv (argv)
@@ -67,6 +74,7 @@
         with include
         with exclude
         with base-commit
+        with mode = "cli"
         for option = (pop argv)
         while option
         do (alexandria:switch (option :test #'equal)
@@ -82,6 +90,8 @@
               (setf exclude (split-trim-comma (pop argv))))
              ("--base-commit"
               (setf base-commit (pop argv)))
+             ("--mode"
+              (setf mode (pop argv)))
              (t (error 'inga-error-option-not-found)))
         finally
           (return (append 
@@ -89,7 +99,8 @@
                     (list :include include)
                     (list :exclude exclude)
                     (when base-commit
-                      (list :base-commit base-commit))))))
+                      (list :base-commit base-commit))
+                    (list :mode mode)))))
 
 (defun start (root-path context-kinds &key include exclude)
   (let* ((index (make-instance 'ast-index-disk :root-path root-path))

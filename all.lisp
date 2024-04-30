@@ -7,6 +7,7 @@
     #:inga/errors
     #:inga/file
     #:inga/git
+    #:inga/language-server
     #:inga/logger  
     #:inga/main
     #:inga/plugin/spring/traversal
