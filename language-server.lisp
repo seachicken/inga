@@ -11,6 +11,7 @@
                           (result (when json (jsown:parse json))))
                      (return result)))))
     (when msg
+      (format t "received msg: ~a~%" msg)
       (format t "Content-Length: 53~C~%~C~%~a~%" #\return #\return
               "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{}}}")
       (force-output t))
@@ -21,7 +22,6 @@
   (let* ((input (read-line stream nil))
          (len (when (>= (length input) 16) (parse-integer (subseq input 16)))))
     (unless len (return-from extract-json))
-
     ;; newline
     (read-line stream)
     ;; JSON
