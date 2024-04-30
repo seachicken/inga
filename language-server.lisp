@@ -11,10 +11,11 @@
                           (result (when json (jsown:parse json))))
                      (return result)))))
     (when msg
-      (format t "received msg: ~a~%" msg)
       (format t "Content-Length: 53~C~%~C~%~a~%" #\return #\return
               "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{}}}")
-      (force-output t))
+      (force-output t)
+      (format t "received message: ~a, msg: ~a~%" (jsown:val msg "method") msg)
+      )
     (run)))
 
 (defun extract-json (stream)
