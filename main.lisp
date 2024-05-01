@@ -120,11 +120,11 @@
                    :ast-index index
                    :traversals (list
                                     (start-traversal :java
-                                                        (or include *include-java*)
-                                                        exclude root-path index)
+                                                     (or include *include-java*)
+                                                     exclude root-path index)
                                     (start-traversal :kotlin
-                                                        (or include *include-java*)
-                                                        exclude root-path index))
+                                                     (or include *include-java*)
+                                                     exclude root-path index))
                    :processes (list
                                 (inga/plugin/spring/spring-property-loader:start root-path)
                                 (inga/plugin/jvm-dependency-loader:start root-path))))

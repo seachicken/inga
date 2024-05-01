@@ -19,20 +19,22 @@
     (when method
       (cond
         ((equal method "initialize")
-         (format t "Content-Length: 53~C~%~C~%~a~%" #\return #\return
-                 "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{}}}")
-         (force-output t))
+         (format t "Content-Length: 56~c~c~c~c~a" #\return #\linefeed
+                 #\return #\linefeed
+                 "{\"jsonrpc\":\"2.0\",\"id\":null,\"result\":{\"capabilities\":{}}}")
+         (force-output))
         ((equal method "initialized")
          (destructuring-bind (&key root-path include exclude base-commit mode) params
            (let* ((diffs (get-diff root-path base-commit))
                   (ctx (inga/main::start root-path
                               '(:java)
                               :include include :exclude exclude))
-                  (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
+                  (result (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
              ;; TODO: count length
-             (format t "Content-Length: 100~C~%~C~%~%" #\return #\return)
-             (format t "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":~a}" results)
-             (force-output t))))
+             (format t "Content-Length: ~a~c~c~c~c" (length result) #\return #\linefeed
+                     #\return #\linefeed)
+             (format t "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":~a}" result)
+             (force-output))))
         ((equal method "textDocument/didChange")
          )))
     (run params)))
