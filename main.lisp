@@ -11,8 +11,6 @@
                 #:start-client
                 #:stop-client
                 #:references-client)
-  (:import-from #:inga/language-server
-                #:run)
   (:import-from #:inga/traversal
                 #:convert-to-pos
                 #:convert-to-top-offset
@@ -33,7 +31,10 @@
                 #:inga-error)
   (:import-from #:inga/logger
                 #:log-debug)
-  (:export #:command))
+  (:export #:parse-argv
+           #:command
+           #:analyze
+           #:to-json))
 (in-package #:inga/main)
 
 (defparameter *include-typescript*
@@ -46,27 +47,22 @@
 (define-condition inga-error-option-not-found (inga-error) ())
 (define-condition inga-error-context-not-found (inga-error) ())
 
-(defun command (&rest argv)
+(defun command (params)
   (handler-case
-    (destructuring-bind (&key root-path include exclude base-commit mode) (parse-argv argv)
-      (cond
-        ((equal mode "cli")
-         (let ((diffs (get-diff root-path base-commit)))
-           (let ((ctx (start root-path
-                             (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
-                             :include include :exclude exclude)))
-             (let ((results (analyze ctx diffs)))
-               (ensure-directories-exist "reports/")
-               (with-open-file (out "reports/report.json"
-                                    :direction :output
-                                    :if-exists :supersede
-                                    :if-does-not-exist :create)
-                 (format out "~a" (to-json results root-path)))
-               (format t "~%~a~%" (to-json results root-path)))
-             (stop ctx))))
-        ((equal mode "server")
-         (inga/language-server:run))
-        (t (error 'unknown-server))))
+    (destructuring-bind (&key root-path include exclude base-commit mode) params
+      (let* ((diffs (get-diff root-path base-commit))
+             (ctx (start root-path
+                         (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
+                         :include include :exclude exclude))
+             (results (analyze ctx diffs)))
+          (ensure-directories-exist "reports/")
+          (with-open-file (out "reports/report.json"
+                               :direction :output
+                               :if-exists :supersede
+                               :if-does-not-exist :create)
+            (format out "~a" (to-json results root-path)))
+          (format t "~%~a~%" (to-json results root-path))
+        (stop ctx)))
     (inga-error (e) (format t "~a~%" e))))
 
 (defun parse-argv (argv)
@@ -124,11 +120,11 @@
                    :ast-index index
                    :traversals (list
                                     (start-traversal :java
-                                                        (or include *include-java*)
-                                                        exclude root-path index)
+                                                     (or include *include-java*)
+                                                     exclude root-path index)
                                     (start-traversal :kotlin
-                                                        (or include *include-java*)
-                                                        exclude root-path index))
+                                                     (or include *include-java*)
+                                                     exclude root-path index))
                    :processes (list
                                 (inga/plugin/spring/spring-property-loader:start root-path)
                                 (inga/plugin/jvm-dependency-loader:start root-path))))
