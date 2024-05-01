@@ -33,7 +33,7 @@
              ;; TODO: count length
              (format t "Content-Length: ~a~c~c~c~c" (length result) #\return #\linefeed
                      #\return #\linefeed)
-             (format t "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":~a}" result)
+             (format t "{\"jsonrpc\":\"2.0\",\"id\":null,\"result\":~a}" result)
              (force-output))))
         ((equal method "textDocument/didChange")
          )))
