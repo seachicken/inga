@@ -30,10 +30,10 @@
                               '(:java)
                               :include include :exclude exclude))
                   (result (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
-             ;; TODO: count length
-             (format t "Content-Length: ~a~c~c~c~c" (length result) #\return #\linefeed
-                     #\return #\linefeed)
-             (format t "{\"jsonrpc\":\"2.0\",\"id\":null,\"result\":~a}" result)
+             (format t "Content-Length: ~a~c~c~c~c{\"jsonrpc\":\"2.0\",\"id\":\"inga-server\",\"result\":~a}"
+                     (length result) #\return #\linefeed
+                     #\return #\linefeed
+                     result)
              (force-output))))
         ((equal method "textDocument/didChange")
          )))
