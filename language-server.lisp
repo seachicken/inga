@@ -29,9 +29,9 @@
                   (ctx (inga/main::start root-path
                               '(:java)
                               :include include :exclude exclude))
-                  (result (format nil "{\"results\":~a}"
+                  (result (format nil "{\"jsonrpc\":\"2.0\",\"id\":\"inga-server\",\"result\":~a}"
                                   (inga/main:to-json (inga/main:analyze ctx diffs) root-path))))
-             (format t "Content-Length: ~a~c~c~c~c{\"jsonrpc\":\"2.0\",\"id\":\"inga-server\",\"result\":~a}"
+             (format t "Content-Length: ~a~c~c~c~c~a"
                      (length result) #\return #\linefeed
                      #\return #\linefeed
                      result)
