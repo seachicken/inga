@@ -11,34 +11,37 @@
 (in-package #:inga/language-server)
 
 (defun run (params)
-  (let* ((msg (loop while *standard-input* do
-                    (let* ((json (extract-json *standard-input*))
-                           (result (when json (jsown:parse json))))
-                      (return result))))
-         (method (when msg (jsown:val msg "method"))))
-    (when method
-      (cond
-        ((equal method "initialize")
-         (format t "Content-Length: 53~c~c~c~c~a" #\return #\linefeed
-                 #\return #\linefeed
-                 "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{}}}")
-         (force-output))
-        ((equal method "initialized")
-         (destructuring-bind (&key root-path include exclude base-commit mode) params
+  (destructuring-bind (&key root-path include exclude base-commit mode) params
+    (let* ((ctx (inga/main::start root-path '(:java) :include include :exclude exclude)))
+      (handle-msg params ctx)
+      (inga/main::stop ctx))))
+
+(defun handle-msg (params ctx)
+  (destructuring-bind (&key root-path include exclude base-commit mode) params
+    (let* ((msg (loop while *standard-input* do
+                      (let* ((json (extract-json *standard-input*))
+                             (result (when json (jsown:parse json))))
+                        (return result))))
+           (method (when msg (jsown:val msg "method"))))
+      (when method
+        (cond
+          ((equal method "initialize")
+           (format t "Content-Length: 53~c~c~c~c~a" #\return #\linefeed
+                   #\return #\linefeed
+                   "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{}}}")
+           (force-output))
+          ((or (equal method "initialized")
+               (equal method "textDocument/didChange"))
            (let* ((diffs (get-diff root-path base-commit))
-                  (ctx (inga/main::start root-path
-                              '(:java)
-                              :include include :exclude exclude))
-                  (result (format nil "{\"jsonrpc\":\"2.0\",\"id\":\"inga-server\",\"result\":~a}"
-                                  (inga/main:to-json (inga/main:analyze ctx diffs) root-path))))
-             (format t "Content-Length: ~a~c~c~c~c~a"
-                     (length result) #\return #\linefeed
-                     #\return #\linefeed
-                     result)
-             (force-output))))
-        ((equal method "textDocument/didChange")
-         )))
-    (run params)))
+                  (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
+             (ensure-directories-exist "reports/")
+             (with-open-file (out "reports/report.json"
+                                  :direction :output
+                                  :if-exists :supersede
+                                  :if-does-not-exist :create)
+               (format out "~a" results))
+             (format t "~%~a~%" results)))))
+      (handle-msg params ctx))))
 
 (defun extract-json (stream)
   ;; Content-Length: 99
