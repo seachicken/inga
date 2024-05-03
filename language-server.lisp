@@ -26,10 +26,10 @@
       (when method
         (cond
           ((equal method "initialize")
-           (format t "Content-Length: 53~c~c~c~c~a" #\return #\linefeed
-                   #\return #\linefeed
-                   "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"capabilities\":{}}}")
-           (force-output))
+           (print-msg "{\"capabilities\":{}}"))
+          ((equal method "shutdown")
+           (print-msg "null")
+           (return-from handle-msg))
           ((or (equal method "initialized")
                (equal method "textDocument/didChange"))
            (let* ((diffs (get-diff root-path base-commit))
@@ -56,4 +56,11 @@
       repeat len
       do (vector-push (read-byte stream) buff)
       finally (return (flexi-streams:octets-to-string buff :external-format :utf-8)))))
+
+(defun print-msg (result)
+  (let ((content (format nil "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":~a}" result)))
+    (format t "Content-Length: ~a~c~c~c~c~a" (length content) #\return #\linefeed
+            #\return #\linefeed
+            content)
+    (force-output)))
 
