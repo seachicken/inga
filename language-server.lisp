@@ -22,13 +22,14 @@
                       (let* ((json (extract-json *standard-input*))
                              (result (when json (jsown:parse json))))
                         (return result))))
+           (id (when msg (jsown:val msg "id")))
            (method (when msg (jsown:val msg "method"))))
       (when method
         (cond
           ((equal method "initialize")
-           (print-msg "{\"capabilities\":{}}"))
+           (print-msg id "{\"capabilities\":{}}"))
           ((equal method "shutdown")
-           (print-msg "null")
+           (print-msg id "null")
            (return-from handle-msg))
           ((or (equal method "initialized")
                (equal method "textDocument/didChange"))
@@ -57,8 +58,8 @@
       do (vector-push (read-byte stream) buff)
       finally (return (flexi-streams:octets-to-string buff :external-format :utf-8)))))
 
-(defun print-msg (result)
-  (let ((content (format nil "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":~a}" result)))
+(defun print-msg (id result)
+  (let ((content (format nil "{\"jsonrpc\":\"2.0\",\"id\":~a,\"result\":~a}" id result)))
     (format t "Content-Length: ~a~c~c~c~c~a" (length content) #\return #\linefeed
             #\return #\linefeed
             content)
