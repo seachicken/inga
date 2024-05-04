@@ -95,8 +95,8 @@
                          (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
                          :include include :exclude exclude :temp-path temp-path))
              (results (analyze ctx diffs)))
-        (ensure-directories-exist temp-path)
-        (with-open-file (out (merge-pathnames "report.json" temp-path)
+        (ensure-directories-exist (merge-pathnames "report/" temp-path))
+        (with-open-file (out (merge-pathnames "report/report.json" temp-path)
                              :direction :output
                              :if-exists :supersede
                              :if-does-not-exist :create)
