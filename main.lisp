@@ -105,7 +105,7 @@
         (stop ctx)))
     (inga-error (e) (format t "~a~%" e))))
 
-(defun start (root-path context-kinds &key include exclude temp-path)
+(defun start (root-path context-kinds &key include exclude (temp-path (merge-pathnames ".inga/")))
   (let* ((index (make-instance 'ast-index-disk :root-path root-path :temp-path temp-path))
          (ctx (alexandria:switch ((when (> (length context-kinds) 0) (first context-kinds)))
                (:typescript

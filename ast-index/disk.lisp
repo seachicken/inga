@@ -18,7 +18,8 @@
      :initarg :temp-path
      :accessor ast-index-disk-path)))
 
-(defmethod initialize-instance :after ((ast-index ast-index-disk) &key temp-path)
+(defmethod initialize-instance :after ((ast-index ast-index-disk)
+                                       &key (temp-path (merge-pathnames ".inga/")))
   (setf (slot-value ast-index 'index-path) (merge-pathnames "index/" temp-path)))
 
 (defmethod create-indexes ((ast-index ast-index-disk) include include-files exclude)
