@@ -1,7 +1,7 @@
 FROM fukamachi/roswell:23.10.14.114-alpine AS build
 
 COPY ../.. /inga
-RUN ros && \
+RUN ros install "sbcl-bin/2.3.11" && \
   ln -s /inga /root/.roswell/local-projects/inga && \
   ros build /inga/roswell/inga.ros
 
