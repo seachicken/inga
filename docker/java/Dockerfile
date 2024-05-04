@@ -1,4 +1,6 @@
-FROM fukamachi/roswell:23.10.14.114-alpine AS build
+FROM fukamachi/roswell:23.10.14.114-ubuntu AS build
+
+RUN apt-get update && apt-get -y install bzip2 make
 
 COPY ../.. /inga
 RUN ros install "sbcl-bin/2.3.11" && \
