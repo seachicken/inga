@@ -1,11 +1,12 @@
-FROM alpine:3.19 AS build
+FROM alpine:3.13 AS build
 
-RUN apk add --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing roswell make
+RUN apk add make
+RUN apk add --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing roswell
 
 COPY ../.. /inga
 RUN ros && \
   ln -s /inga /root/.roswell/local-projects/inga && \
-  ros dynamic-space-size=2gb build /inga/roswell/inga.ros
+  ros build /inga/roswell/inga.ros
 
 
 FROM eclipse-temurin:21-jdk-alpine
