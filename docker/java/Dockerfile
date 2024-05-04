@@ -1,15 +1,17 @@
-FROM ubuntu:24.04 AS build
+FROM fukamachi/roswell:23.10.14.114-ubuntu AS build
 
-ENV ROSWELL 23.10.14.114
+#ENV ROSWELL 23.10.14.114
+
+RUN apt-get update && apt-get -y install bzip2 make
 
 # https://github.com/roswell/roswell/wiki/Installation#building-from-the-source-code
-RUN apt-get update && apt-get -y install git build-essential automake libcurl4-openssl-dev && \
-  git clone -b release https://github.com/roswell/roswell.git && \
-  cd roswell && \
-  sh bootstrap && \
-  ./configure && \
-  make && \
-  make install
+#RUN apt-get update && apt-get -y install git build-essential automake libcurl4-openssl-dev && \
+#  git clone -b release https://github.com/roswell/roswell.git && \
+#  cd roswell && \
+#  sh bootstrap && \
+#  ./configure && \
+#  make && \
+#  make install
 
 #RUN apt-get update && apt-get -y install --no-install-recommends \
 #    curl \
@@ -26,9 +28,9 @@ RUN apt-get update && apt-get -y install git build-essential automake libcurl4-o
 #  apt-get autoremove --purge -y curl build-essential automake && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY ../.. /inga
-RUN ros && \
+RUN ros install "sbcl-bin/2.3.11" && \
   ln -s /inga /root/.roswell/local-projects/inga && \
-  ros dynamic-space-size=2gb build /inga/roswell/inga.ros
+  ros build /inga/roswell/inga.ros
 
 
 FROM eclipse-temurin:21-jdk-jammy
