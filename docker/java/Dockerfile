@@ -5,7 +5,7 @@ RUN apk add --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing roswe
 COPY ../.. /inga
 RUN ros && \
   ln -s /inga /root/.roswell/local-projects/inga && \
-  ros build /inga/roswell/inga.ros
+  ros dynamic-space-size=2gb build /inga/roswell/inga.ros
 
 
 FROM eclipse-temurin:21-jdk-alpine
