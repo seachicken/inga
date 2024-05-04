@@ -1,4 +1,6 @@
-FROM fukamachi/roswell:23.10.14.114-alpine AS build
+FROM alpine:3.19 AS build
+
+RUN apk add --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing roswell make
 
 COPY ../.. /inga
 RUN ros && \
@@ -6,7 +8,7 @@ RUN ros && \
   ros build /inga/roswell/inga.ros
 
 
-FROM eclipse-temurin:21-jdk-jammy
+FROM eclipse-temurin:21-jdk-alpine
 
 ENV JAVAPARSER 0.3.4
 ENV KTPARSRER 0.1.6
@@ -20,11 +22,7 @@ ADD https://github.com/seachicken/ktparser/releases/download/v$KTPARSRER/ktparse
 ADD https://github.com/seachicken/jvm-dependency-loader/releases/download/v$JVM_DEPENDENCY_LOADER/jvm-dependency-loader-$JVM_DEPENDENCY_LOADER.jar ./libs/jvm-dependency-loader.jar
 ADD https://github.com/seachicken/spring-property-loader/releases/download/v$SPRING_PROPERTY_LOADER/spring-property-loader-$SPRING_PROPERTY_LOADER.jar ./libs/spring-property-loader.jar
 
-RUN apt-get update && \
-  apt-get install -y git && \
-  apt-get install -y maven && \
-  apt-get clean && \
-  rm -rf /var/lib/apt/lists/*
+RUN apk --no-cache add git maven
 
 ENV INGA_HOME /
 ENV INGA_CONTEXT java
