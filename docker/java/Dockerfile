@@ -2,7 +2,13 @@ FROM fukamachi/roswell:23.10.14.114-ubuntu AS build
 
 #ENV ROSWELL 23.10.14.114
 
-RUN apt-get update && apt-get -y install bzip2 make
+RUN apt-get update && apt-get -y install curl \
+    libcurl4-gnutls-dev \
+    bzip2 \
+    ca-certificates \
+    make \
+    build-essential \
+    automake
 
 # https://github.com/roswell/roswell/wiki/Installation#building-from-the-source-code
 #RUN apt-get update && apt-get -y install git build-essential automake libcurl4-openssl-dev && \
