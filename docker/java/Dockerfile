@@ -1,7 +1,6 @@
 FROM alpine:3.13 AS build
 
-RUN apk add make
-RUN apk add --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing roswell
+RUN apk add --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing roswell make
 
 COPY ../.. /inga
 RUN ros && \
