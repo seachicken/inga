@@ -1,6 +1,6 @@
 FROM alpine:3.13 AS build
 
-RUN apk add make
+RUN apk add curl-dev make
 RUN apk add --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing roswell
 
 COPY ../.. /inga
