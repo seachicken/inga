@@ -11,13 +11,16 @@
 (in-package #:inga/language-server)
 
 (defun run (params)
-  (destructuring-bind (&key root-path include exclude base-commit mode) params
-    (let* ((ctx (inga/main::start root-path '(:java) :include include :exclude exclude)))
+  (destructuring-bind (&key root-path temp-path include exclude base-commit mode) params
+    (let* ((ctx (inga/main::start root-path '(:java)
+                                  :include include
+                                  :exclude exclude
+                                  :temp-path temp-path)))
       (handle-msg params ctx)
       (inga/main::stop ctx))))
 
 (defun handle-msg (params ctx)
-  (destructuring-bind (&key root-path include exclude base-commit mode) params
+  (destructuring-bind (&key root-path temp-path include exclude base-commit mode) params
     (let* ((msg (loop while *standard-input* do
                       (let* ((json (extract-json *standard-input*))
                              (result (when json (jsown:parse json))))
