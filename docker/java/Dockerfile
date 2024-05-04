@@ -1,7 +1,20 @@
-FROM fukamachi/roswell:23.10.14.114-ubuntu AS build
+FROM ubuntu:24.04 AS build
 
-RUN apt-get update && \
-  apt-get install -y make bzip2
+ENV ROSWELL 23.10.14.114
+
+RUN apt-get update && apt-get -y install --no-install-recommends \
+    curl \
+    libcurl4-gnutls-dev \
+    bzip2 \
+    ca-certificates \
+    make \
+    build-essential \
+    automake && \
+  curl -sL "https://github.com/roswell/roswell/archive/v${ROSWELL}.tar.gz" -o roswell.tar.gz && \
+  tar xvfz roswell.tar.gz && cd "roswell-${ROSWELL}" && \
+  sh bootstrap && ./configure && make && make install \
+    && cd .. && rm roswell.tar.gz && rm -rf "roswell-${ROSWELL}" && \
+  apt-get autoremove --purge -y curl build-essential automake && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY ../.. /inga
 RUN ros && \
