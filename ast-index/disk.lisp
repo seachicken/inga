@@ -15,8 +15,11 @@
 
 (defclass ast-index-disk (ast-index)
   ((index-path
-     :initform (merge-pathnames "inga_temp/")
+     :initarg :temp-path
      :accessor ast-index-disk-path)))
+
+(defmethod initialize-instance :after ((ast-index ast-index-disk) &key temp-path)
+  (setf (slot-value ast-index 'index-path) (merge-pathnames "index/" temp-path)))
 
 (defmethod create-indexes ((ast-index ast-index-disk) include include-files exclude)
   (ensure-directories-exist (ast-index-disk-path ast-index)) 

@@ -47,26 +47,9 @@
 (define-condition inga-error-option-not-found (inga-error) ())
 (define-condition inga-error-context-not-found (inga-error) ())
 
-(defun command (params)
-  (handler-case
-    (destructuring-bind (&key root-path include exclude base-commit mode) params
-      (let* ((diffs (get-diff root-path base-commit))
-             (ctx (start root-path
-                         (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
-                         :include include :exclude exclude))
-             (results (analyze ctx diffs)))
-          (ensure-directories-exist "reports/")
-          (with-open-file (out "reports/report.json"
-                               :direction :output
-                               :if-exists :supersede
-                               :if-does-not-exist :create)
-            (format out "~a" (to-json results root-path)))
-          (format t "~%~a~%" (to-json results root-path))
-        (stop ctx)))
-    (inga-error (e) (format t "~a~%" e))))
-
 (defun parse-argv (argv)
   (loop with root-path = "."
+        with temp-path
         with include
         with exclude
         with base-commit
@@ -80,6 +63,8 @@
               (setf root-path (pop argv)))
              ("--back-path"
               (setf root-path (pop argv)))
+             ("--temp-path"
+              (setf temp-path (pop argv)))
              ("--include"
               (setf include (split-trim-comma (pop argv))))
              ("--exclude"
@@ -92,14 +77,36 @@
         finally
           (return (append 
                     (list :root-path (truename (uiop:merge-pathnames* root-path)))
+                    (list :temp-path
+                          (if temp-path
+                              (pathname (concatenate 'string temp-path "/"))
+                              (merge-pathnames ".inga/")))
                     (list :include include)
                     (list :exclude exclude)
                     (when base-commit
                       (list :base-commit base-commit))
                     (list :mode mode)))))
 
-(defun start (root-path context-kinds &key include exclude)
-  (let* ((index (make-instance 'ast-index-disk :root-path root-path))
+(defun command (params)
+  (handler-case
+    (destructuring-bind (&key root-path temp-path include exclude base-commit mode) params
+      (let* ((diffs (get-diff root-path base-commit))
+             (ctx (start root-path
+                         (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
+                         :include include :exclude exclude :temp-path temp-path))
+             (results (analyze ctx diffs)))
+        (ensure-directories-exist temp-path)
+        (with-open-file (out (merge-pathnames "report.json" temp-path)
+                             :direction :output
+                             :if-exists :supersede
+                             :if-does-not-exist :create)
+          (format out "~a" (to-json results root-path)))
+        (format t "~%~a~%" (to-json results root-path))
+        (stop ctx)))
+    (inga-error (e) (format t "~a~%" e))))
+
+(defun start (root-path context-kinds &key include exclude temp-path)
+  (let* ((index (make-instance 'ast-index-disk :root-path root-path :temp-path temp-path))
          (ctx (alexandria:switch ((when (> (length context-kinds) 0) (first context-kinds)))
                (:typescript
                  (make-context
