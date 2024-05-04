@@ -9,7 +9,7 @@ env:
   IMAGE_NAME: ${{ github.actor }}/inga
 
 jobs:
-  build-and-push-image:
+  build-and-push-image-amd:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -57,7 +57,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-  build-and-push-image:
+  build-and-push-image-arm:
     runs-on: macos-latest
     permissions:
       contents: read
