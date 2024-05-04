@@ -34,7 +34,7 @@ RUN apt-get update && apt-get -y install curl \
 #  apt-get autoremove --purge -y curl build-essential automake && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY ../.. /inga
-RUN ros install "sbcl-bin/2.3.11" && \
+RUN ros install "sbcl-bin/2.3.11" && ros && \
   ln -s /inga /root/.roswell/local-projects/inga && \
   ros build /inga/roswell/inga.ros
 
