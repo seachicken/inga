@@ -38,8 +38,8 @@
                (equal method "textDocument/didChange"))
            (let* ((diffs (get-diff root-path base-commit))
                   (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
-             (ensure-directories-exist temp-path)
-             (with-open-file (out (merge-pathnames "report.json" temp-path)
+             (ensure-directories-exist (merge-pathnames "report/" temp-path))
+             (with-open-file (out (merge-pathnames "report/report.json" temp-path)
                                   :direction :output
                                   :if-exists :supersede
                                   :if-does-not-exist :create)
