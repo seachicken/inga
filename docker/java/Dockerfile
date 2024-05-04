@@ -1,4 +1,4 @@
-FROM fukamachi/roswell:22.12.14.113-ubuntu AS build
+FROM fukamachi/roswell:23.10.14.114-ubuntu AS build
 
 RUN apt-get update && \
   apt-get install -y make bzip2
@@ -6,7 +6,7 @@ RUN apt-get update && \
 COPY ../.. /inga
 RUN ros && \
   ln -s /inga /root/.roswell/local-projects/inga && \
-  ros build /inga/roswell/inga.ros
+  ros dynamic-space-size=2gb build /inga/roswell/inga.ros
 
 
 FROM eclipse-temurin:21-jdk-jammy
