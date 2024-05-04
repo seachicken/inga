@@ -2,19 +2,28 @@ FROM ubuntu:24.04 AS build
 
 ENV ROSWELL 23.10.14.114
 
-RUN apt-get update && apt-get -y install --no-install-recommends \
-    curl \
-    libcurl4-gnutls-dev \
-    bzip2 \
-    ca-certificates \
-    make \
-    build-essential \
-    automake && \
-  curl -sL "https://github.com/roswell/roswell/archive/v${ROSWELL}.tar.gz" -o roswell.tar.gz && \
-  tar xvfz roswell.tar.gz && cd "roswell-${ROSWELL}" && \
-  sh bootstrap && ./configure && make && make install \
-    && cd .. && rm roswell.tar.gz && rm -rf "roswell-${ROSWELL}" && \
-  apt-get autoremove --purge -y curl build-essential automake && apt-get clean && rm -rf /var/lib/apt/lists/*
+# https://github.com/roswell/roswell/wiki/Installation#building-from-the-source-code
+RUN apt-get update && apt-get -y install git build-essential automake libcurl4-openssl-dev && \
+  git clone -b release https://github.com/roswell/roswell.git && \
+  cd roswell && \
+  sh bootstrap && \
+  ./configure && \
+  make && \
+  make install
+
+#RUN apt-get update && apt-get -y install --no-install-recommends \
+#    curl \
+#    libcurl4-gnutls-dev \
+#    bzip2 \
+#    ca-certificates \
+#    make \
+#    build-essential \
+#    automake && \
+#  curl -sL "https://github.com/roswell/roswell/archive/v${ROSWELL}.tar.gz" -o roswell.tar.gz && \
+#  tar xvfz roswell.tar.gz && cd "roswell-${ROSWELL}" && \
+#  sh bootstrap && ./configure && make && make install \
+#    && cd .. && rm roswell.tar.gz && rm -rf "roswell-${ROSWELL}" && \
+#  apt-get autoremove --purge -y curl build-essential automake && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY ../.. /inga
 RUN ros && \
