@@ -1,7 +1,4 @@
-FROM fukamachi/roswell:23.10.14.114-ubuntu AS build
-
-RUN apt-get update && \
-  apt-get install -y make bzip2
+FROM fukamachi/roswell:23.10.14.114-debian AS build
 
 COPY ../.. /inga
 RUN ros && \
