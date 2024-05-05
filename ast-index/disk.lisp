@@ -32,16 +32,18 @@
             (setf (ast-index-paths ast-index)
                   (append (ast-index-paths ast-index) (list relative-path)))
             (handler-case
-              (alexandria:write-string-into-file
-                (format nil "~a" (parse (namestring path)))
-                (get-index-path relative-path (ast-index-disk-path ast-index)))
+              (with-open-file (out (get-index-path relative-path (ast-index-disk-path ast-index))
+                                   :direction :output
+                                   :if-exists :supersede
+                                   :if-does-not-exist :create)
+                (format out "~a" (format nil "~a" (parse (namestring path)))))
               (error (e)
                      (format t "error: ~a, path: ~a~%" e path)
                      (stop-all-parsers)
-                     (error 'inga-error)))))) 
-  (stop-all-parsers))
+                     (error 'inga-error)))))))
 
 (defmethod clean-indexes ((ast-index ast-index-disk))
+  (stop-all-parsers)
   (uiop:delete-directory-tree (ast-index-disk-path ast-index)
                               :validate t
                               :if-does-not-exist :ignore))

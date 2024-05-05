@@ -284,6 +284,9 @@
     results))
 
 (defun convert-to-output-pos (root-path pos)
+  (unless pos
+    (return-from convert-to-output-pos))
+
   (when (eq (cdr (assoc :type pos)) :rest-server)
     (setf pos (cdr (assoc :file-pos pos))))
   (let ((text-pos (convert-to-pos (merge-pathnames (cdr (assoc :path pos)) root-path)
