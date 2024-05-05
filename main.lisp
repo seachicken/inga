@@ -116,9 +116,9 @@
                    :lc (make-client :typescript root-path)
                    :ast-index index
                    :traversals (list
-                                  (start-traversal :typescript
-                                                   (or include *include-typescript*)
-                                                   exclude root-path index))))
+                                 (start-traversal :typescript
+                                                  (or include *include-typescript*)
+                                                  exclude root-path index))))
                (:java
                  (make-context
                    :project-path root-path
@@ -126,12 +126,12 @@
                    :exclude exclude
                    :ast-index index
                    :traversals (list
-                                    (start-traversal :java
-                                                     (or include *include-java*)
-                                                     exclude root-path index)
-                                    (start-traversal :kotlin
-                                                     (or include *include-java*)
-                                                     exclude root-path index))
+                                 (start-traversal :java
+                                                  (or include *include-java*)
+                                                  exclude root-path index)
+                                 (start-traversal :kotlin
+                                                  (or include *include-java*)
+                                                  exclude root-path index))
                    :processes (list
                                 (inga/plugin/spring/spring-property-loader:start root-path)
                                 (inga/plugin/jvm-dependency-loader:start root-path))))
