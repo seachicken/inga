@@ -34,7 +34,9 @@
   (:export #:parse-argv
            #:command
            #:analyze
-           #:to-json))
+           #:to-json
+           #:context
+           #:context-ast-index))
 (in-package #:inga/main)
 
 (defparameter *include-typescript*

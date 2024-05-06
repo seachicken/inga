@@ -7,6 +7,7 @@
            #:ast-index-paths
            #:ast-scoped-paths
            #:create-indexes
+           #:update-index
            #:clean-indexes
            #:get-ast
            #:attach-parent))
@@ -24,6 +25,8 @@
      :accessor ast-scoped-paths)))
 
 (defgeneric create-indexes (ast-index include include-files exclude))
+
+(defgeneric update-index (ast-index path))
 
 (defgeneric clean-indexes (ast-index))
 
