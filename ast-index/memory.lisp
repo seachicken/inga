@@ -22,6 +22,8 @@
             (setf (ast-index-paths ast-index)
                   (append (ast-index-paths ast-index) (list relative-path)))))))
 
+(defmethod update-index ((ast-index ast-index-memory) path))
+
 (defmethod clean-indexes ((ast-index ast-index-memory))
   (stop-all-parsers))
 

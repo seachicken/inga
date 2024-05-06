@@ -2,10 +2,14 @@
   (:use #:cl)
   (:import-from #:flexi-streams)
   (:import-from #:jsown)
+  (:import-from #:inga/ast-index
+                #:update-index)
   (:import-from #:inga/git
                 #:get-diff)
   (:import-from #:inga/main
                 #:analyze
+                #:context
+                #:context-ast-index
                 #:to-json)
   (:export #:run))
 (in-package #:inga/language-server)
@@ -34,11 +38,24 @@
           ((equal method "shutdown")
            (print-response-msg id "null")
            (return-from handle-msg))
-          ((or (equal method "initialized")
-               (equal method "textDocument/didChange"))
+          ((equal method "initialized")
            (let* ((diffs (get-diff root-path base-commit))
                   (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
              (ensure-directories-exist (merge-pathnames "report/" temp-path))
+             (with-open-file (out (merge-pathnames "report/report.json" temp-path)
+                                  :direction :output
+                                  :if-exists :supersede
+                                  :if-does-not-exist :create)
+               (format out "~a" results))))
+          ((equal method "textDocument/didChange")
+           (update-index (context-ast-index ctx)
+                         (enough-namestring
+                           ;; remove file URI scheme
+                           (subseq
+                             (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
+                           root-path))
+           (let* ((diffs (get-diff root-path base-commit))
+                  (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
              (with-open-file (out (merge-pathnames "report/report.json" temp-path)
                                   :direction :output
                                   :if-exists :supersede

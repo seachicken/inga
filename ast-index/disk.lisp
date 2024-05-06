@@ -31,16 +31,15 @@
                      (is-analysis-target relative-path include-files exclude))
             (setf (ast-index-paths ast-index)
                   (append (ast-index-paths ast-index) (list relative-path)))
-            (handler-case
-              (with-open-file (out (get-index-path relative-path (ast-index-disk-path ast-index))
-                                   :direction :output
-                                   :if-exists :supersede
-                                   :if-does-not-exist :create)
-                (format out "~a" (format nil "~a" (parse (namestring path)))))
-              (error (e)
-                     (format t "error: ~a, path: ~a~%" e path)
-                     (stop-all-parsers)
-                     (error 'inga-error)))))))
+            (update-index ast-index relative-path)))))
+
+(defmethod update-index ((ast-index ast-index-disk) path)
+  (with-open-file (out (get-index-path path (ast-index-disk-path ast-index))
+                       :direction :output
+                       :if-exists :supersede
+                       :if-does-not-exist :create)
+    (format out "~a" (format nil "~a" (parse (merge-pathnames
+                                               path (ast-index-root-path ast-index)))))))
 
 (defmethod clean-indexes ((ast-index ast-index-disk))
   (stop-all-parsers)
