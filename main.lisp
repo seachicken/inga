@@ -220,7 +220,9 @@
                                         `(((:type . "entrypoint")
                                            (:origin .
                                             ,(convert-to-output-pos (context-project-path ctx)
-                                                                    (cdr (assoc :origin pos))))
+                                                                    (if (cdr (assoc :origin pos))
+                                                                        (cdr (assoc :origin pos))
+                                                                        pos)))
                                            (:entrypoint .
                                             ,(convert-to-output-pos (context-project-path ctx)
                                                                     pos)))))  
@@ -249,7 +251,9 @@
                                   `(((:type . "entrypoint")
                                      (:origin .
                                       ,(convert-to-output-pos (context-project-path ctx)
-                                                              (cdr (assoc :origin pos))))
+                                                              (if (cdr (assoc :origin pos))
+                                                                  (cdr (assoc :origin pos))
+                                                                  entrypoint)))
                                      (:entrypoint .
                                       ,(convert-to-output-pos (context-project-path ctx) entrypoint))))))
                     (let ((origin
@@ -281,7 +285,9 @@
         (setf results
               `(((:type . "entrypoint")
                  (:origin . ,(convert-to-output-pos (context-project-path ctx)
-                                                    (cdr (assoc :origin pos))))
+                                                    (if (cdr (assoc :origin pos))
+                                                        (cdr (assoc :origin pos))
+                                                        pos)))
                  (:entrypoint . ,(convert-to-output-pos (context-project-path ctx) pos))))))
     results))
 
