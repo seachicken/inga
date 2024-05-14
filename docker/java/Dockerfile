@@ -26,6 +26,10 @@ RUN apt-get update && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
+WORKDIR /work
+
+RUN git config --global --add safe.directory /work
+
 ENV INGA_HOME /
 ENV INGA_CONTEXT java
 

@@ -17,6 +17,10 @@ RUN apt-get update && \
 
 RUN npm install -g typescript @seachicken/tsparser
 
+WORKDIR /work
+
+RUN git config --global --add safe.directory /work
+
 ENV INGA_HOME /
 ENV INGA_CONTEXT typescript
 
