@@ -32,7 +32,6 @@ RUN git config --global --add safe.directory /work
 
 ENV INGA_HOME /
 ENV INGA_CONTEXT java
-ENV INGA_DEBUG 1
 
 ENTRYPOINT ["inga"]
 
