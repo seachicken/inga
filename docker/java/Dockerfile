@@ -1,14 +1,16 @@
 FROM ubuntu:latest AS build
 
-ENV LISP sbcl-bin
+ENV CI true
+
+RUN apt-get update && \
+  apt-get install -y curl sudo git build-essential automake libcurl4-openssl-dev && \
+  curl -L https://raw.githubusercontent.com/roswell/roswell/master/scripts/install-for-ci.sh | sh && \
+  ls -lsa /usr/local && \
+  ros
 
 COPY ../.. /inga
 
-RUN apt-get update && \
-  apt-get install -y curl && \
-  curl -L https://raw.githubusercontent.com/roswell/roswell/master/scripts/install-for-ci.sh | sh && \
-  ros && \
-  ln -s /inga /root/.roswell/local-projects/inga && \
+RUN ln -s /inga /root/.roswell/local-projects/inga && \
   ros build /inga/roswell/inga.ros
 
 
@@ -27,8 +29,7 @@ ADD https://github.com/seachicken/jvm-dependency-loader/releases/download/v$JVM_
 ADD https://github.com/seachicken/spring-property-loader/releases/download/v$SPRING_PROPERTY_LOADER/spring-property-loader-$SPRING_PROPERTY_LOADER.jar ./libs/spring-property-loader.jar
 
 RUN apt-get update && \
-  apt-get install -y git && \
-  apt-get install -y maven && \
+  apt-get install -y git maven && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
