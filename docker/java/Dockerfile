@@ -8,7 +8,7 @@ RUN apt-get update && \
   ./configure && \
   make && \
   sudo make install && \
-  ros setup
+  ros install sbcl-bin/2.3.11 && ros use sbcl-bin/2.3.11
 
 COPY ../.. /inga
 
