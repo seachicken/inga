@@ -1,4 +1,14 @@
-FROM fukamachi/roswell:23.10.14.114-ubuntu
+FROM ubuntu:latest AS build
+
+RUN apt-get update && \
+  apt-get -y install sudo git build-essential automake libcurl4-openssl-dev && \
+  git clone -b release https://github.com/roswell/roswell.git && \
+  cd roswell && \
+  sh bootstrap && \
+  ./configure && \
+  make && \
+  sudo make install && \
+  ros setup
 
 ENV JAVAPARSER 0.3.4
 ENV KTPARSRER 0.1.6
@@ -25,7 +35,7 @@ RUN git config --global --add safe.directory /work
 
 COPY ../.. /root/.roswell/local-projects/inga
 
-RUN ros && ros install inga
+RUN ros install inga
 
 ENTRYPOINT ["ros", "exec", "inga"]
 
