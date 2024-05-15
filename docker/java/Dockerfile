@@ -6,7 +6,7 @@ RUN apt-get update && \
   apt-get install -y curl sudo git build-essential automake libcurl4-openssl-dev && \
   curl -L https://raw.githubusercontent.com/roswell/roswell/master/scripts/install-for-ci.sh | sh && \
   ls -lsa /usr/local && \
-  ros install sbcl-bin/2.3.11 && ros use sbcl-bin/2.3.11
+  ros
 
 COPY ../.. /inga
 
