@@ -1,6 +1,7 @@
 FROM ubuntu:latest AS build
 
-RUN sudo apt-get -y install git build-essential automake libcurl4-openssl-dev && \
+RUN apt-get update && \
+  apt-get -y install git build-essential automake libcurl4-openssl-dev && \
   git clone -b release https://github.com/roswell/roswell.git && \
   cd roswell && \
   sh bootstrap && \
