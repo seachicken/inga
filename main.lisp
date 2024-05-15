@@ -92,11 +92,11 @@
 (defun command (params)
   (handler-case
     (destructuring-bind (&key root-path temp-path include exclude base-commit mode) params
-      (let* ((diffs (get-diff root-path base-commit))
-             (ctx (start root-path
-                         (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
-                         :include include :exclude exclude :temp-path temp-path))
-             (results (analyze ctx diffs)))
+      (let* ((diffs (time (get-diff root-path base-commit)))
+             (ctx (time (start root-path
+                               (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
+                               :include include :exclude exclude :temp-path temp-path)))
+             (results (time (analyze ctx diffs))))
         (ensure-directories-exist (merge-pathnames "report/" temp-path))
         (with-open-file (out (merge-pathnames "report/report.json" temp-path)
                              :direction :output

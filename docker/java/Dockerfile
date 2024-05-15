@@ -1,7 +1,13 @@
-FROM fukamachi/roswell:23.10.14.114-alpine AS build
+FROM ubuntu:latest AS build
+
+ENV LISP sbcl-bin
 
 COPY ../.. /inga
-RUN ros && \
+
+RUN apt-get update && \
+  apt-get install -y curl && \
+  curl -L https://raw.githubusercontent.com/roswell/roswell/master/scripts/install-for-ci.sh | sh && \
+  ros && \
   ln -s /inga /root/.roswell/local-projects/inga && \
   ros build /inga/roswell/inga.ros
 
