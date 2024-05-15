@@ -1,12 +1,13 @@
 FROM ubuntu:latest AS build
 
-ENV CI true
-
-RUN apt-get update && \
-  apt-get install -y curl sudo git build-essential automake libcurl4-openssl-dev && \
-  curl -L https://raw.githubusercontent.com/roswell/roswell/master/scripts/install-for-ci.sh | sh && \
-  ls -lsa /usr/local && \
-  ros
+RUN sudo apt-get -y install git build-essential automake libcurl4-openssl-dev && \
+  git clone -b release https://github.com/roswell/roswell.git && \
+  cd roswell && \
+  sh bootstrap && \
+  ./configure && \
+  make && \
+  sudo make install && \
+  ros setup
 
 COPY ../.. /inga
 

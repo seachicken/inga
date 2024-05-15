@@ -10,7 +10,7 @@ env:
 
 jobs:
   build-and-push-image:
-    runs-on: macos-13
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
@@ -22,8 +22,11 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup docker (missing on MacOS)
-        uses: douglascamata/setup-docker-macos-action@main
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Log in to the Container registry
         if: github.event_name != 'pull_request'
