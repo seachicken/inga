@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup docker (missing on MacOS)
-        uses: douglascamata/setup-docker-macos-action@v1-alpha.13
+        uses: douglascamata/setup-docker-macos-action@main
 
       - name: Log in to the Container registry
         if: github.event_name != 'pull_request'
