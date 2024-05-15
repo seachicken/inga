@@ -1,4 +1,4 @@
-FROM ubuntu:mantic AS build
+FROM ubuntu:jammy AS build
 
 ENV CI true
 
