@@ -7,8 +7,8 @@ RUN apt-get update && \
   sh bootstrap && \
   ./configure && \
   make && \
-  sudo make install && \
-  ros setup
+  sudo make install
+RUN ros dynamic-space-size=2gb setup
 
 ENV JAVAPARSER 0.3.4
 ENV KTPARSRER 0.1.6
