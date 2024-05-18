@@ -31,7 +31,8 @@
                 #:inga-error)
   (:import-from #:inga/logger
                 #:log-debug)
-  (:export #:parse-argv
+  (:export #:main
+           #:parse-argv
            #:command
            #:analyze
            #:to-json
@@ -48,6 +49,16 @@
 
 (define-condition inga-error-option-not-found (inga-error) ())
 (define-condition inga-error-context-not-found (inga-error) ())
+
+(defun main (&rest argv)
+  (let* ((params (inga/main:parse-argv argv))
+         (mode (first (last params))))
+    (cond
+      ((equal mode "cli")
+       (inga/main:command params))
+      ((equal mode "server")
+       ;;(inga/language-server:run params)))))
+       ))))
 
 (defun parse-argv (argv)
   (loop with root-path = "."

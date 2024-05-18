@@ -1,9 +1,16 @@
-FROM fukamachi/roswell:23.10.14.114-alpine AS build
+FROM clfoundation/sbcl:2.2.4 AS build
 
-COPY ../.. /inga
-RUN ros && \
-  ln -s /inga /root/.roswell/local-projects/inga && \
-  ros build /inga/roswell/inga.ros
+ENV QUICKLISP_ADD_TO_INIT_FILE true
+
+COPY ../.. /root/common-lisp
+WORKDIR /root/common-lisp
+
+RUN /usr/local/bin/install-quicklisp
+
+RUN set -x; \
+  sbcl --load inga.asd \
+  --eval "(ql:quickload :inga)" \
+  --eval "(sb-ext:save-lisp-and-die \"inga\" :toplevel #'inga/main:main :executable t)"
 
 
 FROM eclipse-temurin:21-jdk-jammy
@@ -13,7 +20,7 @@ ENV KTPARSRER 0.1.6
 ENV SPRING_PROPERTY_LOADER 0.3.1
 ENV JVM_DEPENDENCY_LOADER 0.5.1
 
-COPY --from=build /inga/roswell/inga /usr/local/bin/
+COPY --from=build /root/common-lisp/inga /usr/local/bin/
 
 ADD https://github.com/seachicken/javaparser/releases/download/v$JAVAPARSER/javaparser-$JAVAPARSER.jar ./libs/javaparser.jar
 ADD https://github.com/seachicken/ktparser/releases/download/v$KTPARSRER/ktparser-$KTPARSRER.jar ./libs/ktparser.jar

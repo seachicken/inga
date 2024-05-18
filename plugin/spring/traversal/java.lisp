@@ -3,7 +3,7 @@
         #:inga/traversal
         #:inga/plugin/spring/traversal/base
         #:inga/utils)
-  (:import-from #:quri)
+  ;;(:import-from #:quri)
   (:import-from #:inga/ast-index
                 #:get-ast)
   (:import-from #:inga/logger
@@ -133,7 +133,7 @@
           ((equal path-type "java.lang.String")
            (mapcar (lambda (pos)
                      `((:host . ,(find-api-host 0 ast))
-                       (:path . ,(quri:uri-path (quri:uri (cdr (assoc :name pos)))))
+                       ;;(:path . ,(quri:uri-path (quri:uri (cdr (assoc :name pos)))))
                        (:name . ,(get-method matched-api ast))
                        (:file-pos . ,pos)))
                    (find-reference-to-literal (get-parameter (cdr (assoc :path-i matched-api)) ast) path)))
@@ -157,7 +157,8 @@
 (defun find-api-host (arg-i ast)
   (let ((url (get-parameter arg-i ast)))
     (when (equal (ast-value url "type") "STRING_LITERAL")
-      (format nil "~a" (quri:uri-port (quri:uri (ast-value url "name")))))))
+      ;;(format nil "~a" (quri:uri-port (quri:uri (ast-value url "name"))))   
+      (format nil ""))))
 
 (defun get-parameter (idx ast)
   (nth (1+ idx) (get-asts ast '("*"))))
@@ -184,14 +185,8 @@
                         (let ((value (first (filter-by-name
                                               (get-asts v '("MODIFIERS" "ANNOTATION"))
                                               "Value"))))
-                          (setf host
-                                (write-to-string
-                                  (quri:uri-port
-                                    (quri:uri 
-                                      (find-property
-                                        (first (get-variable-names
-                                                 (ast-value (first (get-asts value '("STRING_LITERAL"))) "name")))
-                                        path)))))))))
+                          (setf host ""
+                                )))))
                    (find-uri-components-builder
                      (first (get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION")))
                      path))))

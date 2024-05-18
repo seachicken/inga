@@ -3,7 +3,6 @@
         #:inga/plugin/spring/traversal/base
         #:inga/traversal
         #:inga/utils)
-  (:import-from #:quri)
   (:import-from #:inga/ast-index
                 #:get-ast)
   (:import-from #:inga/path
@@ -225,7 +224,6 @@
     (when matched-api
       (mapcar (lambda (pos)
                 `((:host . ,(find-api-host 0 ast))
-                  (:path . ,(quri:uri-path (quri:uri (cdr (assoc :name pos)))))
                   (:name . ,(if (assoc :method matched-api)
                                 (cdr (assoc :method matched-api))
                                 (find-api-method-from-http-method
@@ -239,7 +237,7 @@
 (defun find-api-host (arg-i ast)
   (let ((url (first (get-asts (get-parameter arg-i ast) '("LITERAL_STRING_TEMPLATE_ENTRY")))))
     (when url
-      (format nil "~a" (quri:uri-port (quri:uri (ast-value url "name")))))))
+      nil)))
 
 (defun get-parameter (idx ast)
   (nth idx (get-asts ast '("VALUE_ARGUMENT_LIST" "VALUE_ARGUMENT" "*"))))
