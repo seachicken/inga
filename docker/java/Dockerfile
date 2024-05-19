@@ -1,5 +1,6 @@
 FROM clfoundation/sbcl:2.2.4 AS build
 
+ENV QUICKLISP_DIST_VERSION 2022-02-20
 ENV QUICKLISP_ADD_TO_INIT_FILE true
 
 COPY ../.. /root/common-lisp
