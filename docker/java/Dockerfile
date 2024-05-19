@@ -6,7 +6,8 @@ ENV QUICKLISP_ADD_TO_INIT_FILE true
 COPY ../.. /root/common-lisp
 WORKDIR /root/common-lisp
 
-RUN /usr/local/bin/install-quicklisp
+RUN set -x; \
+  /usr/local/bin/install-quicklisp
 
 RUN set -x; \
   sbcl --load inga.asd \
