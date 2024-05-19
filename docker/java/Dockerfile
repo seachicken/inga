@@ -1,4 +1,4 @@
-FROM fukamachi/sbcl:2.4.4-ubuntu AS build
+FROM fukamachi/sbcl:2.4.4 AS build
 
 COPY ../.. /root/common-lisp
 WORKDIR /root/common-lisp
