@@ -1,13 +1,20 @@
-FROM clfoundation/sbcl:2.2.4 AS build
+FROM clfoundation/sbcl:2.2.4-slim AS build
 
 ENV QUICKLISP_DIST_VERSION 2022-02-20
-ENV QUICKLISP_ADD_TO_INIT_FILE true
 
 COPY ../.. /root/common-lisp
 WORKDIR /root/common-lisp
 
+ADD https://beta.quicklisp.org/quicklisp.lisp /root/quicklisp.lisp
+
 RUN set -x; \
-  /usr/local/bin/install-quicklisp
+  sbcl --load /root/quicklisp.lisp \
+    --eval '(quicklisp-quickstart:install)' \
+    --eval '(ql:uninstall-dist "quicklisp")' \
+    --eval "(ql-dist:install-dist \"http://beta.quicklisp.org/dist/quicklisp/${QUICKLISP_DIST_VERSION}/distinfo.txt\" :prompt nil)" \
+    --quit && \
+  echo '#-quicklisp (load #P"/root/quicklisp/setup.lisp")' > /root/.sbclrc && \
+  rm /root/quicklisp.lisp
 
 RUN set -x; \
   sbcl --load inga.asd \
