@@ -12,5 +12,5 @@
       (format t "~&~a ~a~%" (local-time:now) content))))
 
 (defun log-error (content)
-  (format t "~&~a ~a~%" (local-time:now) content))
+  (format *error-output* "~&~a ~a~%" (local-time:now) content))
 
