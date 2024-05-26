@@ -39,13 +39,6 @@
            #:context-ast-index))
 (in-package #:inga/main)
 
-(defparameter *include-typescript*
-  '("*.(js|jsx)"
-    "*.(ts|tsx)"))
-(defparameter *include-java*
-  '("*.java"
-    "*.kt"))
-
 (define-condition inga-error-option-not-found (inga-error) ())
 (define-condition inga-error-context-not-found (inga-error) ())
 
@@ -112,27 +105,29 @@
          (ctx (alexandria:switch ((when (> (length context-kinds) 0) (first context-kinds)))
                (:typescript
                  (make-context
+                   :kind :typescript
                    :project-path root-path
-                   :include (or include *include-typescript*)
+                   :include include
                    :exclude exclude
                    :lc (make-client :typescript root-path)
                    :ast-index index
                    :traversals (list
                                  (start-traversal :typescript
-                                                  (or include *include-typescript*)
+                                                  include
                                                   exclude root-path index))))
                (:java
                  (make-context
+                   :kind :java
                    :project-path root-path
-                   :include (or include *include-java*)
+                   :include include
                    :exclude exclude
                    :ast-index index
                    :traversals (list
                                  (start-traversal :java
-                                                  (or include *include-java*)
+                                                  include
                                                   exclude root-path index)
                                  (start-traversal :kotlin
-                                                  (or include *include-java*)
+                                                  include
                                                   exclude root-path index))
                    :processes (list
                                 (inga/plugin/spring/spring-property-loader:start root-path)
@@ -150,9 +145,9 @@
   (remove nil
           (remove-duplicates
             (mapcar (lambda (diff)
-                      (if (is-match (cdr (assoc :path diff)) *include-typescript*)
+                      (if (is-match (cdr (assoc :path diff)) :typescript)
                           :typescript
-                          (if (is-match (cdr (assoc :path diff)) *include-java*)
+                          (if (is-match (cdr (assoc :path diff)) :java)
                               :java
                               nil)))
                     diffs))))
@@ -198,7 +193,9 @@
                       diffs))
   (remove-duplicates
     (mapcan (lambda (range)
-              (when (is-analysis-target (cdr (assoc :path range)) (context-include ctx) (context-exclude ctx))
+              (when (is-analysis-target (context-kind ctx)
+                                        (cdr (assoc :path range))
+                                        (context-include ctx) (context-exclude ctx))
                 (analyze-by-range ctx range)))
             diffs)
     :test #'equal))
@@ -236,7 +233,8 @@
               (find-references pos (context-ast-index ctx))))
         results)
     (setf refs (remove nil (mapcar (lambda (ref)
-                                     (when (is-analysis-target (cdr (assoc :path ref))
+                                     (when (is-analysis-target (context-kind ctx)
+                                                               (cdr (assoc :path ref))
                                                                (context-include ctx)
                                                                (context-exclude ctx))
                                        ref))
@@ -325,6 +323,7 @@
   (mapcar (lambda (p) (cons (string-downcase (car p)) (cdr p))) obj))
 
 (defstruct context
+  kind
   project-path
   include
   exclude

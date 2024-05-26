@@ -9,9 +9,6 @@
   (:export #:traversal-typescript))
 (in-package #:inga/traversal/typescript)
 
-(defparameter *include-typescript* '("*.(js|jsx)"
-                                     "*.(ts|tsx)"))
-
 (defclass traversal-typescript (traversal)
   ((nearest-ast-pos :initform nil
                     :accessor traversal-nearest-ast-pos)))
@@ -23,7 +20,7 @@
                               :path path
                               :index index)
                *traversals*))
-  (create-indexes index include *include-typescript* exclude)
+  (create-indexes index :typescript include '("*.(js|jsx)" "*.(ts|tsx)") exclude)
   (cdr (assoc :typescript *traversals*)))
 
 (defmethod stop-traversal ((traversal traversal-typescript))

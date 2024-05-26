@@ -24,8 +24,6 @@
            #:find-definition))
 (in-package #:inga/traversal/java)
 
-(defparameter *include-java* '("*.java"))
-
 (defclass traversal-java (traversal)
   ())
 
@@ -36,7 +34,7 @@
                               :path path
                               :index index)
                *traversals*))
-  (create-indexes index include *include-java* exclude)
+  (create-indexes index :java include '("*.java") exclude)
   (create-index-groups (cdr (assoc :java *traversals*)))
   (cdr (assoc :java *traversals*)))
 

@@ -21,8 +21,6 @@
   (:export #:traversal-kotlin))
 (in-package #:inga/traversal/kotlin)
 
-(defparameter *include-kotlin* '("*.kt"))
-
 (defclass traversal-kotlin (traversal)
   ())
 
@@ -33,7 +31,7 @@
                               :path path
                               :index index)
                *traversals*))
-  (create-indexes index include *include-kotlin* exclude)
+  (create-indexes index :java include '("*.kt") exclude)
   (create-index-groups (cdr (assoc :kotlin *traversals*)))
   (cdr (assoc :kotlin *traversals*)))
 

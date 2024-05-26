@@ -7,56 +7,76 @@
 (def-suite file)
 (in-suite file)
 
-(test filename-matches
+(test file-type-matches
   (is (equal
         t
-        (is-match "src/index.js" '("*.js")))))
+        (is-match "src/index.js" :typescript))))
 
-(test filename-do-not-match
+(test file-type-do-not-match
   (is (equal
         nil
-        (is-match "src/index.ts" '("*.js")))))
+        (is-match "src/index.ts" :java))))
 
 (test analyze-when-the-file-name-does-not-match-exclude
   (is (equal
         t
-        (is-analysis-target "src/index.js" '("*.js") '("*.test.js")))))
+        (is-analysis-target :typescript "src/index.js" '("*.js") '("*.test.js")))))
 
 (test analyze-when-the-path-end-does-not-match-exclude
   (is (equal
         t
-        (is-analysis-target "src/App.test.jsx" '("*.jsx") '("*.test.js")))))
+        (is-analysis-target :typescript "src/App.test.jsx" '("*.jsx") '("*.test.js")))))
 
 (test not-analyze-when-the-path-matches-exclude
   (is (equal
         nil
-        (is-analysis-target "src/App.test.js" '("*.js") '("*.test.js")))))
+        (is-analysis-target :typescript "src/App.test.js" '("*.js") '("*.test.js")))))
+
+(test analyze-with-dir-and-file-include
+  (is (equal
+        t
+        (is-analysis-target :typescript "app/index.js" '("app/**" "*.js")))))
+
+(test not-analyze-with-dir-and-file-include
+  (is (equal
+        nil
+        (is-analysis-target :typescript "app/pom.xml" '("app/**" "*.java")))))
 
 (test not-analyze-when-the-file-extension-matches-exclude
   (is (equal
         nil
-        (is-analysis-target "src/App.test.js" '("**/*.(js|jsx)") '("**/*.test.(js|jsx)"))))
+        (is-analysis-target :typescript "src/App.test.js" '("**/*.(js|jsx)") '("**/*.test.(js|jsx)"))))
   (is (equal
         nil
-        (is-analysis-target "src/App.test.jsx" '("**/*.(js|jsx)") '("**/*.test.(js|jsx)")))))
+        (is-analysis-target :typescript "src/App.test.jsx" '("**/*.(js|jsx)") '("**/*.test.(js|jsx)")))))
 
 (test not-analyze-when-the-parent-directory-matches-exclude
   (is (equal
         nil
-        (is-analysis-target "App/test/App.test.js" '("*.js") '("App/test/*")))))
+        (is-analysis-target :typescript "App/test/App.test.js" '("*.js") '("App/test/*")))))
 
 (test analyze-when-not-excluded
   (is (equal
         t
-        (is-analysis-target "src/index.js" '("*.js")))))
+        (is-analysis-target :typescript "src/index.js" '("*.js")))))
+
+(test analyze-with-multiple-include
+  (is (equal
+        t
+        (is-analysis-target :typescript "src/index.js" '("*.js" "*.ts")))))
 
 (test not-analyze-when-the-file-name-is-the-same-extension
   (is (equal
         nil
-        (is-analysis-target "src/js" '("*.js")))))
+        (is-analysis-target :typescript "src/js" '("*.js")))))
 
-(test not-analyze-when-not-include
+(test analyze-without-include
+  (is (equal
+        t
+        (is-analysis-target :typescript "src/index.js"))))
+
+(test not-analyze-when-context-does-not-matched
   (is (equal
         nil
-        (is-analysis-target "src/index.js" '()))))
+        (is-analysis-target :java "src/index.js"))))
 
