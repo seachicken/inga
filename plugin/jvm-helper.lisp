@@ -14,7 +14,7 @@
   (let ((parent-path (uiop:pathname-parent-directory-pathname path)))
     (loop for file in (uiop:directory-files parent-path)
           do
-          (when (find (file-namestring file) '("pom.xml" "build.gradle") :test #'equal)
+          (when (find (file-namestring file) '("pom.xml" "build.gradle" "build.gradle.kts") :test #'equal)
             (return-from find-base-path parent-path)))
     (find-base-path parent-path)))
 
