@@ -41,6 +41,10 @@ Filenames of glob pattern matching to include from analysis. (e.g. "core/**/*.ts
 
 Filenames of glob pattern matching to exclude from analysis. (e.g. "**/*.test.(ts|tsx)")
 
+### Run on IntelliJ
+
+[Inga for IntelliJ](https://github.com/seachicken/intellij-inga)
+
 ### Run on GitHub Actions
 
 [Inga Action](https://github.com/seachicken/inga-action)
