@@ -48,19 +48,24 @@
                                   :if-does-not-exist :create)
                (format out "~a" results))))
           ((equal method "textDocument/didChange")
-           (update-index (context-ast-index ctx)
-                         (enough-namestring
-                           ;; remove file URI scheme
-                           (subseq
-                             (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
-                           root-path))
-           (let* ((diffs (get-diff root-path base-commit))
-                  (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
-             (with-open-file (out (merge-pathnames "report/report.json" temp-path)
-                                  :direction :output
-                                  :if-exists :supersede
-                                  :if-does-not-exist :create)
-               (format out "~a" results))))))
+           (let ((path (enough-namestring
+                         ;; remove file URI scheme
+                         (subseq
+                           (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
+                         root-path)))
+             (update-index (context-ast-index ctx) path)
+             (let* ((diffs (get-diff root-path base-commit))
+                    (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
+               (with-open-file (out (merge-pathnames "report/report.json" temp-path)
+                                    :direction :output
+                                    :if-exists :supersede
+                                    :if-does-not-exist :create)
+                 (format out "~a" results))
+               (with-open-file (out (merge-pathnames "report/state.json" temp-path)
+                                    :direction :output
+                                    :if-exists :supersede
+                                    :if-does-not-exist :create)
+                 (format out "~a" (to-state-json path))))))))
       (handle-msg params ctx))))
 
 (defun extract-json (stream)
@@ -87,3 +92,7 @@
             content)
     (force-output)))
 
+(defun to-state-json (path)
+  (jsown:to-json
+    `(:obj
+       ("didChange" . ,path))))
