@@ -55,7 +55,7 @@
                          (subseq
                            (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
                          root-path)))
-             (log-error (format nil "didChange: ~a, uri: ~a" path (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri")))
+             (log-error (format nil "didChange: ~a, uri: ~a, root-path: ~a" path (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") root-path))
              (update-index (context-ast-index ctx) path)
              (let* ((diffs (get-diff root-path base-commit))
                     (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
