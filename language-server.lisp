@@ -6,6 +6,8 @@
                 #:update-index)
   (:import-from #:inga/git
                 #:get-diff)
+  (:import-from #:inga/logger
+                #:log-error)
   (:import-from #:inga/main
                 #:analyze
                 #:context
@@ -49,10 +51,11 @@
                (format out "~a" results))))
           ((equal method "textDocument/didChange")
            (let ((path (enough-namestring
-                         ;; remove file URI scheme
+                         ;; remove file URI scheme (file://)
                          (subseq
                            (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
                          root-path)))
+             (log-error (format nil "didChange: ~a, uri: ~a" path (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri")))
              (update-index (context-ast-index ctx) path)
              (let* ((diffs (get-diff root-path base-commit))
                     (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
