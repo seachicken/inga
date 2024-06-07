@@ -25,7 +25,7 @@
       (handle-msg params ctx)
       (inga/main::stop ctx))))
 
-(defun handle-msg (params ctx)
+(defun handle-msg (params ctx &optional root-uri)
   (destructuring-bind (&key root-path temp-path include exclude base-commit mode) params
     (let* ((msg (loop while *standard-input* do
                       (let* ((json (extract-json *standard-input*))
@@ -36,6 +36,8 @@
       (when method
         (cond
           ((equal method "initialize")
+           (format t "msg: ~a~%" msg)
+           (setf root-uri (jsown:val (jsown:val msg "params") "rootUri"))
            (print-response-msg id "{\"capabilities\":{}}"))
           ((equal method "shutdown")
            (print-response-msg id "null")
@@ -54,8 +56,8 @@
                          ;; remove file URI scheme (file://)
                          (subseq
                            (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
-                         root-path)))
-             (log-error (format nil "didChange: ~a, uri: ~a, root-path: ~a" path (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") root-path))
+                         (if (>= (length root-uri) 7) (subseq root-uri 7) ""))))
+             (log-error (format nil "didChange: ~a, uri: ~a, root-path: ~a, root-uri: ~a" path (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") root-path root-uri))
              (update-index (context-ast-index ctx) path)
              (let* ((diffs (get-diff root-path base-commit))
                     (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
@@ -69,7 +71,7 @@
                                     :if-exists :supersede
                                     :if-does-not-exist :create)
                  (format out "~a" (to-state-json path))))))))
-      (handle-msg params ctx))))
+      (handle-msg params ctx root-uri))))
 
 (defun extract-json (stream)
   ;; Content-Length: 99
