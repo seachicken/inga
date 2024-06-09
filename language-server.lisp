@@ -35,7 +35,7 @@
         (cond
           ((equal method "initialize")
            (setf root-uri (jsown:val (jsown:val msg "params") "rootUri"))
-           (print-response-msg id "{\"capabilities\":{}}"))
+           (print-response-msg id "{\"capabilities\":{\"textDocumentSync\":2}}"))
           ((equal method "shutdown")
            (print-response-msg id "null")
            (return-from handle-msg))
