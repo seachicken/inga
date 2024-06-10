@@ -10,7 +10,12 @@
                 #:analyze
                 #:context
                 #:context-ast-index
+                #:convert-to-output-pos
+                #:key-downcase
                 #:to-json)
+  (:import-from #:inga/traversal
+                #:convert-to-top-offset
+                #:find-definitions)
   (:export #:run))
 (in-package #:inga/language-server)
 
@@ -35,7 +40,7 @@
         (cond
           ((equal method "initialize")
            (setf root-uri (jsown:val (jsown:val msg "params") "rootUri"))
-           (print-response-msg id "{\"capabilities\":{}}"))
+           (print-response-msg id "{\"capabilities\":{\"textDocumentSync\":2}}"))
           ((equal method "shutdown")
            (print-response-msg id "null")
            (return-from handle-msg))
@@ -49,24 +54,40 @@
                                   :if-does-not-exist :create)
                (format out "~a" results))))
           ((equal method "textDocument/didChange")
-           (let ((path (enough-namestring
-                         ;; remove file URI scheme (file://)
-                         (subseq
-                           (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
-                         (if (>= (length root-uri) 7) (subseq root-uri 7) ""))))
+           (let* ((path (enough-namestring
+                          ;; remove file URI scheme (file://)
+                          (subseq
+                            (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
+                          (if (>= (length root-uri) 7) (subseq root-uri 7) "")))
+                  (range (jsown:val (first
+                                      (jsown:val (jsown:val msg "params") "contentChanges")) "range"))
+                  (start (let ((start (jsown:val range "start")))
+                           `((:line . ,(jsown:val start "line"))
+                             (:offset . ,(jsown:val start "character")))))
+                  (end (let ((start (jsown:val range "end")))
+                         `((:line . ,(jsown:val start "line"))
+                           (:offset . ,(jsown:val start "character"))))))
              (update-index (context-ast-index ctx) path)
+             (let ((change-pos (first (find-definitions
+                                        `((:path . ,path)
+                                          (:start-offset . ,(convert-to-top-offset
+                                                              (merge-pathnames path root-path)
+                                                              start))
+                                          (:end-offset . ,(convert-to-top-offset
+                                                            (merge-pathnames path root-path)
+                                                            end)))))))
+               (with-open-file (out (merge-pathnames "report/state.json" temp-path)
+                                    :direction :output
+                                    :if-exists :supersede
+                                    :if-does-not-exist :create)
+                 (format out "~a" (to-state-json change-pos root-path))))
              (let* ((diffs (get-diff root-path base-commit))
                     (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
                (with-open-file (out (merge-pathnames "report/report.json" temp-path)
                                     :direction :output
                                     :if-exists :supersede
                                     :if-does-not-exist :create)
-                 (format out "~a" results))
-               (with-open-file (out (merge-pathnames "report/state.json" temp-path)
-                                    :direction :output
-                                    :if-exists :supersede
-                                    :if-does-not-exist :create)
-                 (format out "~a" (to-state-json path))))))))
+                 (format out "~a" results)))))))
       (handle-msg params ctx root-uri))))
 
 (defun extract-json (stream)
@@ -93,7 +114,7 @@
             content)
     (force-output)))
 
-(defun to-state-json (path)
+(defun to-state-json (change-pos root-path)
   (jsown:to-json
     `(:obj
-       ("didChange" . ,path))))
+       ("didChange" . ,(cons :obj (key-downcase (convert-to-output-pos root-path change-pos)))))))

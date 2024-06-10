@@ -34,7 +34,9 @@
   (:export #:parse-argv
            #:command
            #:analyze
+           #:convert-to-output-pos  
            #:to-json
+           #:key-downcase
            #:context
            #:context-ast-index))
 (in-package #:inga/main)
