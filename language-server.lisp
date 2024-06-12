@@ -40,6 +40,7 @@
                             (result (when json (jsown:parse json))))
                        (return result)))))
       ;;(format t "==stdin~%")
+      (inga/logger:log-error (format nil "msg queue size: ~a~%" (length (inga/utils::queue-values *msg-q*))))
       (when msg
         (if (equal (jsown:val msg "method") "shutdown")
             (progn
@@ -64,7 +65,6 @@
       (sb-thread:make-thread
         (lambda ()
           ;;(format t "start thread~%")
-          (sleep 3)
           (let ((method (jsown:val msg "method")))
             (cond
               ((equal method "initialized")
