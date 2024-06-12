@@ -66,14 +66,14 @@
     (unless ast (return))
 
     (when (equal (ast-value ast "type") "PACKAGE")
-      (return-from find-package-index-key (intern (ast-value ast "packageName"))))
+      (return-from find-package-index-key (intern (ast-value ast "packageName") :keyword)))
 
     (loop for child in (jsown:val ast "children")
           do (setf stack (append stack (list child))))))
 
 (defun find-project-index-key (path)
   (let ((base-path (find-base-path path)))
-    (when base-path (intern (namestring base-path)))))
+    (when base-path (intern (namestring base-path) :keyword))))
 
 (defmethod get-scoped-index-paths-generic ((traversal traversal-java) pos)
   (cond

@@ -68,7 +68,6 @@
         (format nil "process. msg queue size: ~a~%" (length (inga/utils::queue-values *msg-q*))))
   ;;(format t "process alive: ~a~%" (and *processing-msg* (sb-thread:thread-alive-p *processing-msg*)))
   (when (or (not msg)
-            (not root-uri)
             (and *processing-msg* (sb-thread:thread-alive-p *processing-msg*)))
     ;;(format t "skip process~%")
     (return-from process-msg-if-present *processing-msg*))
@@ -76,12 +75,14 @@
   ;;(format t "start thread~%")
   (sb-thread:make-thread
     (lambda ()
-      (let* ((method (jsown:val msg "method")))
+      (let ((method (jsown:val msg "method")))
         (cond
           ((equal method "initialized")
            (inga/logger:log-error (format nil "initialized. process msg: ~a~%" msg))
            (let* ((diffs (get-diff root-path base-commit))
                   (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
+             (inga/logger:log-error (format nil "initialized. diffs: ~a~%" diffs))
+             (inga/logger:log-error (format nil "initialized. analyze: ~a~%" results))
              (ensure-directories-exist (merge-pathnames "report/" temp-path))
              (with-open-file (out (merge-pathnames "report/report.json" temp-path)
                                   :direction :output
@@ -126,7 +127,8 @@
              (update-index (context-ast-index ctx) path)
              (let* ((diffs (get-diff root-path base-commit))
                     (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
-               (inga/logger:log-error (format nil "didChange. analyze: ~a~%" results))
+               (inga/logger:log-error (format nil "didChange. diffs: ~a~%" diffs))
+               (inga/logger:log-error (format nil "didChange. analyze: ~a, path: ~a~%" results path))
                (with-open-file (out (merge-pathnames "report/report.json" temp-path)
                                     :direction :output
                                     :if-exists :supersede

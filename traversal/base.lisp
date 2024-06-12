@@ -293,10 +293,12 @@
                       (cdr (assoc :type pos))
                       (cdr (assoc :host pos))
                       (cdr (assoc :name pos))
-                      (cdr (assoc :path pos))))
+                      (cdr (assoc :path pos)))
+              :keyword)
       (intern (format nil "refs-~a-~a"
                       (cdr (assoc :path pos))
-                      (cdr (assoc :top-offset pos))))))
+                      (cdr (assoc :top-offset pos)))
+              :keyword)))
 
 (defun get-traversal (path)
   (let ((result (cdr (assoc (get-file-type path) *traversals*))))

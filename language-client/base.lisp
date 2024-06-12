@@ -77,5 +77,5 @@
       finally (return (flexi-streams:octets-to-string buff :external-format :utf-8)))))
 
 (defun get-references-key (pos)
-  (intern (format nil "refs-~a-~a" (cdr (assoc :path pos)) (cdr (assoc :top-offset pos)))))
+  (intern (format nil "refs-~a-~a" (cdr (assoc :path pos)) (cdr (assoc :top-offset pos))) :keyword))
 
