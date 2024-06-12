@@ -1,5 +1,6 @@
 (defpackage #:inga/language-server
-  (:use #:cl)
+  (:use #:cl
+        #:inga/utils)
   (:import-from #:flexi-streams)
   (:import-from #:jsown)
   (:import-from #:inga/ast-index
@@ -19,76 +20,101 @@
   (:export #:run))
 (in-package #:inga/language-server)
 
+(defparameter *msg-q* nil)
+
 (defun run (params)
   (destructuring-bind (&key root-path temp-path include exclude base-commit mode) params
     (let* ((ctx (inga/main::start root-path '(:java)
                                   :include include
                                   :exclude exclude
                                   :temp-path temp-path)))
+      (init-msg-q)
+      (sb-thread:make-thread
+        (lambda () (msg-processing-loop ctx root-path temp-path base-commit)))
       (handle-msg params ctx)
       (inga/main::stop ctx))))
 
 (defun handle-msg (params ctx &optional root-uri)
   (destructuring-bind (&key root-path temp-path include exclude base-commit mode) params
-    (let* ((msg (loop while *standard-input* do
-                      (let* ((json (extract-json *standard-input*))
-                             (result (when json (jsown:parse json))))
-                        (return result))))
-           (id (when (jsown:keyp msg "id") (jsown:val msg "id")))
-           (method (when msg (jsown:val msg "method"))))
-      (when method
-        (cond
-          ((equal method "initialize")
-           (setf root-uri (jsown:val (jsown:val msg "params") "rootUri"))
-           (print-response-msg id "{\"capabilities\":{\"textDocumentSync\":2}}"))
-          ((equal method "shutdown")
-           (print-response-msg id "null")
-           (return-from handle-msg))
-          ((equal method "initialized")
-           (let* ((diffs (get-diff root-path base-commit))
-                  (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
-             (ensure-directories-exist (merge-pathnames "report/" temp-path))
-             (with-open-file (out (merge-pathnames "report/report.json" temp-path)
-                                  :direction :output
-                                  :if-exists :supersede
-                                  :if-does-not-exist :create)
-               (format out "~a" results))))
-          ((equal method "textDocument/didChange")
-           (let* ((path (enough-namestring
-                          ;; remove file URI scheme (file://)
-                          (subseq
-                            (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
-                          (if (>= (length root-uri) 7) (subseq root-uri 7) "")))
-                  (range (jsown:val (first
-                                      (jsown:val (jsown:val msg "params") "contentChanges")) "range"))
-                  (start (let ((start (jsown:val range "start")))
-                           `((:line . ,(jsown:val start "line"))
-                             (:offset . ,(jsown:val start "character")))))
-                  (end (let ((start (jsown:val range "end")))
-                         `((:line . ,(jsown:val start "line"))
-                           (:offset . ,(jsown:val start "character"))))))
-             (update-index (context-ast-index ctx) path)
-             (let ((change-pos (first (find-definitions
-                                        `((:path . ,path)
-                                          (:start-offset . ,(convert-to-top-offset
-                                                              (merge-pathnames path root-path)
-                                                              start))
-                                          (:end-offset . ,(convert-to-top-offset
-                                                            (merge-pathnames path root-path)
-                                                            end)))))))
-               (with-open-file (out (merge-pathnames "report/state.json" temp-path)
-                                    :direction :output
-                                    :if-exists :supersede
-                                    :if-does-not-exist :create)
-                 (format out "~a" (to-state-json change-pos root-path))))
+    (format t "=before enq msg~%")
+    (let ((msg (loop while *standard-input* do
+                     (let* ((json (extract-json *standard-input*))
+                            (result (when json (jsown:parse json))))
+                       (return result)))))
+      (when msg
+        (enqueue-msg msg)
+        (when (equal (jsown:val msg "method") "shutdown")
+          (return-from handle-msg))))
+    (format t "=after enq msg. q: ~a~%" (inga/utils::queue-values *msg-q*))
+    (handle-msg params ctx root-uri)))
+
+(defun msg-processing-loop (ctx root-path temp-path base-commit)
+  (loop
+    with msg
+    with root-uri
+    do
+    (setf msg (dequeue-msg))
+    (when msg
+      (format t "progress thread!~%")
+      (sleep 3)
+      (let* ((id (when (jsown:keyp msg "id") (jsown:val msg "id")))
+             (method (jsown:val msg "method")))
+        (when method
+          (cond
+            ((equal method "initialize")
+             (setf root-uri (jsown:val (jsown:val msg "params") "rootUri"))
+             (print-response-msg id "{\"capabilities\":{\"textDocumentSync\":2}}"))
+            ((equal method "shutdown")
+             (print-response-msg id "null")
+             (return-from msg-processing-loop))
+            ((equal method "initialized")
              (let* ((diffs (get-diff root-path base-commit))
                     (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
+               (ensure-directories-exist (merge-pathnames "report/" temp-path))
                (with-open-file (out (merge-pathnames "report/report.json" temp-path)
                                     :direction :output
                                     :if-exists :supersede
                                     :if-does-not-exist :create)
-                 (format out "~a" results)))))))
-      (handle-msg params ctx root-uri))))
+                 (format out "~a" results))))
+            ((equal method "textDocument/didChange")
+             (format t "start didChange~%")
+             (let* ((path (enough-namestring
+                            ;; remove file URI scheme (file://)
+                            (subseq
+                              (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
+                            (if (>= (length root-uri) 7) (subseq root-uri 7) "")))
+                    (range (jsown:val (first
+                                        (jsown:val (jsown:val msg "params") "contentChanges")) "range"))
+                    (start (let ((start (jsown:val range "start")))
+                             `((:line . ,(jsown:val start "line"))
+                               (:offset . ,(jsown:val start "character")))))
+                    (end (let ((start (jsown:val range "end")))
+                           `((:line . ,(jsown:val start "line"))
+                             (:offset . ,(jsown:val start "character"))))))
+               (update-index (context-ast-index ctx) path)
+               (let ((change-pos (first (find-definitions
+                                          `((:path . ,path)
+                                            (:start-offset . ,(convert-to-top-offset
+                                                                (merge-pathnames path root-path)
+                                                                start))
+                                            (:end-offset . ,(convert-to-top-offset
+                                                              (merge-pathnames path root-path)
+                                                              end)))))))
+                 (with-open-file (out (merge-pathnames "report/state.json" temp-path)
+                                      :direction :output
+                                      :if-exists :supersede
+                                      :if-does-not-exist :create)
+                   (format out "~a" (to-state-json change-pos root-path))))
+               (format t "before analyze~%")
+               (let* ((diffs (get-diff root-path base-commit))
+                      (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
+                 (format t "after analyze~%")
+                 (with-open-file (out (merge-pathnames "report/report.json" temp-path)
+                                      :direction :output
+                                      :if-exists :supersede
+                                      :if-does-not-exist :create)
+                   (format out "~a" results))))
+             (format t "end didChange~%"))))))))
 
 (defun extract-json (stream)
   ;; Content-Length: 99
@@ -118,3 +144,22 @@
   (jsown:to-json
     `(:obj
        ("didChange" . ,(cons :obj (key-downcase (convert-to-output-pos root-path change-pos)))))))
+
+(defun init-msg-q ()
+  (setf *msg-q* (make-queue)))
+
+(defun enqueue-msg (msg)
+  (unless msg (return-from enqueue-msg))
+
+  (when (equal (jsown:val msg "method") "shutdown")
+    (init-msg-q))
+
+  (let ((prev (peek-last *msg-q*)))
+    (when (and prev
+               (equal (jsown:val msg "method") "textDocument/didChange")
+               (equal (jsown:val prev "method") "textDocument/didChange"))
+      (dequeue-last *msg-q*)))
+  (enqueue *msg-q* msg))
+
+(defun dequeue-msg ()
+  (dequeue *msg-q*))
