@@ -69,11 +69,10 @@
   ;;(format t "start thread~%")
   (sb-thread:make-thread
     (lambda ()
-      (inga/logger:log-error
-        (format nil "process msg: ~a~%" msg))
       (let* ((method (jsown:val msg "method")))
         (cond
           ((equal method "initialized")
+           (inga/logger:log-error (format nil "initialized. process msg: ~a~%" msg))
            (let* ((diffs (get-diff root-path base-commit))
                   (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
              (ensure-directories-exist (merge-pathnames "report/" temp-path))
@@ -83,6 +82,7 @@
                                   :if-does-not-exist :create)
                (format out "~a" results))))
           ((equal method "textDocument/didChange")
+           (inga/logger:log-error (format nil "didChange. process msg: ~a~%" msg))
            (let* ((path (enough-namestring
                           ;; remove file URI scheme (file://)
                           (subseq
