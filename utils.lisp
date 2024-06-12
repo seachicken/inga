@@ -33,7 +33,7 @@
 
 (defun peek (q)
   (unless (null (queue-values q))
-    (first (first (queue-values q)))))
+    (first (queue-values q))))
 
 (defun peek-last (q)
   (unless (null (queue-values q))
