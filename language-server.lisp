@@ -57,7 +57,7 @@
         (cond
           ((equal (jsown:val msg "method") "initialize")
            (setf root-uri (jsown:val (jsown:val msg "params") "rootUri"))
-           (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":2}}"))
+           (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":1}}"))
           (t
            (setf *processing-msg*
                  (process-msg-if-present msg ctx root-path temp-path base-commit root-uri))))))
@@ -68,6 +68,7 @@
         (format nil "process. msg queue size: ~a~%" (length (inga/utils::queue-values *msg-q*))))
   ;;(format t "process alive: ~a~%" (and *processing-msg* (sb-thread:thread-alive-p *processing-msg*)))
   (when (or (not msg)
+            (not root-uri)
             (and *processing-msg* (sb-thread:thread-alive-p *processing-msg*)))
     ;;(format t "skip process~%")
     (return-from process-msg-if-present *processing-msg*))
