@@ -47,7 +47,7 @@
               (return-from handle-msg))
             (enqueue-msg msg)))
       (inga/logger:log-error
-        (format nil "msg queue: ~a~%" (inga/utils::queue-values *msg-q*)))
+        (format nil "msg queue size: ~a~%" (length (inga/utils::queue-values *msg-q*))))
       (setf msg (dequeue-msg))
       (when msg
         (cond
@@ -55,8 +55,6 @@
            (setf root-uri (jsown:val (jsown:val msg "params") "rootUri"))
            (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":2}}"))
           (t
-           ;; 解析可能なら dequeue して非同期で処理する
-           ;; 解析不可能なら dequeue しない
            (setf *processing-msg*
                  (process-msg-if-present msg ctx root-path temp-path base-commit root-uri))))))
     (handle-msg params ctx root-uri)))
@@ -71,7 +69,8 @@
   ;;(format t "start thread~%")
   (sb-thread:make-thread
     (lambda ()
-      (sleep 3)
+      (inga/logger:log-error
+        (format nil "process msg: ~a~%" msg))
       (let* ((method (jsown:val msg "method")))
         (cond
           ((equal method "initialized")
