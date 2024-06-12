@@ -40,6 +40,8 @@
                             (result (when json (jsown:parse json))))
                        (return result)))))
       ;;(format t "==stdin~%")
+      (inga/logger:log-error
+        (format nil "===stdin. msg: ~a~%" msg))
       (when msg
         (if (equal (jsown:val msg "method") "shutdown")
             (progn
@@ -116,6 +118,7 @@
                  (format out "~a" (to-state-json change-pos root-path))))
              (let* ((diffs (get-diff root-path base-commit))
                     (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
+               (inga/logger:log-error (format nil "didChange. analyze: ~a~%" results))
                (with-open-file (out (merge-pathnames "report/report.json" temp-path)
                                     :direction :output
                                     :if-exists :supersede
