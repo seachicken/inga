@@ -7,14 +7,6 @@
 (def-suite language-server)
 (in-suite language-server)
 
-;;(test initialized
-;;  (inga/language-server::init-msg-q)
-;;  (inga/language-server::enqueue-msg '(:obj ("id" . "1") ("method" . "initialized")))
-;;  (inga/language-server::enqueue-msg '(:obj ("id" . "2") ("method" . "initialized")))
-;;  (is (equal
-;;        '(:obj ("id" . "1") ("method" . "initialized"))
-;;        (inga/language-server::dequeue-msg))))
-
 (test dequeue-msg
   (inga/language-server::init-msg-q)
   (inga/language-server::enqueue-msg '(:obj ("id" . "1") ("method" . "textDocument/didOpen")))
@@ -29,6 +21,14 @@
   (inga/language-server::enqueue-msg '(:obj ("id" . "2") ("method" . "textDocument/didChange")))
   (is (equal
         '(:obj ("id" . "2") ("method" . "textDocument/didChange"))
+        (inga/language-server::dequeue-msg))))
+
+(test keep-last-one-when-multiple-didsave-events-are-received
+  (inga/language-server::init-msg-q)
+  (inga/language-server::enqueue-msg '(:obj ("id" . "1") ("method" . "textDocument/didSave")))
+  (inga/language-server::enqueue-msg '(:obj ("id" . "2") ("method" . "textDocument/didSave")))
+  (is (equal
+        '(:obj ("id" . "2") ("method" . "textDocument/didSave"))
         (inga/language-server::dequeue-msg))))
 
 (test discard-queue-when-shutdown-event-is-received

@@ -57,7 +57,7 @@
         (cond
           ((equal (jsown:val msg "method") "initialize")
            (setf root-uri (jsown:val (jsown:val msg "params") "rootUri"))
-           (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":1}}"))
+           (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":{\"change\":2,\"save\":false}}}"))
           (t
            (setf *processing-msg*
                  (process-msg-if-present msg ctx root-path temp-path base-commit root-uri))))))
@@ -103,7 +103,6 @@
                   (end (let ((start (jsown:val range "end")))
                          `((:line . ,(jsown:val start "line"))
                            (:offset . ,(jsown:val start "character"))))))
-             (update-index (context-ast-index ctx) path)
              (let ((change-pos (first (find-definitions
                                         `((:path . ,path)
                                           (:start-offset . ,(convert-to-top-offset
@@ -116,7 +115,15 @@
                                     :direction :output
                                     :if-exists :supersede
                                     :if-does-not-exist :create)
-                 (format out "~a" (to-state-json change-pos root-path))))
+                 (format out "~a" (to-state-json change-pos root-path))))))
+          ((equal method "textDocument/didSave")
+           (inga/logger:log-error (format nil "didSave. process msg: ~a~%" msg))
+           (let ((path (enough-namestring
+                         ;; remove file URI scheme (file://)
+                         (subseq
+                           (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
+                         (if (>= (length root-uri) 7) (subseq root-uri 7) ""))))
+             (update-index (context-ast-index ctx) path)
              (let* ((diffs (get-diff root-path base-commit))
                     (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
                (inga/logger:log-error (format nil "didChange. analyze: ~a~%" results))
@@ -166,9 +173,15 @@
     (init-msg-q))
 
   (let ((prev (peek-last *msg-q*)))
-    (when (and prev
-               (equal (jsown:val msg "method") "textDocument/didChange")
-               (equal (jsown:val prev "method") "textDocument/didChange"))
+    (when (or
+            (and
+              prev
+              (equal (jsown:val msg "method") "textDocument/didChange")
+              (equal (jsown:val prev "method") "textDocument/didChange"))
+            (and
+              prev
+              (equal (jsown:val msg "method") "textDocument/didSave")
+              (equal (jsown:val prev "method") "textDocument/didSave")))
       (dequeue-last *msg-q*)))
   (enqueue *msg-q* msg))
 
