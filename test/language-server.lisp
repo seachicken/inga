@@ -7,6 +7,14 @@
 (def-suite language-server)
 (in-suite language-server)
 
+;;(test initialized
+;;  (inga/language-server::init-msg-q)
+;;  (inga/language-server::enqueue-msg '(:obj ("id" . "1") ("method" . "initialized")))
+;;  (inga/language-server::enqueue-msg '(:obj ("id" . "2") ("method" . "initialized")))
+;;  (is (equal
+;;        '(:obj ("id" . "1") ("method" . "initialized"))
+;;        (inga/language-server::dequeue-msg))))
+
 (test dequeue-msg
   (inga/language-server::init-msg-q)
   (inga/language-server::enqueue-msg '(:obj ("id" . "1") ("method" . "textDocument/didOpen")))
