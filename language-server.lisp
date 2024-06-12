@@ -47,8 +47,10 @@
               (return-from handle-msg))
             (enqueue-msg msg)))
       (inga/logger:log-error
-        (format nil "msg queue size: ~a~%" (length (inga/utils::queue-values *msg-q*))))
+        (format nil "before msg queue size: ~a~%" (length (inga/utils::queue-values *msg-q*))))
       (setf msg (dequeue-msg))
+      (inga/logger:log-error
+        (format nil "after msg queue size: ~a~%" (length (inga/utils::queue-values *msg-q*))))
       (when msg
         (cond
           ((equal (jsown:val msg "method") "initialize")
@@ -60,6 +62,8 @@
     (handle-msg params ctx root-uri)))
 
 (defun process-msg-if-present (msg ctx root-path temp-path base-commit root-uri)
+  (inga/logger:log-error
+        (format nil "process. msg queue size: ~a~%" (length (inga/utils::queue-values *msg-q*))))
   ;;(format t "process alive: ~a~%" (and *processing-msg* (sb-thread:thread-alive-p *processing-msg*)))
   (when (or (not msg)
             (and *processing-msg* (sb-thread:thread-alive-p *processing-msg*)))
