@@ -67,13 +67,14 @@
       (return-from find-package-index-key
                    (intern (format nil "~{~a~^.~}"
                                    (get-dot-expressions
-                                     (first (get-asts ast '("PACKAGE_DIRECTIVE" "*"))))))))
+                                     (first (get-asts ast '("PACKAGE_DIRECTIVE" "*")))))
+                           :keyword)))
 
     (loop for child in (jsown:val ast "children") do (enqueue q child))))
 
 (defun find-project-index-key (path)
   (let ((base-path (find-base-path path)))
-    (when base-path (intern (namestring base-path)))))
+    (when base-path (intern (namestring base-path) :keyword))))
 
 (defmethod get-scoped-index-paths-generic ((trav traversal-kotlin) pos)
   (cond
@@ -352,7 +353,7 @@
                                                                     class-name))
                                                            (mapcan (lambda (fqcn)
                                                                      (loop for path in (gethash (intern 
-                                                                                                  (get-package-name fqcn))
+                                                                                                  (get-package-name fqcn) :keyword)
                                                                                                 (gethash :package *file-index*))
                                                                            do
                                                                            (let ((s (load-structure fqcn path)))

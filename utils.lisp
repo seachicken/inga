@@ -5,6 +5,9 @@
   (:export #:make-queue
            #:enqueue
            #:dequeue
+           #:dequeue-last
+           #:peek
+           #:peek-last
            #:split
            #:split-trim-comma
            #:funtime))
@@ -21,6 +24,20 @@
 (defun dequeue (q)
   (unless (null (queue-values q))
     (pop (queue-values q))))
+
+(defun dequeue-last (q)
+  (unless (null (queue-values q))
+    (let ((last (last (queue-values q))))
+      (setf (queue-values q) (butlast (queue-values q)))
+      last)))
+
+(defun peek (q)
+  (unless (null (queue-values q))
+    (first (queue-values q))))
+
+(defun peek-last (q)
+  (unless (null (queue-values q))
+    (first (last (queue-values q)))))
 
 (defun split (div sequence)
   (let ((pos (position div sequence)))
