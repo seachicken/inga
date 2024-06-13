@@ -3,6 +3,8 @@
   (:import-from #:jsown)
   (:import-from #:inga/file
                 #:get-file-type)
+  (:import-from #:inga/logger
+                #:log-error)
   (:export #:ast-parser
            #:ast-parser-process
            #:start
@@ -38,5 +40,15 @@
 (defun run-parser (ast-parser command)
   (write-line command (uiop:process-info-input (ast-parser-process ast-parser)))
   (force-output (uiop:process-info-input (ast-parser-process ast-parser)))
-  (read-line (uiop:process-info-output (ast-parser-process ast-parser))))
+  (prog1
+    (read-line (uiop:process-info-output (ast-parser-process ast-parser))) 
+    (loop while (listen (uiop:process-info-error-output (ast-parser-process ast-parser)))
+          with results = ""
+          do (setf results
+                   (format nil "~a~a~%"
+                           results 
+                           (read-line (uiop:process-info-error-output
+                                        (ast-parser-process ast-parser)))))
+          finally (unless (equal results "")
+                    (log-error (format nil "~a, cmd: ~a" results command))))))
 
