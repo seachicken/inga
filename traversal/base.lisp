@@ -7,7 +7,6 @@
   (:import-from #:inga/cache
                 #:defunc)
   (:import-from #:inga/file
-                #:is-analysis-target
                 #:get-file-type)
   (:import-from #:inga/errors
                 #:inga-error)
