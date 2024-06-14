@@ -7,6 +7,8 @@
                 #:stop-all-parsers)
   (:import-from #:inga/file
                 #:is-analysis-target)
+  (:import-from #:inga/git
+                #:is-ignore)
   (:export #:ast-index-memory))
 (in-package #:inga/ast-index/memory)
 
@@ -18,7 +20,8 @@
         do
         (let ((relative-path (enough-namestring path (ast-index-root-path ast-index))))
           (when (and (is-analysis-target ctx-kind relative-path include exclude)
-                     (is-analysis-target ctx-kind relative-path include-files exclude))
+                     (is-analysis-target ctx-kind relative-path include-files exclude)
+                     (not (is-ignore (ast-index-root-path ast-index) relative-path)))
             (setf (ast-index-paths ast-index)
                   (append (ast-index-paths ast-index) (list relative-path)))))))
 

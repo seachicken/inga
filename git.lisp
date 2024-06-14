@@ -3,7 +3,8 @@
   (:import-from #:cl-ppcre)
   (:import-from #:inga/errors
                 #:inga-error)
-  (:export #:get-diff))
+  (:export #:get-diff
+           #:is-ignore))
 (in-package #:inga/git)
 
 (defun get-diff (project-path base-commit)
@@ -34,4 +35,11 @@
                                                   (cons :end end))
                                             ranges))))))))
       (return-from get-diff (coerce ranges 'list)))))
+
+(defun is-ignore (project-path relative-path)
+  (multiple-value-bind (output error-output exit-code)
+    (uiop:run-program
+      (format nil "(cd ~a && git check-ignore ~a)" project-path relative-path)
+      :ignore-error-status t)
+    (eq exit-code 0)))
 
