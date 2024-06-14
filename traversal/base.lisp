@@ -256,7 +256,7 @@
   (:method (traversal fq-class-name root-ast path index)))
 
 (defun convert-to-top-offset (path pos)
-  (with-open-file (stream path :if-does-not-exist nil)
+  (with-open-file (stream path)
     (loop for file-line = (read-line stream nil)
           with line-no = 0
           with top-offset = 0
@@ -271,7 +271,7 @@
           (setq top-offset (+ top-offset (length file-line) 1)))))
 
 (defun convert-to-pos (path top-offset)
-  (with-open-file (stream path :if-does-not-exist nil)
+  (with-open-file (stream path)
     (loop for file-line = (read-line stream nil)
           with line-no = 0
           with current-offset = 0
