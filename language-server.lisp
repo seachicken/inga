@@ -52,6 +52,7 @@
                                 'string
                                 (jsown:val (jsown:val msg "params") "rootUri")
                                 "/"))))
+           (log-error (format nil "root-uri: ~a~%" root-uri))
            (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":{\"change\":2,\"save\":false}}}"))
           ((equal (jsown:val msg "method") "shutdown")
            (print-response-msg (jsown:val msg "id") "null")
@@ -93,6 +94,8 @@
                   (end (let ((start (jsown:val range "end")))
                          `((:line . ,(jsown:val start "line"))
                            (:offset . ,(jsown:val start "character"))))))
+           
+             (log-error (format nil "didChange path: ~a, root-path: ~a~%" path root-path))
              (if (probe-file (merge-pathnames path root-path))
                  (let ((change-pos (first (find-definitions
                                             `((:path . ,path)
