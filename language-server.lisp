@@ -102,7 +102,7 @@
                                         :if-exists :supersede
                                         :if-does-not-exist :create)
                      (format out "~a" (to-state-json change-pos root-path))))
-                 (log-error (format nil "path is not found. path: ~a" path)))))
+                 (log-error (format nil "~a is not found" path)))))
           ((equal method "textDocument/didSave")
            (let ((path (enough-namestring
                          ;; remove file URI scheme (file://)
@@ -110,16 +110,15 @@
                            (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
                          (if (>= (length root-uri) 7) (subseq root-uri 7) ""))))
              (if (probe-file (merge-pathnames path root-path))
-                 (progn
-                   (update-index (context-ast-index ctx) path)
-                   (let* ((diffs (get-diff root-path base-commit))
-                          (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
-                     (with-open-file (out (merge-pathnames "report/report.json" temp-path)
-                                          :direction :output
-                                          :if-exists :supersede
-                                          :if-does-not-exist :create)
-                       (format out "~a" results))))
-                 (log-error (format nil "path is not found. path: ~a" path)))))))
+                 (update-index (context-ast-index ctx) path)
+                 (log-error (format nil "~a is not found" path)))
+             (let* ((diffs (get-diff root-path base-commit))
+                    (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
+               (with-open-file (out (merge-pathnames "report/report.json" temp-path)
+                                    :direction :output
+                                    :if-exists :supersede
+                                    :if-does-not-exist :create)
+                 (format out "~a" results)))))))
       (process-msg-if-present (dequeue-msg) ctx root-path temp-path base-commit root-uri))))
 
 (defun extract-json (stream)
