@@ -7,6 +7,8 @@
                 #:update-index)
   (:import-from #:inga/git
                 #:get-diff)
+  (:import-from #:inga/logger
+                #:log-error)
   (:import-from #:inga/main
                 #:analyze
                 #:context
@@ -86,26 +88,30 @@
                   (end (let ((start (jsown:val range "end")))
                          `((:line . ,(jsown:val start "line"))
                            (:offset . ,(jsown:val start "character"))))))
-             (let ((change-pos (first (find-definitions
-                                        `((:path . ,path)
-                                          (:start-offset . ,(convert-to-top-offset
-                                                              (merge-pathnames path root-path)
-                                                              start))
-                                          (:end-offset . ,(convert-to-top-offset
-                                                            (merge-pathnames path root-path)
-                                                            end)))))))
-               (with-open-file (out (merge-pathnames "report/state.json" temp-path)
-                                    :direction :output
-                                    :if-exists :supersede
-                                    :if-does-not-exist :create)
-                 (format out "~a" (to-state-json change-pos root-path))))))
+             (if (probe-file (merge-pathnames path root-path))
+                 (let ((change-pos (first (find-definitions
+                                            `((:path . ,path)
+                                              (:start-offset . ,(convert-to-top-offset
+                                                                  (merge-pathnames path root-path)
+                                                                  start))
+                                              (:end-offset . ,(convert-to-top-offset
+                                                                (merge-pathnames path root-path)
+                                                                end)))))))
+                   (with-open-file (out (merge-pathnames "report/state.json" temp-path)
+                                        :direction :output
+                                        :if-exists :supersede
+                                        :if-does-not-exist :create)
+                     (format out "~a" (to-state-json change-pos root-path))))
+                 (log-error (format nil "~a is not found" path)))))
           ((equal method "textDocument/didSave")
            (let ((path (enough-namestring
                          ;; remove file URI scheme (file://)
                          (subseq
                            (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
                          (if (>= (length root-uri) 7) (subseq root-uri 7) ""))))
-             (update-index (context-ast-index ctx) path)
+             (if (probe-file (merge-pathnames path root-path))
+                 (update-index (context-ast-index ctx) path)
+                 (log-error (format nil "~a is not found" path)))
              (let* ((diffs (get-diff root-path base-commit))
                     (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
                (with-open-file (out (merge-pathnames "report/report.json" temp-path)
