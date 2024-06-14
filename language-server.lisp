@@ -46,7 +46,12 @@
       (when msg
         (cond
           ((equal (jsown:val msg "method") "initialize")
-           (setf root-uri (jsown:val (jsown:val msg "params") "rootUri"))
+           (setf root-uri (namestring
+                            (pathname
+                              (concatenate
+                                'string
+                                (jsown:val (jsown:val msg "params") "rootUri")
+                                "/"))))
            (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":{\"change\":2,\"save\":false}}}"))
           ((equal (jsown:val msg "method") "shutdown")
            (print-response-msg (jsown:val msg "id") "null")
