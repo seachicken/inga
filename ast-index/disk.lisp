@@ -27,10 +27,13 @@
 (defmethod create-indexes ((ast-index ast-index-disk) ctx-kind include include-files exclude)
   (ensure-directories-exist (ast-index-disk-path ast-index)) 
   (loop for path in (uiop:directory-files (format nil "~a/**/*" (ast-index-root-path ast-index)))
+        with index-exclude-path = (concatenate 'string (enough-namestring
+                                                         (ast-index-disk-path ast-index)
+                                                         (ast-index-root-path ast-index)) "**")
         do
         (let ((relative-path (enough-namestring path (ast-index-root-path ast-index))))
           (when (and (is-analysis-target ctx-kind relative-path include exclude)
-                     (is-analysis-target ctx-kind relative-path include-files exclude)
+                     (is-analysis-target ctx-kind relative-path include-files (list index-exclude-path))
                      (not (is-ignore (ast-index-root-path ast-index) relative-path)))
             (setf (ast-index-paths ast-index)
                   (append (ast-index-paths ast-index) (list relative-path)))
