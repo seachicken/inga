@@ -2,6 +2,8 @@
   (:use #:cl)
   (:import-from #:inga/cache
                 #:defunc)
+  (:import-from #:inga/logger
+                #:log-error)
   (:export #:find-base-path
            #:is-primitive-type
            #:convert-to-json-type))
@@ -46,5 +48,5 @@
     ((equal type "java.lang.String")
      "string")
     (t
-     (error (format nil "unexpected type: ~a" type)))))
+     (log-error (format nil "unexpected type: ~a" type)))))
 
