@@ -62,15 +62,18 @@
     (handle-msg params ctx root-host-path)))
 
 (defun process-msg-if-present (msg ctx root-path temp-path base-commit root-host-path)
+  (format t "processing message: ~a~%" msg)
   (when (or (not msg)
             (and *processing-msg* (sb-thread:thread-alive-p *processing-msg*)))
     (return-from process-msg-if-present *processing-msg*))
 
   (sb-thread:make-thread
     (lambda ()
+      (format t "run thread~%")
       (let ((method (jsown:val msg "method")))
         (cond
           ((equal method "initialized")
+           (format t "enter initialized~%")
            (let* ((diffs (get-diff root-path base-commit))
                   (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
              (ensure-directories-exist (merge-pathnames "report/" temp-path))
@@ -78,7 +81,9 @@
                                   :direction :output
                                   :if-exists :supersede
                                   :if-does-not-exist :create)
-               (format out "~a" results))))
+               (format out "~a" results))
+             (format t "leave initialized~%")
+             ))
           ((equal method "textDocument/didChange")
            (let* ((path (enough-namestring
                           ;; remove file URI scheme (file://)
