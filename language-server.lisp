@@ -72,7 +72,6 @@
       (let ((method (jsown:val msg "method")))
         (cond
           ((equal method "initialized")
-           (log-error "ini!!~%")
            (let* ((diffs (get-diff root-path base-commit))
                   (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
              (ensure-directories-exist (merge-pathnames "report/" temp-path))
@@ -111,6 +110,7 @@
                      (format out "~a" (to-state-json change-pos root-path))))
                  (log-error (format nil "~a is not found" path)))))
           ((equal method "textDocument/didSave")
+           (log-error "server log!!")
            (let ((path (enough-namestring
                          ;; remove file URI scheme (file://)
                          (subseq
