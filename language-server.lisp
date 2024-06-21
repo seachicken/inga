@@ -143,7 +143,7 @@
       finally (return (flexi-streams:octets-to-string buff :external-format :utf-8)))))
 
 (defmethod log-error-generic ((mode (eql :server)) content)
-  (print-notification-msg "window/showMessage"
+  (print-notification-msg "window/logMessage"
                           (format nil "{\"type\":1,\"message\":\"~a\"}" content)))
 
 (defun print-response-msg (id result)
