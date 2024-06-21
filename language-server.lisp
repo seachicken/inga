@@ -8,7 +8,8 @@
   (:import-from #:inga/git
                 #:get-diff)
   (:import-from #:inga/logger
-                #:log-error)
+                #:log-error
+                #:log-error-generic)
   (:import-from #:inga/main
                 #:analyze
                 #:context
@@ -71,6 +72,7 @@
       (let ((method (jsown:val msg "method")))
         (cond
           ((equal method "initialized")
+           (log-error "ini!!~%")
            (let* ((diffs (get-diff root-path base-commit))
                   (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
              (ensure-directories-exist (merge-pathnames "report/" temp-path))
@@ -140,11 +142,22 @@
       do (vector-push (read-byte stream) buff)
       finally (return (flexi-streams:octets-to-string buff :external-format :utf-8)))))
 
+(defmethod log-error-generic ((mode (eql :server)) content)
+  (print-notification-msg "window/showMessage"
+                          (format nil "{\"type\":1,\"message\":\"~a\"}" content)))
+
 (defun print-response-msg (id result)
   (unless id
     (return-from print-response-msg))
 
   (let ((content (format nil "{\"jsonrpc\":\"2.0\",\"id\":\"~a\",\"result\":~a}" id result)))
+    (format t "Content-Length: ~a~c~c~c~c~a" (length content) #\return #\linefeed
+            #\return #\linefeed
+            content)
+    (force-output)))
+
+(defun print-notification-msg (method params)
+  (let ((content (format nil "{\"jsonrpc\":\"2.0\",\"method\":\"~a\",\"params\":~a}" method params)))
     (format t "Content-Length: ~a~c~c~c~c~a" (length content) #\return #\linefeed
             #\return #\linefeed
             content)
