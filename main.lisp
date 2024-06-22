@@ -4,6 +4,8 @@
         #:inga/utils)
   (:import-from #:jsown)
   (:import-from #:alexandria)
+  (:import-from #:inga/context
+                #:*default-mode*)
   (:import-from #:inga/git
                 #:get-diff)
   (:import-from #:inga/language-client
@@ -31,7 +33,8 @@
                 #:inga-error)
   (:import-from #:inga/logger
                 #:log-debug)
-  (:export #:parse-argv
+  (:export #:*mode*
+           #:parse-argv
            #:command
            #:analyze
            #:convert-to-output-pos  
@@ -50,7 +53,7 @@
         with include
         with exclude
         with base-commit
-        with mode = "cli"
+        with mode = *default-mode*
         for option = (pop argv)
         while option
         do (alexandria:switch (option :test #'equal)
@@ -69,7 +72,7 @@
              ("--base-commit"
               (setf base-commit (pop argv)))
              ("--mode"
-              (setf mode (pop argv)))
+              (setf mode (intern (string-upcase (pop argv)) :keyword)))
              (t (error 'inga-error-option-not-found)))
         finally
           (return (append 
