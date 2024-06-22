@@ -3,6 +3,7 @@
         #:inga/utils)
   (:import-from #:flexi-streams)
   (:import-from #:jsown)
+  (:import-from #:local-time)
   (:import-from #:inga/ast-index
                 #:update-index)
   (:import-from #:inga/git
@@ -143,12 +144,14 @@
       finally (return (flexi-streams:octets-to-string buff :external-format :utf-8)))))
 
 (defmethod log-error-generic ((mode (eql :server)) content)
-  (print-notification-msg "window/logMessage"
-                          (format nil "{\"type\":1,\"message\":\"~a\"}" content)))
+  (print-notification-msg
+    "window/logMessage"
+    (format nil "{\"type\":1,\"message\":\"~&~a ~a\"}" (local-time:now) content)))
 
 (defmethod log-info-generic ((mode (eql :server)) content)
-  (print-notification-msg "window/logMessage"
-                          (format nil "{\"type\":3,\"message\":\"~a\"}" content)))
+  (print-notification-msg
+    "window/logMessage"
+    (format nil "{\"type\":3,\"message\":\"~&~a ~a\"}" (local-time:now) content)))
 
 (defun print-response-msg (id result)
   (unless id
