@@ -3,12 +3,15 @@
         #:inga/utils)
   (:import-from #:flexi-streams)
   (:import-from #:jsown)
+  (:import-from #:local-time)
   (:import-from #:inga/ast-index
                 #:update-index)
   (:import-from #:inga/git
                 #:get-diff)
   (:import-from #:inga/logger
-                #:log-error)
+                #:log-error
+                #:log-error-generic
+                #:log-info-generic)
   (:import-from #:inga/main
                 #:analyze
                 #:context
@@ -140,11 +143,28 @@
       do (vector-push (read-byte stream) buff)
       finally (return (flexi-streams:octets-to-string buff :external-format :utf-8)))))
 
+(defmethod log-error-generic ((mode (eql :server)) content)
+  (print-notification-msg
+    "window/logMessage"
+    (format nil "{\"type\":1,\"message\":\"~a ~a\"}" (local-time:now) content)))
+
+(defmethod log-info-generic ((mode (eql :server)) content)
+  (print-notification-msg
+    "window/logMessage"
+    (format nil "{\"type\":3,\"message\":\"~a ~a\"}" (local-time:now) content)))
+
 (defun print-response-msg (id result)
   (unless id
     (return-from print-response-msg))
 
   (let ((content (format nil "{\"jsonrpc\":\"2.0\",\"id\":\"~a\",\"result\":~a}" id result)))
+    (format t "Content-Length: ~a~c~c~c~c~a" (length content) #\return #\linefeed
+            #\return #\linefeed
+            content)
+    (force-output)))
+
+(defun print-notification-msg (method params)
+  (let ((content (format nil "{\"jsonrpc\":\"2.0\",\"method\":\"~a\",\"params\":~a}" method params)))
     (format t "Content-Length: ~a~c~c~c~c~a" (length content) #\return #\linefeed
             #\return #\linefeed
             content)
