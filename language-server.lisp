@@ -9,7 +9,8 @@
                 #:get-diff)
   (:import-from #:inga/logger
                 #:log-error
-                #:log-error-generic)
+                #:log-error-generic
+                #:log-info-generic)
   (:import-from #:inga/main
                 #:analyze
                 #:context
@@ -144,6 +145,10 @@
 (defmethod log-error-generic ((mode (eql :server)) content)
   (print-notification-msg "window/logMessage"
                           (format nil "{\"type\":1,\"message\":\"~a\"}" content)))
+
+(defmethod log-info-generic ((mode (eql :server)) content)
+  (print-notification-msg "window/logMessage"
+                          (format nil "{\"type\":3,\"message\":\"~a\"}" content)))
 
 (defun print-response-msg (id result)
   (unless id
