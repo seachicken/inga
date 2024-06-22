@@ -12,6 +12,8 @@
                 #:is-ignore)
   (:import-from #:inga/errors
                 #:inga-error)
+  (:import-from #:inga/logger
+                #:log-info)
   (:export #:ast-index-disk))
 (in-package #:inga/ast-index/disk)
 
@@ -40,6 +42,7 @@
             (update-index ast-index relative-path)))))
 
 (defmethod update-index ((ast-index ast-index-disk) path)
+  (log-info (format nil "upsert ast-index at ~a" path))
   (with-open-file (out (get-index-path path (ast-index-disk-path ast-index))
                        :direction :output
                        :if-exists :supersede
