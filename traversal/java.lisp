@@ -7,9 +7,9 @@
   (:import-from #:inga/ast-index
                 #:ast-index-paths
                 #:ast-index-root-path
-                #:clean-indexes
                 #:create-indexes
-                #:get-ast)
+                #:get-ast
+                #:stop-indexes)
   (:import-from #:inga/traversal/kotlin
                 #:traversal-kotlin)
   (:import-from #:inga/file
@@ -39,7 +39,7 @@
   (cdr (assoc :java *traversals*)))
 
 (defmethod stop-traversal ((traversal traversal-java))
-  (clean-indexes (traversal-index traversal))
+  (stop-indexes (traversal-index traversal))
   (setf *traversals* nil))
 
 (defun create-index-groups (traversal)
