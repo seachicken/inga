@@ -27,8 +27,11 @@
 
 (defmethod update-index ((ast-index ast-index-memory) path))
 
-(defmethod clean-indexes ((ast-index ast-index-memory))
+(defmethod stop-indexes ((ast-index ast-index-memory))
   (stop-all-parsers))
+
+(defmethod clean-indexes ((ast-index ast-index-memory))
+  (stop-indexes ast-index))
 
 (defmethod get-ast (ast-index path)
   (attach-parent (jsown:parse (parse (merge-pathnames path (ast-index-root-path ast-index))))))

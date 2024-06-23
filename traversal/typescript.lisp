@@ -3,9 +3,9 @@
         #:inga/traversal/base
         #:inga/utils)
   (:import-from #:inga/ast-index
-                #:clean-indexes
                 #:create-indexes
-                #:get-ast)
+                #:get-ast
+                #:stop-indexes)
   (:export #:traversal-typescript))
 (in-package #:inga/traversal/typescript)
 
@@ -24,7 +24,7 @@
   (cdr (assoc :typescript *traversals*)))
 
 (defmethod stop-traversal ((traversal traversal-typescript))
-  (clean-indexes (traversal-index traversal))
+  (stop-indexes (traversal-index traversal))
   (setf *traversals* nil))
 
 (defmethod find-definitions-generic ((traversal traversal-typescript) range)
