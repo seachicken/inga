@@ -8,6 +8,7 @@
            #:ast-scoped-paths
            #:create-indexes
            #:update-index
+           #:stop-indexes
            #:clean-indexes
            #:get-ast
            #:attach-parent))
@@ -27,6 +28,8 @@
 (defgeneric create-indexes (ast-index ctx-kind include include-files exclude))
 
 (defgeneric update-index (ast-index path))
+
+(defgeneric stop-indexes (ast-index))
 
 (defgeneric clean-indexes (ast-index))
 
