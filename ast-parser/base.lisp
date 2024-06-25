@@ -38,6 +38,8 @@
     (cdr (assoc file-type *ast-parsers*))))
 
 (defun run-parser (ast-parser command)
+  (log-error (format nil "run-parser command: ~a" command))
+  (log-error (format nil "alive: ~a" (uiop:process-alive-p (ast-parser-process ast-parser))))
   (write-line command (uiop:process-info-input (ast-parser-process ast-parser)))
   (force-output (uiop:process-info-input (ast-parser-process ast-parser)))
   (prog1
