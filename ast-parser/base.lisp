@@ -25,6 +25,7 @@
 (defgeneric stop (ast-parser))
 
 (defun stop-all-parsers ()
+  (log-error "stop all parsers")
   (loop for p in *ast-parsers* do (stop (cdr p)))
   (setf *ast-parsers* nil))
 

@@ -17,5 +17,6 @@
                :input :stream :output :stream :error-output :stream)))
 
 (defmethod stop ((ast-parser ast-parser-kotlin))
+  (inga/logger:log-error "stop parser kotlin")
   (uiop:close-streams (ast-parser-process ast-parser)))
 
