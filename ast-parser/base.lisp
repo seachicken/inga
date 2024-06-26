@@ -33,13 +33,14 @@
   (run-parser (get-parser path) (namestring path)))
 
 (defun get-parser (path)
-  (let ((file-type (get-file-type path)))
-    (unless (assoc file-type *ast-parsers*)
+  (let* ((file-type (get-file-type path))
+         (parser (assoc file-type *ast-parsers*)))
+    (when (null parser or (uiop:process-alive-p parser))
+      (when (and parser (uiop:process-alive-p parser))
+        (log-error (format nil "~a is crashing unexpectedly" parser)))
       (log-error (format nil "start parser. file-type: ~a, path: ~a" file-type path))
       (setf *ast-parsers* (acons file-type (start file-type) *ast-parsers*)))
-    (progn
-      (log-error (format nil "found parser. file-type: ~a, path: ~a" file-type path))
-      (cdr (assoc file-type *ast-parsers*)))))
+    (cdr (assoc file-type *ast-parsers*))))
 
 (defun run-parser (ast-parser command)
   (log-error (format nil "run-parser command: ~a, alive: ~a"
