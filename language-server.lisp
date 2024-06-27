@@ -105,21 +105,20 @@
                   (end (let ((start (jsown:val range "end")))
                          `((:line . ,(jsown:val start "line"))
                            (:offset . ,(jsown:val start "character"))))))
-             (if (probe-file (merge-pathnames path root-path))
-                 (let ((change-pos (first (find-definitions
-                                            `((:path . ,path)
-                                              (:start-offset . ,(convert-to-top-offset
-                                                                  (merge-pathnames path root-path)
-                                                                  start))
-                                              (:end-offset . ,(convert-to-top-offset
-                                                                (merge-pathnames path root-path)
-                                                                end)))))))
-                   (with-open-file (out (merge-pathnames "report/state.json" temp-path)
-                                        :direction :output
-                                        :if-exists :supersede
-                                        :if-does-not-exist :create)
-                     (format out "~a" (to-state-json change-pos root-path))))
-                 (log-error (format nil "~a is not found" path)))))
+             (let ((change-pos (first (find-definitions
+                                        `((:path . ,path)
+                                          (:start-offset . ,(convert-to-top-offset
+                                                              (merge-pathnames path root-path)
+                                                              start))
+                                          (:end-offset . ,(convert-to-top-offset
+                                                            (merge-pathnames path root-path)
+                                                            end)))))))
+               (when change-pos
+                 (with-open-file (out (merge-pathnames "report/state.json" temp-path)
+                                      :direction :output
+                                      :if-exists :supersede
+                                      :if-does-not-exist :create)
+                   (format out "~a" (to-state-json change-pos root-path)))))))
           ((equal method "textDocument/didSave")
            (let ((path (get-relative-path
                          (subseq (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)

@@ -82,9 +82,10 @@
                               :if-does-not-exist :ignore))
 
 (defmethod get-ast ((ast-index ast-index-disk) path)
-  (attach-parent
-    (jsown:parse (alexandria:read-file-into-string
-                   (get-index-path path (ast-index-disk-path ast-index))))))
+  (let ((index-path (get-index-path path (ast-index-disk-path ast-index))))
+    (when (probe-file index-path)
+      (attach-parent
+        (jsown:parse (alexandria:read-file-into-string index-path))))))
 
 (defun commit-src-hash (ast-index)
   (with-open-file (out (merge-pathnames "src-hash.json" (ast-index-disk-path ast-index))
