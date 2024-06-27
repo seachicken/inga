@@ -31,3 +31,11 @@
         '(:obj ("id" . "2") ("method" . "shutdown"))
         (inga/language-server::dequeue-msg))))
 
+(test get-relative-path
+  (is (equal
+        "src/main/java/inga/App.java"
+        (inga/language-server::get-relative-path
+          "/work/service-b/src/main/java/inga/App.java"
+          '("/work/service-a/"
+            "/work/service-b/")))))
+

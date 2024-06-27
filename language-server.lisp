@@ -38,7 +38,7 @@
       (handle-msg params ctx)
       (inga/main::stop ctx))))
 
-(defun handle-msg (params ctx &optional root-host-path)
+(defun handle-msg (params ctx &optional root-host-paths)
   (destructuring-bind (&key root-path temp-path include exclude base-commit mode) params
     (let ((msg (loop while *standard-input* do
                      (let* ((json (extract-json *standard-input*))
@@ -49,22 +49,33 @@
       (when msg
         (cond
           ((equal (jsown:val msg "method") "initialize")
-           (setf root-host-path
-                 (namestring (pathname
-                               (concatenate
-                                 'string
-                                 (subseq (jsown:val (jsown:val msg "params") "rootUri") 7)
-                                 "/"))))
+           (when (jsown:val (jsown:val msg "params") "rootUri")
+             (push (namestring (pathname
+                                 (concatenate
+                                   'string
+                                   ;; remove file URI scheme (file://)
+                                   (subseq (jsown:val (jsown:val msg "params") "rootUri") 7)
+                                   "/")))
+                   root-host-paths))
+           (when (jsown:keyp (jsown:val msg "params") "workspaceFolders")
+             (loop for folder in (jsown:val (jsown:val msg "params") "workspaceFolders")
+                   do
+                   (push (namestring (pathname
+                                       (concatenate
+                                         'string
+                                         (subseq (jsown:val folder "uri") 7)
+                                         "/")))
+                         root-host-paths)))
            (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":{\"change\":2,\"save\":false}}}"))
           ((equal (jsown:val msg "method") "shutdown")
            (print-response-msg (jsown:val msg "id") "null")
            (return-from handle-msg))
           (t
            (setf *processing-msg*
-                 (process-msg-if-present msg ctx root-path temp-path base-commit root-host-path))))))
-    (handle-msg params ctx root-host-path)))
+                 (process-msg-if-present msg ctx root-path temp-path base-commit root-host-paths))))))
+    (handle-msg params ctx root-host-paths)))
 
-(defun process-msg-if-present (msg ctx root-path temp-path base-commit root-host-path)
+(defun process-msg-if-present (msg ctx root-path temp-path base-commit root-host-paths)
   (when (or (not msg)
             (and *processing-msg* (sb-thread:thread-alive-p *processing-msg*)))
     (return-from process-msg-if-present *processing-msg*))
@@ -83,11 +94,9 @@
                                   :if-does-not-exist :create)
                (format out "~a" results))))
           ((equal method "textDocument/didChange")
-           (let* ((path (enough-namestring
-                          ;; remove file URI scheme (file://)
-                          (subseq
-                            (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
-                          root-host-path))
+           (let* ((path (get-relative-path
+                          (subseq (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
+                          root-host-paths))
                   (range (jsown:val (first
                                       (jsown:val (jsown:val msg "params") "contentChanges")) "range"))
                   (start (let ((start (jsown:val range "start")))
@@ -112,11 +121,9 @@
                      (format out "~a" (to-state-json change-pos root-path))))
                  (log-error (format nil "~a is not found" path)))))
           ((equal method "textDocument/didSave")
-           (let ((path (enough-namestring
-                         ;; remove file URI scheme (file://)
-                         (subseq
-                           (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
-                         root-host-path)))
+           (let ((path (get-relative-path
+                         (subseq (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
+                         root-host-paths)))
              (if (probe-file (merge-pathnames path root-path))
                  (update-index (context-ast-index ctx) path)
                  (log-error (format nil "~a is not found" path)))
@@ -127,7 +134,7 @@
                                     :if-exists :supersede
                                     :if-does-not-exist :create)
                  (format out "~a" results)))))))
-      (process-msg-if-present (dequeue-msg) ctx root-path temp-path base-commit root-host-path))))
+      (process-msg-if-present (dequeue-msg) ctx root-path temp-path base-commit root-host-paths))))
 
 (defun extract-json (stream)
   ;; Content-Length: 99
@@ -194,3 +201,9 @@
 
 (defun dequeue-msg ()
   (dequeue *msg-q*))
+
+(defun get-relative-path (path root-host-paths)
+  (loop for root-path in root-host-paths
+        do
+        (when (uiop:string-prefix-p root-path path)
+          (return (enough-namestring path root-path)))))
