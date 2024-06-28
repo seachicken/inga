@@ -9,7 +9,7 @@
   (:import-from #:inga/file
                 #:is-analysis-target)
   (:import-from #:inga/git
-                #:is-ignore)
+                #:get-managed-paths)
   (:import-from #:inga/errors
                 #:inga-error)
   (:import-from #:inga/logger
@@ -39,15 +39,14 @@
             (setf (gethash (intern (car hash) :keyword) (ast-index-src-hash ast-index)) (cdr hash)))))
 
   (ensure-directories-exist (ast-index-disk-path ast-index)) 
-  (loop for path in (uiop:directory-files (format nil "~a/**/*" (ast-index-root-path ast-index)))
+  (loop for path in (get-managed-paths (ast-index-root-path ast-index))
         with index-exclude-path = (concatenate 'string (enough-namestring
                                                          (ast-index-disk-path ast-index)
                                                          (ast-index-root-path ast-index)) "**")
         do
         (let ((relative-path (enough-namestring path (ast-index-root-path ast-index))))
           (when (and (is-analysis-target ctx-kind relative-path include exclude)
-                     (is-analysis-target ctx-kind relative-path include-files (list index-exclude-path))
-                     (not (is-ignore (ast-index-root-path ast-index) relative-path)))
+                     (is-analysis-target ctx-kind relative-path include-files (list index-exclude-path)))
             (setf (ast-index-paths ast-index)
                   (append (ast-index-paths ast-index) (list relative-path)))
             (update-index ast-index relative-path))))
