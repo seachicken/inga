@@ -19,3 +19,6 @@
 (defmethod stop ((ast-parser ast-parser-kotlin))
   (uiop:close-streams (ast-parser-process ast-parser)))
 
+(defmethod version-generic ((ast-parser ast-parser-kotlin))
+  (uiop:getenv "KTPARSRER"))
+

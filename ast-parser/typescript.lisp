@@ -17,3 +17,6 @@
 (defmethod stop ((ast-parser ast-parser-typescript))
   (uiop:close-streams (ast-parser-process ast-parser)))
 
+(defmethod version-generic ((ast-parser ast-parser-typescript))
+  (uiop:getenv "TSPARSRER"))
+

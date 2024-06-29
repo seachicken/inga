@@ -5,7 +5,8 @@
   (:import-from #:jsown)
   (:import-from #:inga/ast-parser
                 #:parse
-                #:stop-all-parsers)
+                #:stop-all-parsers
+                #:version)
   (:import-from #:inga/file
                 #:is-analysis-target)
   (:import-from #:inga/git
@@ -53,9 +54,7 @@
   (commit-src-hash ast-index))
 
 (defmethod update-index ((ast-index ast-index-disk) path)
-  (let* ((src (alexandria:read-file-into-string (merge-pathnames
-                                                  path (ast-index-root-path ast-index))))
-         (src-hash (sxhash src)))
+  (let ((src-hash (get-hash-file-with-version path (ast-index-root-path ast-index))))
     (when (eq src-hash
               (gethash (intern (get-hash-path path) :keyword) (ast-index-src-hash ast-index)))
       (return-from update-index))
@@ -100,4 +99,8 @@
 
 (defun get-hash-path (path)
   (princ-to-string (sxhash path)))
+
+(defun get-hash-file-with-version (path root-path)
+  (let ((file (alexandria:read-file-into-string (merge-pathnames path root-path))))
+    (sxhash (concatenate 'string (version path) file))))
 
