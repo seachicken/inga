@@ -4,6 +4,9 @@
         #:inga/ast-index))
 (in-package #:inga/test/ast-index/disk)
 
+(def-suite java)
+(in-suite java)
+
 (defparameter *java-path* (merge-pathnames "test/fixtures/general/"))
 
 (test create-indexes-with-specific-files

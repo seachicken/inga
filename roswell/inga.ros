@@ -20,5 +20,5 @@ exec ros -Q -- $0 "$@"
       ((eq mode :cli)
        (inga/main:command params))
       ((eq mode :server)
-       (inga/language-server:run params)))))
+       (inga/language-server:run-server params)))))
 ;;; vim: set ft=lisp lisp:

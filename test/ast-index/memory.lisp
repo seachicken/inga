@@ -4,6 +4,9 @@
         #:inga/ast-index))
 (in-package #:inga/test/ast-index/memory)
 
+(def-suite java)
+(in-suite java)
+
 (defparameter *java-path* (merge-pathnames "test/fixtures/general/"))
 
 (test get-all-paths

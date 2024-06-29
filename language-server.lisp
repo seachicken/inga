@@ -22,13 +22,13 @@
   (:import-from #:inga/traversal
                 #:convert-to-top-offset
                 #:find-definitions)
-  (:export #:run))
+  (:export #:run-server))
 (in-package #:inga/language-server)
 
 (defparameter *msg-q* nil)
 (defparameter *processing-msg* nil)
 
-(defun run (params)
+(defun run-server (params)
   (destructuring-bind (&key root-path temp-path include exclude base-commit mode) params
     (let* ((ctx (inga/main::start root-path '(:java)
                                   :include include
