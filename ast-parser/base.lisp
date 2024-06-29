@@ -9,6 +9,8 @@
            #:ast-parser-process
            #:start
            #:stop
+           #:version
+           #:version-generic
            #:stop-all-parsers
            #:parse))
 (in-package #:inga/ast-parser/base)
@@ -23,6 +25,10 @@
 (defgeneric start (file-type))
 
 (defgeneric stop (ast-parser))
+
+(defun version (path)
+  (version-generic (get-parser path)))
+(defgeneric version-generic (ast-parser))
 
 (defun stop-all-parsers ()
   (loop for p in *ast-parsers* do (stop (cdr p)))

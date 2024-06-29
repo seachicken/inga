@@ -23,3 +23,6 @@
 (defmethod stop ((ast-parser ast-parser-java))
   (uiop:close-streams (ast-parser-process ast-parser)))
 
+(defmethod version-generic ((ast-parser ast-parser-java))
+  (uiop:getenv "JAVAPARSER"))
+

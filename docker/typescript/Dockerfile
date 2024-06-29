@@ -8,6 +8,8 @@ RUN ros && \
 
 FROM node:18-slim
 
+ENV TSPARSER 0.1.1
+
 COPY --from=build /inga/roswell/inga /usr/local/bin/
 
 RUN apt-get update && \
@@ -15,7 +17,7 @@ RUN apt-get update && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g typescript @seachicken/tsparser
+RUN npm install -g typescript @seachicken/tsparser@$TSPARSER
 
 WORKDIR /work
 
