@@ -7,15 +7,17 @@
 (in-package #:inga/file)
 
 (defparameter *include-typescript*
-  '("*.(js|jsx)"
-    "*.(ts|tsx)"))
+  '(".js"
+    ".jsx"
+    ".ts"
+    ".tsx"))
 (defparameter *include-java*
-  '("*.java"
-    "*.kt"))
+  '(".java"
+    ".kt"))
 
 (defun is-match (path ctx-kind)
   (loop for inc in (get-language-files ctx-kind)
-        do (when (ppcre:scan (to-scan-str inc) path)
+        do (when (uiop:string-suffix-p path inc)
              (return t))))
 
 (defun is-analysis-target (ctx-kind path &optional include exclude)
@@ -33,11 +35,11 @@
 (defun get-file-type (path)
   (let ((path (namestring path)))
     (cond
-      ((ppcre:scan (to-scan-str "*.java") path)
+      ((uiop:string-suffix-p path ".java")
        :java)
-      ((ppcre:scan (to-scan-str "*.kt") path)
+      ((uiop:string-suffix-p path ".kt")
        :kotlin)
-      ((ppcre:scan (to-scan-str "*.(js|jsx|ts|tsx)") path)
+      ((is-match path :typescript)
        :typescript))))
 
 (defun get-language-files (kind)
