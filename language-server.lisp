@@ -29,51 +29,52 @@
 (defparameter *processing-msg* nil)
 
 (defun run-server (params)
-  (destructuring-bind (&key root-path temp-path include exclude base-commit mode) params
-    (let* ((ctx (inga/main::start root-path '(:java)
-                                  :include include
-                                  :exclude exclude
-                                  :temp-path temp-path)))
-      (init-msg-q)
-      (handle-msg params ctx)
-      (inga/main::stop ctx))))
+  (let* ((ctx (inga/main::start (cdr (assoc :root-path params)) '(:java)
+                                :include (cdr (assoc :include params))
+                                :exclude (cdr (assoc :exclude params))
+                                :temp-path (cdr (assoc :temp-path params)))))
+    (init-msg-q)
+    (handle-msg params ctx)
+    (inga/main::stop ctx)))
 
 (defun handle-msg (params ctx &optional root-host-paths)
-  (destructuring-bind (&key root-path temp-path include exclude base-commit mode) params
-    (let ((msg (loop while *standard-input* do
-                     (let* ((json (extract-json *standard-input*))
-                            (result (when json (jsown:parse json))))
-                       (return result)))))
-      (when msg (enqueue-msg msg))
-      (setf msg (dequeue-msg))
-      (when msg
-        (cond
-          ((equal (jsown:val msg "method") "initialize")
-           (when (jsown:val (jsown:val msg "params") "rootUri")
-             (push (namestring (pathname
-                                 (concatenate
-                                   'string
-                                   ;; remove file URI scheme (file://)
-                                   (subseq (jsown:val (jsown:val msg "params") "rootUri") 7)
-                                   "/")))
-                   root-host-paths))
-           (when (jsown:keyp (jsown:val msg "params") "workspaceFolders")
-             (loop for folder in (jsown:val (jsown:val msg "params") "workspaceFolders")
-                   do
-                   (push (namestring (pathname
-                                       (concatenate
-                                         'string
-                                         (subseq (jsown:val folder "uri") 7)
-                                         "/")))
-                         root-host-paths)))
-           (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":{\"change\":2,\"save\":false}}}"))
-          ((equal (jsown:val msg "method") "shutdown")
-           (print-response-msg (jsown:val msg "id") "null")
-           (return-from handle-msg))
-          (t
-           (setf *processing-msg*
-                 (process-msg-if-present msg ctx root-path temp-path base-commit root-host-paths))))))
-    (handle-msg params ctx root-host-paths)))
+  (let ((root-path (cdr (assoc :root-path params)))
+        (temp-path (cdr (assoc :temp-path params)))
+        (base-commit (cdr (assoc :base-commit params)))
+        (msg (loop while *standard-input* do
+                   (let* ((json (extract-json *standard-input*))
+                          (result (when json (jsown:parse json))))
+                     (return result)))))
+    (when msg (enqueue-msg msg))
+    (setf msg (dequeue-msg))
+    (when msg
+      (cond
+        ((equal (jsown:val msg "method") "initialize")
+         (when (jsown:val (jsown:val msg "params") "rootUri")
+           (push (namestring (pathname
+                               (concatenate
+                                 'string
+                                 ;; remove file URI scheme (file://)
+                                 (subseq (jsown:val (jsown:val msg "params") "rootUri") 7)
+                                 "/")))
+                 root-host-paths))
+         (when (jsown:keyp (jsown:val msg "params") "workspaceFolders")
+           (loop for folder in (jsown:val (jsown:val msg "params") "workspaceFolders")
+                 do
+                 (push (namestring (pathname
+                                     (concatenate
+                                       'string
+                                       (subseq (jsown:val folder "uri") 7)
+                                       "/")))
+                       root-host-paths)))
+         (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":{\"change\":2,\"save\":false}}}"))
+        ((equal (jsown:val msg "method") "shutdown")
+         (print-response-msg (jsown:val msg "id") "null")
+         (return-from handle-msg))
+        (t
+         (setf *processing-msg*
+               (process-msg-if-present msg ctx root-path temp-path base-commit root-host-paths))))))
+  (handle-msg params ctx root-host-paths))
 
 (defun process-msg-if-present (msg ctx root-path temp-path base-commit root-host-paths)
   (when (or (not msg)

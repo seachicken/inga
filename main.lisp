@@ -75,34 +75,40 @@
               (setf mode (intern (string-upcase (pop argv)) :keyword)))
              (t (error 'inga-error-option-not-found)))
         finally
-          (return (append 
-                    (list :root-path (truename (uiop:merge-pathnames* root-path)))
-                    (list :temp-path
-                          (if temp-path
-                              (pathname (concatenate 'string temp-path "/"))
-                              (merge-pathnames ".inga/")))
-                    (list :include include)
-                    (list :exclude exclude)
-                    (when base-commit
-                      (list :base-commit base-commit))
-                    (list :mode mode)))))
+        (return
+          (let ((result
+                  `((:root-path . ,(truename (uiop:merge-pathnames* root-path)))
+                    (:temp-path .
+                     ,(if temp-path
+                          (pathname (concatenate 'string temp-path "/"))
+                          (merge-pathnames ".inga/")))
+                    (:include . ,include)
+                    (:exclude . ,exclude)
+                    (:mode . ,mode))))
+            (when base-commit
+              (push (cons :base-commit base-commit) result))
+            result))))
 
 (defun command (params)
   (handler-case
-    (destructuring-bind (&key root-path temp-path include exclude base-commit mode) params
-      (let* ((diffs (get-diff root-path base-commit))
-             (ctx (start root-path
-                         (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
-                         :include include :exclude exclude :temp-path temp-path))
-             (results (analyze ctx diffs)))
-        (ensure-directories-exist (merge-pathnames "report/" temp-path))
-        (with-open-file (out (merge-pathnames "report/report.json" temp-path)
-                             :direction :output
-                             :if-exists :supersede
-                             :if-does-not-exist :create)
-          (format out "~a" (to-json results root-path)))
-        (format t "~%~a~%" (to-json results root-path))
-        (stop ctx)))
+    (let* ((root-path (cdr (assoc :root-path params)))
+           (temp-path (cdr (assoc :temp-path params)))
+           (include (cdr (assoc :include params)))
+           (exclude (cdr (assoc :exclude params)))
+           (base-commit (cdr (assoc :base-commit params)))
+           (diffs (get-diff root-path base-commit))
+           (ctx (start root-path
+                       (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
+                       :include include :exclude exclude :temp-path temp-path))
+           (results (analyze ctx diffs)))
+      (ensure-directories-exist (merge-pathnames "report/" temp-path))
+      (with-open-file (out (merge-pathnames "report/report.json" temp-path)
+                           :direction :output
+                           :if-exists :supersede
+                           :if-does-not-exist :create)
+        (format out "~a" (to-json results root-path)))
+      (format t "~%~a~%" (to-json results root-path))
+      (stop ctx))
     (inga-error (e) (format t "~a~%" e))))
 
 (defun start (root-path context-kinds &key include exclude (temp-path (merge-pathnames ".inga/")))

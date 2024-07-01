@@ -14,7 +14,7 @@ exec ros -Q -- $0 "$@"
 
 (defun main (&rest argv)
   (let* ((params (inga/main:parse-argv argv))
-         (mode (first (last params))))
+         (mode (cdr (assoc :mode params))))
     (setf inga/context:*mode* mode)
     (cond
       ((eq mode :cli)
