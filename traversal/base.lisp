@@ -187,24 +187,13 @@
           with target-name = (subseq (ppcre:regex-replace-all fq-class-name fq-name "") 1)
           with matched-methods
           do
-          (let ((api-name (format nil "~a~:[~;-~]~:*~{~a~^-~}"
-                              (jsown:val method "name")
-                              (mapcar (lambda (type)
-                                        (if (jsown:val type "isArray")
-                                            (concatenate 'string (jsown:val type "name") "[]")
-                                            (jsown:val type "name")))
-                                      (jsown:val method "parameterTypes")))))
-            (when (matches-signature target-name api-name index)
-              (push method matched-methods)))
+          (when (matches-signature target-name (cdr (assoc :fq-name method)) index)
+            (push method matched-methods))
           finally
-          (return (if (> (length matched-methods) 1)
-                      (or (loop for method in matched-methods
-                                do (unless (jsown:val (jsown:val method "returnType") "isInterface")
-                                     (return method)))
-                          (progn
-                            (log-debug (format nil "get an unexpected ambiguous signature!~%  methods: ~a" matched-methods))
-                            (first matched-methods)))
-                      (first matched-methods))))))
+          (return (progn
+                    (when (> (length matched-methods) 1)
+                      (log-debug (format nil "get an unexpected ambiguous signature!~%  methods: ~a" matched-methods)))
+                    (first matched-methods))))))
 
 (defun matches-signature (target-fq-name api-fq-name index)
   (let* ((split-target-fq-names (split #\- target-fq-name))

@@ -180,10 +180,8 @@
                            (method (find-signature
                                      fq-name
                                      #'(lambda (fqcn) (load-signatures fqcn path))
-                                     index))
-                           (return-type (when method
-                                          (jsown:val (jsown:val method "returnType") "name"))))
-                      return-type))
+                                     index)))
+                      (when method (cdr (assoc :return method)))))
                    ((get-asts ast '("MEMBER_SELECT" "IDENTIFIER"))
                     (find-fq-class-name-java
                       (first (get-asts ast '("MEMBER_SELECT" "IDENTIFIER")))
@@ -250,10 +248,8 @@
                         (find-fq-name-for-reference ast path index))))
             (method (find-signature fq-name
                                     #'(lambda (fqcn) (load-signatures fqcn path))
-                                    index))
-            (return-type (when method
-                           (jsown:val (jsown:val method "returnType") "name"))))
-       return-type))))
+                                    index)))
+       (when method (cdr (assoc :return method)))))))
 
 (defun find-fq-class-name-by-class-name (class-name ast)
   (unless class-name

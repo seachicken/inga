@@ -297,8 +297,7 @@
        (let* ((name (ast-value
                       (first (get-asts ast '("REFERENCE_EXPRESSION")))
                       "name"))
-              (std-sig (find-signature-for-stdlib name path))
-              (fqcn (when std-sig (jsown:val std-sig "fqcn"))))
+              (fqcn (find-signature-for-stdlib name path)))
          (if fqcn
              fqcn
              (let ((parent (or (first (get-asts ast '("DOT_QUALIFIED_EXPRESSION") :direction :upward))
@@ -540,9 +539,7 @@
   (loop for fqcn in '("kotlin.collections.CollectionsKt")
         do
         (let ((found-method (find-if (lambda (method)
-                                       (equal (jsown:val method "name") target-name))
+                                       (equal (cdr (assoc :name method)) target-name))
                                      (load-signatures fqcn path))))
-          (when found-method
-            (push `("fqcn" . ,fqcn) (cdr found-method))
-            (return found-method)))))
+          (when found-method (return fqcn)))))
 

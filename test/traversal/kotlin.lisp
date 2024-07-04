@@ -252,8 +252,8 @@
 
 (test find-signature-for-stdlib
   (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
-    (let* ((path "src/main/kotlin/p1/KotlinReference.kt")
-           (actual (inga/traversal/kotlin::find-signature-for-stdlib "listOf" path)))
-      (is (and (equal "kotlin.collections.CollectionsKt" (jsown:val actual "fqcn"))
-               (equal "listOf" (jsown:val actual "name")))))))
+    (let ((path "src/main/kotlin/p1/KotlinReference.kt"))
+      (is (equal
+            "kotlin.collections.CollectionsKt"
+            (inga/traversal/kotlin::find-signature-for-stdlib "listOf" path))))))
 

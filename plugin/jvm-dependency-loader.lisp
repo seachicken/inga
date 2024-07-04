@@ -55,11 +55,11 @@
                                          base-path))))
       (when results
         (mapcar (lambda (method)
-                  (let* ((type (when (jsown:keyp method "returnType")
-                                 (jsown:val method "returnType")))
-                         (name (when (jsown:keyp type "name")
-                                 (jsown:val type "name"))))
-                    (when (find-if (lambda (type) (equal name type))
+                  (let* ((return-type (when (jsown:keyp method "returnType")
+                                        (jsown:val method "returnType")))
+                         (return-name (when (jsown:keyp return-type "name")
+                                 (jsown:val return-type "name"))))
+                    (when (find-if (lambda (name) (equal name return-name))
                                    '("boolean"
                                      "long"
                                      "short"
@@ -68,8 +68,17 @@
                                      "char"
                                      "float"
                                      "double"))
-                      (setf (jsown:val type "name") (string-upcase name)))
-                    method))
+                      (setf (jsown:val return-type "name") (string-upcase return-name)))
+                    `((:name . ,(jsown:val method "name"))
+                      (:fq-name .
+                       ,(format nil "~a~:[~;-~]~:*~{~a~^-~}"
+                                (jsown:val method "name")
+                                (mapcar (lambda (type)
+                                          (if (jsown:val type "isArray")
+                                              (concatenate 'string (jsown:val type "name") "[]")
+                                              (jsown:val type "name")))
+                                        (jsown:val method "parameterTypes"))))
+                      (:return . ,(jsown:val return-type "name")))))
                 (jsown:parse results))))))
 
 (defun load-structure (fq-class-name from)
