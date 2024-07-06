@@ -119,11 +119,25 @@
              ,(cons :top-offset
                     (convert-to-top-offset
                       (merge-pathnames "src/main/java/p1/PrivateMethodReference.java" *java-path*)
-                      '((:line . 5) (:offset . 9))))))
+                      '((:line . 8) (:offset . 9))))))
           (find-references
             `((:path . "src/main/java/p1/PrivateMethodReference.java")
               (:name . "method2")
               (:fq-name . "p1.PrivateMethodReference.method2"))
+            *index*)))))
+
+(test find-references-with-stdlib-param
+  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+    (is (equal
+          `(((:path . "src/main/java/p1/PrivateMethodReference.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames "src/main/java/p1/PrivateMethodReference.java" *java-path*)
+                      '((:line . 15) (:offset . 9))))))
+          (find-references
+            `((:path . "src/main/java/p1/PrivateMethodReference.java")
+              (:name . "methodWithStdLib")
+              (:fq-name . "p1.PrivateMethodReference.methodWithStdLib-java.nio.file.Path"))
             *index*)))))
 
 (test find-fq-name-for-reference-with-enum
@@ -216,6 +230,16 @@
           (inga/traversal/base::matches-signature
             "java.lang.Object.wait-LONG-INT"
             "java.lang.Object.*"
+            *index*)))))
+
+(test matches-signature-with-additional-strings
+  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+    (is (equal
+          t
+          ;; https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Paths.html#get(java.lang.String,java.lang.String...)
+          (inga/traversal/base::matches-signature
+            "method-java.lang.String"
+            "method-java.lang.String-java.lang.String[]"
             *index*)))))
 
 (test find-class-hierarchy-with-app-class
@@ -424,15 +448,6 @@
           (inga/traversal/base::matches-signature
             "com.google.common.collect.Lists.newArrayList-java.lang.String-java.lang.String"
             "com.google.common.collect.Lists.newArrayList-java.lang.Object[]"
-            *index*)))))
-
-(test not-matches-signature-with-object-array
-  (with-fixture jvm-ctx (*lightrun-path* 'ast-index-disk)
-    (is (eq
-          nil
-          (inga/traversal/base::matches-signature
-            "build"
-            "build-java.lang.Object[]"
             *index*)))))
 
 (test find-class-hierarchy-with-standard-class

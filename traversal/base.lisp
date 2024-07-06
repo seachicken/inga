@@ -208,8 +208,10 @@
           (api-arg-names (cdr split-api-fq-names)))
       (unless (or (eq (length target-arg-names) (length api-arg-names))
                   (and (> (length api-arg-names) 0)
-                       (<= (length api-arg-names) (length target-arg-names))
-                       (is-array (nth (1- (length api-arg-names)) api-arg-names))))
+                       (is-array (nth (1- (length api-arg-names)) api-arg-names))
+                       (or
+                         (<= (length api-arg-names) (length target-arg-names))
+                         (eq (1- (length api-arg-names)) (length target-arg-names)))))
         (return-from matches-signature))
 
       (loop for target-arg-name in target-arg-names
