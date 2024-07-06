@@ -29,13 +29,12 @@
 (defparameter *processing-msg* nil)
 
 (defun run-server (params)
-  (let* ((ctx (inga/main::start (cdr (assoc :root-path params)) '(:java)
-                                :include (cdr (assoc :include params))
-                                :exclude (cdr (assoc :exclude params))
-                                :temp-path (cdr (assoc :temp-path params)))))
+  (let ((ctx (inga/main::start (cdr (assoc :root-path params)) '(:java)
+                               :include (cdr (assoc :include params))
+                               :exclude (cdr (assoc :exclude params))
+                               :temp-path (cdr (assoc :temp-path params)))))
     (init-msg-q)
-    (handle-msg params ctx)
-    (inga/main::stop ctx)))
+    (handle-msg params ctx)))
 
 (defun handle-msg (params ctx &optional root-host-paths)
   (let ((root-path (cdr (assoc :root-path params)))
@@ -69,6 +68,7 @@
                        root-host-paths)))
          (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":{\"change\":2,\"save\":false}}}"))
         ((equal (jsown:val msg "method") "shutdown")
+         (inga/main::stop ctx)
          (print-response-msg (jsown:val msg "id") "null")
          (return-from handle-msg))
         (t
