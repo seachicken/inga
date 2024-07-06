@@ -539,7 +539,8 @@
   (loop for fqcn in '("kotlin.collections.CollectionsKt")
         do
         (let ((found-method (find-if (lambda (method)
-                                       (equal (cdr (assoc :name method)) target-name))
+                                       (equal (cdr (assoc :name method))
+                                              (concatenate 'string fqcn "." target-name)))
                                      (load-signatures fqcn path))))
           (when found-method (return fqcn)))))
 

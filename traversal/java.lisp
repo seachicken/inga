@@ -150,7 +150,9 @@
       (t :module-default))))
 
 (defmethod find-reference ((traversal traversal-java) target-pos fq-name ast path)
-  (when (matches-signature fq-name (cdr (assoc :fq-name target-pos)) (traversal-index traversal))
+  (when (find-signature fq-name
+                        #'(lambda (fqcn) (list target-pos))
+                        (traversal-index traversal))
     `((:path . ,path)
       (:top-offset . ,(ast-value ast "startPos")))))
 

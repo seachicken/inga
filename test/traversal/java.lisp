@@ -195,7 +195,7 @@
   (with-fixture jvm-ctx (*java-path* 'ast-index-disk)
     (is (eq
           t
-          (matches-signature
+          (inga/traversal/base::matches-signature
             "p2.ApiSignature-p2.ChildClass"
             "p2.ApiSignature-p2.ParentClass"
             *index*)))))
@@ -204,7 +204,7 @@
   (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
     (is (eq
           t
-          (matches-signature
+          (inga/traversal/base::matches-signature
             "java.lang.Object-equals-NULL"
             "java.lang.Object-equals-java.lang.Object"
             *index*)))))
@@ -213,7 +213,7 @@
   (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
     (is (eq
           t
-          (matches-signature
+          (inga/traversal/base::matches-signature
             "java.lang.Object.wait-LONG-INT"
             "java.lang.Object.*"
             *index*)))))
@@ -403,7 +403,7 @@
     (is (eq
           nil
           ;; https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/web/util/UriComponentsBuilder.html
-          (matches-signature
+          (inga/traversal/base::matches-signature
             "build"
             "build-boolean"
             *index*)))))
@@ -412,7 +412,7 @@
   (with-fixture jvm-ctx (*spring-boot-path* 'ast-index-disk :include '("src/main/**"))
     (is (eq
           t
-          (matches-signature
+          (inga/traversal/base::matches-signature
             "io.spring.application.CursorPager.CursorPager-java.util.ArrayList-io.spring.application.CursorPager$Direction-BOOLEAN"
             "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager$Direction-BOOLEAN"
             *index*)))))
@@ -421,7 +421,7 @@
   (with-fixture jvm-ctx (*guava-modules* 'ast-index-memory)
     (is (eq
           t
-          (matches-signature
+          (inga/traversal/base::matches-signature
             "com.google.common.collect.Lists.newArrayList-java.lang.String-java.lang.String"
             "com.google.common.collect.Lists.newArrayList-java.lang.Object[]"
             *index*)))))
@@ -430,7 +430,7 @@
   (with-fixture jvm-ctx (*lightrun-path* 'ast-index-disk)
     (is (eq
           nil
-          (matches-signature
+          (inga/traversal/base::matches-signature
             "build"
             "build-java.lang.Object[]"
             *index*)))))

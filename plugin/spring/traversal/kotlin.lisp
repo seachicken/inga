@@ -216,12 +216,9 @@
       (call-next-method)))
 
 (defmethod find-rest-clients ((traversal traversal-kotlin) fq-name ast path)
-  (let* ((rest-template-apis (gethash :rest-template *rest-client-apis*))
-         (matched-api (find-if (lambda (api)
-                                 (matches-signature fq-name
-                                                    (cdr (assoc :fq-name api))
-                                                    (traversal-index traversal)))
-                               rest-template-apis)))
+  (let ((matched-api (find-signature fq-name
+                                     #'(lambda (fqcn) (gethash :rest-template *rest-client-apis*))
+                                     (traversal-index traversal))))
     (when matched-api
       (mapcar (lambda (pos)
                 `((:host . ,(find-api-host 0 ast))

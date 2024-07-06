@@ -16,7 +16,7 @@
                 #:create-indexes
                 #:get-ast) 
   (:import-from #:inga/logger
-                #:log-debug)
+                #:log-error)
   (:export #:traversal
            #:*traversals*
            #:*file-index*
@@ -42,7 +42,6 @@
            #:find-reference-to-literal
            #:find-reference-to-literal-generic
            #:find-signature
-           #:matches-signature
            #:find-class-hierarchy
            #:find-class-hierarchy-generic
            #:convert-to-top-offset
@@ -187,12 +186,12 @@
           with target-name = (subseq (ppcre:regex-replace-all fq-class-name fq-name "") 1)
           with matched-methods
           do
-          (when (matches-signature target-name (cdr (assoc :fq-name method)) index)
+          (when (matches-signature fq-name (cdr (assoc :fq-name method)) index)
             (push method matched-methods))
           finally
           (return (progn
                     (when (> (length matched-methods) 1)
-                      (log-debug (format nil "get an unexpected ambiguous signature!~%  methods: ~a" matched-methods)))
+                      (log-error (format nil "get an unexpected ambiguous signature!~%  methods: ~a" matched-methods)))
                     (first matched-methods))))))
 
 (defun matches-signature (target-fq-name api-fq-name index)
