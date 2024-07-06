@@ -71,7 +71,11 @@
 
 (defmethod stop-indexes ((ast-index ast-index-disk))
   (stop-all-parsers)
-  (commit-src-hash ast-index))
+  (inga/logger:log-info "before commit-src")
+  (commit-src-hash ast-index)
+  (inga/logger:log-info "after commit-src")
+  
+  )
 
 (defmethod clean-indexes ((ast-index ast-index-disk))
   (stop-indexes ast-index)

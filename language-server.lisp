@@ -34,7 +34,10 @@
                                 :exclude (cdr (assoc :exclude params))
                                 :temp-path (cdr (assoc :temp-path params)))))
     (init-msg-q)
-    (handle-msg params ctx)))
+    (handle-msg params ctx)
+    
+         (inga/logger:log-info "ended server")
+    ))
 
 (defun handle-msg (params ctx &optional root-host-paths)
   (let ((root-path (cdr (assoc :root-path params)))
@@ -68,8 +71,11 @@
                        root-host-paths)))
          (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":{\"change\":2,\"save\":false}}}"))
         ((equal (jsown:val msg "method") "shutdown")
+         (inga/logger:log-info "before stop")
          (inga/main::stop ctx)
+         (inga/logger:log-info "after stop")
          (print-response-msg (jsown:val msg "id") "null")
+         (inga/logger:log-info "sended shutdown msg")
          (return-from handle-msg))
         (t
          (setf *processing-msg*
