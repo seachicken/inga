@@ -31,6 +31,8 @@
   (setf (slot-value ast-index 'index-path) (merge-pathnames "index/" temp-path)))
 
 (defmethod create-indexes ((ast-index ast-index-disk) ctx-kind include include-files exclude)
+  (inga/logger:log-info (format nil "probe-file: ~a, path: ~a" (probe-file (merge-pathnames "src-hash.json" (ast-index-disk-path ast-index)))
+                     (merge-pathnames "src-hash.json" (ast-index-disk-path ast-index))))
   (when (probe-file (merge-pathnames "src-hash.json" (ast-index-disk-path ast-index)))
     (let ((src-hash (jsown:parse (alexandria:read-file-into-string
                                    (merge-pathnames "src-hash.json"
