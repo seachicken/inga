@@ -1,5 +1,6 @@
 (defpackage #:inga/plugin/jvm-dependency-loader
-  (:use #:cl)
+  (:use #:cl
+        #:inga/utils)
   (:import-from #:jsown)
   (:import-from #:inga/cache
                 #:defunc)
@@ -69,7 +70,7 @@
                                      "float"
                                      "double"))
                       (setf (jsown:val return-type "name") (string-upcase return-name)))
-                    `((:name . ,(jsown:val method "name"))
+                    `((:name . ,(first (last (split #\. (jsown:val method "name")))))
                       (:fq-name .
                        ,(format nil "~a~:[~;-~]~:*~{~a~^-~}"
                                 (jsown:val method "name")
