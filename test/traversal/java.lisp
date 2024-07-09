@@ -223,15 +223,6 @@
             "java.lang.Object-equals-java.lang.Object"
             *index*)))))
 
-(test matches-signature-with-wild-card
-  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
-    (is (eq
-          t
-          (inga/traversal/base::matches-signature
-            "java.lang.Object.wait-LONG-INT"
-            "java.lang.Object.*"
-            *index*)))))
-
 (test matches-signature-with-additional-strings
   (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
     (is (equal

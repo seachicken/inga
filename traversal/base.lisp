@@ -196,10 +196,7 @@
 
 (defun matches-signature (target-fq-name api-fq-name index)
   (let* ((split-target-fq-names (split #\- target-fq-name))
-         (split-api-fq-names (split #\- api-fq-name))
-         (split-api-wild-card-naems (split #\* api-fq-name)))
-    (when (uiop:string-prefix-p (first split-api-wild-card-naems) target-fq-name)
-      (return-from matches-signature t))
+         (split-api-fq-names (split #\- api-fq-name)))
 
     (unless (equal (first split-target-fq-names) (first split-api-fq-names))
       (return-from matches-signature))
