@@ -95,6 +95,7 @@
                                   :if-does-not-exist :create)
                (format out "~a" results))))
           ((equal method "textDocument/didChange")
+           (format t "===didChange~%")
            (let* ((path (get-relative-path
                           (subseq (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
                           root-host-paths))
@@ -121,14 +122,15 @@
                                       :if-does-not-exist :create)
                    (format out "~a" (to-state-json change-pos root-path)))))))
           ((equal method "textDocument/didSave")
+           (format t "===didSave~%")
            (let ((path (get-relative-path
                          (subseq (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
                          root-host-paths)))
              (if (probe-file (merge-pathnames path root-path))
-                 (update-index (context-ast-index ctx) path)
+                 (time (update-index (context-ast-index ctx) path))
                  (log-error (format nil "~a is not found" path)))
-             (let* ((diffs (get-diff root-path base-commit))
-                    (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
+             (let* ((diffs (time (get-diff root-path base-commit)))
+                    (results (inga/main:to-json (time (inga/main:analyze ctx diffs)) root-path)))
                (with-open-file (out (merge-pathnames "report/report.json" temp-path)
                                     :direction :output
                                     :if-exists :supersede
