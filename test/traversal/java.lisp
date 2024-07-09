@@ -205,6 +205,16 @@
               (:fq-name . "p1.JavaReference.method"))
             *index*)))))
 
+(test find-signature-without-array
+  (with-fixture jvm-ctx (*java-path* 'ast-index-disk)
+    (is (equal
+          '((:fq-name . "java.util.List.of-java.lang.Object"))
+          (find-signature
+            "java.util.List.of-java.lang.String"
+            #'(lambda (fqcn) '(((:fq-name . "java.util.List.of-java.lang.Object"))
+                               ((:fq-name . "java.util.List.of-java.lang.Object[]"))))
+            *index*)))))
+
 (test matches-signature
   (with-fixture jvm-ctx (*java-path* 'ast-index-disk)
     (is (eq

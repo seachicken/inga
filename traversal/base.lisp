@@ -16,7 +16,7 @@
                 #:create-indexes
                 #:get-ast) 
   (:import-from #:inga/logger
-                #:log-error)
+                #:log-info)
   (:export #:traversal
            #:*traversals*
            #:*file-index*
@@ -183,15 +183,18 @@
       (setf fq-class-name (string-right-trim "[]" fq-class-name)))
 
     (loop for method in (funcall find-signatures fq-class-name)
-          with target-name = (subseq (ppcre:regex-replace-all fq-class-name fq-name "") 1)
+          with target-is-array = (is-array fq-name)
           with matched-methods
           do
           (when (matches-signature fq-name (cdr (assoc :fq-name method)) index)
-            (push method matched-methods))
+            (if (or (and target-is-array (is-array (cdr (assoc :fq-name method))))
+                    (and (not target-is-array) (not (is-array (cdr (assoc :fq-name method))))))
+                (push method matched-methods)  
+                (setf matched-methods (append matched-methods (list method)))))
           finally
           (return (progn
                     (when (> (length matched-methods) 1)
-                      (log-error (format nil "get an unexpected ambiguous signature!~%  fq-name: ~a~%  matched-methods: ~a" fq-name matched-methods)))
+                      (log-info (format nil "matched multiple signatures.~%  fq-name: ~a~%  matched-methods: ~a" fq-name matched-methods)))
                     (first matched-methods))))))
 
 (defun matches-signature (target-fq-name api-fq-name index)
