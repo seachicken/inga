@@ -191,7 +191,7 @@
           finally
           (return (progn
                     (when (> (length matched-methods) 1)
-                      (log-error (format nil "get an unexpected ambiguous signature!~%  methods: ~a" matched-methods)))
+                      (log-error (format nil "get an unexpected ambiguous signature!~%  fq-name: ~a~%  matched-methods: ~a" fq-name matched-methods)))
                     (first matched-methods))))))
 
 (defun matches-signature (target-fq-name api-fq-name index)
