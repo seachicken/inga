@@ -187,6 +187,21 @@
               path
               *index*))))))
 
+(test find-reference-to-literal-field
+  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+    (let ((path "src/main/java/p1/LiteralReference.java"))
+      (is (equal
+            `(((:path . ,path)
+               (:name . "field literal")
+               (:top-offset .
+                ,(convert-to-top-offset
+                   (merge-pathnames path *java-path*) '((:line . 4) (:offset . 43))))))
+            (find-reference-to-literal
+              ;;        ↓
+              ;; method(literal);
+              (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 16)))
+              path))))))
+
 (test find-fq-name-for-factory-method
   (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
     (let ((path "src/main/java/p1/TypeInferenceReference.java"))

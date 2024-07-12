@@ -362,14 +362,18 @@
                                                (traversal-index trav)))))
            (return-from
              find-reference-to-literal-generic
-             (mapcan (lambda (ref)
-                       (let ((ast (first (get-asts (find-ast ref (traversal-index trav)) '("ASSIGNMENT")))))
-                         (when ast
-                           (find-reference-to-literal-generic
-                             trav
-                             (first (get-asts ast '("IDENTIFIER")))
-                             (cdr (assoc :path ref))))))
-                     refs))))
+             (if (get-asts v '("STRING_LITERAL"))
+                 (find-reference-to-literal-generic
+                   trav (first (get-asts v '("STRING_LITERAL"))) path)
+                 (mapcan (lambda (ref)
+                           (let ((ast (first (get-asts (find-ast ref (traversal-index trav))
+                                                       '("ASSIGNMENT")))))
+                             (when ast
+                               (find-reference-to-literal-generic
+                                 trav
+                                 (first (get-asts ast '("IDENTIFIER")))
+                                 (cdr (assoc :path ref))))))
+                         refs)))))
        (when (and (equal (ast-value ast "type") "METHOD")
                   (filter-by-name (get-asts ast '("VARIABLE")) variable-name))
          (let ((refs (find-references (ast-to-pos ast (traversal-index trav) path)
