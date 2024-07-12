@@ -111,6 +111,23 @@
               (:fq-name . "p1.KotlinReference.method"))
             *index*)))))
 
+(test find-reference-to-literal-field
+  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+    (let ((path "src/main/kotlin/p1/LiteralReference.kt"))
+      (is (equal
+            `(((:path . ,path)
+               (:name . "field literal")
+               (:top-offset .
+                ,(convert-to-top-offset
+                   (merge-pathnames path *kotlin-path*) '((:line . 12) (:offset . 37))))))
+            (find-reference-to-literal
+              ;;        ↓
+              ;; method(literal);
+              (first (get-asts
+                       (find-ast-in-ctx `((:path . ,path) (:line . 5) (:offset . 16)))
+                       '("REFERENCE_EXPRESSION")))
+              path))))))
+
 (test find-fq-name-for-reference-with-enum
   (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
     (let ((path "src/main/kotlin/p1/EnumReference.kt"))

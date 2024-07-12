@@ -407,7 +407,10 @@
                                                               "STRING_TEMPLATE")))))
                                  (find-reference-to-literal-generic
                                    trav ast (cdr (assoc :path ref-pos)))))
-                             refs)))))))))
+                             refs)))))))
+    ((equal (ast-value ast "type") "REFERENCE_EXPRESSION")
+     (let ((def (find-definition (ast-value ast "name") ast)))
+       (find-reference-to-literal-generic trav (first (get-asts def '("STRING_TEMPLATE"))) path)))))
 
 (defun find-definition (variable-name ast)
   (unless variable-name
@@ -423,6 +426,8 @@
     (when (equal (ast-value ast "type") "CLASS")
       (loop for inner-class in (get-asts ast '("CLASS_BODY" "CLASS"))
         do (enqueue q inner-class))
+      (loop for dec in (get-asts ast '("CLASS_BODY" "OBJECT_DECLARATION"))
+        do (enqueue q dec))
 
       (loop for param in (get-asts ast '("PRIMARY_CONSTRUCTOR"
                                          "VALUE_PARAMETER_LIST"
@@ -431,6 +436,11 @@
             do (when (equal (ast-value param "name") variable-name)
                  (return-from find-definition (values param index))))
 
+      (let ((v (first (filter-by-name (get-asts ast '("CLASS_BODY" "PROPERTY"))
+                                      variable-name))))
+        (when v (return v))))
+
+    (when (equal (ast-value ast "type") "OBJECT_DECLARATION")
       (let ((v (first (filter-by-name (get-asts ast '("CLASS_BODY" "PROPERTY"))
                                       variable-name))))
         (when v (return v))))
