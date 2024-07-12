@@ -9,12 +9,12 @@ RUN ros && \
   ros build /inga/roswell/inga.ros
 
 
-FROM eclipse-temurin:21-jdk-jammy
+FROM eclipse-temurin:21-jdk-alpine
 
-ENV JAVAPARSER 0.3.5
-ENV KTPARSRER 0.1.6
-ENV SPRING_PROPERTY_LOADER 0.3.2
-ENV JVM_DEPENDENCY_LOADER 0.6.3
+ENV JAVAPARSER=0.3.5
+ENV KTPARSRER=0.1.6
+ENV SPRING_PROPERTY_LOADER=0.3.2
+ENV JVM_DEPENDENCY_LOADER=0.6.3
 
 COPY --from=build /inga/roswell/inga /usr/local/bin/
 
@@ -23,17 +23,14 @@ ADD https://github.com/seachicken/ktparser/releases/download/v$KTPARSRER/ktparse
 ADD https://github.com/seachicken/jvm-dependency-loader/releases/download/v$JVM_DEPENDENCY_LOADER/jvm-dependency-loader-$JVM_DEPENDENCY_LOADER.jar ./libs/jvm-dependency-loader.jar
 ADD https://github.com/seachicken/spring-property-loader/releases/download/v$SPRING_PROPERTY_LOADER/spring-property-loader-$SPRING_PROPERTY_LOADER.jar ./libs/spring-property-loader.jar
 
-RUN apt-get update && \
-  apt-get install -y git maven && \
-  apt-get clean && \
-  rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache git maven
 
 WORKDIR /work
 
 RUN git config --global --add safe.directory /work
 
-ENV INGA_HOME /
-ENV INGA_CONTEXT java
+ENV INGA_HOME=/
+ENV INGA_CONTEXT=java
 
 ENTRYPOINT ["inga"]
 
