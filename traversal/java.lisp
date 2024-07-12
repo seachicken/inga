@@ -114,7 +114,8 @@
                   (jsown:keyp ast "parent")
                   (equal (ast-value (jsown:val ast "parent") "type") "CLASS") 
                   (equal (ast-value ast "type") "VARIABLE"))
-                  (equal (ast-value ast "type") "METHOD"))
+                (equal (ast-value ast "type") "METHOD")
+                (equal (ast-value ast "type") "BLOCK"))
               (contains-offset (jsown:val ast "startPos") (jsown:val ast "endPos")
                                start-offset end-offset)
               (jsown:keyp ast "name"))
@@ -161,8 +162,10 @@
 
 (defun find-fq-name-for-reference (ast path index)
   (alexandria:switch ((ast-value ast "type") :test #'equal)
-    ("VARIABLE"
-     (find-fq-name-for-definition (ast-value ast "name") ast))
+    ("ASSIGNMENT"
+     (let* ((lhs (first (get-asts ast '("MEMBER_SELECT"))))
+            (v (when lhs (find-definition (ast-value lhs "name") lhs))))
+       (when v (find-fq-name-for-definition (ast-value v "name") v))))
     ("NEW_CLASS"
      (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
              (find-fq-class-name-by-class-name (ast-value ast "name") ast)
@@ -311,6 +314,7 @@
 
   (loop
     with q = (make-queue)
+    with has-this = (equal (ast-value (first (get-asts ast '("IDENTIFIER"))) "name") "this")
     initially (enqueue q ast)
     do
     (setf ast (dequeue q))
@@ -319,7 +323,8 @@
     (let ((variable (first (if (equal (ast-value ast "type") "VARIABLE")
                                (filter-by-name (list ast) variable-name)
                                (filter-by-name (get-asts ast '("VARIABLE")) variable-name)))))
-      (when variable
+      (when (and variable
+                 (if has-this (not (equal (ast-value ast "type") "METHOD")) t))
         (return variable)))
 
     (when (get-asts ast '("LAMBDA_EXPRESSION") :direction :upward)
@@ -357,22 +362,14 @@
                                                (traversal-index trav)))))
            (return-from
              find-reference-to-literal-generic
-             (loop for ref in refs
-                   do
-                   (let* ((defs (find-definitions
-                                  `((:path . ,path)
-                                    (:start-offset . ,(cdr (assoc :top-offset ref)))
-                                    (:end-offset . ,(cdr (assoc :top-offset ref))))))
-                          (refs (remove-if (lambda (r) (equal r ref))
-                                           (mapcan (lambda (d)
-                                                     (find-references d (traversal-index trav))) defs)))) 
-                     (return (mapcan (lambda (ref)
-                                       (find-reference-to-literal-generic
-                                         trav
-                                         (first (get-asts (find-ast ref (traversal-index trav))
-                                                          '("VARIABLE") :direction :upward))
-                                         (cdr (assoc :path ref))))
-                                     refs)))))))
+             (mapcan (lambda (ref)
+                       (let ((ast (first (get-asts (find-ast ref (traversal-index trav)) '("ASSIGNMENT")))))
+                         (when ast
+                           (find-reference-to-literal-generic
+                             trav
+                             (first (get-asts ast '("IDENTIFIER")))
+                             (cdr (assoc :path ref))))))
+                     refs))))
        (when (and (equal (ast-value ast "type") "METHOD")
                   (filter-by-name (get-asts ast '("VARIABLE")) variable-name))
          (let ((refs (find-references (ast-to-pos ast (traversal-index trav) path)

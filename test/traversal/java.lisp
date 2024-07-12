@@ -84,6 +84,40 @@
           (find-definitions
             (create-range "src/main/java/p1/GenericTypeDefinition.java" :line 6))))))
 
+(test find-definition-of-field-reference
+  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+    (let ((path "src/main/java/p1/FieldDefinition.java"))
+      (is (equal
+            ;;                ↓
+            ;; private String field;
+            (convert-to-top-offset
+              (merge-pathnames path *java-path*)
+              '((:line . 4) (:offset . 20)))
+            ;;     ↓
+            ;; this.field = p;
+            (ast-value
+              (find-definition
+                "field"
+                (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 13))))
+              "pos"))))))
+
+(test find-definition-of-parameter
+  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+    (let ((path "src/main/java/p1/FieldDefinition.java"))
+      (is (equal
+            ;;                           ↓
+            ;; public void method(String p) {
+            (convert-to-top-offset
+              (merge-pathnames path *java-path*)
+              '((:line . 6) (:offset . 31)))
+            ;;              ↓
+            ;; this.field = p;
+            (ast-value
+              (find-definition
+                "p"
+                (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 22))))
+              "pos"))))))
+
 (test find-references-for-new-class
   (with-fixture jvm-ctx (*java-path* 'ast-index-disk)
     (is (equal
