@@ -37,6 +37,38 @@
                       '((:line . 5) (:offset . 27))))))
           (find-definitions (create-range "src/main/kotlin/p1/ValueClassDefinition.kt" :line 5))))))
 
+(test find-definition-of-field-reference
+  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+    (let ((path "src/main/kotlin/p1/FieldDefinition.kt"))
+      (is (equal
+            ;;             ↓
+            ;; private var field: String = ""
+            (convert-to-top-offset
+              (merge-pathnames path *kotlin-path*) '((:line . 4) (:offset . 17)))
+            ;;      ↓
+            ;; this.field = p
+            (ast-value
+              (inga/traversal/kotlin::find-definition
+                "field"
+                (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 14))))
+              "textOffset"))))))
+
+(test find-definition-of-parameter
+  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+    (let ((path "src/main/kotlin/p1/FieldDefinition.kt"))
+      (is (equal
+            ;;            ↓
+            ;; fun method(p: String) {
+            (convert-to-top-offset
+              (merge-pathnames path *kotlin-path*) '((:line . 6) (:offset . 16)))
+            ;;              ↓
+            ;; this.field = p
+            (ast-value
+              (inga/traversal/kotlin::find-definition
+                "p"
+                (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 22))))
+              "textOffset"))))))
+
 (test find-references-for-primary-constructor
   (with-fixture jvm-ctx (*kotlin-path* 'ast-index-disk)
     (is (equal

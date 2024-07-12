@@ -91,8 +91,7 @@
             ;;                ↓
             ;; private String field;
             (convert-to-top-offset
-              (merge-pathnames path *java-path*)
-              '((:line . 4) (:offset . 20)))
+              (merge-pathnames path *java-path*) '((:line . 4) (:offset . 20)))
             ;;     ↓
             ;; this.field = p;
             (ast-value
@@ -108,8 +107,7 @@
             ;;                           ↓
             ;; public void method(String p) {
             (convert-to-top-offset
-              (merge-pathnames path *java-path*)
-              '((:line . 6) (:offset . 31)))
+              (merge-pathnames path *java-path*) '((:line . 6) (:offset . 31)))
             ;;              ↓
             ;; this.field = p;
             (ast-value
