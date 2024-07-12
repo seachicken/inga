@@ -11,10 +11,10 @@ RUN ros && \
 
 FROM eclipse-temurin:21-jdk-jammy
 
-ENV JAVAPARSER 0.3.5
-ENV KTPARSRER 0.1.6
-ENV SPRING_PROPERTY_LOADER 0.3.2
-ENV JVM_DEPENDENCY_LOADER 0.6.3
+ENV JAVAPARSER=0.3.5
+ENV KTPARSRER=0.1.6
+ENV SPRING_PROPERTY_LOADER=0.3.2
+ENV JVM_DEPENDENCY_LOADER=0.6.3
 
 COPY --from=build /inga/roswell/inga /usr/local/bin/
 
@@ -32,8 +32,8 @@ WORKDIR /work
 
 RUN git config --global --add safe.directory /work
 
-ENV INGA_HOME /
-ENV INGA_CONTEXT java
+ENV INGA_HOME=/
+ENV INGA_CONTEXT=java
 
 ENTRYPOINT ["inga"]
 

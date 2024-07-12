@@ -8,7 +8,7 @@ RUN ros && \
 
 FROM node:18-slim
 
-ENV TSPARSER 0.1.1
+ENV TSPARSER=0.1.1
 
 COPY --from=build /inga/roswell/inga /usr/local/bin/
 
@@ -23,8 +23,8 @@ WORKDIR /work
 
 RUN git config --global --add safe.directory /work
 
-ENV INGA_HOME /
-ENV INGA_CONTEXT typescript
+ENV INGA_HOME=/
+ENV INGA_CONTEXT=typescript
 
 ENTRYPOINT ["inga"]
 
