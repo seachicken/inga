@@ -1,8 +1,8 @@
 ARG BASE_IMAGE
 FROM $BASE_IMAGE
 
-ENV LISP sbcl-bin
-ENV INGA_HOME /inga
+ENV LISP=sbcl-bin
+ENV INGA_HOME=/inga
 
 WORKDIR /inga
 
