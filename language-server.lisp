@@ -121,11 +121,15 @@
                                       :if-does-not-exist :create)
                    (format out "~a" (to-state-json change-pos root-path)))))))
           ((equal method "textDocument/didSave")
+           (inga/logger:log-info "enter didSave")
            (let ((path (get-relative-path
                          (subseq (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
                          root-host-paths)))
              (if (probe-file (merge-pathnames path root-path))
-                 (update-index (context-ast-index ctx) path)
+                 (progn
+                   (inga/logger:log-info "before update index")
+                   (update-index (context-ast-index ctx) path)
+                   (inga/logger:log-info "after update index"))
                  (log-error (format nil "~a is not found" path)))
              (let* ((diffs (get-diff root-path base-commit))
                     (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
@@ -133,7 +137,9 @@
                                     :direction :output
                                     :if-exists :supersede
                                     :if-does-not-exist :create)
-                 (format out "~a" results)))))))
+                 (format out "~a" results))))
+           (inga/logger:log-info "leave didSave")
+           )))
       (process-msg-if-present (dequeue-msg) ctx root-path temp-path base-commit root-host-paths))))
 
 (defun extract-json (stream)

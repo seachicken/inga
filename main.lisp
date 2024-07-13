@@ -182,6 +182,7 @@
       found-context))
 
 (defun analyze (ctx diffs)
+  (inga/logger:log-info "enter analyze")
   (setf diffs (mapcar (lambda (diff)
                         (push (cons :start-offset
                                     (convert-to-top-offset
@@ -202,6 +203,7 @@
                                         (cons :offset -1))))
                               diff))
                       diffs))
+  (inga/logger:log-info (format nil "get diffs: ~a" diffs))
   (remove-duplicates
     (mapcan (lambda (range)
               (when (is-analysis-target (context-kind ctx)
