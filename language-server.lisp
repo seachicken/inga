@@ -88,8 +88,8 @@
           ((equal method "initialized")
            (let* ((diffs (get-diff root-path base-commit))
                   (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
-             (ensure-directories-exist (merge-pathnames "inga-report/" temp-path))
-             (with-open-file (out (merge-pathnames "inga-report/report.json" temp-path)
+             (ensure-directories-exist (merge-pathnames "inga-report/"))
+             (with-open-file (out (merge-pathnames "inga-report/report.json")
                                   :direction :output
                                   :if-exists :supersede
                                   :if-does-not-exist :create)
@@ -130,7 +130,7 @@
              (let* ((diffs (get-diff root-path base-commit))
                     (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
                (inga/logger:log-info "after anlyze")
-               (with-open-file (out (merge-pathnames "report/report.json")
+               (with-open-file (out (merge-pathnames "inga-report/report.json")
                                     :direction :output
                                     :if-exists :supersede
                                     :if-does-not-exist :create)
