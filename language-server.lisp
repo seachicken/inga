@@ -135,7 +135,7 @@
                                     :if-exists :supersede
                                     :if-does-not-exist :create)
                  (format out "~a" results)))))))
-      (process-msg-if-present (dequeue-msg) ctx root-path temp-path base-commit root-host-paths))))
+      (process-msg-if-present (dequeue-msg) ctx root-path output-path temp-path base-commit root-host-paths))))
 
 (defun extract-json (stream)
   ;; Content-Length: 99
