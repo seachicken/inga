@@ -49,6 +49,7 @@
 
 (defun parse-argv (argv)
   (loop with root-path = "."
+        with output-path
         with temp-path
         with include
         with exclude
@@ -63,6 +64,8 @@
               (setf root-path (pop argv)))
              ("--back-path"
               (setf root-path (pop argv)))
+             ("--output-path"
+              (setf output-path (pop argv)))
              ("--temp-path"
               (setf temp-path (pop argv)))
              ("--include"
@@ -78,6 +81,10 @@
         (return
           (let ((result
                   `((:root-path . ,(truename (uiop:merge-pathnames* root-path)))
+                    (:output-path .
+                     ,(if output-path
+                          (pathname (concatenate 'string output-path "/"))
+                          (merge-pathnames ".inga/")))
                     (:temp-path .
                      ,(if temp-path
                           (pathname (concatenate 'string temp-path "/"))
@@ -92,6 +99,7 @@
 (defun command (params)
   (handler-case
     (let* ((root-path (cdr (assoc :root-path params)))
+           (output-path (cdr (assoc :output-path params)))
            (temp-path (cdr (assoc :temp-path params)))
            (include (cdr (assoc :include params)))
            (exclude (cdr (assoc :exclude params)))
@@ -101,8 +109,7 @@
                        (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
                        :include include :exclude exclude :temp-path temp-path))
            (results (analyze ctx diffs)))
-      (ensure-directories-exist (merge-pathnames "report/" temp-path))
-      (with-open-file (out (merge-pathnames "report/report.json" temp-path)
+      (with-open-file (out (merge-pathnames "report/report.json" output-path)
                            :direction :output
                            :if-exists :supersede
                            :if-does-not-exist :create)

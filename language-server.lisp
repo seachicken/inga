@@ -38,6 +38,7 @@
 
 (defun handle-msg (params ctx &optional root-host-paths)
   (let ((root-path (cdr (assoc :root-path params)))
+        (output-path (cdr (assoc :output-path params)))
         (temp-path (cdr (assoc :temp-path params)))
         (base-commit (cdr (assoc :base-commit params)))
         (msg (loop while *standard-input* do
@@ -73,10 +74,10 @@
          (return-from handle-msg))
         (t
          (setf *processing-msg*
-               (process-msg-if-present msg ctx root-path temp-path base-commit root-host-paths))))))
+               (process-msg-if-present msg ctx root-path output-path temp-path base-commit root-host-paths))))))
   (handle-msg params ctx root-host-paths))
 
-(defun process-msg-if-present (msg ctx root-path temp-path base-commit root-host-paths)
+(defun process-msg-if-present (msg ctx root-path output-path temp-path base-commit root-host-paths)
   (when (or (not msg)
             (and *processing-msg* (sb-thread:thread-alive-p *processing-msg*)))
     (return-from process-msg-if-present *processing-msg*))
@@ -88,8 +89,7 @@
           ((equal method "initialized")
            (let* ((diffs (get-diff root-path base-commit))
                   (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
-             (ensure-directories-exist (merge-pathnames "report/" temp-path))
-             (with-open-file (out (merge-pathnames "report/report.json" temp-path)
+             (with-open-file (out (merge-pathnames "report.json" output-path)
                                   :direction :output
                                   :if-exists :supersede
                                   :if-does-not-exist :create)
@@ -115,7 +115,7 @@
                                                             (merge-pathnames path root-path)
                                                             end)))))))
                (when change-pos
-                 (with-open-file (out (merge-pathnames "report/state.json" temp-path)
+                 (with-open-file (out (merge-pathnames "state.json" output-path)
                                       :direction :output
                                       :if-exists :supersede
                                       :if-does-not-exist :create)
@@ -129,12 +129,12 @@
                  (log-error (format nil "~a is not found" path)))
              (let* ((diffs (get-diff root-path base-commit))
                     (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
-               (with-open-file (out (merge-pathnames "report/report.json" temp-path)
+               (with-open-file (out (merge-pathnames "report.json" output-path)
                                     :direction :output
                                     :if-exists :supersede
                                     :if-does-not-exist :create)
                  (format out "~a" results)))))))
-      (process-msg-if-present (dequeue-msg) ctx root-path temp-path base-commit root-host-paths))))
+      (process-msg-if-present (dequeue-msg) ctx root-path output-path temp-path base-commit root-host-paths))))
 
 (defun extract-json (stream)
   ;; Content-Length: 99
