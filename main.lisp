@@ -182,6 +182,7 @@
       found-context))
 
 (defun analyze (ctx diffs)
+  (inga/logger:log-info "before anlyze")
   (setf diffs (mapcar (lambda (diff)
                         (push (cons :start-offset
                                     (convert-to-top-offset

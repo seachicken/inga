@@ -129,6 +129,7 @@
                  (log-error (format nil "~a is not found" path)))
              (let* ((diffs (get-diff root-path base-commit))
                     (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
+               (inga/logger:log-info "after anlyze")
                (with-open-file (out (merge-pathnames "report/report.json" temp-path)
                                     :direction :output
                                     :if-exists :supersede

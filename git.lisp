@@ -8,11 +8,13 @@
 (in-package #:inga/git)
 
 (defun get-diff (project-path base-commit)
+  (inga/logger:log-info "before get-diff")
   (let ((diff (uiop:run-program
                 (format nil "(cd ~a && git diff ~a --unified=0 --)"
                         project-path
                         (if base-commit base-commit ""))
                 :output :string)))
+    (inga/logger:log-info "after get-diff")
     (let ((ranges (make-array 10 :fill-pointer 0 :adjustable t)) to-path)
       (with-input-from-string (in diff)
         (loop for line = (read-line in nil nil)
