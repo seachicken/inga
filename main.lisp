@@ -101,8 +101,8 @@
                        (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
                        :include include :exclude exclude :temp-path temp-path))
            (results (analyze ctx diffs)))
-      (ensure-directories-exist (merge-pathnames "report/" temp-path))
-      (with-open-file (out (merge-pathnames "report/report.json" temp-path)
+      (ensure-directories-exist (merge-pathnames "inga-report/"))
+      (with-open-file (out (merge-pathnames "inga-report/report.json")
                            :direction :output
                            :if-exists :supersede
                            :if-does-not-exist :create)

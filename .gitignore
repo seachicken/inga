@@ -1,4 +1,5 @@
 /.inga
+/inga-report
 /libs
 *.abcl
 *.fasl
