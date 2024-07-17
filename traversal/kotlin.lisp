@@ -156,6 +156,14 @@
             (append (get-dot-expressions (first (get-asts ast '("PACKAGE_DIRECTIVE" "*"))))
                     fq-class-names)))
 
+    (when (and (equal (ast-value ast "type") "FUN") (equal (ast-value ast "name") fun-name))
+      (setf method fun-name)
+      (loop for param in (get-asts ast '("VALUE_PARAMETER_LIST"
+                                         "VALUE_PARAMETER"
+                                         "TYPE_REFERENCE"))
+            do (setf fq-param-names (append (list (find-fq-class-name-kotlin param path index))
+                                            fq-param-names))))
+
     (when (equal (ast-value ast "type") "CLASS")
       (when inner-class-names
         (setf fq-class-names (butlast fq-class-names)))
@@ -163,7 +171,7 @@
       (setf inner-class-names (append (list (ast-value ast "name")) inner-class-names))
 
       ;; if constructor
-      (when (equal (ast-value ast "name") fun-name)
+      (when (and (not method) (equal (ast-value ast "name") fun-name))
         (setf method (ast-value ast "name"))
         (loop for param in (get-asts ast '("PRIMARY_CONSTRUCTOR"
                                            "VALUE_PARAMETER_LIST"
@@ -171,7 +179,7 @@
               do (setf fq-param-names (append (list (find-fq-class-name-kotlin param path index))
                                               fq-param-names))))
       
-      (when (filter-by-name (get-asts ast '("CLASS_BODY" "FUN")) fun-name)
+      (when (and (not method) (filter-by-name (get-asts ast '("CLASS_BODY" "FUN")) fun-name))
         (setf method fun-name)
         (loop for param in (get-asts ast '("CLASS_BODY"
                                            "FUN"
