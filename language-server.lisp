@@ -9,6 +9,7 @@
   (:import-from #:inga/git
                 #:get-diff)
   (:import-from #:inga/logger
+                #:log-debug-generic
                 #:log-error
                 #:log-error-generic
                 #:log-info-generic)
