@@ -5,6 +5,7 @@
   (:import-from #:inga/context
                 #:*mode*)
   (:export #:log-debug
+           #:log-debug-generic
            #:log-info
            #:log-info-generic
            #:log-error
@@ -14,7 +15,10 @@
 (defun log-debug (content)
   (let ((debug (uiop:getenv "INGA_DEBUG")))
     (when (equal debug "1")
-      (format t "~&~a DEBUG ~a~%" (local-time:now) content))))
+      (log-debug-generic *mode* content))))
+(defgeneric log-debug-generic (mode content)
+  (:method (mode content)
+   (format t "~&~a DEBUG ~a~%" (local-time:now) content)))
 
 (defun log-info (content)
   (log-info-generic *mode* content))

@@ -150,15 +150,20 @@
       do (vector-push (read-byte stream) buff)
       finally (return (flexi-streams:octets-to-string buff :external-format :utf-8)))))
 
-(defmethod log-error-generic ((mode (eql :server)) content)
+(defmethod log-debug-generic ((mode (eql :server)) content)
   (print-notification-msg
     "window/logMessage"
-    (format nil "{\"type\":1,\"message\":\"~a ~a\"}" (local-time:now) content)))
+    (format nil "{\"type\":5,\"message\":\"~a ~a\"}" (local-time:now) content)))
 
 (defmethod log-info-generic ((mode (eql :server)) content)
   (print-notification-msg
     "window/logMessage"
     (format nil "{\"type\":3,\"message\":\"~a ~a\"}" (local-time:now) content)))
+
+(defmethod log-error-generic ((mode (eql :server)) content)
+  (print-notification-msg
+    "window/logMessage"
+    (format nil "{\"type\":1,\"message\":\"~a ~a\"}" (local-time:now) content)))
 
 (defun print-response-msg (id result)
   (unless id
