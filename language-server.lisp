@@ -154,17 +154,26 @@
 (defmethod log-debug-generic ((mode (eql :server)) content)
   (print-notification-msg
     "window/logMessage"
-    (format nil "{\"type\":5,\"message\":\"~a ~a\"}" (local-time:now) content)))
+    (jsown:to-json
+      `((:obj
+          ("type" . 5)
+          ("message" . ,(format nil "~a ~a" (local-time:now) content)))))))
 
 (defmethod log-info-generic ((mode (eql :server)) content)
   (print-notification-msg
     "window/logMessage"
-    (format nil "{\"type\":3,\"message\":\"~a ~a\"}" (local-time:now) content)))
+    (jsown:to-json
+      `((:obj
+          ("type" . 3)
+          ("message" . ,(format nil "~a ~a" (local-time:now) content)))))))
 
 (defmethod log-error-generic ((mode (eql :server)) content)
   (print-notification-msg
     "window/logMessage"
-    (format nil "{\"type\":1,\"message\":\"~a ~a\"}" (local-time:now) content)))
+    (jsown:to-json
+      `((:obj
+          ("type" . 1)
+          ("message" . ,(format nil "~a ~a" (local-time:now) content)))))))
 
 (defun print-response-msg (id result)
   (unless id
