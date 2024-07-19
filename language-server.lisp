@@ -156,7 +156,7 @@
     "window/logMessage"
     (jsown:to-json
       `((:obj
-          ("type" . 5)
+          ("type" . 4)
           ("message" . ,(format nil "~a ~a" (local-time:now) content)))))))
 
 (defmethod log-info-generic ((mode (eql :server)) content)
