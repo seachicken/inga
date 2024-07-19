@@ -1,5 +1,6 @@
 (defpackage #:inga/git
-  (:use #:cl)
+  (:use #:cl
+        #:inga/utils)
   (:import-from #:cl-ppcre)
   (:import-from #:inga/errors
                 #:inga-error)
@@ -8,11 +9,13 @@
 (in-package #:inga/git)
 
 (defun get-diff (project-path base-commit)
-  (let ((diff (uiop:run-program
-                (format nil "(cd ~a && git diff ~a --unified=0 --)"
-                        project-path
-                        (if base-commit base-commit ""))
-                :output :string)))
+  (let ((diff (funtime
+                (lambda () (uiop:run-program
+                             (format nil "(cd ~a && git diff ~a --unified=0 --)"
+                                     project-path
+                                     (if base-commit base-commit ""))
+                             :output :string))
+                :label "git diff")))
     (let ((ranges (make-array 10 :fill-pointer 0 :adjustable t)) to-path)
       (with-input-from-string (in diff)
         (loop for line = (read-line in nil nil)
@@ -37,7 +40,9 @@
       (return-from get-diff (coerce ranges 'list)))))
 
 (defun get-managed-paths (root-path)
-  (uiop:run-program
-    (format nil "(cd ~a && git ls-files --exclude-standard)" root-path)
-    :output :lines))
+  (funtime
+    (lambda () (uiop:run-program
+                 (format nil "(cd ~a && git ls-files --exclude-standard)" root-path)
+                 :output :lines))
+    :label "git ls-files"))
 

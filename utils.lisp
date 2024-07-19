@@ -56,6 +56,7 @@
          (result (funcall func))
          (sec (/ (- (get-internal-real-time) start-time) internal-time-units-per-second)))
     (when (> sec max-sec)
-      (log-debug (format nil "~a time: ~,5f seconds, args: ~a" label sec args)))
+      (log-debug (format nil "~a time: ~,5f seconds~a" label sec
+                         (if args (format nil ", args: ~a" args) ""))))
     result))
 

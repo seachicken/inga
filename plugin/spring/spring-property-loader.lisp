@@ -1,5 +1,6 @@
 (defpackage #:inga/plugin/spring/spring-property-loader
-  (:use #:cl)
+  (:use #:cl
+        #:inga/utils)
   (:import-from #:jsown)
   (:import-from #:inga/cache
                 #:defunc)
@@ -55,7 +56,7 @@
                                 result))))))
 
 (defunc exec-command (process cmd)
-  (inga/utils::funtime
+  (funtime
     (lambda ()
       (handler-case
         (progn

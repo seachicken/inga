@@ -129,7 +129,7 @@
               (when results (jsown:parse results))))))
 
 (defunc exec-command (process cmd)
-  (inga/utils::funtime
+  (funtime
     (lambda ()
       (handler-case
         (progn
