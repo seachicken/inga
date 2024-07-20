@@ -51,7 +51,6 @@
     (when msg
       (cond
         ((equal (jsown:val msg "method") "initialize")
-         (inga/git:initialize root-path)
          (when (jsown:val (jsown:val msg "params") "rootUri")
            (push (namestring (pathname
                                (concatenate

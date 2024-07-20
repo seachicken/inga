@@ -5,8 +5,7 @@
   (:import-from #:inga/errors
                 #:inga-error)
   (:export #:get-diff
-           #:get-managed-paths
-           #:initialize))
+           #:get-managed-paths))
 (in-package #:inga/git)
 
 (defun get-diff (project-path base-commit)
@@ -46,11 +45,4 @@
                  (format nil "(cd ~a && git ls-files --exclude-standard)" root-path)
                  :output :lines))
     :label "git ls-files"))
-
-(defun initialize (root-path)
-  (funtime
-    (lambda () (uiop:run-program
-                 (format nil "(cd ~a && git status)" root-path)
-                 :output :lines))
-    :label "git status"))
 
