@@ -51,6 +51,7 @@
     (when msg
       (cond
         ((equal (jsown:val msg "method") "initialize")
+         (inga/git:initialize root-path)
          (when (jsown:val (jsown:val msg "params") "rootUri")
            (push (namestring (pathname
                                (concatenate
@@ -88,7 +89,6 @@
       (let ((method (jsown:val msg "method")))
         (cond
           ((equal method "initialized")
-           (inga/git:initialize root-path)
            (let* ((diffs (get-diff root-path base-commit))
                   (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
              (with-open-file (out (merge-pathnames "report.json" output-path)
