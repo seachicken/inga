@@ -51,7 +51,7 @@
             (string-trim '(#\Space) str))
           (split #\, sequence)))
 
-(defun funtime (func &key label args (max-sec 0.5))
+(defun funtime (func &key label args (max-sec 0))
   (let* ((start-time (get-internal-real-time))
          (result (funcall func))
          (sec (/ (- (get-internal-real-time) start-time) internal-time-units-per-second)))
