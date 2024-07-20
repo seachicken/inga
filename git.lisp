@@ -9,14 +9,15 @@
 (in-package #:inga/git)
 
 (defun get-diff (project-path base-commit &optional path)
-  (let ((diff (funtime
-                (lambda () (uiop:run-program
-                             (format nil "(cd ~a && git diff ~a --unified=0 -- ~a)"
-                                     project-path
-                                     (if base-commit base-commit "")
-                                     (if path path ""))
-                             :output :string))
-                :label "git diff")))
+  (let* ((command (format nil "git diff ~a --unified=0 -- ~a"
+                          (if base-commit base-commit "")
+                          (if path path "")))
+         (diff (funtime
+                 (lambda () (uiop:run-program
+                              (format nil "(cd ~a && ~a)" project-path command)
+                              :output :string))
+                 :label "git diff"
+                 :args command)))
     (let ((ranges (make-array 10 :fill-pointer 0 :adjustable t)) to-path)
       (with-input-from-string (in diff)
         (loop for line = (read-line in nil nil)
