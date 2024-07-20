@@ -8,12 +8,13 @@
            #:get-managed-paths))
 (in-package #:inga/git)
 
-(defun get-diff (project-path base-commit)
+(defun get-diff (project-path base-commit &optional path)
   (let ((diff (funtime
                 (lambda () (uiop:run-program
-                             (format nil "(cd ~a && git diff ~a --unified=0 --)"
+                             (format nil "(cd ~a && git diff ~a --unified=0 -- ~a)"
                                      project-path
-                                     (if base-commit base-commit ""))
+                                     (if base-commit base-commit "")
+                                     (if path path ""))
                              :output :string))
                 :label "git diff")))
     (let ((ranges (make-array 10 :fill-pointer 0 :adjustable t)) to-path)

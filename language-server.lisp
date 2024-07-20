@@ -128,7 +128,7 @@
              (if (probe-file (merge-pathnames path root-path))
                  (update-index (context-ast-index ctx) path)
                  (log-error (format nil "~a is not found" path)))
-             (let* ((diffs (get-diff root-path base-commit))
+             (let* ((diffs (get-diff root-path base-commit path))
                     (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
                (with-open-file (out (merge-pathnames "report.json" output-path)
                                     :direction :output
