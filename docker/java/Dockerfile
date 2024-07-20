@@ -30,7 +30,8 @@ RUN apt-get update && \
 
 WORKDIR /work
 
-RUN git config --global --add safe.directory /work
+RUN git config --global --add safe.directory /work && \
+  cp /work/.git/index /inga-temp/.git/index
 
 ENV INGA_HOME=/
 ENV INGA_CONTEXT=java
