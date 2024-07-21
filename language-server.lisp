@@ -129,8 +129,8 @@
                  (update-index (context-ast-index ctx) path)
                  (log-error (format nil "~a is not found" path)))))
           ((equal method "inga/diffChanged")
-           (let ((results (inga/main:to-json (inga/main:analyze ctx (jsown:val msg "params"))
-                                             root-path)))
+           (let* ((diff (get-diff (jsown:val msg "params")))
+                  (results (inga/main:to-json (inga/main:analyze ctx diff) root-path)))
              (with-open-file (out (merge-pathnames "report.json" output-path)
                                   :direction :output
                                   :if-exists :supersede
