@@ -122,7 +122,7 @@
                  (log-error (format nil "~a is not found" path)))))
           ((equal method "inga/diffChanged")
            (inga/logger:log-debug (format nil "params: ~a" (jsown:val msg "params")))
-           (let* ((diff (get-diff (jsown:val msg "params")))
+           (let* ((diff (get-diff (first (jsown:val msg "params"))))
                   (results (inga/main:to-json (inga/main:analyze ctx diff) root-path)))
              (with-open-file (out (merge-pathnames "report.json" output-path)
                                   :direction :output
