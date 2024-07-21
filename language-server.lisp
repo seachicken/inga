@@ -87,14 +87,6 @@
     (lambda ()
       (let ((method (jsown:val msg "method")))
         (cond
-          ((equal method "initialized")
-           (let* ((diffs (get-diff root-path base-commit))
-                  (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
-             (with-open-file (out (merge-pathnames "report.json" output-path)
-                                  :direction :output
-                                  :if-exists :supersede
-                                  :if-does-not-exist :create)
-               (format out "~a" results))))
           ((equal method "textDocument/didChange")
            (let* ((path (get-relative-path
                           (subseq (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
