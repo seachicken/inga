@@ -25,9 +25,9 @@ inga [options]
 
 ### Options
 
-`--base-commit <string>`
+`--diff <string>`
 
-Analyze the difference between the --base-commit and the checked-out commit. Set refname or SHA.
+`git diff`
 
 `--root-path <string>`
 

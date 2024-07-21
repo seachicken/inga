@@ -4,11 +4,11 @@
   (:import-from #:cl-ppcre)
   (:import-from #:inga/errors
                 #:inga-error)
-  (:export #:get-diff
+  (:export #:diff-to-ranges
            #:get-managed-paths))
 (in-package #:inga/git)
 
-(defun get-diff (diff &optional b)
+(defun diff-to-ranges (diff)
   (let ((ranges (make-array 10 :fill-pointer 0 :adjustable t)) to-path)
     (with-input-from-string (in diff)
       (loop for line = (read-line in nil nil)
@@ -30,7 +30,7 @@
                                                 (cons :start start)
                                                 (cons :end end))
                                           ranges))))))))
-    (return-from get-diff (coerce ranges 'list))))
+    (return-from diff-to-ranges (coerce ranges 'list))))
 
 (defun get-managed-paths (root-path)
   (funtime
