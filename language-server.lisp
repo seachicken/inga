@@ -127,14 +127,15 @@
                          root-host-paths)))
              (if (probe-file (merge-pathnames path root-path))
                  (update-index (context-ast-index ctx) path)
-                 (log-error (format nil "~a is not found" path)))
-             (let* ((diffs (get-diff root-path base-commit))
-                    (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
-               (with-open-file (out (merge-pathnames "report.json" output-path)
-                                    :direction :output
-                                    :if-exists :supersede
-                                    :if-does-not-exist :create)
-                 (format out "~a" results)))))))
+                 (log-error (format nil "~a is not found" path)))))
+          ((equal method "inga/diffChanged")
+           (let ((results (inga/main:to-json (inga/main:analyze ctx (jsown:val msg "params"))
+                                             root-path)))
+             (with-open-file (out (merge-pathnames "report.json" output-path)
+                                  :direction :output
+                                  :if-exists :supersede
+                                  :if-does-not-exist :create)
+               (format out "~a" results))))))
       (process-msg-if-present (dequeue-msg) ctx root-path output-path temp-path base-commit root-host-paths))))
 
 (defun extract-json (stream)
