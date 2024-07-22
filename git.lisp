@@ -4,8 +4,7 @@
   (:import-from #:cl-ppcre)
   (:import-from #:inga/errors
                 #:inga-error)
-  (:export #:diff-to-ranges
-           #:get-managed-paths))
+  (:export #:diff-to-ranges))
 (in-package #:inga/git)
 
 (defun diff-to-ranges (diff)
@@ -31,11 +30,4 @@
                                                 (cons :end end))
                                           ranges))))))))
     (return-from diff-to-ranges (coerce ranges 'list))))
-
-(defun get-managed-paths (root-path)
-  (funtime
-    (lambda () (uiop:run-program
-                 (format nil "(cd ~a && git ls-files --exclude-standard)" root-path)
-                 :output :lines))
-    :label "git ls-files"))
 

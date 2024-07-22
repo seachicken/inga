@@ -24,13 +24,11 @@ ADD https://github.com/seachicken/jvm-dependency-loader/releases/download/v$JVM_
 ADD https://github.com/seachicken/spring-property-loader/releases/download/v$SPRING_PROPERTY_LOADER/spring-property-loader-$SPRING_PROPERTY_LOADER.jar ./libs/spring-property-loader.jar
 
 RUN apt-get update && \
-  apt-get install -y git maven && \
+  apt-get install -y maven && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
 WORKDIR /work
-
-RUN git config --global --add safe.directory /work
 
 ENV INGA_HOME=/
 ENV INGA_CONTEXT=java
