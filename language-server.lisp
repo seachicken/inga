@@ -7,7 +7,7 @@
   (:import-from #:inga/ast-index
                 #:update-index)
   (:import-from #:inga/git
-                #:get-diff)
+                #:diff-to-ranges)
   (:import-from #:inga/logger
                 #:log-debug-generic
                 #:log-error
@@ -87,14 +87,6 @@
     (lambda ()
       (let ((method (jsown:val msg "method")))
         (cond
-          ((equal method "initialized")
-           (let* ((diffs (get-diff root-path base-commit))
-                  (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
-             (with-open-file (out (merge-pathnames "report.json" output-path)
-                                  :direction :output
-                                  :if-exists :supersede
-                                  :if-does-not-exist :create)
-               (format out "~a" results))))
           ((equal method "textDocument/didChange")
            (let* ((path (get-relative-path
                           (subseq (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
@@ -127,14 +119,15 @@
                          root-host-paths)))
              (if (probe-file (merge-pathnames path root-path))
                  (update-index (context-ast-index ctx) path)
-                 (log-error (format nil "~a is not found" path)))
-             (let* ((diffs (get-diff root-path base-commit))
-                    (results (inga/main:to-json (inga/main:analyze ctx diffs) root-path)))
-               (with-open-file (out (merge-pathnames "report.json" output-path)
-                                    :direction :output
-                                    :if-exists :supersede
-                                    :if-does-not-exist :create)
-                 (format out "~a" results)))))))
+                 (log-error (format nil "~a is not found" path)))))
+          ((equal method "inga/diffChanged")
+           (let* ((diff (diff-to-ranges (first (jsown:val msg "params"))))
+                  (results (inga/main:to-json (inga/main:analyze ctx diff) root-path)))
+             (with-open-file (out (merge-pathnames "report.json" output-path)
+                                  :direction :output
+                                  :if-exists :supersede
+                                  :if-does-not-exist :create)
+               (format out "~a" results))))))
       (process-msg-if-present (dequeue-msg) ctx root-path output-path temp-path base-commit root-host-paths))))
 
 (defun extract-json (stream)

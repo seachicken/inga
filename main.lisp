@@ -7,7 +7,7 @@
   (:import-from #:inga/context
                 #:*default-mode*)
   (:import-from #:inga/git
-                #:get-diff)
+                #:diff-to-ranges)
   (:import-from #:inga/language-client
                 #:make-client
                 #:start-client
@@ -32,7 +32,8 @@
   (:import-from #:inga/errors
                 #:inga-error)
   (:import-from #:inga/logger
-                #:log-debug)
+                #:log-debug
+                #:log-error)
   (:export #:*mode*
            #:parse-argv
            #:command
@@ -53,11 +54,13 @@
         with temp-path
         with include
         with exclude
-        with base-commit
+        with diff = ""
         with mode = *default-mode*
         for option = (pop argv)
         while option
         do (alexandria:switch (option :test #'equal)
+             ("--diff"
+              (setf diff (pop argv)))
              ("--root-path"
               (setf root-path (pop argv)))
              ("--front-path"
@@ -73,14 +76,16 @@
              ("--exclude"
               (setf exclude (split-trim-comma (pop argv))))
              ("--base-commit"
-              (setf base-commit (pop argv)))
+              (log-error "base-commit option is deprecated")
+              (pop argv))
              ("--mode"
               (setf mode (intern (string-upcase (pop argv)) :keyword)))
              (t (error 'inga-error-option-not-found)))
         finally
         (return
           (let ((result
-                  `((:root-path . ,(truename (uiop:merge-pathnames* root-path)))
+                  `((:diff . ,diff)
+                    (:root-path . ,(truename (uiop:merge-pathnames* root-path)))
                     (:output-path .
                      ,(if output-path
                           (pathname (concatenate 'string output-path "/"))
@@ -92,23 +97,22 @@
                     (:include . ,include)
                     (:exclude . ,exclude)
                     (:mode . ,mode))))
-            (when base-commit
-              (push (cons :base-commit base-commit) result))
             result))))
 
 (defun command (params)
   (handler-case
-    (let* ((root-path (cdr (assoc :root-path params)))
+    (let* ((diff (cdr (assoc :diff params)))
+           (root-path (cdr (assoc :root-path params)))
            (output-path (cdr (assoc :output-path params)))
            (temp-path (cdr (assoc :temp-path params)))
            (include (cdr (assoc :include params)))
            (exclude (cdr (assoc :exclude params)))
-           (base-commit (cdr (assoc :base-commit params)))
-           (diffs (get-diff root-path base-commit))
+           (diffs (diff-to-ranges diff))
            (ctx (start root-path
                        (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
                        :include include :exclude exclude :temp-path temp-path))
            (results (analyze ctx diffs)))
+      (ensure-directories-exist (merge-pathnames "report/" output-path))
       (with-open-file (out (merge-pathnames "report/report.json" output-path)
                            :direction :output
                            :if-exists :supersede

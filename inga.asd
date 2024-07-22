@@ -9,7 +9,6 @@
   :class :package-inferred-system
   :depends-on ("fiveam"
                "inga/test/file"
-               "inga/test/git"
                "inga/test/helper"
                "inga/test/language-server"
                "inga/test/main"
@@ -21,8 +20,6 @@
                               (list
                                 (uiop:find-symbol* '#:file
                                                    :inga/test/file)
-                                (uiop:find-symbol* '#:git
-                                                   :inga/test/git)
                                 (uiop:find-symbol* '#:language-server
                                                    :inga/test/language-server)
                                 (uiop:find-symbol* '#:main
