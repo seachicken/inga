@@ -7,8 +7,7 @@
                 #:stop-all-parsers)
   (:import-from #:inga/file
                 #:is-analysis-target)
-  (:import-from #:inga/git
-                #:get-managed-paths)
+  (:import-from #:inga/git)
   (:export #:ast-index-memory))
 (in-package #:inga/ast-index/memory)
 
@@ -16,7 +15,7 @@
   ())
 
 (defmethod create-indexes ((ast-index ast-index-memory) ctx-kind include include-files exclude)
-  (loop for path in (get-managed-paths (ast-index-root-path ast-index))
+  (loop for path in (uiop:directory-files (format nil "~a/**/*" (ast-index-root-path ast-index)))
         do
         (let ((relative-path (enough-namestring path (ast-index-root-path ast-index))))
           (when (and (is-analysis-target ctx-kind relative-path include exclude)
