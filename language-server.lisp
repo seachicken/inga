@@ -84,7 +84,6 @@
   (when (or (not msg)
             (and *processing-msg* (sb-thread:thread-alive-p *processing-msg*)))
     (return-from process-msg-if-present *processing-msg*))
-  (inga/logger:log-info (format nil "process msg: ~a" msg))
 
   (sb-thread:make-thread
     (lambda ()
@@ -125,10 +124,7 @@
                   (diff (diff-to-ranges (jsown:val (jsown:val msg "params") "diff")))
                   (results (inga/main:to-json (inga/main:analyze ctx diff) root-path)))
              (inga/logger:log-info (format nil "path: ~a, diff: ~a, results: ~a" path diff results))
-             (when path
-               (if (probe-file (merge-pathnames path root-path))
-                   (update-index (context-ast-index ctx) path)
-                   (log-error (format nil "~a is not found" path))))
+             (when path (update-index (context-ast-index ctx) path))
              (with-open-file (out (merge-pathnames "report.json" output-path)
                                   :direction :output
                                   :if-exists :supersede
