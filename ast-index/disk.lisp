@@ -53,7 +53,7 @@
   (commit-src-hash ast-index))
 
 (defmethod update-index ((ast-index ast-index-disk) path)
-  (unless (get-index-path path (ast-index-disk-path ast-index))
+  (unless (probe-file (get-index-path path (ast-index-disk-path ast-index)))
     (return-from update-index))
   (upsert-index ast-index path))
 
