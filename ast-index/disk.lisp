@@ -49,14 +49,19 @@
                      (is-analysis-target ctx-kind relative-path include-files (list index-exclude-path)))
             (setf (ast-index-paths ast-index)
                   (append (ast-index-paths ast-index) (list relative-path)))
-            (update-index ast-index relative-path))))
+            (upsert-index ast-index relative-path))))
   (commit-src-hash ast-index))
 
 (defmethod update-index ((ast-index ast-index-disk) path)
+  (unless (probe-file (get-index-path path (ast-index-disk-path ast-index)))
+    (return-from update-index))
+  (upsert-index ast-index path))
+
+(defun upsert-index (ast-index path)
   (let ((src-hash (get-hash-file-with-version path (ast-index-root-path ast-index))))
     (when (eq src-hash
               (gethash (intern (get-hash-path path) :keyword) (ast-index-src-hash ast-index)))
-      (return-from update-index))
+      (return-from upsert-index))
 
     (log-info (format nil "upsert ast-index at ~a" path))
     (with-open-file (out (get-index-path path (ast-index-disk-path ast-index))
