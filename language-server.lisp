@@ -51,6 +51,7 @@
     (when msg
       (cond
         ((equal (jsown:val msg "method") "initialize")
+         (inga/logger:log-info "run initialize processing")
          (when (jsown:val (jsown:val msg "params") "rootUri")
            (push (namestring (pathname
                                (concatenate
@@ -70,6 +71,7 @@
                        root-host-paths)))
          (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":{\"change\":2,\"save\":false}}}"))
         ((equal (jsown:val msg "method") "shutdown")
+         (inga/logger:log-info "run shutdown processing")
          (inga/main::stop ctx)
          (print-response-msg (jsown:val msg "id") "null")
          (return-from handle-msg))
@@ -89,7 +91,7 @@
       (let ((method (jsown:val msg "method")))
         (cond
           ((equal method "textDocument/didChange")
-           (inga/logger:log-info "run textDocument/didChange")
+           (inga/logger:log-info "run textDocument/didChange processing")
            (let* ((path (get-relative-path
                           (subseq (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
                           root-host-paths))
@@ -115,20 +117,17 @@
                                       :if-exists :supersede
                                       :if-does-not-exist :create)
                    (format out "~a" (to-state-json change-pos root-path)))))))
-          ((equal method "textDocument/didSave")
-           (inga/logger:log-info "run textDocument/didSave")
-           (let ((path (get-relative-path
-                         (subseq (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
-                         root-host-paths)))
-             (if (probe-file (merge-pathnames path root-path))
-                 (update-index (context-ast-index ctx) path)
-                 (log-error (format nil "~a is not found" path)))))
           ((equal method "inga/diffChanged")
-           (inga/logger:log-info "run inga/diffChanged")
-           (let* ((diff (diff-to-ranges (first (jsown:val msg "params"))))
+           (inga/logger:log-info "run inga/diffChanged processing")
+           (let* ((param (first (jsown:val msg "params")))
+                  (path (when (jsown:keyp param "uri")
+                          (get-relative-path (subseq (jsown:val param "uri") 7) root-host-paths)))
+                  (diff (diff-to-ranges (jsown:val param "diff")))
                   (results (inga/main:to-json (inga/main:analyze ctx diff) root-path)))
-             (inga/logger:log-info (format nil "diff: ~a" diff))
-             (inga/logger:log-info (format nil "results: ~a" results))
+             (when path
+               (if (probe-file (merge-pathnames path root-path))
+                   (update-index (context-ast-index ctx) path)
+                   (log-error (format nil "~a is not found" path))))
              (with-open-file (out (merge-pathnames "report.json" output-path)
                                   :direction :output
                                   :if-exists :supersede
