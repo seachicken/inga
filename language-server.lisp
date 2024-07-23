@@ -123,6 +123,8 @@
           ((equal method "inga/diffChanged")
            (let* ((diff (diff-to-ranges (first (jsown:val msg "params"))))
                   (results (inga/main:to-json (inga/main:analyze ctx diff) root-path)))
+             (inga/logger:log-info (format nil "diff: ~a" diff))
+             (inga/logger:log-info (format nil "results: ~a" results))
              (with-open-file (out (merge-pathnames "report.json" output-path)
                                   :direction :output
                                   :if-exists :supersede
