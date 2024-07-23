@@ -119,10 +119,10 @@
                    (format out "~a" (to-state-json change-pos root-path)))))))
           ((equal method "inga/diffChanged")
            (inga/logger:log-info "run inga/diffChanged processing")
-           (let* ((param (first (jsown:val msg "params")))
-                  (path (when (jsown:keyp param "uri")
-                          (get-relative-path (subseq (jsown:val param "uri") 7) root-host-paths)))
-                  (diff (diff-to-ranges (jsown:val param "diff")))
+           (let* ((path (when (jsown:keyp (jsown:val msg "params") "uri")
+                          (get-relative-path
+                            (subseq (jsown:val (jsown:val msg "params") "uri") 7) root-host-paths)))
+                  (diff (diff-to-ranges (jsown:val (jsown:val msg "params") "diff")))
                   (results (inga/main:to-json (inga/main:analyze ctx diff) root-path)))
              (when path
                (if (probe-file (merge-pathnames path root-path))
