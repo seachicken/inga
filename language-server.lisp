@@ -82,12 +82,14 @@
   (when (or (not msg)
             (and *processing-msg* (sb-thread:thread-alive-p *processing-msg*)))
     (return-from process-msg-if-present *processing-msg*))
+  (inga/logger:log-info (format nil "process msg: ~a" msg))
 
   (sb-thread:make-thread
     (lambda ()
       (let ((method (jsown:val msg "method")))
         (cond
           ((equal method "textDocument/didChange")
+           (inga/logger:log-info "run textDocument/didChange")
            (let* ((path (get-relative-path
                           (subseq (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
                           root-host-paths))
@@ -114,6 +116,7 @@
                                       :if-does-not-exist :create)
                    (format out "~a" (to-state-json change-pos root-path)))))))
           ((equal method "textDocument/didSave")
+           (inga/logger:log-info "run textDocument/didSave")
            (let ((path (get-relative-path
                          (subseq (jsown:val (jsown:val (jsown:val msg "params") "textDocument") "uri") 7)
                          root-host-paths)))
@@ -121,6 +124,7 @@
                  (update-index (context-ast-index ctx) path)
                  (log-error (format nil "~a is not found" path)))))
           ((equal method "inga/diffChanged")
+           (inga/logger:log-info "run inga/diffChanged")
            (let* ((diff (diff-to-ranges (first (jsown:val msg "params"))))
                   (results (inga/main:to-json (inga/main:analyze ctx diff) root-path)))
              (inga/logger:log-info (format nil "diff: ~a" diff))
