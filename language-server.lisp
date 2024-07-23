@@ -124,6 +124,7 @@
                             (subseq (jsown:val (jsown:val msg "params") "uri") 7) root-host-paths)))
                   (diff (diff-to-ranges (jsown:val (jsown:val msg "params") "diff")))
                   (results (inga/main:to-json (inga/main:analyze ctx diff) root-path)))
+             (inga/logger:log-info "path: ~a, diff: ~a, results: ~a" path diff results)
              (when path
                (if (probe-file (merge-pathnames path root-path))
                    (update-index (context-ast-index ctx) path)
