@@ -13,7 +13,7 @@
   (:import-from #:inga/errors
                 #:inga-error)
   (:import-from #:inga/logger
-                #:log-info)
+                #:log-debug)
   (:export #:ast-index-disk))
 (in-package #:inga/ast-index/disk)
 
@@ -63,7 +63,7 @@
               (gethash (intern (get-hash-path path) :keyword) (ast-index-src-hash ast-index)))
       (return-from upsert-index))
 
-    (log-info (format nil "upsert ast-index at ~a" path))
+    (log-debug (format nil "upsert ast-index at ~a" path))
     (with-open-file (out (get-index-path path (ast-index-disk-path ast-index))
                          :direction :output
                          :if-exists :supersede
