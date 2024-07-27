@@ -16,7 +16,7 @@
                 #:create-indexes
                 #:get-ast) 
   (:import-from #:inga/logger
-                #:log-info)
+                #:log-debug)
   (:export #:traversal
            #:*traversals*
            #:*file-index*
@@ -194,7 +194,7 @@
           finally
           (return (progn
                     (when (> (length matched-methods) 1)
-                      (log-info (format nil "matched multiple signatures.~%  fq-name: ~a~%  matched-methods: ~a" fq-name matched-methods)))
+                      (log-debug (format nil "matched multiple signatures.~%  fq-name: ~a~%  matched-methods: ~a" fq-name matched-methods)))
                     (first matched-methods))))))
 
 (defun matches-signature (target-fq-name api-fq-name index)
