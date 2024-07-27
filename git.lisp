@@ -8,6 +8,7 @@
 (in-package #:inga/git)
 
 (defun diff-to-ranges (diff)
+  (inga/logger:log-info (format t "diff: ~a" diff))
   (let ((ranges (make-array 10 :fill-pointer 0 :adjustable t)) to-path)
     (with-input-from-string (in diff)
       (loop for line = (read-line in nil nil)
