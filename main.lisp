@@ -124,7 +124,7 @@
 
 (defun start (root-path context-kinds &key include exclude (temp-path (merge-pathnames ".inga/")))
   (let* ((index (make-instance 'ast-index-disk :root-path root-path :temp-path temp-path))
-         (ctx (alexandria:switch ((when (> (length context-kinds) 0) (first context-kinds)))
+         (ctx (case (when (> (length context-kinds) 0) (first context-kinds))
                (:typescript
                  (make-context
                    :kind :typescript
