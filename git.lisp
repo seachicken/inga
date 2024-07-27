@@ -13,7 +13,7 @@
       (loop for line = (read-line in nil nil)
             while line
             do
-            (inga/logger/log-info (format t "line: ~a" line))
+            (inga/logger:log-info (format t "line: ~a" line))
             (let ((found-to-path (car (cdr (multiple-value-list
                                              (ppcre:scan-to-strings "^diff --git a/.+ b/(.+)$" line))))))
               (when found-to-path
