@@ -107,7 +107,7 @@
            (temp-path (cdr (assoc :temp-path params)))
            (include (cdr (assoc :include params)))
            (exclude (cdr (assoc :exclude params)))
-           (diffs (diff-to-ranges diff))
+           (diffs (diff-to-ranges (get-diff diff)))
            (ctx (start root-path
                        (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
                        :include include :exclude exclude :temp-path temp-path))
@@ -121,6 +121,17 @@
       (format t "~%~a~%" (to-json results root-path))
       (stop ctx))
     (inga-error (e) (format t "~a~%" e))))
+
+(defun get-diff (input)
+  (if (equal input "-")
+      (loop while (listen *standard-input*)
+            with result = ""
+            do (setf result
+                     (format nil "~a~a~%"
+                             result
+                             (read-line *standard-input* nil)))
+            finally (return result))
+      input))
 
 (defun start (root-path context-kinds &key include exclude (temp-path (merge-pathnames ".inga/")))
   (let* ((index (make-instance 'ast-index-disk :root-path root-path :temp-path temp-path))

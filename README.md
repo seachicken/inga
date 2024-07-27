@@ -27,7 +27,7 @@ inga [options]
 
 `--diff <string>`
 
-Analyze the result of `git diff --unified=0`
+Analyze the result of `git diff --unified=0` (use "-" to read from standard input)
 
 `--root-path <string>`
 
