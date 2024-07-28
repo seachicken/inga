@@ -6,4 +6,7 @@ public class MethodDefinition {
 
     public void method(int i) {
     }
+
+    public void methodWithFinal(final int p) {
+    }
 }

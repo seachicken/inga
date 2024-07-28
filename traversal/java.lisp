@@ -449,6 +449,7 @@
                     (loop for child in (jsown:val child "children")
                           do
                           (when (and (ast-value child "name")
+                                     (not (equal (jsown:val child "type") "MODIFIERS"))
                                      (not (equal (ast-value child "name") "")))
                             (setf result (concatenate
                                            'string

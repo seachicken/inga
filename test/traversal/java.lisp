@@ -42,6 +42,20 @@
           (find-definitions
             (create-range "src/main/java/p1/MethodDefinition.java" :line 7))))))
 
+(test find-definitions-with-final-parameter
+  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+    (is (equal
+          `(((:type . :module-public)
+             (:path . "src/main/java/p1/MethodDefinition.java")
+             (:name . "methodWithFinal")
+             (:fq-name . "p1.MethodDefinition.methodWithFinal-INT")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames "src/main/java/p1/MethodDefinition.java" *java-path*)
+                      '((:line . 10) (:offset . 17))))))
+          (find-definitions
+            (create-range "src/main/java/p1/MethodDefinition.java" :line 10))))))
+
 (test find-definitions-for-interface
   (with-fixture jvm-ctx (*java-path* 'ast-index-disk)
     (is (equal
