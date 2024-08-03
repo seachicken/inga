@@ -50,14 +50,14 @@
       (&body)
       (stop-traversal typescript))))
 
-(defmacro find-ast-in-ctx (readable-pos)
+(defmacro find-ast-in-ctx (readable-pos &key (type nil))
   `(let* ((path (cdr (assoc :path ,readable-pos)))
           (pos (list (cons :path path)
                      (cons :top-offset
                            (convert-to-top-offset
                              (merge-pathnames path (ast-index-root-path *index*))
                              ,readable-pos))))
-          (result (find-ast pos *index*)))
+          (result (find-ast pos *index* :type ,type)))
      (if result
          result
          (error "ast not found"))))

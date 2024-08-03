@@ -360,7 +360,7 @@
           (setf results (append results (list node))))
         finally (return results)))
 
-(defun find-ast (pos index)
+(defun find-ast (pos index &key (type nil))
   (loop
     with q = (make-queue)
     with path = (cdr (assoc :path pos))
@@ -376,7 +376,9 @@
     do
     (setf ast (dequeue q))
     (when (or (null ast)
-              (eq (ast-value ast key-offset) (cdr (assoc :top-offset pos))))
+              (and
+                (eq (ast-value ast key-offset) (cdr (assoc :top-offset pos)))
+                (if type (equal type (ast-value ast "type")) t)))
       (return ast))
 
     (loop for child in (ast-value ast "children") do (enqueue q child))))
