@@ -259,11 +259,11 @@
              ,(cons :top-offset
                     (convert-to-top-offset
                       (merge-pathnames "src/main/java/p1/KotlinReference.java" *java-path*)
-                      '((:line . 7) (:offset . 9))))))
+                      '((:line . 9) (:offset . 9))))))
           (find-references
-            '((:path . "src/main/java/p1/JavaReference.kt")
+            '((:path . "src/main/java/pkt1/JavaReference.kt")
               (:name . "method")
-              (:fq-name . "p1.JavaReference.method"))
+              (:fq-name . "pkt1.JavaReference.method"))
             *index*)))))
 
 (test find-signature-without-array
