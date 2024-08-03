@@ -22,29 +22,29 @@
              (:origin)
              (:file-pos .
               ((:type . :module-default)
-               (:path . "src/main/kotlin/inga/server/RestControllerDefinition.kt")
+               (:path . "src/main/kotlin/ingakt/server/RestControllerDefinition.kt")
                (:name . "get")
-               (:fq-name . "inga.server.RestControllerDefinition.get-java.lang.String")
+               (:fq-name . "ingakt.server.RestControllerDefinition.get-java.lang.String")
                ,(cons :top-offset
                       (convert-to-top-offset
                         (merge-pathnames
-                          "src/main/kotlin/inga/server/RestControllerDefinition.kt" *spring-path*)
+                          "src/main/kotlin/ingakt/server/RestControllerDefinition.kt" *spring-path*)
                         '((:line . 11) (:offset . 5))))))))
           (find-definitions
-            (create-range "src/main/kotlin/inga/server/RestControllerDefinition.kt" :line 12))))))
+            (create-range "src/main/kotlin/ingakt/server/RestControllerDefinition.kt" :line 12))))))
 
 (test find-references-for-rest-client
   (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
     (is (equal
-          `(((:path . "src/main/kotlin/inga/client/ClientKotlinRestTemplate.kt")
+          `(((:path . "src/main/kotlin/ingakt/client/ClientKotlinRestTemplate.kt")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      (merge-pathnames "src/main/kotlin/inga/client/ClientKotlinRestTemplate.kt" *spring-path*)
+                      (merge-pathnames "src/main/kotlin/ingakt/client/ClientKotlinRestTemplate.kt" *spring-path*)
                       '((:line . 10) (:offset . 42)))))
-            ((:path . "src/main/kotlin/inga/client/ClientKotlinRestTemplate.kt")
+            ((:path . "src/main/kotlin/ingakt/client/ClientKotlinRestTemplate.kt")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      (merge-pathnames "src/main/kotlin/inga/client/ClientKotlinRestTemplate.kt" *spring-path*)
+                      (merge-pathnames "src/main/kotlin/ingakt/client/ClientKotlinRestTemplate.kt" *spring-path*)
                       '((:line . 18) (:offset . 38))))))
           (find-references
             `((:type . :rest-server)
@@ -52,25 +52,25 @@
               (:path . "/kotlin/path")
               (:name . "GET")
               (:file-pos .
-               ((:path . "src/main/kotlin/inga/server/RestControllerKotlinDefinition.kt"))))
+               ((:path . "src/main/kotlin/ingakt/server/RestControllerKotlinDefinition.kt"))))
             *index*)))))
 
 (test find-references-with-literal-for-rest-client
   (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
     (is (equal
-          `(((:path . "src/main/kotlin/inga/client/StringLiteralKotlinReference.kt")
+          `(((:path . "src/main/kotlin/ingakt/client/StringLiteralKotlinReference.kt")
              ;;           ↓
              ;; WebClient("/kotlin/string-literal-reference").get()
              ,(cons :top-offset
                     (convert-to-top-offset
-                      (merge-pathnames "src/main/kotlin/inga/client/StringLiteralKotlinReference.kt" *spring-path*)
+                      (merge-pathnames "src/main/kotlin/ingakt/client/StringLiteralKotlinReference.kt" *spring-path*)
                       '((:line . 13) (:offset . 19))))))
           (find-references
             `((:type . :rest-server)
               (:path . "/kotlin/string-literal-reference")
               (:name . "GET")
               (:file-pos .
-               ((:path . "src/main/kotlin/inga/server/RestControllerKotlinDefinition.kt"))))
+               ((:path . "src/main/kotlin/ingakt/server/RestControllerKotlinDefinition.kt"))))
             *index*)))))
 
 ;; RequestMapping
@@ -86,7 +86,7 @@
             :kotlin
             (first (get-asts
                      (find-ast-in-ctx
-                       '((:path . "src/main/kotlin/inga/server/RequestMappingDefinition.kt")
+                       '((:path . "src/main/kotlin/ingakt/server/RequestMappingDefinition.kt")
                          (:line . 8) (:offset . 1)))
                      '("ANNOTATION_ENTRY"))))))))
 
@@ -100,7 +100,7 @@
             :kotlin
             (first (get-asts
                      (find-ast-in-ctx
-                       '((:path . "src/main/kotlin/inga/server/RequestMappingDefinition.kt")
+                       '((:path . "src/main/kotlin/ingakt/server/RequestMappingDefinition.kt")
                          (:line . 11) (:offset . 5)))
                      '("ANNOTATION_ENTRY"))))))))
 
@@ -114,7 +114,7 @@
             :kotlin
             (first (get-asts
                      (find-ast-in-ctx
-                       '((:path . "src/main/kotlin/inga/server/RequestMappingDefinition.kt")
+                       '((:path . "src/main/kotlin/ingakt/server/RequestMappingDefinition.kt")
                          (:line . 15) (:offset . 5)))
                      '("ANNOTATION_ENTRY"))))))))
 
@@ -128,7 +128,7 @@
             :kotlin
             (first (get-asts
                      (find-ast-in-ctx
-                       '((:path . "src/main/kotlin/inga/server/RequestMappingDefinition.kt")
+                       '((:path . "src/main/kotlin/ingakt/server/RequestMappingDefinition.kt")
                          (:line . 19) (:offset . 5)))
                      '("ANNOTATION_ENTRY"))))))))
 
@@ -142,7 +142,7 @@
             :kotlin
             (first (get-asts
                      (find-ast-in-ctx
-                       '((:path . "src/main/kotlin/inga/server/RequestMappingDefinition.kt")
+                       '((:path . "src/main/kotlin/ingakt/server/RequestMappingDefinition.kt")
                          (:line . 23) (:offset . 5)))
                      '("ANNOTATION_ENTRY"))))))))
 
@@ -156,7 +156,7 @@
             :kotlin
             (first (get-asts
                      (find-ast-in-ctx
-                       '((:path . "src/main/kotlin/inga/server/RequestMappingDefinition.kt")
+                       '((:path . "src/main/kotlin/ingakt/server/RequestMappingDefinition.kt")
                          (:line . 27) (:offset . 5)))
                      '("ANNOTATION_ENTRY"))))))))
 
@@ -170,7 +170,7 @@
             :kotlin
             (first (get-asts
                      (find-ast-in-ctx
-                       '((:path . "src/main/kotlin/inga/server/RequestMappingDefinition.kt")
+                       '((:path . "src/main/kotlin/ingakt/server/RequestMappingDefinition.kt")
                          (:line . 15) (:offset . 5)))
                      '("ANNOTATION_ENTRY"))))))))
 
@@ -187,7 +187,7 @@
             :kotlin
             (first (get-asts
                      (find-ast-in-ctx
-                       '((:path . "src/main/kotlin/inga/server/GetMappingDefinition.kt")
+                       '((:path . "src/main/kotlin/ingakt/server/GetMappingDefinition.kt")
                          (:line . 14) (:offset . 5)))
                      '("ANNOTATION_ENTRY"))))))))
 
@@ -201,7 +201,7 @@
             :kotlin
             (first (get-asts
                      (find-ast-in-ctx
-                       '((:path . "src/main/kotlin/inga/server/GetMappingDefinition.kt")
+                       '((:path . "src/main/kotlin/ingakt/server/GetMappingDefinition.kt")
                          (:line . 10) (:offset . 5)))
                      '("ANNOTATION_ENTRY"))))))))
 
@@ -218,7 +218,7 @@
             (find-param-from-path-variable
               :kotlin
               (find-ast-in-ctx
-                '((:path . "src/main/kotlin/inga/server/PathVariableDefinition.kt")
+                '((:path . "src/main/kotlin/ingakt/server/PathVariableDefinition.kt")
                   (:line . 12) (:offset . 23)))
               "v")
             "name")))))
@@ -233,7 +233,7 @@
             (find-param-from-path-variable
               :kotlin
               (find-ast-in-ctx
-                '((:path . "src/main/kotlin/inga/server/PathVariableDefinition.kt")
+                '((:path . "src/main/kotlin/ingakt/server/PathVariableDefinition.kt")
                   (:line . 16) (:offset . 28)))
               "v")
             "name")))))
@@ -248,7 +248,7 @@
             (find-param-from-path-variable
               :kotlin
               (find-ast-in-ctx
-                '((:path . "src/main/kotlin/inga/server/PathVariableDefinition.kt")
+                '((:path . "src/main/kotlin/ingakt/server/PathVariableDefinition.kt")
                   (:line . 20) (:offset . 21)))
               "v")
             "name")))))
@@ -263,7 +263,7 @@
             (find-param-from-path-variable
               :kotlin
               (find-ast-in-ctx
-                '((:path . "src/main/kotlin/inga/server/PathVariableDefinition.kt")
+                '((:path . "src/main/kotlin/ingakt/server/PathVariableDefinition.kt")
                   (:line . 24) (:offset . 20)))
               "v")
             "name")))))

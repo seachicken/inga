@@ -1,8 +1,8 @@
 package p1;
 
-import lib.Annotation;
+import org.jetbrains.annotations.NotNull;
 
 public class InstanceVariableAnnotationDefinition {
-    @Annotation
-    public String variable; 
+    @NotNull
+    public String variable;
 }

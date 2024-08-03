@@ -189,7 +189,7 @@
             (first (get-asts
                      (find-ast-in-ctx
                        '((:path . "src/main/java/inga/server/GetMappingDefinition.java")
-                         (:line . 13) (:offset . 5)))
+                         (:line . 14) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
 (test get-method-from-get-mapping
@@ -203,7 +203,7 @@
             (first (get-asts
                      (find-ast-in-ctx
                        '((:path . "src/main/java/inga/server/GetMappingDefinition.java")
-                         (:line . 9) (:offset . 5)))
+                         (:line . 10) (:offset . 5)))
                      '("ANNOTATION"))))))))
 
 ;; PathVariable
@@ -220,7 +220,7 @@
               :java
               (find-ast-in-ctx
                 '((:path . "src/main/java/inga/server/PathVariableDefinition.java")
-                  (:line . 11) (:offset . 17)))
+                  (:line . 12) (:offset . 17)))
               "v")
             "name")))))
 
@@ -235,7 +235,7 @@
               :java
               (find-ast-in-ctx
                 '((:path . "src/main/java/inga/server/PathVariableDefinition.java")
-                  (:line . 15) (:offset . 17)))
+                  (:line . 16) (:offset . 17)))
               "v")
             "name")))))
 
@@ -250,7 +250,7 @@
               :java
               (find-ast-in-ctx
                 '((:path . "src/main/java/inga/server/PathVariableDefinition.java")
-                  (:line . 19) (:offset . 17)))
+                  (:line . 20) (:offset . 17)))
               "v")
             "name")))))
 
@@ -265,7 +265,7 @@
               :java
               (find-ast-in-ctx
                 '((:path . "src/main/java/inga/server/PathVariableDefinition.java")
-                  (:line . 23) (:offset . 17)))
+                  (:line . 24) (:offset . 17)))
               "v")
             "name")))))
 
