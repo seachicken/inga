@@ -7,4 +7,3 @@ class JavaReference(val v: KotlinReference) {
         v.method()
     }
 }
-
