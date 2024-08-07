@@ -41,6 +41,8 @@
            #:find-fq-class-name-generic
            #:find-reference-to-literal
            #:find-reference-to-literal-generic
+           #:find-caller
+           #:find-caller-generic
            #:find-signature
            #:find-class-hierarchy
            #:find-class-hierarchy-generic
@@ -169,6 +171,11 @@
   (:method (traversal ast path)
    (error (format nil "unknown traversal. path: ~a" path))))
 
+(defun find-caller (fq-names ast path)
+  (find-caller-generic (get-traversal path) fq-names ast path))
+(defgeneric find-caller-generic (traversal fq-names ast path)
+  (:method (traversal fq-names ast path)))
+
 (defun find-signature (fq-name find-signatures index)
   (when (or (null fq-name) (equal fq-name ""))
     (return-from find-signature))
@@ -199,34 +206,44 @@
 
 (defun matches-signature (target-fq-name api-fq-name index)
   (let* ((split-target-fq-names (split #\- target-fq-name))
-         (split-api-fq-names (split #\- api-fq-name)))
-
-    (unless (equal (first split-target-fq-names) (first split-api-fq-names))
+         (split-api-fq-names (split #\- api-fq-name))
+         (target-fq-class-name (format nil "~{~a~^.~}"
+                                       (butlast (split #\. (first split-target-fq-names)))))
+         (api-fq-class-name (format nil "~{~a~^.~}"
+                                    (butlast (split #\. (first split-api-fq-names)))))
+         (target-method-name (first (last (split #\. (first split-target-fq-names)))))
+         (api-method-name (first (last (split #\. (first split-api-fq-names)))))
+         (target-arg-names (cdr split-target-fq-names))
+         (api-arg-names (cdr split-api-fq-names)))
+    (unless (equal target-method-name api-method-name)
       (return-from matches-signature))
 
-    (let ((target-arg-names (cdr split-target-fq-names))
-          (api-arg-names (cdr split-api-fq-names)))
-      (unless (or (eq (length target-arg-names) (length api-arg-names))
-                  (and (> (length api-arg-names) 0)
-                       (is-array (nth (1- (length api-arg-names)) api-arg-names))
-                       (or
-                         (<= (length api-arg-names) (length target-arg-names))
-                         (eq (1- (length api-arg-names)) (length target-arg-names)))))
-        (return-from matches-signature))
+    (unless (or (eq (length target-arg-names) (length api-arg-names))
+                (and (> (length api-arg-names) 0)
+                     (is-array (nth (1- (length api-arg-names)) api-arg-names))
+                     (or
+                       (<= (length api-arg-names) (length target-arg-names))
+                       (eq (1- (length api-arg-names)) (length target-arg-names)))))
+      (return-from matches-signature))
 
-      (loop for target-arg-name in target-arg-names
-            for i below (length target-arg-names)
-            with array-arg
-            do
-            (when (and (< i (length api-arg-names)) (is-array (nth i api-arg-names)))
-              (setf array-arg (subseq (nth i api-arg-names) 0 (- (length (nth i api-arg-names)) 2))))
-            (unless (or (equal target-arg-name "NULL")
-                        (find-if (lambda (super-class-name)
-                                   (or
-                                     (equal super-class-name (nth i api-arg-names))
-                                     (equal super-class-name array-arg)))
-                                 (find-class-hierarchy target-arg-name index)))
-              (return-from matches-signature)))))
+    (when (and (not (equal target-fq-class-name api-fq-class-name))
+               (not (find-if (lambda (super-class-name) (equal super-class-name api-fq-class-name))
+                             (find-class-hierarchy target-fq-class-name index))))
+      (return-from matches-signature)) 
+
+    (loop for target-arg-name in target-arg-names
+          for i below (length target-arg-names)
+          with array-arg
+          do
+          (when (and (< i (length api-arg-names)) (is-array (nth i api-arg-names)))
+            (setf array-arg (subseq (nth i api-arg-names) 0 (- (length (nth i api-arg-names)) 2))))
+          (unless (or (equal target-arg-name "NULL")
+                      (find-if (lambda (super-class-name)
+                                 (or
+                                   (equal super-class-name (nth i api-arg-names))
+                                   (equal super-class-name array-arg)))
+                               (find-class-hierarchy target-arg-name index)))
+            (return-from matches-signature))))
   t)
 
 (defun is-array (name)

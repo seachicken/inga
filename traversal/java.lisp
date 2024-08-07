@@ -308,7 +308,7 @@
       (find-chain-root (first (get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))))
       ast))
 
-(defun find-definition (variable-name ast)
+(defun find-definition (variable-name ast &optional visitor)
   (unless variable-name
     (return-from find-definition))
 
@@ -319,6 +319,11 @@
     do
     (setf ast (dequeue q))
     (when (null ast) (return))
+    (when visitor
+      (loop for ast in (remove-if (lambda (sibling)
+                                    (> (ast-value sibling "pos") (ast-value ast "pos")))
+                                  (get-asts ast '("*") :direction :horizontal))
+            do (funcall visitor ast)))
 
     (let ((variable (first (if (equal (ast-value ast "type") "VARIABLE")
                                (filter-by-name (list ast) variable-name)
@@ -392,6 +397,35 @@
                      refs))))
 
     (enqueue q (ast-value ast "parent"))))))
+
+(defmethod find-caller-generic ((trav traversal-java) fq-names ast path)
+  (labels ((find-caller (fq-names ast path)
+             (unless ast (return-from find-caller))
+
+             (let* ((found-fq-name (find-fq-name ast path))
+                    (found-api (find-if (lambda (n) (equal (cdr (assoc :fq-name n)) found-fq-name))
+                                        fq-names)))
+               (if found-api
+                   (values ast found-api)
+                   (if (get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
+                     (find-caller
+                       fq-names
+                       (first (get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION")))
+                       path)
+                     (progn
+                       (find-definition
+                         (ast-value (first (get-asts ast '("MEMBER_SELECT" "IDENTIFIER"))) "name")
+                         ast
+                         #'(lambda (ast)
+                             (multiple-value-bind (caller api)
+                               (find-caller
+                                 fq-names
+                                 (first (get-asts ast '("METHOD_INVOCATION")))
+                                 path)
+                               (when caller
+                                 (return-from find-caller (values caller api))))))
+                       nil))))))
+    (find-caller fq-names ast path)))
 
 (defun find-fq-name-for-definition (target-name ast)
   (loop

@@ -33,6 +33,19 @@
           (find-definitions
             (create-range "src/main/java/inga/server/RestControllerDefinition.java" :line 12))))))
 
+(test find-server-for-web-client
+  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
+    (let ((path "src/main/java/inga/client/ClientWebClient.java"))
+      (is (equal
+            `((:method . "GET")
+              (:path . "/web-client"))
+            (inga/plugin/spring/traversal/java::find-server
+              ;;          ↓
+              ;; .retrieve()
+              (find-ast-in-ctx `((:path . ,path) (:line . 11) (:offset . 26)))
+              path
+              :web-client))))))
+
 (test find-references-for-rest-client
   (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
     (is (equal
