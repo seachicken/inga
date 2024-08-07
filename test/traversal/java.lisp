@@ -214,6 +214,44 @@
               (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 16)))
               path))))))
 
+(test find-caller
+  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+    (let ((path "src/main/java/p1/ObjectCallReference.java"))
+      (is (equal
+            ;;                  ↓
+            ;; client.methodSelf();
+            ;; client.method();
+            (convert-to-top-offset
+              (merge-pathnames path *java-path*) '((:line . 6) (:offset . 26)))
+            (ast-value
+              (find-caller
+                '(((:fq-name . "p1.ObjectCallHelper.methodSelf")))
+                ;; client.methodSelf();
+                ;;              ↓
+                ;; client.method();
+                (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 22)))
+                path)
+              "pos"))))))
+
+(test find-caller-with-method-chains
+  (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
+    (let ((path "src/main/java/p1/ObjectCallReference.java"))
+      (is (equal
+            ;;                  ↓
+            ;; client.methodSelf()
+            ;;       .method();
+            (convert-to-top-offset
+              (merge-pathnames path *java-path*) '((:line . 12) (:offset . 26)))
+            (ast-value
+              (find-caller
+                '(((:fq-name . "p1.ObjectCallHelper.methodSelf")))
+                ;; client.methodSelf()
+                ;;              ↓
+                ;;       .method();
+                (find-ast-in-ctx `((:path . ,path) (:line . 13) (:offset . 24)))
+                path)
+              "pos"))))))
+
 (test find-fq-name-for-factory-method
   (with-fixture jvm-ctx (*java-path* 'ast-index-memory)
     (let ((path "src/main/java/p1/TypeInferenceReference.java"))

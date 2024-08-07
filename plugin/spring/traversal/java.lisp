@@ -23,9 +23,10 @@
     (push path (gethash :rest-client *file-index*))))
 
 (defun is-rest-client (ast)
-  (filter-by-name
+  (filter-by-names
     (get-asts ast '("COMPILATION_UNIT" "IMPORT"))
-    "org.springframework.web.client.RestTemplate"
+    '("org.springframework.web.client.RestTemplate"
+      "org.springframework.web.reactive.function.client.WebClient")
     :key-name "fqName"))
 
 (defmethod get-scoped-index-paths-generic :around ((traversal traversal-java) pos)
@@ -121,11 +122,14 @@
 
 (defmethod find-rest-clients ((traversal traversal-java) fq-name ast path)
   (let ((matched-api (find-signature fq-name
-                                     #'(lambda (fqcn) (gethash :rest-template *rest-client-apis*))
+                                     #'(lambda (fqcn) (append
+                                                        (gethash :rest-template *rest-client-apis*)
+                                                        (gethash :web-client *rest-client-apis*)))
                                      (traversal-index traversal))))
     (when matched-api
       (let* ((split-fq-names (split #\- (cdr (assoc :fq-name matched-api))))
-             (path-type (nth (1+ (cdr (assoc :path-i matched-api))) split-fq-names)))
+             (path-type (when (assoc :path-i matched-api)
+                          (nth (1+ (cdr (assoc :path-i matched-api))) split-fq-names))))
         (cond
           ((equal path-type "java.lang.String")
            (mapcar (lambda (pos)
@@ -137,8 +141,16 @@
           ((equal path-type "java.net.URI")
            (let ((server (find-server-from-uri 0 ast path)))
              `(((:host . ,(cdr (assoc :host server)))
-                (:path . ,(cdr (assoc :path server)))        
+                (:path . ,(cdr (assoc :path server)))
                 (:name . ,(get-method matched-api ast))
+                (:file-pos . ((:path . ,path)
+                              (:name . ,(ast-value ast "name"))
+                              (:top-offset . ,(ast-value ast "pos"))))))))
+          (t
+           (let ((server (find-server ast path (cdr (assoc :type matched-api)))))
+             `(((:host . nil)
+                (:path . ,(cdr (assoc :path server)))
+                (:name . ,(cdr (assoc :method server)))
                 (:file-pos . ((:path . ,path)
                               (:name . ,(ast-value ast "name"))
                               (:top-offset . ,(ast-value ast "pos")))))))))))))
@@ -158,6 +170,24 @@
 
 (defun get-parameter (idx ast)
   (nth (1+ idx) (get-asts ast '("*"))))
+
+(defun find-server (ast path client-type)
+  (let (result)
+    (multiple-value-bind (caller api) (find-caller
+                                        (gethash client-type *rest-client-method-apis*) ast path)
+      (when caller
+        (setf result (append result `((:method . ,(get-method api caller)))))))
+    (multiple-value-bind (caller api) (find-caller
+                                        (gethash client-type *rest-client-path-apis*) ast path)
+      (when caller
+        (let ((path-type (nth (1+ (cdr (assoc :path-i api))) (split #\- (cdr (assoc :fq-name api))))))
+          (cond
+            ((equal path-type "java.lang.String")
+             (let ((pos (first (find-reference-to-literal
+                                 (get-parameter (cdr (assoc :path-i api)) caller) path)) ))
+               (setf result
+                     (append result `((:path . ,(quri:uri-path (quri:uri (cdr (assoc :name pos))))))))))))))
+    result))
 
 (defun find-server-from-uri (arg-i ast path)
   (let ((param-uri (nth (1+ arg-i) (get-asts ast '("*")))))
