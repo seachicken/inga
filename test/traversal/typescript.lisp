@@ -70,7 +70,7 @@
 (test find-definitions-for-variable-call-expression-array
   (if t
       (skip "heap exhausted in CI")
-      (with-fixture node-ctx (*fixtures-path* 'ast-index-disk)
+      (with-fixture node-ctx (*fixtures-path*)
         (is (equal
               `(((:path . "declaration.ts")
                  (:name . "a, b")
@@ -88,7 +88,7 @@
 ;;   })
 ;; }
 (test find-definitions-for-variable-arrow-function
-  (with-fixture node-ctx (*react-path* 'ast-index-disk)
+  (with-fixture node-ctx (*react-path*)
     (is (equal
           `(((:path . "src/App/TodoList/Item/index.tsx")
               (:name . "reverseCompleted")
@@ -106,7 +106,7 @@
 (test find-definitions-for-variable-arrow-function-return-undefined
   (if t
       (skip "heap exhausted in CI")
-      (with-fixture node-ctx (*fixtures-path* 'ast-index-disk)
+      (with-fixture node-ctx (*fixtures-path*)
         (is (equal
               `(((:path . "declaration.ts")
                  (:name . "f2")
@@ -124,7 +124,7 @@
 ;;   }
 ;; }
 (test find-definitions-for-method
-  (with-fixture node-ctx (*nestjs-path* 'ast-index-disk)
+  (with-fixture node-ctx (*nestjs-path*)
     (is (equal
           `(((:path . "src/article/article.service.ts")
               (:name . "findAll")
@@ -136,7 +136,7 @@
             (create-range "src/article/article.service.ts" :line 46))))))
 
 (test find-entrypoint
-  (with-fixture node-ctx (*react-path* 'ast-index-disk)
+  (with-fixture node-ctx (*react-path*)
     (is (equal
           `((:path . "src/App/TodoList/Item/index.tsx")
             (:name . "input")
