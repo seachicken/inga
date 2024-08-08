@@ -7,6 +7,8 @@
                 #:clean-indexes
                 #:create-indexes
                 #:get-ast)
+  (:import-from #:inga/ast-index/disk
+                #:ast-index-disk)
   (:import-from #:inga/file
                 #:get-file-type)
   (:import-from #:inga/traversal
@@ -23,7 +25,7 @@
            #:create-range))
 (in-package #:inga/test/helper)
 
-(def-fixture jvm-ctx (root-path index-type &key (include '("**")))
+(def-fixture jvm-ctx (root-path &key (index-type 'ast-index-disk) (include '("**")))
   (defparameter *root-path* root-path)
   (defparameter *index* nil)
   (inga/plugin/jvm-dependency-loader:start root-path)
@@ -40,7 +42,7 @@
         (inga/plugin/spring/spring-property-loader:stop)
         (inga/plugin/jvm-dependency-loader:stop)))))
 
-(def-fixture node-ctx (root-path index-type &key (include '("**")))
+(def-fixture node-ctx (root-path &key (index-type 'ast-index-disk) (include '("**")))
   (defparameter *root-path* root-path)
   (defparameter *index* nil)
   (setf *index* (make-instance index-type

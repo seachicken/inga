@@ -12,7 +12,7 @@
 (defparameter *kotlin-path* (merge-pathnames "test/fixtures/general/"))
 
 (test find-definitions-for-method
-  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-disk)
+  (with-fixture jvm-ctx (*kotlin-path*)
     (is (equal
           `(((:type . :module-default)
              (:path . "src/main/kotlin/pkt1/PrimaryConstructorDefinition.kt")
@@ -25,7 +25,7 @@
           (find-definitions (create-range "src/main/kotlin/pkt1/PrimaryConstructorDefinition.kt" :line 4))))))
 
 (test find-definitions-for-value-class
-  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*kotlin-path*)
     (is (equal
           `(((:type . :module-default)
              (:path . "src/main/kotlin/pkt1/ValueClassDefinition.kt")
@@ -38,7 +38,7 @@
           (find-definitions (create-range "src/main/kotlin/pkt1/ValueClassDefinition.kt" :line 5))))))
 
 (test find-definition-of-field-reference
-  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/FieldDefinition.kt"))
       (is (equal
             ;;             ↓
@@ -54,7 +54,7 @@
               "textOffset"))))))
 
 (test find-definition-of-parameter
-  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/FieldDefinition.kt"))
       (is (equal
             ;;            ↓
@@ -70,7 +70,7 @@
               "textOffset"))))))
 
 (test find-references-for-primary-constructor
-  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-disk)
+  (with-fixture jvm-ctx (*kotlin-path*)
     (is (equal
           `(((:path . "src/main/kotlin/pkt1/PrimaryConstructorReference.kt")
              ,(cons :top-offset
@@ -84,7 +84,7 @@
             *index*)))))
 
 (test find-references-for-fq-method
-  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-disk)
+  (with-fixture jvm-ctx (*kotlin-path*)
     (is (equal
           `(((:path . "src/main/kotlin/pkt1/FqMethodReference.kt")
              ,(cons :top-offset
@@ -98,7 +98,7 @@
             *index*)))))
 
 (test find-references-for-java-class
-  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-disk)
+  (with-fixture jvm-ctx (*kotlin-path*)
     (is (equal
           `(((:path . "src/main/kotlin/pkt1/JavaReference.kt")
              ,(cons :top-offset
@@ -112,7 +112,7 @@
             *index*)))))
 
 (test find-reference-to-literal-field
-  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/LiteralReference.kt"))
       (is (equal
             `(((:path . ,path)
@@ -129,7 +129,7 @@
               path))))))
 
 (test find-fq-name-for-reference-with-enum
-  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/EnumReference.kt"))
       (is (equal
             "pkt1.EnumHelper.method-pkt1.EnumHelper.Enum"
@@ -140,7 +140,7 @@
               path))))))
 
 (test find-fq-name-for-reference-with-properties
-  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/PropertyReference.kt"))
       (is (equal
             "pkt1.PropertyHelper.method-java.lang.String"
@@ -149,7 +149,7 @@
               path))))))
 
 (test find-fq-name-for-reference-with-not-null-parameter
-  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/ParameterReference.kt"))
       (is (equal
             "pkt1.ParameterHelper.method"
@@ -162,7 +162,7 @@
               path))))))
 
 (test find-fq-name-for-reference-with-nullable-parameter
-  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/ParameterReference.kt"))
       (is (equal
             "pkt1.ParameterHelper.method"
@@ -175,7 +175,7 @@
               path))))))
 
 (test find-fq-name-for-reference-with-vararg
-  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/VarargReference.kt"))
       (is (equal
             "pkt1.VarargReference.method-pkt1.VarargHelper"
@@ -188,7 +188,7 @@
               path))))))
 
 (test find-fq-name-for-reference-with-anonymous-objects
-  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/AnonymousObjectReference.kt"))
       (is (equal
             "java.lang.Thread.Thread-java.lang.Runnable"
@@ -200,7 +200,7 @@
               path))))))
 
 (test find-fq-name-for-reference-with-anonymous-objects-super-call
-  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/AnonymousObjectReference.kt"))
       (is (equal
             "pkt1.AnonymousObjectReference.anonymousMethod-pkt1.AnonymousObjectHelper"
@@ -211,7 +211,7 @@
               path))))))
 
 (test find-fq-name-for-method-chain-first
-  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/TypeInferenceReference.kt"))
       (is (equal
             "kotlin.collections.CollectionsKt.listOf-java.lang.String"
@@ -224,7 +224,7 @@
               path))))))
 
 (test find-fq-name-for-value-class
-  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/ValueClassReference.kt"))
       (is (equal
             "pkt1.ValueClassReferenceHelper$ValueClass.ValueClass-java.lang.String"
@@ -235,7 +235,7 @@
               path))))))
 
 (test find-fq-name-for-method-chain-second
-  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/TypeInferenceReference.kt"))
       (is (equal
             "kotlin.collections.CollectionsKt.forEach-FUNCTION_LITERAL"
@@ -246,7 +246,7 @@
               path))))))
 
 (test find-fq-class-name-for-type-inference-in-lambda
-  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/TypeInferenceReference.kt"))
       (is (equal
             "java.lang.String"
@@ -259,7 +259,7 @@
               path))))))
 
 (test find-fq-class-name-for-reference-type-inference-in-lambda
-  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/TypeInferenceReference.kt"))
       (is (equal
             "java.lang.String"
@@ -270,7 +270,7 @@
               path))))))
 
 (test get-scope-with-private
-  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/VisibilityPrivateDefinition.kt"))
       (is (equal
             :module-private
@@ -280,7 +280,7 @@
               (find-ast-in-ctx `((:path . ,path) (:line . 4) (:offset . 17)))))))))
 
 (test get-dot-expressions-with-zero-dot
-  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/PrimaryConstructorDefinition.kt"))
       (is (equal
             '("pkt1")
@@ -290,7 +290,7 @@
               (find-ast-in-ctx `((:path . ,path) (:line . 1) (:offset . 9)))))))))
 
 (test get-dot-expressions-with-two-dots
-  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/p2/p3/PackageDefinition.kt"))
       (is (equal
             '("pkt1" "p2" "p3")
@@ -300,7 +300,7 @@
               (find-ast-in-ctx `((:path . ,path) (:line . 1) (:offset . 9)))))))))
 
 (test find-signature-for-stdlib
-  (with-fixture jvm-ctx (*kotlin-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/KotlinReference.kt"))
       (is (equal
             "kotlin.collections.CollectionsKt"

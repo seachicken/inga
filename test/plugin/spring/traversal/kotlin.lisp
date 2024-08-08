@@ -13,7 +13,7 @@
 (defparameter *spring-path* (merge-pathnames "test/plugin/spring/fixtures/general/"))
 
 (test find-definitions-for-rest-server
-  (with-fixture jvm-ctx (*spring-path* 'ast-index-disk)
+  (with-fixture jvm-ctx (*spring-path*)
     (is (equal
           `(((:type . :rest-server)
              (:host . "8080")
@@ -34,7 +34,7 @@
             (create-range "src/main/kotlin/ingakt/server/RestControllerDefinition.kt" :line 12))))))
 
 (test find-references-for-rest-client
-  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path*)
     (is (equal
           `(((:path . "src/main/kotlin/ingakt/client/ClientKotlinRestTemplate.kt")
              ,(cons :top-offset
@@ -56,7 +56,7 @@
             *index*)))))
 
 (test find-references-with-literal-for-rest-client
-  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path*)
     (is (equal
           `(((:path . "src/main/kotlin/ingakt/client/StringLiteralKotlinReference.kt")
              ;;           ↓
@@ -77,7 +77,7 @@
 ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/bind/annotation/RequestMapping.html
 
 (test get-value-from-request-mapping-with-single-member-annotation
-  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path*)
     (is (equal
           '("/mapping")
           ;; ↓
@@ -91,7 +91,7 @@
                      '("ANNOTATION_ENTRY"))))))))
 
 (test get-value-from-request-mapping-with-no-value
-  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path*)
     (is (equal
           '("")
           ;; ↓
@@ -105,7 +105,7 @@
                      '("ANNOTATION_ENTRY"))))))))
 
 (test get-value-from-request-mapping-with-value
-  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path*)
     (is (equal
           '("/{v}")
           ;; ↓
@@ -119,7 +119,7 @@
                      '("ANNOTATION_ENTRY"))))))))
 
 (test get-values-from-request-mapping-with-value
-  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path*)
     (is (equal
           '("/{v1}" "/{v1}/{v2}")
           ;; ↓
@@ -133,7 +133,7 @@
                      '("ANNOTATION_ENTRY"))))))))
 
 (test get-value-from-request-mapping-with-path
-  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path*)
     (is (equal
           '("/{v}")
           ;; ↓
@@ -147,7 +147,7 @@
                      '("ANNOTATION_ENTRY"))))))))
 
 (test get-values-from-request-mapping-with-path
-  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path*)
     (is (equal
           '("/{v1}" "/{v1}/{v2}")
           ;; ↓
@@ -161,7 +161,7 @@
                      '("ANNOTATION_ENTRY"))))))))
 
 (test get-method-from-request-mapping
-  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path*)
     (is (equal
           "GET"
           ;; ↓
@@ -178,7 +178,7 @@
 ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/bind/annotation/GetMapping.html
 
 (test get-value-from-get-mapping-with-single-member-annotation
-  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path*)
     (is (equal
           '("/{v}")
           ;; ↓
@@ -192,7 +192,7 @@
                      '("ANNOTATION_ENTRY"))))))))
 
 (test get-method-from-get-mapping
-  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path*)
     (is (equal
           "GET"
           ;; ↓
@@ -209,7 +209,7 @@
 ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/bind/annotation/PathVariable.html
 
 (test find-param-from-path-variable-with-no-value
-  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path*)
     (is (equal
           "v"
           ;;           ↓
@@ -224,7 +224,7 @@
             "name")))))
 
 (test find-param-from-path-variable-with-single-member-annotation
-  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path*)
     (is (equal
           "a"
           ;;           ↓
@@ -239,7 +239,7 @@
             "name")))))
 
 (test find-param-from-path-variable-with-value
-  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path*)
     (is (equal
           "a"
           ;;           ↓
@@ -254,7 +254,7 @@
             "name")))))
 
 (test find-param-from-path-variable-with-name
-  (with-fixture jvm-ctx (*spring-path* 'ast-index-memory)
+  (with-fixture jvm-ctx (*spring-path*)
     (is (equal
           "a"
           ;;           ↓
