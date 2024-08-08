@@ -42,7 +42,7 @@
         (inga/plugin/spring/spring-property-loader:stop)
         (inga/plugin/jvm-dependency-loader:stop)))))
 
-(def-fixture node-ctx (root-path &key (index-type 'ast-index-diskt) (include '("**")))
+(def-fixture node-ctx (root-path &key (index-type 'ast-index-disk) (include '("**")))
   (defparameter *root-path* root-path)
   (defparameter *index* nil)
   (setf *index* (make-instance index-type
