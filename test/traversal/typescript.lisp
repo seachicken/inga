@@ -18,7 +18,7 @@
 ;;   title: "Hello" ←[in]
 ;; };
 (test find-definitions-for-variable-object-literal-expression
-  (with-fixture node-ctx (*nestjs-path* 'ast-index-disk)
+  (with-fixture node-ctx (*nestjs-path*)
     (is (equal
           `(((:path . "src/article/article.service.ts")
              (:name . "articleAuthorSelect")
@@ -36,7 +36,7 @@
 ;;   }
 ;; }
 (test find-definitions-for-function
-  (with-fixture node-ctx (*react-path* 'ast-index-disk)
+  (with-fixture node-ctx (*react-path*)
     (is (equal
           `(((:path . "src/App/NewTodoInput/index.tsx")
               (:name . "addTodo")
@@ -52,7 +52,7 @@
 ;;   const a = 0; ←[in]
 ;; });
 (test find-definitions-for-variable-call-expression
-  (with-fixture node-ctx (*nestjs-path* 'ast-index-disk)
+  (with-fixture node-ctx (*nestjs-path*)
     (is (equal
           `(((:path . "src/user/user.decorator.ts")
               (:name . "User")  
