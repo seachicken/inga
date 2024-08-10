@@ -147,27 +147,6 @@
                               (:name . ,(ast-value ast "name"))
                               (:top-offset . ,(ast-value ast "pos")))))))))))))
 
-(defun get-method (api ast)
-  (if (assoc :method api)
-      (cdr (assoc :method api))
-      (find-api-method-from-http-method (get-parameter (cdr (assoc :method-i api)) ast))))
-
-(defun find-api-method-from-http-method (http-method)
-  (ast-value http-method "name"))
-
-(defun find-api-host (arg-i ast)
-  (let ((url (get-parameter arg-i ast)))
-    (when (equal (ast-value url "type") "STRING_LITERAL")
-      (format nil "~a" (quri:uri-port (quri:uri (ast-value url "name")))))))
-
-(defun get-host (ast)
-  (when (equal (ast-value ast "type") "STRING_LITERAL")
-    (let ((port (quri:uri-port (quri:uri (ast-value ast "name")))))
-      (when port (format nil "~a" port)))))
-
-(defun get-parameter (idx ast)
-  (nth (1+ idx) (get-asts ast '("*"))))
-
 (defun find-server (ast path)
   (let (server-host server-method server-path)
     (multiple-value-bind (caller api) (find-caller
@@ -216,6 +195,27 @@
     `((:host . ,server-host)
       (:method . ,server-method)
       (:path . ,server-path))))
+
+(defun get-method (api ast)
+  (if (assoc :method api)
+      (cdr (assoc :method api))
+      (find-api-method-from-http-method (get-parameter (cdr (assoc :method-i api)) ast))))
+
+(defun find-api-method-from-http-method (http-method)
+  (ast-value http-method "name"))
+
+(defun find-api-host (arg-i ast)
+  (let ((url (get-parameter arg-i ast)))
+    (when (equal (ast-value url "type") "STRING_LITERAL")
+      (format nil "~a" (quri:uri-port (quri:uri (ast-value url "name")))))))
+
+(defun get-host (ast)
+  (when (equal (ast-value ast "type") "STRING_LITERAL")
+    (let ((port (quri:uri-port (quri:uri (ast-value ast "name")))))
+      (when port (format nil "~a" port)))))
+
+(defun get-parameter (idx ast)
+  (nth (1+ idx) (get-asts ast '("*"))))
 
 (defmethod get-values-from-request-mapping ((type (eql :java)) ast)
   (let* ((values (filter-by-names
