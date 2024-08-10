@@ -121,31 +121,19 @@
       (call-next-method)))
 
 (defmethod find-rest-clients ((traversal traversal-java) fq-name ast path)
-  (let ((matched-api
-          (find-signature fq-name
-                          #'(lambda (fqcn) (remove-if (lambda (a) (not (assoc :call-type a)))
-                                                      (gethash :spring *rest-client-apis*)))
-                          (traversal-index traversal))))
+  (let ((matched-api (find-signature
+                       fq-name
+                       #'(lambda (fqcn) (remove-if (lambda (a) (not (assoc :call-type a)))
+                                                   (gethash :spring *rest-client-apis*)))
+                       (traversal-index traversal))))
     (when matched-api
-      (let* ((split-fq-names (split #\- (cdr (assoc :fq-name matched-api))))
-             (path-type (when (assoc :path-i matched-api)
-                          (nth (1+ (cdr (assoc :path-i matched-api))) split-fq-names))))
-        (cond
-          ((equal path-type "java.lang.String")
-           (mapcar (lambda (pos)
-                     `((:host . ,(find-api-host 0 ast))
-                       (:path . ,(quri:uri-path (quri:uri (cdr (assoc :name pos)))))
-                       (:name . ,(get-method matched-api ast))
-                       (:file-pos . ,pos)))
-                   (find-reference-to-literal (get-parameter (cdr (assoc :path-i matched-api)) ast) path)))
-          (t
-           (let ((server (find-server ast path)))
-             `(((:host . ,(cdr (assoc :host server)))
-                (:path . ,(cdr (assoc :path server)))
-                (:name . ,(cdr (assoc :method server)))
-                (:file-pos . ((:path . ,path)
-                              (:name . ,(ast-value ast "name"))
-                              (:top-offset . ,(ast-value ast "pos")))))))))))))
+      (let ((server (find-server ast path)))
+        `(((:host . ,(cdr (assoc :host server)))
+           (:path . ,(cdr (assoc :path server)))
+           (:name . ,(cdr (assoc :method server)))
+           (:file-pos . ((:path . ,path)
+                         (:name . ,(ast-value ast "name"))
+                         (:top-offset . ,(ast-value ast "pos"))))))))))
 
 (defun find-server (ast path)
   (let (server-host server-method server-path)
@@ -156,7 +144,6 @@
       (when caller
         (let* ((param (get-parameter (cdr (assoc :host-i api)) caller))
                (host (get-host param)))
-          (debug-ast param)
           (setf server-host
                 (if host
                     host

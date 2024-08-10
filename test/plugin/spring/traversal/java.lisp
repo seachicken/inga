@@ -94,12 +94,12 @@
              ,(cons :top-offset
                     (convert-to-top-offset
                       (merge-pathnames "src/main/java/inga/client/ClientRestTemplate.java" *spring-path*)
-                      '((:line . 17) (:offset . 42)))))
+                      '((:line . 17) (:offset . 41)))))
             ((:path . "src/main/java/inga/client/ClientRestTemplate.java")
              ,(cons :top-offset
                     (convert-to-top-offset
                       (merge-pathnames "src/main/java/inga/client/ClientRestTemplate.java" *spring-path*)
-                      '((:line . 33) (:offset . 38))))))
+                      '((:line . 33) (:offset . 37))))))
           (find-references
             `((:type . :rest-server)
               (:host . "8080")
@@ -112,14 +112,14 @@
 (test find-references-with-literal-for-rest-client
   (with-fixture jvm-ctx (*spring-path*)
     (is (equal
-          `(((:path . "src/main/java/inga/client/StringLiteralReference.java")
-             ;;                                   ↓
-             ;; new StringLiteralHelper.WebClient("/string-literal-reference").get();
+          `(((:path . "src/main/java/inga/client/StringLiteralHelper.java")
+             ;;                      ↓
+             ;; restTemplate.exchange(path, HttpMethod.GET, null, String.class);
              ,(cons :top-offset
                     (convert-to-top-offset
-                      (merge-pathnames "src/main/java/inga/client/StringLiteralReference.java"
+                      (merge-pathnames "src/main/java/inga/client/StringLiteralHelper.java"
                                        *spring-path*)
-                      '((:line . 5) (:offset . 43))))))
+                      '((:line . 16) (:offset . 34))))))
           (find-references
             `((:type . :rest-server)
               (:path . "/string-literal-reference")

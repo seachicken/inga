@@ -403,10 +403,11 @@
              (unless ast (return-from find-caller))
 
              (let* ((found-fq-name (find-fq-name ast path))
-                    (found-api (find-if (lambda (n) (equal (cdr (assoc :fq-name n)) found-fq-name))
-                                        fq-names)))
-               (if found-api
-                   (values ast found-api)
+                    (matched-api (find-signature found-fq-name
+                                                 #'(lambda (fqcn) fq-names)
+                                                 (traversal-index trav))))
+               (if matched-api
+                   (values ast matched-api)
                    (if (get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
                      (find-caller
                        fq-names
