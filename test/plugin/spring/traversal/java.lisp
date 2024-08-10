@@ -33,18 +33,59 @@
           (find-definitions
             (create-range "src/main/java/inga/server/RestControllerDefinition.java" :line 12))))))
 
-(test find-server-for-web-client
+(test find-server-for-rest-template-with-uri-string
+  (with-fixture jvm-ctx (*spring-path*)
+    (let ((path "src/main/java/inga/client/ClientRestTemplate.java"))
+      (is (equal
+            `((:host . "8080")
+              (:method . "GET")
+              (:path . "/path"))
+            (inga/plugin/spring/traversal/java::find-server
+              ;;                                 ↓
+              ;; return restTemplate.getForObject("http://localhost:8080/path", String.class);
+              (find-ast-in-ctx `((:path . ,path) (:line . 17) (:offset . 41)))
+              path))))))
+
+(test find-server-for-rest-template-with-uri-class
+  (with-fixture jvm-ctx (*spring-path*)
+    (let ((path "src/main/java/inga/client/ClientRestTemplate.java"))
+      (is (equal
+            `((:host . "8080")
+              (:method . "GET")
+              (:path . "/rest-template"))
+            (inga/plugin/spring/traversal/java::find-server
+              ;;                                 ↓
+              ;; return restTemplate.getForObject(uri, String.class);
+              (find-ast-in-ctx `((:path . ,path) (:line . 29) (:offset . 41)))
+              path))))))
+
+(test find-server-for-web-client-with-uri-string
   (with-fixture jvm-ctx (*spring-path*)
     (let ((path "src/main/java/inga/client/ClientWebClient.java"))
       (is (equal
-            `((:method . "GET")
+            `((:host . "8080")
+              (:method . "GET")
               (:path . "/web-client"))
             (inga/plugin/spring/traversal/java::find-server
+              ;; .uri("/web-client")
               ;;          ↓
               ;; .retrieve()
-              (find-ast-in-ctx `((:path . ,path) (:line . 11) (:offset . 26)))
-              path
-              :web-client))))))
+              (find-ast-in-ctx `((:path . ,path) (:line . 12) (:offset . 26)))
+              path))))))
+
+(test find-server-for-web-client-with-uri-class
+  (with-fixture jvm-ctx (*spring-path*)
+    (let ((path "src/main/java/inga/client/ClientWebClient.java"))
+      (is (equal
+            `((:host . "8080")
+              (:method . "GET")
+              (:path . "/web-client"))
+            (inga/plugin/spring/traversal/java::find-server
+              ;; .uri(uri)
+              ;;          ↓
+              ;; .retrieve()
+              (find-ast-in-ctx `((:path . ,path) (:line . 24) (:offset . 26)))
+              path))))))
 
 (test find-references-for-rest-client
   (with-fixture jvm-ctx (*spring-path*)
@@ -53,12 +94,12 @@
              ,(cons :top-offset
                     (convert-to-top-offset
                       (merge-pathnames "src/main/java/inga/client/ClientRestTemplate.java" *spring-path*)
-                      '((:line . 16) (:offset . 42)))))
+                      '((:line . 17) (:offset . 42)))))
             ((:path . "src/main/java/inga/client/ClientRestTemplate.java")
              ,(cons :top-offset
                     (convert-to-top-offset
                       (merge-pathnames "src/main/java/inga/client/ClientRestTemplate.java" *spring-path*)
-                      '((:line . 24) (:offset . 38))))))
+                      '((:line . 33) (:offset . 38))))))
           (find-references
             `((:type . :rest-server)
               (:host . "8080")

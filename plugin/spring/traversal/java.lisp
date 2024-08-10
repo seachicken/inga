@@ -121,11 +121,11 @@
       (call-next-method)))
 
 (defmethod find-rest-clients ((traversal traversal-java) fq-name ast path)
-  (let ((matched-api (find-signature fq-name
-                                     #'(lambda (fqcn) (append
-                                                        (gethash :rest-template *rest-client-apis*)
-                                                        (gethash :web-client *rest-client-apis*)))
-                                     (traversal-index traversal))))
+  (let ((matched-api
+          (find-signature fq-name
+                          #'(lambda (fqcn) (remove-if (lambda (a) (not (assoc :call-type a)))
+                                                      (gethash :spring *rest-client-apis*)))
+                          (traversal-index traversal))))
     (when matched-api
       (let* ((split-fq-names (split #\- (cdr (assoc :fq-name matched-api))))
              (path-type (when (assoc :path-i matched-api)
@@ -138,17 +138,9 @@
                        (:name . ,(get-method matched-api ast))
                        (:file-pos . ,pos)))
                    (find-reference-to-literal (get-parameter (cdr (assoc :path-i matched-api)) ast) path)))
-          ((equal path-type "java.net.URI")
-           (let ((server (find-server-from-uri 0 ast path)))
-             `(((:host . ,(cdr (assoc :host server)))
-                (:path . ,(cdr (assoc :path server)))
-                (:name . ,(get-method matched-api ast))
-                (:file-pos . ((:path . ,path)
-                              (:name . ,(ast-value ast "name"))
-                              (:top-offset . ,(ast-value ast "pos"))))))))
           (t
-           (let ((server (find-server ast path (cdr (assoc :type matched-api)))))
-             `(((:host . nil)
+           (let ((server (find-server ast path)))
+             `(((:host . ,(cdr (assoc :host server)))
                 (:path . ,(cdr (assoc :path server)))
                 (:name . ,(cdr (assoc :method server)))
                 (:file-pos . ((:path . ,path)
@@ -168,65 +160,62 @@
     (when (equal (ast-value url "type") "STRING_LITERAL")
       (format nil "~a" (quri:uri-port (quri:uri (ast-value url "name")))))))
 
+(defun get-host (ast)
+  (when (equal (ast-value ast "type") "STRING_LITERAL")
+    (let ((port (quri:uri-port (quri:uri (ast-value ast "name")))))
+      (when port (format nil "~a" port)))))
+
 (defun get-parameter (idx ast)
   (nth (1+ idx) (get-asts ast '("*"))))
 
-(defun find-server (ast path client-type)
-  (let (result)
+(defun find-server (ast path)
+  (let (server-host server-method server-path)
     (multiple-value-bind (caller api) (find-caller
-                                        (gethash client-type *rest-client-method-apis*) ast path)
+                                        (remove-if (lambda (a) (not (assoc :host-i a)))
+                                                   (gethash :spring *rest-client-apis*))
+                                        ast path)
       (when caller
-        (setf result (append result `((:method . ,(get-method api caller)))))))
+        (let* ((param (get-parameter (cdr (assoc :host-i api)) caller))
+               (host (get-host param)))
+          (debug-ast param)
+          (setf server-host
+                (if host
+                    host
+                    (let* ((v (find-definition (ast-value param "name") ast))
+                           (value (first (filter-by-name
+                                           (get-asts v '("MODIFIERS" "ANNOTATION"))
+                                           "Value"))))
+                      (write-to-string
+                        (quri:uri-port (quri:uri 
+                                         (find-property
+                                           (first (get-variable-names
+                                                    (ast-value (first (get-asts value '("STRING_LITERAL")))
+                                                               "name")))
+                                           path))))))))))
     (multiple-value-bind (caller api) (find-caller
-                                        (gethash client-type *rest-client-path-apis*) ast path)
+                                        (remove-if (lambda (a) (and (not (assoc :method a))
+                                                                    (not (assoc :method-i a))))
+                                                   (gethash :spring *rest-client-apis*))
+                                        ast path)
       (when caller
-        (let ((path-type (nth (1+ (cdr (assoc :path-i api))) (split #\- (cdr (assoc :fq-name api))))))
-          (cond
-            ((equal path-type "java.lang.String")
-             (let ((pos (first (find-reference-to-literal
-                                 (get-parameter (cdr (assoc :path-i api)) caller) path)) ))
-               (setf result
-                     (append result `((:path . ,(quri:uri-path (quri:uri (cdr (assoc :name pos))))))))))))))
-    result))
-
-(defun find-server-from-uri (arg-i ast path)
-  (let ((param-uri (nth (1+ arg-i) (get-asts ast '("*")))))
-    (let ((variable-uri (find-definition (ast-value param-uri "name") param-uri))
-          found-path
-          host)
-      (labels ((find-uri-components-builder (ast path)
-                 (let ((fq-name (find-fq-name ast path)))
-                   (unless fq-name (return-from find-uri-components-builder))
-                   (cond
-                     ((equal
-                        fq-name
-                        "org.springframework.web.util.UriComponentsBuilder.path-java.lang.String")
-                      (setf found-path (format nil "/{~a}"
-                                               (convert-to-json-type
-                                                 (find-fq-class-name (get-parameter 0 ast) path)))))
-                     ((equal
-                        fq-name
-                        "org.springframework.web.util.UriComponentsBuilder.fromUriString-java.lang.String")
-                      (let ((v (find-definition (ast-value (get-parameter 0 ast) "name") ast)))
-                        (let ((value (first (filter-by-name
-                                              (get-asts v '("MODIFIERS" "ANNOTATION"))
-                                              "Value"))))
-                          (setf host
-                                (write-to-string
-                                  (quri:uri-port
-                                    (quri:uri 
-                                      (find-property
-                                        (first (get-variable-names
-                                                 (ast-value (first (get-asts value '("STRING_LITERAL"))) "name")))
-                                        path)))))))))
-                   (find-uri-components-builder
-                     (first (get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION")))
-                     path))))
-        (find-uri-components-builder
-          (first (get-asts variable-uri '("METHOD_INVOCATION")))
-          path))
-      `((:host . ,host)
-        (:path . ,found-path)))))
+        (setf server-method (get-method api caller))))
+    (multiple-value-bind (caller api) (find-caller
+                                        (remove-if (lambda (a) (not (assoc :path-i a)))
+                                                   (gethash :spring *rest-client-apis*))
+                                        ast path)
+      (when caller
+        (let* ((param (get-parameter (cdr (assoc :path-i api)) caller))
+               (pos (first (find-reference-to-literal param path)))
+               (host (get-host param)))
+          (when host (setf server-host host))
+          (setf server-path (if pos
+                                (quri:uri-path (quri:uri (cdr (assoc :name pos))))
+                                (format nil "/{~a}"
+                                        (convert-to-json-type
+                                          (find-fq-class-name param path))))))))
+    `((:host . ,server-host)
+      (:method . ,server-method)
+      (:path . ,server-path))))
 
 (defmethod get-values-from-request-mapping ((type (eql :java)) ast)
   (let* ((values (filter-by-names
