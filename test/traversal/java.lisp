@@ -186,19 +186,6 @@
               (:fq-name . "p1.PrivateMethodReference.methodWithStdLib-java.nio.file.Path"))
             *index*)))))
 
-(test find-fq-name-for-reference-with-enum
-  (with-fixture jvm-ctx (*java-path*)
-    (let ((path "src/main/java/p1/EnumReference.java"))
-      (is (equal
-            "p1.EnumHelper.EnumHelper-p1.EnumHelper.Enum"
-            ;; ↓
-            ;; new EnumHelper(Enum.A);
-            (inga/traversal/java::find-fq-name-for-reference
-              (first (get-asts (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 9)))
-                               '("NEW_CLASS")))
-              path
-              *index*))))))
-
 (test find-reference-to-literal-field
   (with-fixture jvm-ctx (*java-path*)
     (let ((path "src/main/java/p1/LiteralReference.java"))
@@ -251,6 +238,18 @@
                 (find-ast-in-ctx `((:path . ,path) (:line . 13) (:offset . 24)))
                 path)
               "pos"))))))
+
+(test find-fq-name-for-enum
+  (with-fixture jvm-ctx (*java-path*)
+    (let ((path "src/main/java/p1/EnumReference.java"))
+      (is (equal
+            "p1.EnumHelper.EnumHelper-p1.EnumHelper.Enum"
+            ;; ↓
+            ;; new EnumHelper(Enum.A);
+            (find-fq-name
+              (first (get-asts (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 9)))
+                               '("NEW_CLASS")))
+              path))))))
 
 (test find-fq-name-for-factory-method
   (with-fixture jvm-ctx (*java-path*)
