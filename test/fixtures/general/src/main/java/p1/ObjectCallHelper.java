@@ -5,6 +5,6 @@ public class ObjectCallHelper {
     }
 
     public ObjectCallHelper methodSelf() {
-        return null;
+        return this;
     }
 }

@@ -69,6 +69,22 @@
                 (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 22))))
               "textOffset"))))))
 
+(test find-definition-of-local-variable
+  (with-fixture jvm-ctx (*kotlin-path*)
+    (let ((path "src/main/kotlin/pkt1/ObjectCallReference.kt"))
+      (is (equal
+            ;;     ↓
+            ;; val client = ObjectCallHelper()
+            (convert-to-top-offset
+              (merge-pathnames path *kotlin-path*) '((:line . 5) (:offset . 13)))
+            ;; ↓
+            ;; client.method()
+            (ast-value
+              (inga/traversal/kotlin::find-definition
+                "client"
+                (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 9))))
+              "textOffset"))))))
+
 (test find-references-for-primary-constructor
   (with-fixture jvm-ctx (*kotlin-path*)
     (is (equal
@@ -127,6 +143,44 @@
                        (find-ast-in-ctx `((:path . ,path) (:line . 5) (:offset . 16)))
                        '("REFERENCE_EXPRESSION")))
               path))))))
+
+(test find-caller
+  (with-fixture jvm-ctx (*kotlin-path*)
+    (let ((path "src/main/kotlin/pkt1/ObjectCallReference.kt"))
+      (is (equal
+            ;;        ↓
+            ;; client.methodSelf()
+            ;; client.method()
+            (convert-to-top-offset
+              (merge-pathnames path *kotlin-path*) '((:line . 6) (:offset . 16)))
+            (ast-value
+              (find-caller
+                '(((:fq-name . "pkt1.ObjectCallHelper.methodSelf")))
+                ;; client.methodSelf()
+                ;;        ↓
+                ;; client.method()
+                (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 16)))
+                path)
+              "textOffset"))))))
+
+(test find-caller-with-method-chains
+  (with-fixture jvm-ctx (*kotlin-path*)
+    (let ((path "src/main/kotlin/pkt1/ObjectCallReference.kt"))
+      (is (equal
+            ;;        ↓
+            ;; client.methodSelf()
+            ;;       .method()
+            (convert-to-top-offset
+              (merge-pathnames path *kotlin-path*) '((:line . 12) (:offset . 16)))
+            (ast-value
+              (find-caller
+                '(((:fq-name . "pkt1.ObjectCallHelper.methodSelf")))
+                ;; client.methodSelf()
+                ;;        ↓
+                ;;       .method()
+                (find-ast-in-ctx `((:path . ,path) (:line . 13) (:offset . 14)))
+                path)
+              "textOffset"))))))
 
 (test find-fq-name-for-reference-with-enum
   (with-fixture jvm-ctx (*kotlin-path*)
@@ -210,7 +264,18 @@
               (find-ast-in-ctx `((:path . ,path) (:line . 15) (:offset . 9)))
               path))))))
 
-(test find-fq-name-for-method-chain-first
+(test find-fq-name-for-value-class
+  (with-fixture jvm-ctx (*kotlin-path*)
+    (let ((path "src/main/kotlin/pkt1/ValueClassReference.kt"))
+      (is (equal
+            "pkt1.ValueClassReferenceHelper$ValueClass.ValueClass-java.lang.String"
+            (find-fq-name
+              ;; ↓
+              ;; ValueClass("a")
+              (find-ast-in-ctx `((:path . ,path) (:line . 5) (:offset . 9)))
+              path))))))
+
+(test find-fq-name-with-method-chain-first
   (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/TypeInferenceReference.kt"))
       (is (equal
@@ -223,18 +288,7 @@
                        '("CALL_EXPRESSION")))
               path))))))
 
-(test find-fq-name-for-value-class
-  (with-fixture jvm-ctx (*kotlin-path*)
-    (let ((path "src/main/kotlin/pkt1/ValueClassReference.kt"))
-      (is (equal
-            "pkt1.ValueClassReferenceHelper$ValueClass.ValueClass-java.lang.String"
-            (find-fq-name
-              ;; ↓
-              ;; ValueClass("a")
-              (find-ast-in-ctx `((:path . ,path) (:line . 5) (:offset . 9)))
-              path))))))
-
-(test find-fq-name-for-method-chain-second
+(test find-fq-name-with-method-chain-second
   (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/TypeInferenceReference.kt"))
       (is (equal
@@ -243,6 +297,17 @@
               ;;             ↓
               ;; listOf("a").forEach { println(it) }
               (find-ast-in-ctx `((:path . ,path) (:line . 5) (:offset . 21)))
+              path))))))
+
+(test find-fq-name-with-method-chain-third
+  (with-fixture jvm-ctx (*kotlin-path*)
+    (let ((path "src/main/kotlin/pkt1/ObjectCallReference.kt"))
+      (is (equal
+            "pkt1.ObjectCallHelper.method"
+            (find-fq-name
+              ;;                     ↓
+              ;; client.methodSelf().method()
+              (find-ast-in-ctx `((:path . ,path) (:line . 13) (:offset . 14)))
               path))))))
 
 (test find-fq-class-name-for-type-inference-in-lambda
