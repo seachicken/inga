@@ -3,7 +3,7 @@ package ingakt.client
 import org.springframework.http.HttpMethod
 import org.springframework.web.client.RestTemplate
 
-open class StringLiteralKotlinHelper(
+open class StringLiteralHelper(
     val restTemplate: RestTemplate
 ) {
     @JvmInline

@@ -36,15 +36,15 @@
 (test find-references-for-rest-client
   (with-fixture jvm-ctx (*spring-path*)
     (is (equal
-          `(((:path . "src/main/kotlin/ingakt/client/ClientKotlinRestTemplate.kt")
+          `(((:path . "src/main/kotlin/ingakt/client/ClientRestTemplate.kt")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      (merge-pathnames "src/main/kotlin/ingakt/client/ClientKotlinRestTemplate.kt" *spring-path*)
+                      (merge-pathnames "src/main/kotlin/ingakt/client/ClientRestTemplate.kt" *spring-path*)
                       '((:line . 10) (:offset . 42)))))
-            ((:path . "src/main/kotlin/ingakt/client/ClientKotlinRestTemplate.kt")
+            ((:path . "src/main/kotlin/ingakt/client/ClientRestTemplate.kt")
              ,(cons :top-offset
                     (convert-to-top-offset
-                      (merge-pathnames "src/main/kotlin/ingakt/client/ClientKotlinRestTemplate.kt" *spring-path*)
+                      (merge-pathnames "src/main/kotlin/ingakt/client/ClientRestTemplate.kt" *spring-path*)
                       '((:line . 18) (:offset . 38))))))
           (find-references
             `((:type . :rest-server)
@@ -52,25 +52,25 @@
               (:path . "/kotlin/path")
               (:name . "GET")
               (:file-pos .
-               ((:path . "src/main/kotlin/ingakt/server/RestControllerKotlinDefinition.kt"))))
+               ((:path . "src/main/kotlin/ingakt/server/RestControllerDefinition.kt"))))
             *index*)))))
 
 (test find-references-with-literal-for-rest-client
   (with-fixture jvm-ctx (*spring-path*)
     (is (equal
-          `(((:path . "src/main/kotlin/ingakt/client/StringLiteralKotlinReference.kt")
+          `(((:path . "src/main/kotlin/ingakt/client/StringLiteralReference.kt")
              ;;           ↓
              ;; WebClient("/kotlin/string-literal-reference").get()
              ,(cons :top-offset
                     (convert-to-top-offset
-                      (merge-pathnames "src/main/kotlin/ingakt/client/StringLiteralKotlinReference.kt" *spring-path*)
+                      (merge-pathnames "src/main/kotlin/ingakt/client/StringLiteralReference.kt" *spring-path*)
                       '((:line . 13) (:offset . 19))))))
           (find-references
             `((:type . :rest-server)
               (:path . "/kotlin/string-literal-reference")
               (:name . "GET")
               (:file-pos .
-               ((:path . "src/main/kotlin/ingakt/server/RestControllerKotlinDefinition.kt"))))
+               ((:path . "src/main/kotlin/ingakt/server/RestControllerDefinition.kt"))))
             *index*)))))
 
 ;; RequestMapping

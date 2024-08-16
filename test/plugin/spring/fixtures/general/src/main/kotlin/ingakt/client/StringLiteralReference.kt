@@ -2,9 +2,9 @@ package ingakt.client
 
 import org.springframework.web.client.RestTemplate
 
-class StringLiteralKotlinReference(
+class StringLiteralReference(
     restTemplate: RestTemplate
-) : StringLiteralKotlinHelper(restTemplate) {
+) : StringLiteralHelper(restTemplate) {
     fun get() {
         WebClient("/kotlin/dummy").post()
     }
