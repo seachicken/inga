@@ -73,6 +73,19 @@
                ((:path . "src/main/kotlin/ingakt/server/RestControllerDefinition.kt"))))
             *index*)))))
 
+(test find-server-for-rest-template-with-uri-string
+  (with-fixture jvm-ctx (*spring-path*)
+    (let ((path "src/main/kotlin/ingakt/client/ClientRestTemplate.kt"))
+      (is (equal
+            `((:host . "8080")
+              (:method . "GET")
+              (:path . "/kotlin/path"))
+            (inga/plugin/spring/traversal/kotlin::find-server
+              ;;                     ↓
+              ;; return restTemplate.getForObject("http://localhost:8080/kotlin/path", String::class.java)
+              (find-ast-in-ctx `((:path . ,path) (:line . 10) (:offset . 29)))
+              path))))))
+
 ;; RequestMapping
 ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/bind/annotation/RequestMapping.html
 

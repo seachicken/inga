@@ -232,6 +232,43 @@
                   (:file-pos . ,pos)))
               (find-reference-to-literal (get-parameter (cdr (assoc :path-i matched-api)) ast) path)))))
 
+(defun find-server (ast path)
+  (let (server-host server-method server-path)
+    (multiple-value-bind (caller api) (find-caller
+                                        (remove-if (lambda (a) (and (not (assoc :method a))
+                                                                    (not (assoc :method-i a))))
+                                                   (gethash :spring *rest-client-apis*))
+                                        ast path)
+      (when caller
+        (setf server-method (get-method api caller))))
+    (multiple-value-bind (caller api) (find-caller
+                                        (remove-if (lambda (a) (not (assoc :path-i a)))
+                                                   (gethash :spring *rest-client-apis*))
+                                        ast path)
+      (when caller
+        (let* ((param (get-parameter (cdr (assoc :path-i api)) caller))
+               (pos (first (find-reference-to-literal param path)))
+               (host (get-host param)))
+          (when host (setf server-host host))
+          (setf server-path (if pos
+                                (quri:uri-path (quri:uri (cdr (assoc :name pos))))
+                                (format nil "/{~a}"
+                                        (convert-to-json-type
+                                          (find-fq-class-name param path))))))))
+    `((:host . ,server-host)
+      (:method . ,server-method)
+      (:path . ,server-path))))
+
+(defun get-host (ast)
+  (let* ((literal (first (get-asts ast '("LITERAL_STRING_TEMPLATE_ENTRY"))))
+         (port (when literal (quri:uri-port (quri:uri (ast-value literal "name"))))))
+    (when port (format nil "~a" port))))
+
+(defun get-method (api ast)
+  (if (assoc :method api)
+      (cdr (assoc :method api))
+      (find-api-method-from-http-method (get-parameter (cdr (assoc :method-i api)) ast))))
+
 (defun find-api-method-from-http-method (http-method)
   (ast-value (nth 1 (get-asts http-method '("REFERENCE_EXPRESSION"))) "name"))
 
