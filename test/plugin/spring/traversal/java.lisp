@@ -33,6 +33,47 @@
           (find-definitions
             (create-range "src/main/java/inga/server/RestControllerDefinition.java" :line 12))))))
 
+(test find-references-for-rest-client
+  (with-fixture jvm-ctx (*spring-path*)
+    (is (equal
+          `(((:path . "src/main/java/inga/client/ClientRestTemplate.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames "src/main/java/inga/client/ClientRestTemplate.java" *spring-path*)
+                      '((:line . 17) (:offset . 41)))))
+            ((:path . "src/main/java/inga/client/ClientRestTemplate.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames "src/main/java/inga/client/ClientRestTemplate.java" *spring-path*)
+                      '((:line . 33) (:offset . 37))))))
+          (find-references
+            `((:type . :rest-server)
+              (:host . "8080")
+              (:path . "/path")
+              (:name . "GET")
+              (:file-pos .
+               ((:path . "src/main/java/inga/server/RestControllerDefinition.java"))))
+            *index*)))))
+
+(test find-references-with-literal-for-rest-client
+  (with-fixture jvm-ctx (*spring-path*)
+    (is (equal
+          `(((:path . "src/main/java/inga/client/StringLiteralHelper.java")
+             ;;                      ↓
+             ;; restTemplate.exchange(path, HttpMethod.GET, null, String.class);
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames "src/main/java/inga/client/StringLiteralHelper.java"
+                                       *spring-path*)
+                      '((:line . 16) (:offset . 34))))))
+          (find-references
+            `((:type . :rest-server)
+              (:path . "/string-literal-reference")
+              (:name . "GET")
+              (:file-pos .
+               ((:path . "src/main/java/inga/server/RestControllerDefinition.java"))))
+            *index*)))))
+
 (test find-server-for-rest-template-with-uri-string
   (with-fixture jvm-ctx (*spring-path*)
     (let ((path "src/main/java/inga/client/ClientRestTemplate.java"))
@@ -86,47 +127,6 @@
               ;; .retrieve()
               (find-ast-in-ctx `((:path . ,path) (:line . 24) (:offset . 26)))
               path))))))
-
-(test find-references-for-rest-client
-  (with-fixture jvm-ctx (*spring-path*)
-    (is (equal
-          `(((:path . "src/main/java/inga/client/ClientRestTemplate.java")
-             ,(cons :top-offset
-                    (convert-to-top-offset
-                      (merge-pathnames "src/main/java/inga/client/ClientRestTemplate.java" *spring-path*)
-                      '((:line . 17) (:offset . 41)))))
-            ((:path . "src/main/java/inga/client/ClientRestTemplate.java")
-             ,(cons :top-offset
-                    (convert-to-top-offset
-                      (merge-pathnames "src/main/java/inga/client/ClientRestTemplate.java" *spring-path*)
-                      '((:line . 33) (:offset . 37))))))
-          (find-references
-            `((:type . :rest-server)
-              (:host . "8080")
-              (:path . "/path")
-              (:name . "GET")
-              (:file-pos .
-               ((:path . "src/main/java/inga/server/RestControllerDefinition.java"))))
-            *index*)))))
-
-(test find-references-with-literal-for-rest-client
-  (with-fixture jvm-ctx (*spring-path*)
-    (is (equal
-          `(((:path . "src/main/java/inga/client/StringLiteralHelper.java")
-             ;;                      ↓
-             ;; restTemplate.exchange(path, HttpMethod.GET, null, String.class);
-             ,(cons :top-offset
-                    (convert-to-top-offset
-                      (merge-pathnames "src/main/java/inga/client/StringLiteralHelper.java"
-                                       *spring-path*)
-                      '((:line . 16) (:offset . 34))))))
-          (find-references
-            `((:type . :rest-server)
-              (:path . "/string-literal-reference")
-              (:name . "GET")
-              (:file-pos .
-               ((:path . "src/main/java/inga/server/RestControllerDefinition.java"))))
-            *index*)))))
 
 ;; RequestMapping
 ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/bind/annotation/RequestMapping.html
