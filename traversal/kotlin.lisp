@@ -310,14 +310,9 @@
      (or (find-fq-class-name-by-variable-name (ast-value ast "name") ast path index)
          (find-fq-class-name-by-class-name (ast-value ast "name") ast path index)))
     ("DOT_QUALIFIED_EXPRESSION"
-     (cond
-       ((get-asts ast '("CLASS_LITERAL_EXPRESSION"))
-        "java.lang.Class")
-       ;; change to self call?
-       ((get-asts ast '("REFERENCE_EXPRESSION"))
-        (find-fq-class-name-by-class-name
-          (ast-value (first (get-asts ast '("REFERENCE_EXPRESSION"))) "name")
-          ast path index))))
+     (if (get-asts ast '("CLASS_LITERAL_EXPRESSION"))
+         "java.lang.Class"
+         (find-fq-class-name-kotlin (first (get-asts ast '("REFERENCE_EXPRESSION"))) path index)))
     ("CALL_EXPRESSION"
      (when (get-asts ast '("REFERENCE_EXPRESSION"))
        (let* ((name (ast-value
