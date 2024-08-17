@@ -99,6 +99,34 @@
               (find-ast-in-ctx `((:path . ,path) (:line . 23) (:offset . 29)))
               path))))))
 
+(test find-server-for-web-client-with-uri-string
+  (with-fixture jvm-ctx (*spring-path*)
+    (let ((path "src/main/kotlin/ingakt/client/ClientWebClient.kt"))
+      (is (equal
+            `(((:host . "8080")
+               (:method . "GET")
+               (:path . "/web-client")))
+            (inga/plugin/spring/traversal/kotlin::find-servers
+              ;; .uri("/web-client")
+              ;;  ↓
+              ;; .retrieve()
+              (find-ast-in-ctx `((:path . ,path) (:line . 12) (:offset . 14)))
+              path))))))
+
+(test find-server-for-web-client-with-uri-class
+  (with-fixture jvm-ctx (*spring-path*)
+    (let ((path "src/main/kotlin/ingakt/client/ClientWebClient.kt"))
+      (is (equal
+            `(((:host . "8080")
+               (:method . "GET")
+               (:path . "/web-client")))
+            (inga/plugin/spring/traversal/kotlin::find-servers
+              ;; .uri(uri)
+              ;;  ↓
+              ;; .retrieve()
+              (find-ast-in-ctx `((:path . ,path) (:line . 24) (:offset . 14)))
+              path))))))
+
 ;; RequestMapping
 ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/bind/annotation/RequestMapping.html
 
