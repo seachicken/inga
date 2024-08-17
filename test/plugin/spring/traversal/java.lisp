@@ -78,10 +78,10 @@
   (with-fixture jvm-ctx (*spring-path*)
     (let ((path "src/main/java/inga/client/ClientRestTemplate.java"))
       (is (equal
-            `((:host . "8080")
-              (:method . "GET")
-              (:path . "/path"))
-            (inga/plugin/spring/traversal/java::find-server
+            `(((:host . "8080")
+               (:method . "GET")
+               (:path . "/path")))
+            (inga/plugin/spring/traversal/java::find-servers
               ;;                                 ↓
               ;; return restTemplate.getForObject("http://localhost:8080/path", String.class);
               (find-ast-in-ctx `((:path . ,path) (:line . 17) (:offset . 41)))
@@ -91,10 +91,10 @@
   (with-fixture jvm-ctx (*spring-path*)
     (let ((path "src/main/java/inga/client/ClientRestTemplate.java"))
       (is (equal
-            `((:host . "8080")
-              (:method . "GET")
-              (:path . "/rest-template"))
-            (inga/plugin/spring/traversal/java::find-server
+            `(((:host . "8080")
+               (:method . "GET")
+               (:path . "/rest-template")))
+            (inga/plugin/spring/traversal/java::find-servers
               ;;                                 ↓
               ;; return restTemplate.getForObject(uri, String.class);
               (find-ast-in-ctx `((:path . ,path) (:line . 29) (:offset . 41)))
@@ -104,10 +104,10 @@
   (with-fixture jvm-ctx (*spring-path*)
     (let ((path "src/main/java/inga/client/ClientWebClient.java"))
       (is (equal
-            `((:host . "8080")
-              (:method . "GET")
-              (:path . "/web-client"))
-            (inga/plugin/spring/traversal/java::find-server
+            `(((:host . "8080")
+               (:method . "GET")
+               (:path . "/web-client")))
+            (inga/plugin/spring/traversal/java::find-servers
               ;; .uri("/web-client")
               ;;          ↓
               ;; .retrieve()
@@ -118,10 +118,10 @@
   (with-fixture jvm-ctx (*spring-path*)
     (let ((path "src/main/java/inga/client/ClientWebClient.java"))
       (is (equal
-            `((:host . "8080")
-              (:method . "GET")
-              (:path . "/web-client"))
-            (inga/plugin/spring/traversal/java::find-server
+            `(((:host . "8080")
+               (:method . "GET")
+               (:path . "/web-client")))
+            (inga/plugin/spring/traversal/java::find-servers
               ;; .uri(uri)
               ;;          ↓
               ;; .retrieve()

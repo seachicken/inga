@@ -127,16 +127,17 @@
                                                    (gethash :spring *rest-client-apis*)))
                        (traversal-index traversal))))
     (when matched-api
-      (let ((server (find-server ast path)))
-        `(((:host . ,(cdr (assoc :host server)))
-           (:path . ,(cdr (assoc :path server)))
-           (:name . ,(cdr (assoc :method server)))
-           (:file-pos . ((:path . ,path)
-                         (:name . ,(ast-value ast "name"))
-                         (:top-offset . ,(ast-value ast "pos"))))))))))
+      (mapcar (lambda (server)
+                `((:host . ,(cdr (assoc :host server)))
+                  (:path . ,(cdr (assoc :path server)))
+                  (:name . ,(cdr (assoc :method server)))
+                  (:file-pos . ((:path . ,path)
+                                (:name . ,(ast-value ast "name"))
+                                (:top-offset . ,(ast-value ast "pos"))))))
+              (find-servers ast path)))))
 
-(defun find-server (ast path)
-  (let (server-host server-method server-path)
+(defun find-servers (ast path)
+  (let (server-host server-method server-paths)
     (multiple-value-bind (caller api) (find-caller
                                         (remove-if (lambda (a) (not (assoc :host-i a)))
                                                    (gethash :spring *rest-client-apis*))
@@ -171,17 +172,21 @@
                                         ast path)
       (when caller
         (let* ((param (get-parameter (cdr (assoc :path-i api)) caller))
-               (pos (first (find-reference-to-literal param path)))
+               (literal-poss (find-reference-to-literal param path))
                (host (get-host param)))
           (when host (setf server-host host))
-          (setf server-path (if pos
-                                (quri:uri-path (quri:uri (cdr (assoc :name pos))))
-                                (format nil "/{~a}"
-                                        (convert-to-json-type
-                                          (find-fq-class-name param path))))))))
-    `((:host . ,server-host)
-      (:method . ,server-method)
-      (:path . ,server-path))))
+          (setf server-paths (if literal-poss
+                                (mapcar (lambda (p)
+                                          (quri:uri-path (quri:uri (cdr (assoc :name p)))))
+                                        literal-poss)
+                                (list (format nil "/{~a}"
+                                              (convert-to-json-type
+                                                (find-fq-class-name param path)))))))))
+    (mapcar (lambda (server-path)
+              `((:host . ,server-host)
+                (:method . ,server-method)
+                (:path . ,server-path)))
+            server-paths)))
 
 (defun get-method (api ast)
   (if (assoc :method api)
