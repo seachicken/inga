@@ -221,7 +221,7 @@
                        #'(lambda (fqcn) (remove-if (lambda (a) (not (assoc :call-type a)))
                                                    (gethash :spring *rest-client-apis*)))
                        (traversal-index traversal))))
-    (when matched-api
+    (when (and matched-api (assoc :path-i matched-api))
       (mapcar (lambda (pos)
                 `((:host . ,(find-api-host 0 ast))
                   (:path . ,(quri:uri-path (quri:uri (cdr (assoc :name pos)))))
@@ -234,6 +234,14 @@
 
 (defun find-server (ast path)
   (let (server-host server-method server-path)
+    (multiple-value-bind (caller api) (find-caller
+                                        (remove-if (lambda (a) (not (assoc :host-i a)))
+                                                   (gethash :spring *rest-client-apis*))
+                                        ast path)
+      (when caller
+        (let* ((param (get-parameter (cdr (assoc :host-i api)) caller))
+               (host (get-host param)))
+          (setf server-host host))))
     (multiple-value-bind (caller api) (find-caller
                                         (remove-if (lambda (a) (and (not (assoc :method a))
                                                                     (not (assoc :method-i a))))

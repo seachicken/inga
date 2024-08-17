@@ -40,12 +40,12 @@
              ,(cons :top-offset
                     (convert-to-top-offset
                       (merge-pathnames "src/main/kotlin/ingakt/client/ClientRestTemplate.kt" *spring-path*)
-                      '((:line . 10) (:offset . 42)))))
+                      '((:line . 11) (:offset . 42)))))
             ((:path . "src/main/kotlin/ingakt/client/ClientRestTemplate.kt")
              ,(cons :top-offset
                     (convert-to-top-offset
                       (merge-pathnames "src/main/kotlin/ingakt/client/ClientRestTemplate.kt" *spring-path*)
-                      '((:line . 18) (:offset . 38))))))
+                      '((:line . 27) (:offset . 38))))))
           (find-references
             `((:type . :rest-server)
               (:host . "8080")
@@ -83,7 +83,20 @@
             (inga/plugin/spring/traversal/kotlin::find-server
               ;;                     ↓
               ;; return restTemplate.getForObject("http://localhost:8080/kotlin/path", String::class.java)
-              (find-ast-in-ctx `((:path . ,path) (:line . 10) (:offset . 29)))
+              (find-ast-in-ctx `((:path . ,path) (:line . 11) (:offset . 29)))
+              path))))))
+
+(test find-server-for-rest-template-with-uri-class
+  (with-fixture jvm-ctx (*spring-path*)
+    (let ((path "src/main/kotlin/ingakt/client/ClientRestTemplate.kt"))
+      (is (equal
+            `((:host . "8080")
+              (:method . "GET")
+              (:path . "/kotlin/rest-template"))
+            (inga/plugin/spring/traversal/kotlin::find-server
+              ;;                     ↓
+              ;; return restTemplate.getForObject(uri, String::class.java)
+              (find-ast-in-ctx `((:path . ,path) (:line . 23) (:offset . 29)))
               path))))))
 
 ;; RequestMapping

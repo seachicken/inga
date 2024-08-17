@@ -216,14 +216,24 @@
                       (let ((v (first (get-asts root '("PROPERTY") :direction :horizontal))))
                         (if v
                             (find-fq-class-name-kotlin v path index)
-                            (format nil "~{~a~^.~}"
-                                    (append
-                                      (get-dot-expressions (first (ast-value root "children")))
-                                      (list
-                                        (ast-value (first (get-asts root '("DOT_QUALIFIED_EXPRESSION"
-                                                                           "CALL_EXPRESSION"
-                                                                           "REFERENCE_EXPRESSION")))
-                                                   "name"))))))
+                            (let* ((fq-name (find-fq-name-for-reference
+                                              (first (get-asts root '("DOT_QUALIFIED_EXPRESSION"
+                                                                      "CALL_EXPRESSION")))
+                                              path index))
+                                   (method (find-signature
+                                             fq-name
+                                             #'(lambda (fqcn) (load-signatures fqcn path))
+                                             index)))
+                              (if method
+                                  (cdr (assoc :return method))
+                                  (format nil "~{~a~^.~}"
+                                          (append
+                                            (get-dot-expressions (first (ast-value root "children")))
+                                            (list
+                                              (ast-value (first (get-asts root '("DOT_QUALIFIED_EXPRESSION"
+                                                                                 "CALL_EXPRESSION"
+                                                                                 "REFERENCE_EXPRESSION")))
+                                                         "name"))))))))
                       (find-fq-class-name-kotlin ast path index))
                   (ast-value (first (get-asts ast '("REFERENCE_EXPRESSION"))) "name")
                   (mapcar (lambda (arg) (find-fq-class-name-kotlin arg path index))
@@ -287,6 +297,9 @@
     ("PROPERTY"
      (or
        ;; if create an instance of a class
+       (find-fq-class-name-kotlin (first (get-asts ast '("DOT_QUALIFIED_EXPRESSION"
+                                                         "CALL_EXPRESSION")))
+                                  path index)
        (find-fq-class-name-kotlin (first (get-asts ast '("CALL_EXPRESSION"))) path index)
        (find-fq-class-name-kotlin (first (get-asts ast '("TYPE_REFERENCE"))) path index)))
     ("VALUE_PARAMETER"
@@ -316,12 +329,26 @@
              (let ((parent (or (first (get-asts ast '("DOT_QUALIFIED_EXPRESSION") :direction :upward))
                                (first (get-asts ast '("SAFE_ACCESS_EXPRESSION") :direction :upward)))))
                (if parent
-                   (or (find-fq-class-name-by-variable-name
-                         (ast-value (first (get-asts parent '("REFERENCE_EXPRESSION"))) "name")
-                         ast path index)
-                       (find-fq-class-name-kotlin
-                         (first (get-asts ast '("REFERENCE_EXPRESSION")))
-                         path index))
+                   ;; if method chains
+                   (if (get-asts parent '("DOT_QUALIFIED_EXPRESSION"))
+                       (let* ((fq-name (find-fq-name-for-reference ast path index))
+                              (method (find-signature fq-name
+                                                      #'(lambda (fqcn) (load-signatures fqcn path))
+                                                      index)))
+                         (when method (cdr (assoc :return method))))
+                       (if (find-definition 
+                             (ast-value (first (get-asts parent '("REFERENCE_EXPRESSION"))) "name")
+                             parent)
+                           (find-fq-class-name-by-variable-name
+                             (ast-value (first (get-asts parent '("REFERENCE_EXPRESSION"))) "name")
+                             ast path index)
+                           (or 
+                             (find-fq-class-name-by-class-name
+                                 (ast-value (first (get-asts parent '("REFERENCE_EXPRESSION"))) "name")
+                                 ast path index)  
+                             (find-fq-class-name-kotlin
+                               (first (get-asts ast '("REFERENCE_EXPRESSION")))
+                               path index))))
                    (find-fq-class-name-by-class-name
                      (ast-value (first (get-asts ast '("REFERENCE_EXPRESSION"))) "name")
                      ast path index)))))))
@@ -329,6 +356,8 @@
       (ast-value ast "type"))))
 
 (defun find-fq-class-name-by-class-name (class-name ast path index)
+  (unless class-name (return-from find-fq-class-name-by-class-name))
+
   (loop
     with q = (make-queue)
     initially (enqueue q ast)
@@ -446,16 +475,29 @@
                              (ast-value (first (get-asts ast '("REFERENCE_EXPRESSION")
                                                          :direction :horizontal))
                                         "name")
-                             ast
-                             #'(lambda (ast)
-                                 (multiple-value-bind (caller api)
-                                   (find-caller
-                                     fq-names
-                                     (first (get-asts ast '("CALL_EXPRESSION")))
-                                     path)
-                                   (when caller
-                                     (return-from find-caller (values caller api))))))
-                           nil)))))))
+                             ast #'find-caller-by-visitor)
+                           (loop for arg in (get-asts ast '("VALUE_ARGUMENT_LIST"
+                                                            "VALUE_ARGUMENT"
+                                                            "REFERENCE_EXPRESSION"))
+                                 do
+                                 (find-definition
+                                   (ast-value arg "name")
+                                   arg #'find-caller-by-visitor))
+                           nil))))))
+           (find-caller-by-visitor (ast)
+             (multiple-value-bind (caller api) (find-caller
+                                                 fq-names
+                                                 (first (get-asts ast '("CALL_EXPRESSION")))
+                                                 path)
+               (when caller
+                 (return-from find-caller-generic (values caller api))))
+             (multiple-value-bind (caller api) (find-caller
+                                                 fq-names
+                                                 (first (get-asts ast '("DOT_QUALIFIED_EXPRESSION"
+                                                                        "CALL_EXPRESSION")))
+                                                 path)
+               (when caller
+                 (return-from find-caller-generic (values caller api))))))
     (find-caller fq-names ast path)))
 
 (defun find-definition (variable-name ast &optional visitor)
