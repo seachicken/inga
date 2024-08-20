@@ -12,4 +12,10 @@ class ObjectCallReference {
         client.methodSelf()
             .method()
     }
+
+    fun callMethodChainWithNullableAndHigherOrderFunctions() {
+        val client = ObjectCallHelper()
+        client.methodSelfWithNullable()
+            ?.methodWithHigherOrderFunctions { }
+    }
 }

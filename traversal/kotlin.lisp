@@ -210,7 +210,8 @@
                                        "name")
                                      ast path index))
        (t
-        (let ((root (first (get-asts ast '("DOT_QUALIFIED_EXPRESSION") :direction :upward))))
+        (let ((root (first (or (get-asts ast '("DOT_QUALIFIED_EXPRESSION") :direction :upward)
+                               (get-asts ast '("SAFE_ACCESS_EXPRESSION") :direction :upward)))))
           (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
                   (if (get-asts root '("DOT_QUALIFIED_EXPRESSION"))
                       (let ((v (first (get-asts root '("PROPERTY") :direction :horizontal))))

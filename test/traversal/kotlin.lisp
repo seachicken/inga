@@ -310,6 +310,17 @@
               (find-ast-in-ctx `((:path . ,path) (:line . 13) (:offset . 14)))
               path))))))
 
+(test find-fq-name-with-method-chain-nullable-higher-order-functions
+  (with-fixture jvm-ctx (*kotlin-path*)
+    (let ((path "src/main/kotlin/pkt1/ObjectCallReference.kt"))
+      (is (equal
+            "pkt1.ObjectCallHelper.methodWithHigherOrderFunctions-FUNCTION_LITERAL"
+            (find-fq-name
+              ;;                      ↓
+              ;; client.methodSelf()?.method {}
+              (find-ast-in-ctx `((:path . ,path) (:line . 19) (:offset . 15)))
+              path))))))
+
 (test find-fq-class-name-for-type-inference-in-lambda
   (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/TypeInferenceReference.kt"))
