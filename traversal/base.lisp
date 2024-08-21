@@ -111,6 +111,7 @@
 (defunc find-references (pos index)
   (funtime
     (lambda ()
+      (inga/logger:log-debug (format nil "find-ref. scoped-index: ~a" (get-scoped-index-paths pos index)))
       (loop for path in (get-scoped-index-paths pos index)
             with results
             do
