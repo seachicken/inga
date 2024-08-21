@@ -104,8 +104,6 @@
       (when results (jsown:parse results)))))
 
 (defun load-hierarchy (fq-class-name from)
-  (when (equal from "/work/libraries-transform/")
-    (error "test"))
   (unless (uiop:process-alive-p *jvm-dependency-loader*)
     (error 'inga-error-process-not-running))
   (when (is-primitive-type fq-class-name)
@@ -118,6 +116,8 @@
   (let ((base-path (find-base-path (merge-pathnames from *root-path*))))
     (unless base-path
       (return-from load-hierarchy))
+    (when (equal base-path "/work/libraries-transform/")
+      (error "test"))
 
     (when (uiop:string-suffix-p fq-class-name "[]")
       (setf fq-class-name (string-right-trim "[]" fq-class-name)))
