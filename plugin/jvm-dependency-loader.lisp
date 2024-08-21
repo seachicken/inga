@@ -104,7 +104,7 @@
       (when results (jsown:parse results)))))
 
 (defun load-hierarchy (fq-class-name from)
-  (when (equal fq-class-name "/work/libraries-transform/")
+  (when (equal from "/work/libraries-transform/")
     (error "test"))
   (unless (uiop:process-alive-p *jvm-dependency-loader*)
     (error 'inga-error-process-not-running))
