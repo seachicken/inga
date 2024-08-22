@@ -114,6 +114,7 @@
     (return-from load-hierarchy))
 
   (let ((base-path (find-base-path (merge-pathnames from *root-path*))))
+    (inga/logger:log-debug (format nil "find-bath-path in: ~a, out: ~a" from base-path))
     (unless base-path
       (return-from load-hierarchy))
     (when (equal base-path "/work/libraries-transform/")
