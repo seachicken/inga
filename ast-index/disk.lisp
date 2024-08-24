@@ -94,7 +94,10 @@
                        :direction :output
                        :if-exists :supersede
                        :if-does-not-exist :create)
-    (format out "~a" (jsown:to-json (ast-index-src-hash ast-index)))))
+    (let (hashes)
+      (maphash (lambda (k v) (push (cons k v) hashes))
+               (ast-index-src-hash ast-index))
+      (format out "~a" (jsown:to-json (cons :obj hashes))))))
 
 (defun get-index-path (original-path index-path)
   (merge-pathnames
