@@ -220,7 +220,7 @@
                        fq-name
                        #'(lambda (fqcn) (remove-if (lambda (a) (not (assoc :call-type a)))
                                                    (gethash :spring *rest-client-apis*)))
-                       (traversal-index traversal))))
+                       path)))
     (when matched-api
       (mapcar (lambda (server)
                 `((:host . ,(cdr (assoc :host server)))
