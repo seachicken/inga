@@ -125,7 +125,7 @@
                        fq-name
                        #'(lambda (fqcn) (remove-if (lambda (a) (not (assoc :call-type a)))
                                                    (gethash :spring *rest-client-apis*)))
-                       (traversal-index traversal))))
+                       path)))
     (when matched-api
       (mapcar (lambda (server)
                 `((:host . ,(cdr (assoc :host server)))
@@ -151,14 +151,14 @@
                     (let* ((v (find-definition (ast-value param "name") ast))
                            (value (first (filter-by-name
                                            (get-asts v '("MODIFIERS" "ANNOTATION"))
-                                           "Value"))))
-                      (write-to-string
-                        (quri:uri-port (quri:uri 
-                                         (find-property
-                                           (first (get-variable-names
-                                                    (ast-value (first (get-asts value '("STRING_LITERAL")))
-                                                               "name")))
-                                           path))))))))))
+                                           "Value")))
+                           (url (find-property
+                                  (first (get-variable-names
+                                           (ast-value (first (get-asts value '("STRING_LITERAL")))
+                                                      "name")))
+                                  path)))
+                      (when url
+                        (write-to-string (quri:uri-port (quri:uri url))))))))))
     (multiple-value-bind (caller api) (find-caller
                                         (remove-if (lambda (a) (and (not (assoc :method a))
                                                                     (not (assoc :method-i a))))

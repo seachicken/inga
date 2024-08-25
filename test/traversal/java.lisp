@@ -311,7 +311,7 @@
             "java.util.List.of-java.lang.String"
             #'(lambda (fqcn) '(((:fq-name . "java.util.List.of-java.lang.Object"))
                                ((:fq-name . "java.util.List.of-java.lang.Object[]"))))
-            *index*)))))
+            "src/main/java/p1/NewClassReference.java")))))
 
 (test matches-signature
   (with-fixture jvm-ctx (*java-path*)
@@ -320,7 +320,7 @@
           (inga/traversal/base::matches-signature
             "p2.ApiSignature-p2.ChildClass"
             "p2.ApiSignature-p2.ParentClass"
-            *index*)))))
+            "src/main/java/p2/ApiSignature.java")))))
 
 (test matches-signature-with-null
   (with-fixture jvm-ctx (*java-path*)
@@ -329,7 +329,7 @@
           (inga/traversal/base::matches-signature
             "java.lang.Object-equals-NULL"
             "java.lang.Object-equals-java.lang.Object"
-            *index*)))))
+            "src/main/java/p2/ApiSignature.java")))))
 
 (test matches-signature-with-additional-strings
   (with-fixture jvm-ctx (*java-path*)
@@ -339,7 +339,7 @@
           (inga/traversal/base::matches-signature
             "method-java.lang.String"
             "method-java.lang.String-java.lang.String[]"
-            *index*)))))
+            "src/main/java/p2/ApiSignature.java")))))
 
 (test find-class-hierarchy-with-app-class
   (with-fixture jvm-ctx (*java-path*)
@@ -347,7 +347,7 @@
           '("java.lang.Object"
             "p2.ParentClass"
             "p2.ChildClass")
-          (find-class-hierarchy "p2.ChildClass" *index*)))))
+          (find-class-hierarchy "p2.ChildClass" "src/main/java/p2/ApiSignature.java")))))
 
 (def-suite jdk17
            :in java)
@@ -538,7 +538,7 @@
           (inga/traversal/base::matches-signature
             "io.spring.application.CursorPager.CursorPager-java.util.ArrayList-io.spring.application.CursorPager$Direction-BOOLEAN"
             "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager$Direction-BOOLEAN"
-            *index*)))))
+            "src/main/java/io/spring/application/ArticleQueryService.java")))))
 
 (test matches-signature-with-object-array
   (with-fixture jvm-ctx (*guava-modules*)
@@ -547,7 +547,7 @@
           (inga/traversal/base::matches-signature
             "com.google.common.collect.Lists.newArrayList-java.lang.String-java.lang.String"
             "com.google.common.collect.Lists.newArrayList-java.lang.Object[]"
-            *index*)))))
+            "guava-io/src/test/java/com/baeldung/guava/GuavaIOUnitTest.java")))))
 
 (test find-class-hierarchy-with-standard-class
   (with-fixture jvm-ctx (*lightrun-path*)
@@ -559,5 +559,7 @@
             "java.lang.constant.ConstantDesc"
             "java.lang.Object"
             "java.lang.String")
-          (find-class-hierarchy "java.lang.String" *index*)))))
+          (find-class-hierarchy
+            "java.lang.String"
+            "users-service/src/main/java/com/baeldung/usersservice/service/UsersService.java")))))
 

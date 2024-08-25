@@ -224,7 +224,7 @@
                                    (method (find-signature
                                              fq-name
                                              #'(lambda (fqcn) (load-signatures fqcn path))
-                                             index)))
+                                             path)))
                               (if method
                                   (cdr (assoc :return method))
                                   (format nil "~{~a~^.~}"
@@ -330,7 +330,7 @@
                        (let* ((fq-name (find-fq-name-for-reference ast path index))
                               (method (find-signature fq-name
                                                       #'(lambda (fqcn) (load-signatures fqcn path))
-                                                      index)))
+                                                      path)))
                          (when method (cdr (assoc :return method))))
                        (if (find-definition 
                              (ast-value (first (get-asts parent '("REFERENCE_EXPRESSION"))) "name")
@@ -399,7 +399,7 @@
                                                                      (find-fq-class-name-by-class-name
                                                                        (ast-value super "name")
                                                                        super path index)
-                                                                     index)))))
+                                                                     path)))))
                                             (when fq-class-name (jsown:val fq-class-name "name"))))))
                         (format nil "~{~a~^.~}"
                                 (append (get-dot-expressions
@@ -457,7 +457,7 @@
              (let* ((found-fq-name (find-fq-name ast path))
                     (matched-api (find-signature found-fq-name
                                                  #'(lambda (fqcn) fq-names)
-                                                 (traversal-index trav))))
+                                                 path)))
                (if matched-api
                    (values ast matched-api)
                    (let* ((root (first (get-asts ast '("DOT_QUALIFIED_EXPRESSION")
@@ -588,7 +588,7 @@
        results))))
 
 (defmethod find-class-hierarchy-generic ((traversal traversal-kotlin)
-                                         fq-class-name root-ast path index)
+                                         fq-class-name root-ast path)
   (loop
     with stack = (list root-ast)
     with ast
@@ -618,10 +618,11 @@
         ;; TODO: fix parent class get
         (let ((parent-class-name (ast-value (first (get-asts ast '("IDENTIFIER"))) "name")))
           (if parent-class-name
-              (let ((parent-fq-class-name (find-fq-class-name-by-class-name parent-class-name
-                                                                            ast path index)))
+              (let ((parent-fq-class-name (find-fq-class-name-by-class-name
+                                            parent-class-name ast path
+                                            (traversal-index traversal))))
                 (when parent-fq-class-name
-                  (append (find-class-hierarchy parent-fq-class-name index)
+                  (append (find-class-hierarchy parent-fq-class-name path)
                           (list parent-fq-class-name)
                           (list fq-class-name))))
               '("java.lang.Object")))))

@@ -153,7 +153,7 @@
 (defmethod find-reference ((traversal traversal-java) target-pos fq-name ast path)
   (when (find-signature fq-name
                         #'(lambda (fqcn) (list target-pos))
-                        (traversal-index traversal))
+                        path)
     `((:path . ,path)
       (:top-offset . ,(ast-value ast "startPos")))))
 
@@ -185,7 +185,7 @@
                            (method (find-signature
                                      fq-name
                                      #'(lambda (fqcn) (load-signatures fqcn path))
-                                     index)))
+                                     path)))
                       (when method (cdr (assoc :return method)))))
                    ((get-asts ast '("MEMBER_SELECT" "IDENTIFIER"))
                     (find-fq-class-name-java
@@ -253,7 +253,7 @@
                         (find-fq-name-for-reference ast path index))))
             (method (find-signature fq-name
                                     #'(lambda (fqcn) (load-signatures fqcn path))
-                                    index)))
+                                    path)))
        (when method (cdr (assoc :return method)))))))
 
 (defun find-fq-class-name-by-class-name (class-name ast)
@@ -405,7 +405,7 @@
              (let* ((found-fq-name (find-fq-name ast path))
                     (matched-api (find-signature found-fq-name
                                                  #'(lambda (fqcn) fq-names)
-                                                 (traversal-index trav))))
+                                                 path)))
                (if matched-api
                    (values ast matched-api)
                    (if (get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
@@ -497,7 +497,7 @@
               do (setf stack (append stack (list child))))))))
 
 (defmethod find-class-hierarchy-generic ((traversal traversal-java)
-                                         fq-class-name root-ast path index)
+                                         fq-class-name root-ast path)
   (loop
     with stack = (list root-ast)
     with ast
@@ -522,7 +522,7 @@
           (if parent-class-name
               (let ((parent-fq-class-name (find-fq-class-name-by-class-name parent-class-name ast)))
                 (when parent-fq-class-name
-                  (append (find-class-hierarchy parent-fq-class-name index)
+                  (append (find-class-hierarchy parent-fq-class-name path)
                           (list parent-fq-class-name)
                           (list fq-class-name))))
               '("java.lang.Object")))))
