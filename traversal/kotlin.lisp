@@ -224,7 +224,7 @@
                                    (method (find-signature
                                              fq-name
                                              #'(lambda (fqcn) (load-signatures fqcn path))
-                                             index)))
+                                             path)))
                               (if method
                                   (cdr (assoc :return method))
                                   (format nil "~{~a~^.~}"
@@ -330,7 +330,7 @@
                        (let* ((fq-name (find-fq-name-for-reference ast path index))
                               (method (find-signature fq-name
                                                       #'(lambda (fqcn) (load-signatures fqcn path))
-                                                      index)))
+                                                      path)))
                          (when method (cdr (assoc :return method))))
                        (if (find-definition 
                              (ast-value (first (get-asts parent '("REFERENCE_EXPRESSION"))) "name")
@@ -399,7 +399,7 @@
                                                                      (find-fq-class-name-by-class-name
                                                                        (ast-value super "name")
                                                                        super path index)
-                                                                     index)))))
+                                                                     path)))))
                                             (when fq-class-name (jsown:val fq-class-name "name"))))))
                         (format nil "~{~a~^.~}"
                                 (append (get-dot-expressions
@@ -457,7 +457,7 @@
              (let* ((found-fq-name (find-fq-name ast path))
                     (matched-api (find-signature found-fq-name
                                                  #'(lambda (fqcn) fq-names)
-                                                 (traversal-index trav))))
+                                                 path)))
                (if matched-api
                    (values ast matched-api)
                    (let* ((root (first (get-asts ast '("DOT_QUALIFIED_EXPRESSION")
@@ -588,46 +588,8 @@
        results))))
 
 (defmethod find-class-hierarchy-generic ((traversal traversal-kotlin)
-                                         fq-class-name root-ast path index)
-  (loop
-    with stack = (list root-ast)
-    with ast
-    with target-package-name = (get-package-name fq-class-name)
-    with target-class-name = (first (last (split #\. fq-class-name)))
-    initially
-    (let ((hierarchy (load-hierarchy fq-class-name path)))
-      (when hierarchy
-        (return-from find-class-hierarchy-generic hierarchy)))
-    do
-    (setf ast (pop stack))
-    (if (null ast) (return))
-
-    (when (equal (ast-value ast "type") "kotlin.FILE")
-      (unless (equal (format nil "~{~a~^.~}"
-                             (mapcar (lambda (ast) (ast-value ast "name"))
-                                     (get-asts ast '("PACKAGE_DIRECTIVE"
-                                                     "DOT_QUALIFIED_EXPRESSION"
-                                                     "REFERENCE_EXPRESSION"))))
-                     target-package-name)
-        (return-from find-class-hierarchy-generic)))
-
-    (when (equal (ast-value ast "type") "CLASS")
-      (unless (equal (ast-value ast "name") target-class-name)
-        (return-from find-class-hierarchy-generic))
-      (return-from find-class-hierarchy-generic
-        ;; TODO: fix parent class get
-        (let ((parent-class-name (ast-value (first (get-asts ast '("IDENTIFIER"))) "name")))
-          (if parent-class-name
-              (let ((parent-fq-class-name (find-fq-class-name-by-class-name parent-class-name
-                                                                            ast path index)))
-                (when parent-fq-class-name
-                  (append (find-class-hierarchy parent-fq-class-name index)
-                          (list parent-fq-class-name)
-                          (list fq-class-name))))
-              '("java.lang.Object")))))
-
-    (loop for child in (jsown:val ast "children")
-          do (setf stack (append stack (list child))))))
+                                         fq-class-name root-ast path)
+  (load-hierarchy fq-class-name path))
 
 (defun get-package-name (fq-class-name)
   (format nil "~{~a~^.~}" (butlast (split #\. fq-class-name))))

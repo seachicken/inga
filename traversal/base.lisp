@@ -176,7 +176,7 @@
 (defgeneric find-caller-generic (traversal fq-names ast path)
   (:method (traversal fq-names ast path)))
 
-(defun find-signature (fq-name find-signatures index)
+(defun find-signature (fq-name find-signatures path)
   (when (or (null fq-name) (equal fq-name ""))
     (return-from find-signature))
 
@@ -193,7 +193,7 @@
           with target-is-array = (is-array fq-name)
           with matched-methods
           do
-          (when (matches-signature fq-name (cdr (assoc :fq-name method)) index)
+          (when (matches-signature fq-name (cdr (assoc :fq-name method)) path)
             (if (or (and target-is-array (is-array (cdr (assoc :fq-name method))))
                     (and (not target-is-array) (not (is-array (cdr (assoc :fq-name method))))))
                 (push method matched-methods)  
@@ -204,7 +204,7 @@
                       (log-debug (format nil "matched multiple signatures.~%  fq-name: ~a~%  matched-methods: ~a" fq-name matched-methods)))
                     (first matched-methods))))))
 
-(defun matches-signature (target-fq-name api-fq-name index)
+(defun matches-signature (target-fq-name api-fq-name path)
   (let* ((split-target-fq-names (split #\- target-fq-name))
          (split-api-fq-names (split #\- api-fq-name))
          (target-fq-class-name (format nil "~{~a~^.~}"
@@ -228,7 +228,7 @@
 
     (when (and (not (equal target-fq-class-name api-fq-class-name))
                (not (find-if (lambda (super-class-name) (equal super-class-name api-fq-class-name))
-                             (find-class-hierarchy target-fq-class-name index))))
+                             (find-class-hierarchy target-fq-class-name path))))
       (return-from matches-signature)) 
 
     (loop for target-arg-name in target-arg-names
@@ -242,25 +242,22 @@
                                  (or
                                    (equal super-class-name (nth i api-arg-names))
                                    (equal super-class-name array-arg)))
-                               (find-class-hierarchy target-arg-name index)))
+                               (find-class-hierarchy target-arg-name path)))
             (return-from matches-signature))))
   t)
 
 (defun is-array (name)
   (uiop:string-suffix-p name "[]"))
 
-(defun find-class-hierarchy (fq-class-name index)
-  (loop for path in (ast-index-paths index)
-        do
-        (let* ((traversal (get-traversal (namestring path)))
-               (ast (get-ast (traversal-index traversal) path)))
-          (let ((class-hierarchy (find-class-hierarchy-generic traversal fq-class-name ast path index)))
-            (when class-hierarchy
-              (return-from find-class-hierarchy class-hierarchy)))))
-  (list fq-class-name))
-
-(defgeneric find-class-hierarchy-generic (traversal fq-class-name root-ast path index)
-  (:method (traversal fq-class-name root-ast path index)))
+(defun find-class-hierarchy (fq-class-name path)
+  (let* ((traversal (get-traversal (namestring path)))
+         (ast (get-ast (traversal-index traversal) path))
+         (class-hierarchy (find-class-hierarchy-generic traversal fq-class-name ast path)))
+    (if class-hierarchy
+        (return-from find-class-hierarchy class-hierarchy)
+        (list fq-class-name))))
+(defgeneric find-class-hierarchy-generic (traversal fq-class-name root-ast path)
+  (:method (traversal fq-class-name root-ast path)))
 
 (defun convert-to-top-offset (path pos)
   (with-open-file (stream path)

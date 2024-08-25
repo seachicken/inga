@@ -15,6 +15,8 @@
      (concatenate 'string a b))))
 
 (defun get-variable-names (sequence)
+  (unless sequence (return-from get-variable-names))
+
   (loop for c across sequence
         with begin-token
         with variable
