@@ -498,34 +498,5 @@
 
 (defmethod find-class-hierarchy-generic ((traversal traversal-java)
                                          fq-class-name root-ast path)
-  (loop
-    with stack = (list root-ast)
-    with ast
-    with target-package-name = (format nil "~{~a~^.~}" (butlast (split #\. fq-class-name)))
-    with target-class-name = (first (last (split #\. fq-class-name)))
-    initially
-    (let ((hierarchy (load-hierarchy fq-class-name path)))
-      (when hierarchy
-        (return-from find-class-hierarchy-generic hierarchy)))
-    do
-    (setf ast (pop stack))
-    (if (null ast) (return))
-
-    (when (equal (ast-value ast "type") "PACKAGE")
-      (unless (equal (ast-value ast "packageName") target-package-name)
-        (return-from find-class-hierarchy-generic)))
-    (when (equal (ast-value ast "type") "CLASS")
-      (unless (equal (ast-value ast "name") target-class-name)
-        (return-from find-class-hierarchy-generic))
-      (return-from find-class-hierarchy-generic
-        (let ((parent-class-name (ast-value (first (get-asts ast '("IDENTIFIER"))) "name")))
-          (if parent-class-name
-              (let ((parent-fq-class-name (find-fq-class-name-by-class-name parent-class-name ast)))
-                (when parent-fq-class-name
-                  (append (find-class-hierarchy parent-fq-class-name path)
-                          (list parent-fq-class-name)
-                          (list fq-class-name))))
-              '("java.lang.Object")))))
-    (loop for child in (jsown:val ast "children")
-          do (setf stack (append stack (list child))))))
+  (load-hierarchy fq-class-name path))
 
