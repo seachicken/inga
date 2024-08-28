@@ -506,8 +506,7 @@
           (inga/traversal::get-scoped-index-paths
             '((:type . :module-private)
               (:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
-              (:fq-name . "com.baeldung.apiservice.adapters.http.TasksController.getUser-java.lang.String")
-              )
+              (:fq-name . "com.baeldung.apiservice.adapters.http.TasksController.getUser-java.lang.String"))
             *index*)))))
 
 (test get-scoped-index-paths-with-module-public

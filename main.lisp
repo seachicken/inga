@@ -234,37 +234,36 @@
     :test #'equal))
 
 (defun analyze-by-range (ctx range)
-  (let ((q (make-queue))
-        results)
-    (enqueue q range)
-    (loop
-      (setf range (dequeue q))
-      (if (null range) (return results))
+  (loop
+    with q = (make-queue)
+    with results
+    initially (enqueue q range)
+    do
+    (setf range (dequeue q))
+    (unless range (return (remove-duplicates results :test #'equal)))
 
-      (setf results
-            (append results
-                    (mapcan (lambda (pos)
-                              (unless (assoc :origin pos)
-                                (push (cons :origin pos) pos))
-                              (append (when (eq (cdr (assoc :type pos)) :rest-server)
-                                        `(((:type . "entrypoint")
-                                           (:origin .
-                                            ,(convert-to-output-pos (context-project-path ctx)
-                                                                    (if (cdr (assoc :origin pos))
-                                                                        (cdr (assoc :origin pos))
-                                                                        pos)))
-                                           (:entrypoint .
-                                            ,(convert-to-output-pos (context-project-path ctx)
-                                                                    pos)))))  
-                                      (find-entrypoints ctx pos q)))
-                            (find-definitions range)))))))
+    (let ((poss (mapcan
+                  (lambda (pos)
+                    (unless (assoc :origin pos)
+                      (push (cons :origin pos) pos))
+                    (append (when (eq (cdr (assoc :type pos)) :rest-server)
+                              `(((:type . "entrypoint")
+                                 (:origin .
+                                  ,(convert-to-output-pos (context-project-path ctx)
+                                                          (if (cdr (assoc :origin pos))
+                                                              (cdr (assoc :origin pos))
+                                                              pos)))
+                                 (:entrypoint .
+                                  ,(convert-to-output-pos (context-project-path ctx)
+                                                          pos)))))  
+                            (find-entrypoints ctx pos q)))
+                  (find-definitions range))))
+      (setf results (append results poss)))))
 
 (defun find-entrypoints (ctx pos q)
-  (let ((refs
-          (if (context-lc ctx)
-              (references-client (context-lc ctx) pos) 
-              (find-references pos (context-ast-index ctx))))
-        results)
+  (let ((refs (if (context-lc ctx)
+                  (references-client (context-lc ctx) pos) 
+                  (find-references pos (context-ast-index ctx)))))
     (setf refs (remove nil (mapcar (lambda (ref)
                                      (when (is-analysis-target (context-kind ctx)
                                                                (cdr (assoc :path ref))
@@ -274,6 +273,7 @@
                                    refs)))
     (if refs
         (loop for ref in refs
+              with results
               do
               (let ((entrypoint (find-entrypoint ref)))
                 (if entrypoint
@@ -286,7 +286,8 @@
                                                                   (cdr (assoc :origin pos))
                                                                   entrypoint)))
                                      (:entrypoint .
-                                      ,(convert-to-output-pos (context-project-path ctx) entrypoint))))))
+                                      ,(convert-to-output-pos (context-project-path ctx)
+                                                              entrypoint))))))
                     (let ((origin
                             (if (eq (cdr (assoc :type pos)) :rest-server)
                                 (let ((definition
@@ -308,19 +309,17 @@
                                                        definition))))))
                                   definition)
                                 (cdr (assoc :origin pos)))))
-                      (enqueue q (list
-                                   (cons :path (cdr (assoc :path ref)))
-                                   (cons :origin origin)
-                                   (cons :start-offset (cdr (assoc :top-offset ref)))
-                                   (cons :end-offset (cdr (assoc :top-offset ref)))))))))
-        (setf results
-              `(((:type . "entrypoint")
-                 (:origin . ,(convert-to-output-pos (context-project-path ctx)
-                                                    (if (cdr (assoc :origin pos))
-                                                        (cdr (assoc :origin pos))
-                                                        pos)))
-                 (:entrypoint . ,(convert-to-output-pos (context-project-path ctx) pos))))))
-    results))
+                      (enqueue q `((:path . ,(cdr (assoc :path ref)))
+                                   (:origin . ,origin)
+                                   (:start-offset . ,(cdr (assoc :top-offset ref)))
+                                   (:end-offset . ,(cdr (assoc :top-offset ref))))))))
+              finally (return results))
+        `(((:type . "entrypoint")
+           (:origin . ,(convert-to-output-pos (context-project-path ctx)
+                                              (if (cdr (assoc :origin pos))
+                                                  (cdr (assoc :origin pos))
+                                                  pos)))
+           (:entrypoint . ,(convert-to-output-pos (context-project-path ctx) pos)))))))
 
 (defun convert-to-output-pos (root-path pos)
   (when (eq (cdr (assoc :type pos)) :rest-server)

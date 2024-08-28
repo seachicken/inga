@@ -24,29 +24,27 @@
           '(((:path . "src/App/NewTodoInput/index.tsx")
              (:name . "input")
              (:line . 34) (:offset . 10)))
-          (remove-duplicates
-            (mapcar (lambda (e) (cdr (assoc :entrypoint e)))
-                    (inga/main::analyze-by-range
-                      ctx
-                      `((:path . "src/functions.ts")
-                        ,(cons :start-offset
-                               (convert-to-top-offset
-                                 (merge-pathnames "src/functions.ts" *front-path*)
-                                 '((:line . 2) (:offset . 0))))
-                        ,(cons :end-offset
-                               (convert-to-top-offset
-                                 (merge-pathnames "src/functions.ts" *front-path*)
-                                 '((:line . 2) (:offset . -1)))))))
-            :test #'equal)))
+          (mapcar (lambda (e) (cdr (assoc :entrypoint e)))
+                  (inga/main::analyze-by-range
+                    ctx
+                    `((:path . "src/functions.ts")
+                      ,(cons :start-offset
+                             (convert-to-top-offset
+                               (merge-pathnames "src/functions.ts" *front-path*)
+                               '((:line . 2) (:offset . 0))))
+                      ,(cons :end-offset
+                             (convert-to-top-offset
+                               (merge-pathnames "src/functions.ts" *front-path*)
+                               '((:line . 2) (:offset . -1)))))))))
     (inga/main::stop ctx)))
 
 (def-suite java)
 (in-suite java)
 
 (defparameter *back-path*
-  (truename (uiop:merge-pathnames* "test/fixtures/spring-boot-realworld-example-app/")))
+  (truename (merge-pathnames "test/fixtures/spring-boot-realworld-example-app/")))
 (defparameter *lightrun-path*
-  (truename (uiop:merge-pathnames* "test/fixtures/spring-tutorials/lightrun/")))
+  (truename (merge-pathnames "test/fixtures/spring-tutorials/lightrun/")))
 
 (test analyze-by-range-for-entrypoints
   (let ((ctx (inga/main::start *back-path* '(:java) :exclude '("src/test/**"))))
@@ -55,24 +53,22 @@
             '(((:path . "src/main/java/io/spring/api/ArticlesApi.java")
                (:name . "getArticles")
                (:line . 49) (:offset . 25)))
-            (remove-duplicates
-              (mapcar (lambda (e) (cdr (assoc :entrypoint e)))
-                      (inga/main::analyze-by-range
-                        ctx
-                        `((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
-                          ,(cons :start-offset
-                                 (convert-to-top-offset
-                                   (merge-pathnames
-                                     "src/main/java/io/spring/application/ArticleQueryService.java"
-                                     *back-path*)
-                                   '((:line . 105) (:offset . 0))))
-                          ,(cons :end-offset
-                                 (convert-to-top-offset
-                                   (merge-pathnames
-                                     "src/main/java/io/spring/application/ArticleQueryService.java"
-                                     *back-path*)
-                                   '((:line . 105) (:offset . -1)))))))
-              :test #'equal)))
+            (mapcar (lambda (e) (cdr (assoc :entrypoint e)))
+                    (inga/main::analyze-by-range
+                      ctx
+                      `((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
+                        ,(cons :start-offset
+                               (convert-to-top-offset
+                                 (merge-pathnames
+                                   "src/main/java/io/spring/application/ArticleQueryService.java"
+                                   *back-path*)
+                                 '((:line . 105) (:offset . 0))))
+                        ,(cons :end-offset
+                               (convert-to-top-offset
+                                 (merge-pathnames
+                                   "src/main/java/io/spring/application/ArticleQueryService.java"
+                                   *back-path*)
+                                 '((:line . 105) (:offset . -1)))))))))
       (inga/main::stop ctx))))
 
 (test analyze-by-range-for-micro-services
@@ -106,23 +102,21 @@
                 ((:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
                  (:name . "getTaskById")
                  (:line . 25) (:offset . 25)))))
-            (remove-duplicates
-              (inga/main::analyze-by-range
-                ctx
-                `((:path . "users-service/src/main/java/com/baeldung/usersservice/service/UsersService.java")
-                  ,(cons :start-offset
-                         (convert-to-top-offset
-                           (merge-pathnames
-                             "users-service/src/main/java/com/baeldung/usersservice/service/UsersService.java"
-                             *lightrun-path*)
-                           '((:line . 34) (:offset . 0))))
-                  ,(cons :end-offset
-                         (convert-to-top-offset
-                           (merge-pathnames
-                             "users-service/src/main/java/com/baeldung/usersservice/service/UsersService.java"
-                             *lightrun-path*)
-                           '((:line . 34) (:offset . -1))))))
-              :test #'equal)))
+            (inga/main::analyze-by-range
+              ctx
+              `((:path . "users-service/src/main/java/com/baeldung/usersservice/service/UsersService.java")
+                ,(cons :start-offset
+                       (convert-to-top-offset
+                         (merge-pathnames
+                           "users-service/src/main/java/com/baeldung/usersservice/service/UsersService.java"
+                           *lightrun-path*)
+                         '((:line . 34) (:offset . 0))))
+                ,(cons :end-offset
+                       (convert-to-top-offset
+                         (merge-pathnames
+                           "users-service/src/main/java/com/baeldung/usersservice/service/UsersService.java"
+                           *lightrun-path*)
+                         '((:line . 34) (:offset . -1))))))))
       (inga/main::stop ctx))))
 
 (test analyze-by-range-for-constraint-validator
