@@ -45,6 +45,7 @@
   (truename (merge-pathnames "test/fixtures/spring-boot-realworld-example-app/")))
 (defparameter *lightrun-path*
   (truename (merge-pathnames "test/fixtures/spring-tutorials/lightrun/")))
+(defparameter *java-path* (merge-pathnames "test/fixtures/general/"))
 
 (test analyze-by-range-for-entrypoints
   (let ((ctx (inga/main::start *back-path* '(:java) :exclude '("src/test/**"))))
@@ -118,6 +119,30 @@
                            *lightrun-path*)
                          '((:line . 34) (:offset . -1))))))))
       (inga/main::stop ctx))))
+
+(test analyze-by-range-with-recursion
+  (let ((ctx (inga/main::start *java-path* '(:java))))
+    (is (equal
+          '(((:path . "src/main/java/p1/RecursionReference.java")
+             (:name . "method")
+             (:line . 4) (:offset . 17)))
+          (mapcar (lambda (e) (cdr (assoc :entrypoint e)))
+                  (inga/main::analyze-by-range
+                    ctx
+                    `((:path . "src/main/java/p1/RecursionReference.java")
+                      ,(cons :start-offset
+                             (convert-to-top-offset
+                               (merge-pathnames
+                                 "src/main/java/p1/RecursionReference.java"
+                                 *java-path*)
+                               '((:line . 5) (:offset . 0))))
+                      ,(cons :end-offset
+                             (convert-to-top-offset
+                               (merge-pathnames
+                                 "src/main/java/p1/RecursionReference.java"
+                                 *java-path*)
+                               '((:line . 5) (:offset . -1)))))))))
+    (inga/main::stop ctx)))
 
 (test analyze-by-range-for-constraint-validator
   (if t
