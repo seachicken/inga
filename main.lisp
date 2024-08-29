@@ -246,6 +246,11 @@
                   (lambda (pos)
                     (unless (assoc :origin pos)
                       (push (cons :origin pos) pos))
+                    ;; nodejs doesn't support fq-name
+                    (when (assoc :fq-name pos)
+                      (if (assoc :visited-fq-names pos)
+                          (adjoin (cdr (assoc :fq-name pos)) (cdr (assoc :visited-fq-names pos)))
+                          (push (cons :visited-fq-names (list (cdr (assoc :fq-name pos)))) pos)))
                     (append (when (eq (cdr (assoc :type pos)) :rest-server)
                               `(((:type . "entrypoint")
                                  (:origin .
@@ -268,55 +273,46 @@
                       (if (context-lc ctx)
                           (references-client (context-lc ctx) pos) 
                           (find-references pos (context-ast-index ctx))))))
-    (if refs
-        (loop for ref in refs
-              with results
-              do
-              (let ((entrypoint (find-entrypoint ref)))
-                (if entrypoint
-                    (setf results
-                          (append results
-                                  `(((:type . "entrypoint")
-                                     (:origin .
-                                      ,(convert-to-output-pos (context-project-path ctx)
-                                                              (if (cdr (assoc :origin pos))
-                                                                  (cdr (assoc :origin pos))
-                                                                  entrypoint)))
-                                     (:entrypoint .
-                                      ,(convert-to-output-pos (context-project-path ctx)
-                                                              entrypoint))))))
-                    (let ((origin
-                            (if (eq (cdr (assoc :type pos)) :rest-server)
-                                (let ((definition
-                                        (first
-                                          (find-definitions
-                                            `((:path . ,(cdr (assoc :path ref)))
-                                              (:start-offset . ,(cdr (assoc :top-offset ref)))
-                                              (:end-offset . ,(cdr (assoc :top-offset ref))))))))
-                                  (setf results
-                                        (append results
-                                                `(((:type . "connection")
-                                                   (:origin .
-                                                    ,(convert-to-output-pos
-                                                       (context-project-path ctx)
-                                                       (cdr (assoc :file-pos pos))))
-                                                   (:entrypoint .
-                                                    ,(convert-to-output-pos
-                                                       (context-project-path ctx)
-                                                       definition))))))
-                                  definition)
-                                (cdr (assoc :origin pos)))))
-                      (enqueue q `((:path . ,(cdr (assoc :path ref)))
-                                   (:origin . ,origin)
-                                   (:start-offset . ,(cdr (assoc :top-offset ref)))
-                                   (:end-offset . ,(cdr (assoc :top-offset ref))))))))
-              finally (return results))
-        `(((:type . "entrypoint")
-           (:origin . ,(convert-to-output-pos (context-project-path ctx)
-                                              (if (cdr (assoc :origin pos))
-                                                  (cdr (assoc :origin pos))
-                                                  pos)))
-           (:entrypoint . ,(convert-to-output-pos (context-project-path ctx) pos)))))))
+    (labels ((make-entrypoint (entrypoint)
+               `((:type . "entrypoint")
+                 (:origin . ,(convert-to-output-pos (context-project-path ctx)
+                                                    (if (cdr (assoc :origin pos))
+                                                        (cdr (assoc :origin pos))
+                                                        entrypoint)))
+                 (:entrypoint . ,(convert-to-output-pos (context-project-path ctx)
+                                                        entrypoint))))
+             (make-connection (definition)
+               `((:type . "connection")
+                 (:origin . ,(convert-to-output-pos (context-project-path ctx)
+                                                    (cdr (assoc :file-pos pos))))
+                 (:entrypoint . ,(convert-to-output-pos (context-project-path ctx)
+                                                        definition)))))
+      (if refs
+          (loop for ref in refs
+            with results
+            do
+            (let ((entrypoint (find-entrypoint ref)))
+              (if entrypoint
+                  (setf results (append results (list (make-entrypoint entrypoint))))
+                  (let* ((def (first
+                                (find-definitions
+                                  `((:path . ,(cdr (assoc :path ref)))
+                                    (:start-offset . ,(cdr (assoc :top-offset ref)))
+                                    (:end-offset . ,(cdr (assoc :top-offset ref)))))))
+                         (origin (if (eq (cdr (assoc :type pos)) :rest-server)
+                                     def
+                                     (cdr (assoc :origin pos)))))
+                    (when (eq (cdr (assoc :type pos)) :rest-server)
+                      (setf results (append results (list (make-connection def)))))
+                    (if (member (cdr (assoc :fq-name def))
+                                (cdr (assoc :visited-fq-names pos)) :test #'equal)
+                        (setf results (append results (list (make-entrypoint def))))
+                        (enqueue q `((:path . ,(cdr (assoc :path ref)))
+                                     (:origin . ,origin)
+                                     (:start-offset . ,(cdr (assoc :top-offset ref)))
+                                     (:end-offset . ,(cdr (assoc :top-offset ref)))))))))
+            finally (return results))
+          (list (make-entrypoint pos))))))
 
 (defun convert-to-output-pos (root-path pos)
   (when (eq (cdr (assoc :type pos)) :rest-server)
