@@ -261,16 +261,13 @@
       (setf results (append results poss)))))
 
 (defun find-entrypoints (ctx pos q)
-  (let ((refs (if (context-lc ctx)
-                  (references-client (context-lc ctx) pos) 
-                  (find-references pos (context-ast-index ctx)))))
-    (setf refs (remove nil (mapcar (lambda (ref)
-                                     (when (is-analysis-target (context-kind ctx)
-                                                               (cdr (assoc :path ref))
-                                                               (context-include ctx)
-                                                               (context-exclude ctx))
-                                       ref))
-                                   refs)))
+  (let ((refs (mapcan (lambda (ref)
+                        (when (is-analysis-target (context-kind ctx) (cdr (assoc :path ref))
+                                                  (context-include ctx) (context-exclude ctx))
+                          (list ref)))
+                      (if (context-lc ctx)
+                          (references-client (context-lc ctx) pos) 
+                          (find-references pos (context-ast-index ctx))))))
     (if refs
         (loop for ref in refs
               with results
