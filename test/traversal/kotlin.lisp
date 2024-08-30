@@ -321,6 +321,17 @@
               (find-ast-in-ctx `((:path . ,path) (:line . 19) (:offset . 15)))
               path))))))
 
+(test find-fq-class-name-with-fq-constructor
+  (with-fixture jvm-ctx (*kotlin-path*)
+    (let ((path "src/main/kotlin/pkt1/FqMethodReference.kt"))
+      (is (equal
+            "pkt1.FqMethodHelper"
+            ;;      ↓
+            ;; pkt1.FqMethodHelper().method()
+            (find-fq-class-name
+              (find-ast-in-ctx `((:path . ,path) (:line . 5) (:offset . 14)))
+              path))))))
+
 (test find-fq-class-name-for-type-inference-in-lambda
   (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/TypeInferenceReference.kt"))

@@ -325,7 +325,7 @@
              (let ((parent (or (first (get-asts ast '("DOT_QUALIFIED_EXPRESSION") :direction :upward))
                                (first (get-asts ast '("SAFE_ACCESS_EXPRESSION") :direction :upward)))))
                (if parent
-                   ;; if method chains
+                   ;; method chains
                    (if (get-asts parent '("DOT_QUALIFIED_EXPRESSION"))
                        (let* ((fq-name (find-fq-name-for-reference ast path index))
                               (method (find-signature fq-name
@@ -338,13 +338,15 @@
                            (find-fq-class-name-by-variable-name
                              (ast-value (first (get-asts parent '("REFERENCE_EXPRESSION"))) "name")
                              ast path index)
-                           (or 
-                             (find-fq-class-name-by-class-name
+                           ;; name is a package (e.g. name is 'p' when 'p.Class')
+                           (if (equal (ast-value (first (get-asts parent '("REFERENCE_EXPRESSION"))) "name")
+                                      (car (last (get-dot-expressions parent))))
+                               (find-fq-class-name-kotlin
+                                 (first (get-asts ast '("REFERENCE_EXPRESSION")))
+                                 path index)
+                               (find-fq-class-name-by-class-name
                                  (ast-value (first (get-asts parent '("REFERENCE_EXPRESSION"))) "name")
-                                 ast path index)  
-                             (find-fq-class-name-kotlin
-                               (first (get-asts ast '("REFERENCE_EXPRESSION")))
-                               path index))))
+                                 ast path index))))
                    (find-fq-class-name-by-class-name
                      (ast-value (first (get-asts ast '("REFERENCE_EXPRESSION"))) "name")
                      ast path index)))))))
