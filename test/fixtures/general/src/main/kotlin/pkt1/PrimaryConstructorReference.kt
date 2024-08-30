@@ -1,8 +1,8 @@
 package pkt1
 
-class PrimaryConstructorReference(private val v: PrimaryConstructorHelper) {
+class PrimaryConstructorReference() {
     fun method() {
-        v.method()
+        PrimaryConstructorHelper()
     }
 }
 

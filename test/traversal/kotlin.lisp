@@ -92,11 +92,11 @@
              ,(cons :top-offset
                     (convert-to-top-offset
                       (merge-pathnames "src/main/kotlin/pkt1/PrimaryConstructorReference.kt" *kotlin-path*)
-                      '((:line . 5) (:offset . 11))))))
+                      '((:line . 5) (:offset . 9))))))
           (find-references
             '((:path . "src/main/kotlin/pkt1/PrimaryConstructorHelper.kt")
-              (:name . "method")
-              (:fq-name . "pkt1.PrimaryConstructorHelper.method"))
+              (:name . "PrimaryConstructorHelper")
+              (:fq-name . "pkt1.PrimaryConstructorHelper.PrimaryConstructorHelper-INT"))
             *index*)))))
 
 (test find-references-for-fq-method
