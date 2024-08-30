@@ -96,7 +96,7 @@
           (find-references
             '((:path . "src/main/kotlin/pkt1/PrimaryConstructorHelper.kt")
               (:name . "PrimaryConstructorHelper")
-              (:fq-name . "pkt1.PrimaryConstructorHelper.PrimaryConstructorHelper-INT"))
+              (:fq-name . "pkt1.PrimaryConstructorHelper.PrimaryConstructorHelper"))
             *index*)))))
 
 (test find-references-for-fq-method
