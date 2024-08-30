@@ -325,8 +325,8 @@
              (let ((parent (or (first (get-asts ast '("DOT_QUALIFIED_EXPRESSION") :direction :upward))
                                (first (get-asts ast '("SAFE_ACCESS_EXPRESSION") :direction :upward)))))
                (if parent
-                   ;; method chains
                    (if (get-asts parent '("DOT_QUALIFIED_EXPRESSION"))
+                       ;; for method chains
                        (let* ((fq-name (find-fq-name-for-reference ast path index))
                               (method (find-signature fq-name
                                                       #'(lambda (fqcn) (load-signatures fqcn path))
@@ -338,15 +338,14 @@
                            (find-fq-class-name-by-variable-name
                              (ast-value (first (get-asts parent '("REFERENCE_EXPRESSION"))) "name")
                              ast path index)
-                           ;; name is a package (e.g. name is 'p' when 'p.Class')
-                           (if (equal (ast-value (first (get-asts parent '("REFERENCE_EXPRESSION"))) "name")
-                                      (car (last (get-dot-expressions parent))))
-                               (find-fq-class-name-kotlin
-                                 (first (get-asts ast '("REFERENCE_EXPRESSION")))
-                                 path index)
-                               (find-fq-class-name-by-class-name
-                                 (ast-value (first (get-asts parent '("REFERENCE_EXPRESSION"))) "name")
-                                 ast path index))))
+                           (or
+                             ;; for companion objects
+                             (find-fq-class-name-by-class-name
+                               (ast-value (first (get-asts parent '("REFERENCE_EXPRESSION"))) "name")
+                               ast path index)    
+                             (find-fq-class-name-by-class-name
+                               (ast-value (first (get-asts ast '("REFERENCE_EXPRESSION"))) "name")
+                               ast path index))))
                    (find-fq-class-name-by-class-name
                      (ast-value (first (get-asts ast '("REFERENCE_EXPRESSION"))) "name")
                      ast path index)))))))
@@ -403,10 +402,11 @@
                                                                        super path index)
                                                                      path)))))
                                             (when fq-class-name (jsown:val fq-class-name "name"))))))
-                        (format nil "~{~a~^.~}"
-                                (append (get-dot-expressions
-                                          (first (get-asts ast '("PACKAGE_DIRECTIVE" "*"))))
-                                        (list class-name))))))))
+                        (let ((fqcn (format nil "~{~a~^.~}"
+                                            (append (get-dot-expressions
+                                                      (first (get-asts ast '("PACKAGE_DIRECTIVE" "*"))))
+                                                    (list class-name)))))
+                          (when (load-signatures fqcn path) fqcn)))))))
     (enqueue q (ast-value ast "parent"))))
 
 (defun find-fq-class-name-by-variable-name (variable-name ast path index)

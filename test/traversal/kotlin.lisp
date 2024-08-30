@@ -321,6 +321,28 @@
               (find-ast-in-ctx `((:path . ,path) (:line . 19) (:offset . 15)))
               path))))))
 
+(test find-fq-class-name-with-companion-object
+  (with-fixture jvm-ctx (*kotlin-path*)
+    (let ((path "src/main/kotlin/pkt1/CompanionMethodReference.kt"))
+      (is (equal
+            "pkt1.CompanionMethodHelper"
+            ;; ↓
+            ;; CompanionMethodHelper.method()
+            (find-fq-class-name
+              (find-ast-in-ctx `((:path . ,path) (:line . 5) (:offset . 9)))
+              path))))))
+
+(test find-fq-class-name-is-not-possible-with-package
+  (with-fixture jvm-ctx (*kotlin-path*)
+    (let ((path "src/main/kotlin/pkt1/FqMethodReference.kt"))
+      (is (equal
+            nil
+            ;; ↓
+            ;; pkt1.FqMethodHelper().method()
+            (find-fq-class-name
+              (find-ast-in-ctx `((:path . ,path) (:line . 5) (:offset . 9)))
+              path))))))
+
 (test find-fq-class-name-with-fq-constructor
   (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/FqMethodReference.kt"))
