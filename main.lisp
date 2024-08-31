@@ -263,6 +263,7 @@
                                                           pos)))))  
                             (find-entrypoints ctx pos q)))
                   (find-definitions range))))
+      (inga/logger:log-info (format nil "results: ~a" results))
       (setf results (append results poss)))))
 
 (defun find-entrypoints (ctx pos q)
