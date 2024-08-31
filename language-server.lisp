@@ -34,6 +34,7 @@
   (let ((ctx (inga/main::start (cdr (assoc :root-path params)) '(:java)
                                :include (cdr (assoc :include params))
                                :exclude (cdr (assoc :exclude params))
+                               :output-path (cdr (assoc :output-path params))
                                :temp-path (cdr (assoc :temp-path params)))))
     (init-msg-q)
     (handle-msg params ctx)))
