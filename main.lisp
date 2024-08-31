@@ -266,6 +266,8 @@
                                                           pos)))))  
                             (find-entrypoints ctx pos q)))
                   (find-definitions range))))
+      (inga/logger:log-info (format nil "ctx: ~a, output-path: ~a, project-path: ~a"
+                                    ctx (context-output-path ctx) (context-project-path ctx)))
       (setf *processing-output* (process-output-if-present results
                                                            (context-output-path ctx)
                                                            (context-project-path ctx)))
