@@ -117,7 +117,7 @@
                        :include include :exclude exclude
                        :temp-path temp-path :output-path output-path))
            (results (analyze ctx diffs)))
-      (setf *processing-output* (process-output-if-present ctx results))
+      (setf *processing-output* (process-output-if-present results output-path root-path))
       (log-info (to-json results root-path))
       (stop ctx))
     (inga-error (e) (format t "~a~%" e))))
@@ -266,7 +266,9 @@
                                                           pos)))))  
                             (find-entrypoints ctx pos q)))
                   (find-definitions range))))
-      (setf *processing-output* (process-output-if-present ctx results))
+      (setf *processing-output* (process-output-if-present results
+                                                           (context-output-path ctx)
+                                                           (context-project-path ctx)))
       (inga/logger:log-info (format nil "results: ~a" results))
       (setf results (append results poss)))))
 
@@ -341,20 +343,20 @@
 (defun dequeue-output ()
   (dequeue *output-q*))
 
-(defun process-output-if-present (ctx output)
+(defun process-output-if-present (output output-path root-path)
   (when (or (not output)
             (and *processing-output* (sb-thread:thread-alive-p *processing-output*)))
     (return-from process-output-if-present *processing-output*))
 
   (sb-thread:make-thread
     (lambda ()
-      (ensure-directories-exist (merge-pathnames "report/" (context-output-path ctx)))
-      (with-open-file (out (merge-pathnames "report/report.json" (context-output-path ctx))
+      (ensure-directories-exist (merge-pathnames "report/" output-path))
+      (with-open-file (out (merge-pathnames "report/report.json" output-path)
                            :direction :output
                            :if-exists :supersede
                            :if-does-not-exist :create)
-        (format out "~a" (to-json output (context-project-path ctx))))
-      (process-output-if-present (dequeue-output) ctx))))
+        (format out "~a" (to-json output root-path)))
+      (process-output-if-present (dequeue-output) output-path root-path))))
 
 (defun to-json (results root-path)
   (jsown:to-json
