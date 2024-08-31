@@ -33,7 +33,8 @@
                 #:inga-error)
   (:import-from #:inga/logger
                 #:log-debug
-                #:log-error)
+                #:log-error
+                #:log-info)
   (:export #:*mode*
            #:parse-argv
            #:command
@@ -47,6 +48,9 @@
 
 (define-condition inga-error-option-not-found (inga-error) ())
 (define-condition inga-error-context-not-found (inga-error) ())
+
+(defparameter *output-q* (make-queue))
+(defparameter *processing-output* nil)
 
 (defun parse-argv (argv)
   (loop with root-path = "."
@@ -110,15 +114,11 @@
            (diffs (diff-to-ranges (get-diff diff)))
            (ctx (start root-path
                        (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
-                       :include include :exclude exclude :temp-path temp-path))
+                       :include include :exclude exclude
+                       :temp-path temp-path :output-path output-path))
            (results (analyze ctx diffs)))
-      (ensure-directories-exist (merge-pathnames "report/" output-path))
-      (with-open-file (out (merge-pathnames "report/report.json" output-path)
-                           :direction :output
-                           :if-exists :supersede
-                           :if-does-not-exist :create)
-        (format out "~a" (to-json results root-path)))
-      (format t "~%~a~%" (to-json results root-path))
+      (setf *processing-output* (process-output-if-present ctx results))
+      (log-info (to-json results root-path))
       (stop ctx))
     (inga-error (e) (format t "~a~%" e))))
 
@@ -133,7 +133,8 @@
             finally (return result))
       input))
 
-(defun start (root-path context-kinds &key include exclude (temp-path (merge-pathnames ".inga/")))
+(defun start (root-path context-kinds &key include exclude
+                        (temp-path (merge-pathnames ".inga/")) output-path)
   (let* ((index (make-instance 'ast-index-disk :root-path root-path :temp-path temp-path))
          (ctx (alexandria:switch ((when (> (length context-kinds) 0) (first context-kinds)))
                (:typescript
@@ -142,6 +143,7 @@
                    :project-path root-path
                    :include include
                    :exclude exclude
+                   :output-path output-path
                    :lc (make-client :typescript root-path)
                    :ast-index index
                    :traversals (list
@@ -154,6 +156,7 @@
                    :project-path root-path
                    :include include
                    :exclude exclude
+                   :output-path output-path
                    :ast-index index
                    :traversals (list
                                  (start-traversal :java
@@ -263,6 +266,7 @@
                                                           pos)))))  
                             (find-entrypoints ctx pos q)))
                   (find-definitions range))))
+      (setf *processing-output* (process-output-if-present ctx results))
       (inga/logger:log-info (format nil "results: ~a" results))
       (setf results (append results poss)))))
 
@@ -326,6 +330,32 @@
       (cons :line (cdr (assoc :line text-pos)))
       (cons :offset (cdr (assoc :offset text-pos))))))
 
+(defun enqueue-output (output)
+  (unless output (return-from enqueue-output))
+
+  (let ((prev (peek-last *output-q*)))
+    (when prev
+      (dequeue-last *output-q*)))
+  (enqueue *output-q* output))
+
+(defun dequeue-output ()
+  (dequeue *output-q*))
+
+(defun process-output-if-present (ctx output)
+  (when (or (not output)
+            (and *processing-output* (sb-thread:thread-alive-p *processing-output*)))
+    (return-from process-output-if-present *processing-output*))
+
+  (sb-thread:make-thread
+    (lambda ()
+      (ensure-directories-exist (merge-pathnames "report/" (context-output-path ctx)))
+      (with-open-file (out (merge-pathnames "report/report.json" (context-output-path ctx))
+                           :direction :output
+                           :if-exists :supersede
+                           :if-does-not-exist :create)
+        (format out "~a" (to-json output (context-project-path ctx))))
+      (process-output-if-present (dequeue-output) ctx))))
+
 (defun to-json (results root-path)
   (jsown:to-json
     (mapcan (lambda (r)
@@ -353,6 +383,7 @@
   project-path
   include
   exclude
+  output-path
   lc
   ast-index
   traversals

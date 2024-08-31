@@ -199,3 +199,9 @@
   (signals inga/main::inga-error-option-not-found
     (inga/main::parse-argv '("--not-exist"))))
 
+(test keep-last-one-when-multiple-events-are-received
+  (inga/main::enqueue-output '(((:type . "entrypoint") (:name . "a"))))
+  (inga/main::enqueue-output '(((:type . "entrypoint") (:name . "b"))))
+  (is (equal
+        '(((:type . "entrypoint") (:name . "b")))
+        (inga/main::dequeue-output))))
