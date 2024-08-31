@@ -218,7 +218,7 @@
     ((uiop:string-suffix-p (ast-value ast "type") "_LITERAL")
      (if (equal (ast-value ast "type") "STRING_LITERAL")
          "java.lang.String"
-         (ppcre:regex-replace-all "_LITERAL" (ast-value ast "type") "")))
+         (subseq (ast-value ast "type") 0 (- (length (ast-value ast "type")) 8))))
     ((equal (ast-value ast "type") "PRIMITIVE_TYPE")
      (find-fq-class-name-by-class-name (ast-value ast "name") ast))
     ((equal (ast-value ast "type") "ARRAY_TYPE")
