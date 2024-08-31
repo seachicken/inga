@@ -182,6 +182,28 @@
                 path)
               "textOffset"))))))
 
+(test find-fq-name-for-reference-with-basic-type-int
+  (with-fixture jvm-ctx (*kotlin-path*)
+    (let ((path "src/main/kotlin/pkt1/BasicTypeReference.kt"))
+      (is (equal
+            "pkt1.BasicTypeHelper.method-INT"
+            (find-fq-name
+              ;;        ↓
+              ;; helper.method(0)
+              (find-ast-in-ctx `((:path . ,path) (:line . 5) (:offset . 16)))
+              path))))))
+
+(test find-fq-name-for-reference-with-basic-type-boolean
+  (with-fixture jvm-ctx (*kotlin-path*)
+    (let ((path "src/main/kotlin/pkt1/BasicTypeReference.kt"))
+      (is (equal
+            "pkt1.BasicTypeHelper.method-BOOLEAN"
+            (find-fq-name
+              ;;        ↓
+              ;; helper.method(true)
+              (find-ast-in-ctx `((:path . ,path) (:line . 9) (:offset . 16)))
+              path))))))
+
 (test find-fq-name-for-reference-with-enum
   (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/EnumReference.kt"))

@@ -263,12 +263,17 @@
   (find-fq-class-name-kotlin ast path (traversal-index traversal)))
 
 (defun find-fq-class-name-kotlin (ast path index)
-  (alexandria:switch ((ast-value ast "type") :test #'equal)
-    ("NULL"
+  (cond
+    ((equal (ast-value ast "type") "NULL")
      "NULL")
-    ("STRING_TEMPLATE"
+    ((uiop:string-suffix-p (ast-value ast "type") "_CONSTANT")
+     (let ((type (subseq (ast-value ast "type") 0 (- (length (ast-value ast "type")) 9))))
+       (cond
+         ((equal type "INTEGER") "INT")
+         (t type))))
+    ((equal (ast-value ast "type") "STRING_TEMPLATE")
      "java.lang.String")
-    ("TYPE_REFERENCE"
+    ((equal (ast-value ast "type") "TYPE_REFERENCE")
      (let ((class-name (ast-value
                          (first (or (get-asts ast '("NULLABLE_TYPE"
                                                     "USER_TYPE"
@@ -283,7 +288,7 @@
           "INT")
          (t
           (find-fq-class-name-by-class-name class-name ast path index)))))
-    ("OBJECT_LITERAL"
+    ((equal (ast-value ast "type") "OBJECT_LITERAL")
      (find-fq-class-name-kotlin
        (first (or (get-asts ast '("OBJECT_DECLARATION"
                                   "SUPER_TYPE_LIST"
@@ -295,7 +300,7 @@
                                   "CONSTRUCTOR_CALLEE"
                                   "TYPE_REFERENCE"))))
        path index))
-    ("PROPERTY"
+    ((equal (ast-value ast "type") "PROPERTY")
      (or
        ;; if create an instance of a class
        (find-fq-class-name-kotlin (first (get-asts ast '("DOT_QUALIFIED_EXPRESSION"
@@ -303,18 +308,18 @@
                                   path index)
        (find-fq-class-name-kotlin (first (get-asts ast '("CALL_EXPRESSION"))) path index)
        (find-fq-class-name-kotlin (first (get-asts ast '("TYPE_REFERENCE"))) path index)))
-    ("VALUE_PARAMETER"
+    ((equal (ast-value ast "type") "VALUE_PARAMETER")
      (find-fq-class-name-kotlin (or (first (get-asts ast '("REFERENCE_EXPRESSION")))
                                     (first (get-asts ast '("TYPE_REFERENCE"))))
                                 path index))
-    ("REFERENCE_EXPRESSION"
+    ((equal (ast-value ast "type") "REFERENCE_EXPRESSION")
      (or (find-fq-class-name-by-variable-name (ast-value ast "name") ast path index)
          (find-fq-class-name-by-class-name (ast-value ast "name") ast path index)))
-    ("DOT_QUALIFIED_EXPRESSION"
+    ((equal (ast-value ast "type") "DOT_QUALIFIED_EXPRESSION")
      (if (get-asts ast '("CLASS_LITERAL_EXPRESSION"))
          "java.lang.Class"
          (find-fq-class-name-kotlin (first (get-asts ast '("REFERENCE_EXPRESSION"))) path index)))
-    ("CALL_EXPRESSION"
+    ((equal (ast-value ast "type") "CALL_EXPRESSION")
      (when (get-asts ast '("REFERENCE_EXPRESSION"))
        (let* ((name (ast-value
                       (first (get-asts ast '("REFERENCE_EXPRESSION")))
