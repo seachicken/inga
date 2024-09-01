@@ -289,15 +289,15 @@
                                                         definition))))
              (make-searching (origin)
                `((:type . "searching")
-                 (:orign . ,(convert-to-output-pos (context-project-path ctx)
-                                                   origin))))
+                 (:origin . ,(convert-to-output-pos (context-project-path ctx)
+                                                    origin))))
              (add-results (new-result results)
                (append
                  (if (equal (cdr (assoc :type new-result)) "searching")
                      results
                      (remove-if (lambda (r)
                                   (and (equal (cdr (assoc :type r)) "searching")
-                                       (equal (cdr (assoc :orign r))
+                                       (equal (cdr (assoc :origin r))
                                               (cdr (assoc :origin new-result)))))
                                 results))
                  (list new-result))))
