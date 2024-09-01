@@ -360,8 +360,7 @@
 
   (sb-thread:make-thread
     (lambda ()
-      (ensure-directories-exist (merge-pathnames "report/" output-path))
-      (with-open-file (out (merge-pathnames "report/report.json" output-path)
+      (with-open-file (out (merge-pathnames "report.json" output-path)
                            :direction :output
                            :if-exists :supersede
                            :if-does-not-exist :create)
