@@ -257,9 +257,10 @@
                           (push (cons :visited-fq-names (list (cdr (assoc :fq-name pos)))) pos)))
                     (find-entrypoints ctx pos q))
                   (find-definitions range))))
-      (setf *processing-output* (process-output-if-present results
-                                                           (context-output-path ctx)
-                                                           (context-project-path ctx)))
+      (setf *processing-output* (process-output-if-present
+                                  results
+                                  (context-output-path ctx)
+                                  (context-project-path ctx)))
       (setf results (append results poss))
       (inga/logger:log-info (format nil "print results: ~a" (to-json results (context-project-path ctx))))
       )))
@@ -301,12 +302,16 @@
                                               (cdr (assoc :origin new-result)))))
                                 results))
                  (list new-result))))
+      (setf results (add-results (make-searching pos) results))
+      (setf *processing-output* (process-output-if-present
+                                  results
+                                  (context-output-path ctx)
+                                  (context-project-path ctx)))
+      (inga/logger:log-info (format nil "print results: ~a" (to-json results (context-project-path ctx))))
       (when (eq (cdr (assoc :type pos)) :rest-server)
         (setf results (add-results (make-entrypoint pos) results)))
       (if refs
           (loop for ref in refs
-            initially
-            (setf results (add-results (make-searching pos) results))
             do
             (let ((entrypoint (find-entrypoint ref)))
               (if entrypoint
