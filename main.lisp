@@ -261,7 +261,7 @@
                                                            (context-output-path ctx)
                                                            (context-project-path ctx)))
       (setf results (append results poss))
-      (inga/logger:log-info (format nil "print results: ~a" results))
+      (inga/logger:log-info (format nil "print results: ~a" (to-json results (context-project-path ctx))))
       )))
 
 (defun find-entrypoints (ctx pos q)
