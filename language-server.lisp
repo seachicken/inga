@@ -72,7 +72,9 @@
                                        (subseq (jsown:val folder "uri") 7)
                                        "/")))
                        root-host-paths)))
-         (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":{\"change\":2,\"save\":false}}}"))
+         (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":{\"change\":2,\"save\":false}}}")
+         (setf *processing-output*
+               (process-output-if-present nil output-path root-path)))
         ((equal (jsown:val msg "method") "shutdown")
          (log-debug "run shutdown processing")
          (inga/main::stop ctx)
