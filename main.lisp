@@ -111,8 +111,7 @@
            (ctx (start root-path
                        (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
                        :include include :exclude exclude :temp-path temp-path))
-           (results (remove-if (lambda (r) (equal (cdr (assoc :type r)) "searching"))
-                               (analyze ctx diffs))))
+           (results (analyze ctx diffs)))
       (ensure-directories-exist (merge-pathnames "report/" output-path))
       (with-open-file (out (merge-pathnames "report/report.json" output-path)
                            :direction :output
@@ -229,8 +228,9 @@
     (mapcan (lambda (range)
               (when (is-analysis-target (context-kind ctx)
                                         (cdr (assoc :path range))
-                                        (context-include ctx) (context-exclude ctx))
-                (analyze-by-range ctx range callback)))
+                                        (context-include ctx) (context-exclude ctx)))
+              (remove-if (lambda (r) (equal (cdr (assoc :type r)) "searching"))
+                         (analyze-by-range ctx range callback)))
             diffs)
     :test #'equal))
 
