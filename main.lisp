@@ -203,7 +203,7 @@
               env-context)
       found-context))
 
-(defun analyze (ctx diffs)
+(defun analyze (ctx diffs &optional (callback (lambda ())))
   (setf diffs (mapcar (lambda (diff)
                         (push (cons :start-offset
                                     (convert-to-top-offset
@@ -229,11 +229,11 @@
               (when (is-analysis-target (context-kind ctx)
                                         (cdr (assoc :path range))
                                         (context-include ctx) (context-exclude ctx))
-                (analyze-by-range ctx range)))
+                (analyze-by-range ctx range callback)))
             diffs)
     :test #'equal))
 
-(defun analyze-by-range (ctx range)
+(defun analyze-by-range (ctx range &optional callback)
   (loop
     with q = (make-queue)
     with results
@@ -252,7 +252,14 @@
                           (adjoin (cdr (assoc :fq-name pos)) (cdr (assoc :visited-fq-names pos)))
                           (push (cons :visited-fq-names (list (cdr (assoc :fq-name pos)))) pos)))
                     (find-entrypoints ctx pos q))
-                  (find-definitions range))))
+                  (let ((defs (find-definitions range)))
+                    (funcall callback
+                             (mapcar (lambda (def)
+                                       `((:type . "searching")
+                                         (:origin . ,(convert-to-output-pos (context-project-path ctx)
+                                                                            def))))
+                                     defs))
+                    defs))))
       (setf results (append results poss)))))
 
 (defun find-entrypoints (ctx pos q)
