@@ -1,7 +1,7 @@
-(defpackage #:inga/plugin/spring/traversal/java
+(defpackage #:inga/plugin/spring/analyzer/java
   (:use #:cl
-        #:inga/traversal
-        #:inga/plugin/spring/traversal/base
+        #:inga/analyzer
+        #:inga/plugin/spring/analyzer/base
         #:inga/utils)
   (:import-from #:quri)
   (:import-from #:inga/ast-index
@@ -16,10 +16,10 @@
                 #:convert-to-json-type)
   (:import-from #:inga/plugin/spring/spring-property-loader
                 #:find-property))
-(in-package #:inga/plugin/spring/traversal/java)
+(in-package #:inga/plugin/spring/analyzer/java)
 
-(defmethod set-index-group :after ((traversal traversal-java) path)
-  (when (is-rest-client (get-ast (traversal-index traversal) path))
+(defmethod set-index-group :after ((analyzer analyzer-java) path)
+  (when (is-rest-client (get-ast (analyzer-index analyzer) path))
     (push path (gethash :rest-client *file-index*))))
 
 (defun is-rest-client (ast)
@@ -29,18 +29,18 @@
       "org.springframework.web.reactive.function.client.WebClient")
     :key-name "fqName"))
 
-(defmethod get-scoped-index-paths-generic :around ((traversal traversal-java) pos)
+(defmethod get-scoped-index-paths-generic :around ((analyzer analyzer-java) pos)
   (if (eq (cdr (assoc :type pos)) :rest-server)
       (gethash :rest-client *file-index*)
       (call-next-method)))
 
-(defmethod find-definitions-generic :around ((traversal traversal-java) range)
+(defmethod find-definitions-generic :around ((analyzer analyzer-java) range)
   (loop
     with q = (make-queue)
     with path = (cdr (assoc :path range))
     with start-offset = (cdr (assoc :start-offset range))
     with end-offset = (cdr (assoc :end-offset range))
-    with ast = (get-ast (traversal-index traversal) path)
+    with ast = (get-ast (analyzer-index analyzer) path)
     with file-definitions = (call-next-method)
     with rest-base-path = ""
     initially (enqueue q ast)
@@ -104,7 +104,7 @@
 
     (loop for child in (jsown:val ast "children") do (enqueue q child))))
 
-(defmethod find-reference :around ((traversal traversal-java) target-pos fq-name ast path)
+(defmethod find-reference :around ((analyzer analyzer-java) target-pos fq-name ast path)
   (if (eq (cdr (assoc :type target-pos)) :rest-server)
       (let ((pos (find-if (lambda (rest-client)
                             (and (equal (cdr (assoc :host rest-client))
@@ -113,13 +113,13 @@
                                         (cdr (assoc :path target-pos)))
                                  (equal (cdr (assoc :name rest-client))
                                         (cdr (assoc :name target-pos)))))
-                          (find-rest-clients traversal fq-name ast path))))
+                          (find-rest-clients analyzer fq-name ast path))))
         (when pos
           `((:path . ,(cdr (assoc :path (cdr (assoc :file-pos pos)))))
             (:top-offset . ,(cdr (assoc :top-offset (cdr (assoc :file-pos pos))))))))
       (call-next-method)))
 
-(defmethod find-rest-clients ((traversal traversal-java) fq-name ast path)
+(defmethod find-rest-clients ((analyzer analyzer-java) fq-name ast path)
   (let ((matched-api (find-signature
                        fq-name
                        #'(lambda (fqcn) (remove-if (lambda (a) (not (assoc :call-type a)))

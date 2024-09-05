@@ -21,7 +21,7 @@
                 #:convert-to-output-pos
                 #:key-downcase
                 #:to-json)
-  (:import-from #:inga/traversal
+  (:import-from #:inga/analyzer
                 #:convert-to-top-offset
                 #:find-definitions)
   (:export #:run-server))

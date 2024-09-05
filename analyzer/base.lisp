@@ -1,4 +1,4 @@
-(defpackage #:inga/traversal/base
+(defpackage #:inga/analyzer/base
   (:use #:cl
         #:inga/utils)
   (:import-from #:alexandria
@@ -17,14 +17,14 @@
                 #:get-ast) 
   (:import-from #:inga/logger
                 #:log-debug)
-  (:export #:traversal
-           #:*traversals*
+  (:export #:analyzer
+           #:*analyzers*
            #:*file-index*
            #:*rest-client-apis*
-           #:traversal-path
-           #:traversal-index
-           #:start-traversal
-           #:stop-traversal
+           #:analyzer-path
+           #:analyzer-index
+           #:start-analyzer
+           #:stop-analyzer
            #:get-scoped-index-paths
            #:get-scoped-index-paths-generic
            #:set-index-group
@@ -56,57 +56,57 @@
            #:ast-find-suffix
            #:find-ast
            #:debug-ast))
-(in-package #:inga/traversal/base)
+(in-package #:inga/analyzer/base)
 
 (defparameter *index-path* (uiop:merge-pathnames* #p"inga_temp/"))
-(defparameter *traversals* nil)
+(defparameter *analyzers* nil)
 (defparameter *file-index* (make-hash-table))
 (defparameter *rest-client-apis* (make-hash-table))
 
-(defclass traversal ()
+(defclass analyzer ()
   ((path
      :initarg :path
-     :accessor traversal-path)
+     :accessor analyzer-path)
    (index
      :initarg :index
-     :accessor traversal-index)))
+     :accessor analyzer-index)))
 
-(defgeneric start-traversal (kind include exclude path index)
+(defgeneric start-analyzer (kind include exclude path index)
   (:method (kind include exclude path index)
-   (error (format nil "unknown traversal. kind: ~a" kind))))
+   (error (format nil "unknown analyzer. kind: ~a" kind))))
 
-(defgeneric stop-traversal (traversal)
-  (:method (traversal)))
+(defgeneric stop-analyzer (analyzer)
+  (:method (analyzer)))
 
-(defmethod stop-traversal :after (traversal)
+(defmethod stop-analyzer :after (analyzer)
   (clrhash *file-index*)
   (clrhash *rest-client-apis*))
 
 (defun get-scoped-index-paths (pos index)
-  (let ((traversal (get-traversal (cdr (assoc :path (or (cdr (assoc :file-pos pos)) pos))))))
-    (if traversal
-        (get-scoped-index-paths-generic traversal pos)
+  (let ((analyzer (get-analyzer (cdr (assoc :path (or (cdr (assoc :file-pos pos)) pos))))))
+    (if analyzer
+        (get-scoped-index-paths-generic analyzer pos)
         (ast-index-paths index))))
-(defgeneric get-scoped-index-paths-generic (traversal pos)
-  (:method (traversal pos)
-   (ast-index-paths (traversal-index traversal))))
+(defgeneric get-scoped-index-paths-generic (analyzer pos)
+  (:method (analyzer pos)
+   (ast-index-paths (analyzer-index analyzer))))
 
-(defgeneric set-index-group (traversal path)
-  (:method (traversal path)))
+(defgeneric set-index-group (analyzer path)
+  (:method (analyzer path)))
 
 (defun find-definitions (range)
   (funtime
     (lambda ()
-      (let ((traversal (get-traversal (cdr (assoc :path range)))))
-        (find-definitions-generic traversal range)))
+      (let ((analyzer (get-analyzer (cdr (assoc :path range)))))
+        (find-definitions-generic analyzer range)))
     :label "find-definitions"
     :args range))
-(defgeneric find-definitions-generic (traversal range))
+(defgeneric find-definitions-generic (analyzer range))
 
 (defun find-entrypoint (pos)
-  (find-entrypoint-generic (cdr (assoc :typescript *traversals*)) pos))
-(defgeneric find-entrypoint-generic (traversal pos)
-  (:method (traversal pos)))
+  (find-entrypoint-generic (cdr (assoc :typescript *analyzers*)) pos))
+(defgeneric find-entrypoint-generic (analyzer pos)
+  (:method (analyzer pos)))
 
 (defunc find-references (pos index)
   (funtime
@@ -114,16 +114,16 @@
       (loop for path in (get-scoped-index-paths pos index)
             with results
             do
-            (let* ((traversal (get-traversal path))
-                   (ast (get-ast (traversal-index traversal) path))
-                   (references (find-references-by-file traversal path ast pos)))
+            (let* ((analyzer (get-analyzer path))
+                   (ast (get-ast (analyzer-index analyzer) path))
+                   (references (find-references-by-file analyzer path ast pos)))
               (when references
                 (setf results (append results references))))
             finally (return results)))
     :label "find-references"
     :args pos))
 
-(defun find-references-by-file (traversal path ast target-pos)
+(defun find-references-by-file (analyzer path ast target-pos)
   (let ((q (make-queue))
         results)
     (enqueue q ast)
@@ -132,7 +132,7 @@
         (when (null ast) (return))
 
         (let* ((fq-name (find-fq-name ast path))
-               (ref (when fq-name (find-reference traversal target-pos fq-name ast path))))
+               (ref (when fq-name (find-reference analyzer target-pos fq-name ast path))))
           (when ref
             (setf results (append results (list ref)))))
 
@@ -141,40 +141,40 @@
                 do (enqueue q child)))))
     results))
 
-(defgeneric find-reference (traversal target-pos fq-name ast path)
-  (:method (traversal target-pos fq-name ast path)
-   (error (format nil "unknown traversal. path: ~a" path))))
+(defgeneric find-reference (analyzer target-pos fq-name ast path)
+  (:method (analyzer target-pos fq-name ast path)
+   (error (format nil "unknown analyzer. path: ~a" path))))
 
-(defgeneric find-rest-clients (traversal fq-name ast path)
-  (:method (traversal fq-name ast path)
-   (error (format nil "unknown traversal. path: ~a" path))))
+(defgeneric find-rest-clients (analyzer fq-name ast path)
+  (:method (analyzer fq-name ast path)
+   (error (format nil "unknown analyzer. path: ~a" path))))
 
-(defmethod find-rest-clients :around (traversal fq-name ast path)
+(defmethod find-rest-clients :around (analyzer fq-name ast path)
   (funtime
     (lambda () (call-next-method))
     :label "find-rest-clients"
     :args path))
 
 (defun find-fq-name (ast path)
-  (find-fq-name-generic (get-traversal path) ast path))
-(defgeneric find-fq-name-generic (traversal ast path)
-  (:method (traversal ast path)
-   (error (format nil "unknown traversal. path: ~a" path))))
+  (find-fq-name-generic (get-analyzer path) ast path))
+(defgeneric find-fq-name-generic (analyzer ast path)
+  (:method (analyzer ast path)
+   (error (format nil "unknown analyzer. path: ~a" path))))
 
 (defun find-fq-class-name (ast path)
-  (find-fq-class-name-generic (get-traversal path) ast path))
-(defgeneric find-fq-class-name-generic (traversal ast path))
+  (find-fq-class-name-generic (get-analyzer path) ast path))
+(defgeneric find-fq-class-name-generic (analyzer ast path))
 
 (defun find-reference-to-literal (ast path)
-  (find-reference-to-literal-generic (get-traversal path) ast path))
-(defgeneric find-reference-to-literal-generic (traversal ast path)
-  (:method (traversal ast path)
-   (error (format nil "unknown traversal. path: ~a" path))))
+  (find-reference-to-literal-generic (get-analyzer path) ast path))
+(defgeneric find-reference-to-literal-generic (analyzer ast path)
+  (:method (analyzer ast path)
+   (error (format nil "unknown analyzer. path: ~a" path))))
 
 (defun find-caller (fq-names ast path)
-  (find-caller-generic (get-traversal path) fq-names ast path))
-(defgeneric find-caller-generic (traversal fq-names ast path)
-  (:method (traversal fq-names ast path)))
+  (find-caller-generic (get-analyzer path) fq-names ast path))
+(defgeneric find-caller-generic (analyzer fq-names ast path)
+  (:method (analyzer fq-names ast path)))
 
 (defun find-signature (fq-name find-signatures path)
   (when (or (null fq-name) (equal fq-name ""))
@@ -250,14 +250,14 @@
   (uiop:string-suffix-p name "[]"))
 
 (defun find-class-hierarchy (fq-class-name path)
-  (let* ((traversal (get-traversal (namestring path)))
-         (ast (get-ast (traversal-index traversal) path))
-         (class-hierarchy (find-class-hierarchy-generic traversal fq-class-name ast path)))
+  (let* ((analyzer (get-analyzer (namestring path)))
+         (ast (get-ast (analyzer-index analyzer) path))
+         (class-hierarchy (find-class-hierarchy-generic analyzer fq-class-name ast path)))
     (if class-hierarchy
         (return-from find-class-hierarchy class-hierarchy)
         (list fq-class-name))))
-(defgeneric find-class-hierarchy-generic (traversal fq-class-name root-ast path)
-  (:method (traversal fq-class-name root-ast path)))
+(defgeneric find-class-hierarchy-generic (analyzer fq-class-name root-ast path)
+  (:method (analyzer fq-class-name root-ast path)))
 
 (defun convert-to-top-offset (path pos)
   (with-open-file (stream path)
@@ -303,11 +303,11 @@
                       (cdr (assoc :top-offset pos)))
               :keyword)))
 
-(defun get-traversal (path)
-  (let ((result (cdr (assoc (get-file-type path) *traversals*))))
+(defun get-analyzer (path)
+  (let ((result (cdr (assoc (get-file-type path) *analyzers*))))
     (if result
       result
-      (error (format nil "traversal not found. path: ~a" path)))))
+      (error (format nil "analyzer not found. path: ~a" path)))))
 
 (defun contains-offset (a-start a-end b-start b-end)
   (and (<= a-start b-end) (>= a-end b-start)))

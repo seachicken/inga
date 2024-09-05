@@ -2,7 +2,7 @@
   (:use #:cl
         #:fiveam
         #:inga/main)
-  (:import-from #:inga/traversal
+  (:import-from #:inga/analyzer
                 #:convert-to-top-offset))
 (in-package #:inga/test/main)
 

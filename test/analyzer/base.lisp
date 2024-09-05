@@ -1,13 +1,13 @@
-(defpackage #:inga/test/traversal/base
+(defpackage #:inga/test/analyzer/base
   (:use #:cl
         #:fiveam
-        #:inga/traversal)
+        #:inga/analyzer)
   (:import-from #:inga/ast-index
                 #:attach-parent))
-(in-package #:inga/test/traversal/base)
+(in-package #:inga/test/analyzer/base)
 
-(def-suite traversal/base)
-(in-suite traversal/base)
+(def-suite analyzer/base)
+(in-suite analyzer/base)
 
 (test get-value
   (let ((ast '(:obj

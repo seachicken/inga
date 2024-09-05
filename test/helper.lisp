@@ -1,6 +1,13 @@
 (defpackage #:inga/test/helper
   (:use #:cl
         #:fiveam)
+  (:import-from #:inga/analyzer
+                #:find-ast
+                #:analyzer-java
+                #:ast-value
+                #:convert-to-top-offset
+                #:start-analyzer
+                #:stop-analyzer)
   (:import-from #:inga/ast-index
                 #:ast-index-root-path
                 #:ast-index-paths
@@ -11,13 +18,6 @@
                 #:ast-index-disk)
   (:import-from #:inga/file
                 #:get-file-type)
-  (:import-from #:inga/traversal
-                #:find-ast
-                #:traversal-java 
-                #:ast-value
-                #:convert-to-top-offset
-                #:start-traversal
-                #:stop-traversal)
   (:export #:*index*
            #:jvm-ctx
            #:node-ctx
@@ -32,13 +32,13 @@
   (inga/plugin/spring/spring-property-loader:start root-path)
   (setf *index* (make-instance index-type
                                :root-path root-path))
-  (let ((java (start-traversal :java include nil root-path *index*))
-        (kotlin (start-traversal :kotlin include nil root-path *index*)))
+  (let ((java (start-analyzer :java include nil root-path *index*))
+        (kotlin (start-analyzer :kotlin include nil root-path *index*)))
     (unwind-protect
       (&body)
       (progn
-        (stop-traversal java)
-        (stop-traversal kotlin)
+        (stop-analyzer java)
+        (stop-analyzer kotlin)
         (inga/plugin/spring/spring-property-loader:stop)
         (inga/plugin/jvm-dependency-loader:stop)))))
 
@@ -47,10 +47,10 @@
   (defparameter *index* nil)
   (setf *index* (make-instance index-type
                                :root-path root-path))
-  (let ((typescript (start-traversal :typescript include nil root-path *index*)))
+  (let ((typescript (start-analyzer :typescript include nil root-path *index*)))
     (unwind-protect
       (&body)
-      (stop-traversal typescript))))
+      (stop-analyzer typescript))))
 
 (defmacro find-ast-in-ctx (readable-pos &key (type nil))
   `(let* ((path (cdr (assoc :path ,readable-pos)))

@@ -1,10 +1,10 @@
-(defpackage #:inga/test/traversal/kotlin
+(defpackage #:inga/test/analyzer/kotlin
   (:use #:cl
         #:fiveam
-        #:inga/traversal
+        #:inga/analyzer
         #:inga/ast-index
         #:inga/test/helper))
-(in-package #:inga/test/traversal/kotlin)
+(in-package #:inga/test/analyzer/kotlin)
 
 (def-suite kotlin)
 (in-suite kotlin)
@@ -48,7 +48,7 @@
             ;;      ↓
             ;; this.field = p
             (ast-value
-              (inga/traversal/kotlin::find-definition
+              (inga/analyzer/kotlin::find-definition
                 "field"
                 (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 14))))
               "textOffset"))))))
@@ -64,7 +64,7 @@
             ;;              ↓
             ;; this.field = p
             (ast-value
-              (inga/traversal/kotlin::find-definition
+              (inga/analyzer/kotlin::find-definition
                 "p"
                 (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 22))))
               "textOffset"))))))
@@ -80,7 +80,7 @@
             ;; ↓
             ;; client.method()
             (ast-value
-              (inga/traversal/kotlin::find-definition
+              (inga/analyzer/kotlin::find-definition
                 "client"
                 (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 9))))
               "textOffset"))))))
@@ -405,7 +405,7 @@
     (let ((path "src/main/kotlin/pkt1/VisibilityPrivateDefinition.kt"))
       (is (equal
             :module-private
-            (inga/traversal/kotlin::get-scope
+            (inga/analyzer/kotlin::get-scope
               ;;             ↓
               ;; private void method() {
               (find-ast-in-ctx `((:path . ,path) (:line . 4) (:offset . 17)))))))))
@@ -415,7 +415,7 @@
     (let ((path "src/main/kotlin/pkt1/PrimaryConstructorDefinition.kt"))
       (is (equal
             '("pkt1")
-            (inga/traversal/kotlin::get-dot-expressions
+            (inga/analyzer/kotlin::get-dot-expressions
               ;;         ↓
               ;; package pkt1
               (find-ast-in-ctx `((:path . ,path) (:line . 1) (:offset . 9)))))))))
@@ -425,7 +425,7 @@
     (let ((path "src/main/kotlin/pkt1/p2/p3/PackageDefinition.kt"))
       (is (equal
             '("pkt1" "p2" "p3")
-            (inga/traversal/kotlin::get-dot-expressions
+            (inga/analyzer/kotlin::get-dot-expressions
               ;;         ↓
               ;; package pkt1.p2.p3
               (find-ast-in-ctx `((:path . ,path) (:line . 1) (:offset . 9)))))))))
@@ -435,5 +435,5 @@
     (let ((path "src/main/kotlin/pkt1/KotlinReference.kt"))
       (is (equal
             "kotlin.collections.CollectionsKt"
-            (inga/traversal/kotlin::find-signature-for-stdlib "listOf" path))))))
+            (inga/analyzer/kotlin::find-signature-for-stdlib "listOf" path))))))
 

@@ -1,19 +1,19 @@
-(defpackage #:inga/plugin/spring/traversal/base
+(defpackage #:inga/plugin/spring/analyzer/base
   (:use #:cl)
   (:import-from #:alexandria
                 #:switch)
-  (:import-from #:inga/traversal/base
+  (:import-from #:inga/analyzer/base
                 #:*rest-client-apis*
-                #:start-traversal)
+                #:start-analyzer)
   (:export #:*rest-client-method-apis*
            #:*rest-client-path-apis*
            #:get-values-from-request-mapping
            #:get-method-from-request-mapping
            #:find-param-from-path-variable
            #:to-http-method))
-(in-package #:inga/plugin/spring/traversal/base)
+(in-package #:inga/plugin/spring/analyzer/base)
 
-(defmethod start-traversal :after (kind include exclude path index)
+(defmethod start-analyzer :after (kind include exclude path index)
   ;; https://docs.spring.io/spring-framework/docs/current/javadoc-api/org/springframework/web/client/RestTemplate.html
   (unless (gethash :spring *rest-client-apis*)
     (push '((:fq-name . "org.springframework.web.client.RestTemplate.exchange-java.lang.String-org.springframework.http.HttpMethod-org.springframework.http.HttpEntity-org.springframework.core.ParameterizedTypeReference-java.lang.Object")

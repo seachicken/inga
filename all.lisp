@@ -1,6 +1,7 @@
 (uiop:define-package #:inga/all
   (:nicknames #:inga)
   (:use-reexport
+    #:inga/analyzer  
     #:inga/ast-parser
     #:inga/ast-index
     #:inga/cache
@@ -10,6 +11,5 @@
     #:inga/language-server
     #:inga/logger  
     #:inga/main
-    #:inga/plugin/spring/traversal
-    #:inga/traversal))
+    #:inga/plugin/spring/analyzer))
 

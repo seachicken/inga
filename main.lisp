@@ -13,11 +13,11 @@
                 #:start-client
                 #:stop-client
                 #:references-client)
-  (:import-from #:inga/traversal
+  (:import-from #:inga/analyzer
                 #:convert-to-pos
                 #:convert-to-top-offset
-                #:start-traversal
-                #:stop-traversal
+                #:start-analyzer
+                #:stop-analyzer
                 #:find-definitions
                 #:find-entrypoint
                 #:find-references)
@@ -144,10 +144,10 @@
                    :exclude exclude
                    :lc (make-client :typescript root-path)
                    :ast-index index
-                   :traversals (list
-                                 (start-traversal :typescript
-                                                  include
-                                                  exclude root-path index))))
+                   :analyzers (list
+                                 (start-analyzer :typescript
+                                                 include
+                                                 exclude root-path index))))
                (:java
                  (make-context
                    :kind :java
@@ -155,13 +155,13 @@
                    :include include
                    :exclude exclude
                    :ast-index index
-                   :traversals (list
-                                 (start-traversal :java
-                                                  include
-                                                  exclude root-path index)
-                                 (start-traversal :kotlin
-                                                  include
-                                                  exclude root-path index))
+                   :analyzers (list
+                                 (start-analyzer :java
+                                                 include
+                                                 exclude root-path index)
+                                 (start-analyzer :kotlin
+                                                 include
+                                                 exclude root-path index))
                    :processes (list
                                 (inga/plugin/spring/spring-property-loader:start root-path)
                                 (inga/plugin/jvm-dependency-loader:start root-path))))
@@ -172,7 +172,7 @@
 (defun stop (ctx)
   (stop-client (context-lc ctx)) 
   (loop for p in (context-processes ctx) do (uiop:close-streams p)) 
-  (loop for a in (context-traversals ctx) do (stop-traversal a)))
+  (loop for a in (context-analyzers ctx) do (stop-analyzer a)))
 
 (defun get-analysis-kinds (diffs)
   (remove nil
@@ -346,6 +346,6 @@
   exclude
   lc
   ast-index
-  traversals
+  analyzers
   processes)
 

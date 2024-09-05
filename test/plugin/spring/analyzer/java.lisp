@@ -1,11 +1,11 @@
-(defpackage #:inga/test/plugin/spring/traversal/java
+(defpackage #:inga/test/plugin/spring/analyzer/java
   (:use #:cl
         #:fiveam
         #:inga/ast-index
-        #:inga/plugin/spring/traversal
+        #:inga/plugin/spring/analyzer
         #:inga/test/helper  
-        #:inga/traversal))
-(in-package #:inga/test/plugin/spring/traversal/java)
+        #:inga/analyzer))
+(in-package #:inga/test/plugin/spring/analyzer/java)
 
 (def-suite java)
 (in-suite java)
@@ -81,7 +81,7 @@
             `(((:host . "8080")
                (:method . "GET")
                (:path . "/path")))
-            (inga/plugin/spring/traversal/java::find-servers
+            (inga/plugin/spring/analyzer/java::find-servers
               ;;                                 ↓
               ;; return restTemplate.getForObject("http://localhost:8080/path", String.class);
               (find-ast-in-ctx `((:path . ,path) (:line . 17) (:offset . 41)))
@@ -94,7 +94,7 @@
             `(((:host . "8080")
                (:method . "GET")
                (:path . "/rest-template")))
-            (inga/plugin/spring/traversal/java::find-servers
+            (inga/plugin/spring/analyzer/java::find-servers
               ;;                                 ↓
               ;; return restTemplate.getForObject(uri, String.class);
               (find-ast-in-ctx `((:path . ,path) (:line . 29) (:offset . 41)))
@@ -107,7 +107,7 @@
             `(((:host . "8080")
                (:method . "GET")
                (:path . "/web-client")))
-            (inga/plugin/spring/traversal/java::find-servers
+            (inga/plugin/spring/analyzer/java::find-servers
               ;; .uri("/web-client")
               ;;          ↓
               ;; .retrieve()
@@ -121,7 +121,7 @@
             `(((:host . "8080")
                (:method . "GET")
                (:path . "/web-client")))
-            (inga/plugin/spring/traversal/java::find-servers
+            (inga/plugin/spring/analyzer/java::find-servers
               ;; .uri(uri)
               ;;          ↓
               ;; .retrieve()

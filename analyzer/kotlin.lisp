@@ -1,6 +1,6 @@
-(defpackage #:inga/traversal/kotlin
+(defpackage #:inga/analyzer/kotlin
   (:use #:cl
-        #:inga/traversal/base
+        #:inga/analyzer/base
         #:inga/utils)
   (:import-from #:inga/ast-index
                 #:ast-index-paths
@@ -18,39 +18,39 @@
                 #:load-structure)
   (:import-from #:inga/plugin/jvm-helper
                 #:find-base-path)
-  (:export #:traversal-kotlin))
-(in-package #:inga/traversal/kotlin)
+  (:export #:analyzer-kotlin))
+(in-package #:inga/analyzer/kotlin)
 
-(defclass traversal-kotlin (traversal)
+(defclass analyzer-kotlin (analyzer)
   ())
 
-(defmethod start-traversal ((kind (eql :kotlin)) include exclude path index)
-  (setf *traversals*
+(defmethod start-analyzer ((kind (eql :kotlin)) include exclude path index)
+  (setf *analyzers*
         (acons :kotlin
-               (make-instance 'traversal-kotlin
+               (make-instance 'analyzer-kotlin
                               :path path
                               :index index)
-               *traversals*))
+               *analyzers*))
   (create-indexes index :java include '("*.kt") exclude)
-  (create-index-groups (cdr (assoc :kotlin *traversals*)))
-  (cdr (assoc :kotlin *traversals*)))
+  (create-index-groups (cdr (assoc :kotlin *analyzers*)))
+  (cdr (assoc :kotlin *analyzers*)))
 
-(defmethod stop-traversal ((traversal traversal-kotlin))
-  (stop-indexes (traversal-index traversal))
-  (setf *traversals* nil))
+(defmethod stop-analyzer ((analyzer analyzer-kotlin))
+  (stop-indexes (analyzer-index analyzer))
+  (setf *analyzers* nil))
 
-(defun create-index-groups (traversal)
+(defun create-index-groups (analyzer)
   (loop for path in (remove-if-not (lambda (p) (eq (get-file-type p) :kotlin))
-                                   (ast-index-paths (traversal-index traversal)))
-        do (set-index-group traversal path)))
+                                   (ast-index-paths (analyzer-index analyzer)))
+        do (set-index-group analyzer path)))
 
-(defmethod set-index-group ((trav traversal-kotlin) path)
-  (let ((index-key (find-package-index-key (get-ast (traversal-index trav) path))))
+(defmethod set-index-group ((analyzer analyzer-kotlin) path)
+  (let ((index-key (find-package-index-key (get-ast (analyzer-index analyzer) path))))
     (unless (gethash :package *file-index*)
       (setf (gethash :package *file-index*) (make-hash-table)))
     (push path (gethash index-key (gethash :package *file-index*))))
   (let ((index-key (find-project-index-key
-                      (merge-pathnames path (ast-index-root-path (traversal-index trav))))))
+                      (merge-pathnames path (ast-index-root-path (analyzer-index analyzer))))))
     (unless (gethash :module *file-index*)
       (setf (gethash :module *file-index*) (make-hash-table)))
     (push path (gethash index-key (gethash :module *file-index*)))))
@@ -76,23 +76,23 @@
   (let ((base-path (find-base-path path)))
     (when base-path (intern (namestring base-path) :keyword))))
 
-(defmethod get-scoped-index-paths-generic ((trav traversal-kotlin) pos)
+(defmethod get-scoped-index-paths-generic ((analyzer analyzer-kotlin) pos)
   (cond
     ((eq (cdr (assoc :type pos)) :module-private)
      (list (cdr (assoc :path pos))))
     ((eq (cdr (assoc :type pos)) :module-default)
-     (ast-index-paths (traversal-index trav)))
+     (ast-index-paths (analyzer-index analyzer)))
     (t
      (log-error (format nil "unexpected visibility modifiers. type: ~a" (cdr (assoc :type pos))))
-     (ast-index-paths (traversal-index trav)))))
+     (ast-index-paths (analyzer-index analyzer)))))
 
-(defmethod find-definitions-generic ((traversal traversal-kotlin) range)
+(defmethod find-definitions-generic ((analyzer analyzer-kotlin) range)
   (let* ((q (make-queue))
          (src-path (cdr (assoc :path range)))
          (path (cdr (assoc :path range)))
          (start-offset (cdr (assoc :start-offset range)))
          (end-offset (cdr (assoc :end-offset range)))
-         (ast (get-ast (traversal-index traversal) path)) 
+         (ast (get-ast (analyzer-index analyzer) path))
          results)
     (enqueue q ast)
     (loop
@@ -117,7 +117,7 @@
                          (cons :path src-path)
                          (cons :name method-name)
                          (cons :fq-name (find-fq-name-for-definition
-                                          method-name ast path (traversal-index traversal)))
+                                          method-name ast path (analyzer-index analyzer)))
                          (cons :top-offset (jsown:val (jsown:val ast "textRange") "startOffset")))))
               (when (assoc :origin range)
                 (push (cons :origin (cdr (assoc :origin range))) pos))
@@ -191,14 +191,14 @@
 
     (enqueue q (ast-value ast "parent"))))
 
-(defmethod find-reference ((traversal traversal-kotlin) target-pos fq-name ast path)
+(defmethod find-reference ((analyzer analyzer-kotlin) target-pos fq-name ast path)
   (when (equal fq-name (cdr (assoc :fq-name target-pos)))
     (list
       (cons :path path)
       (cons :top-offset (ast-value ast "textOffset")))))
 
-(defmethod find-fq-name-generic ((traversal traversal-kotlin) ast path)
-  (find-fq-name-for-reference ast path (traversal-index traversal)))
+(defmethod find-fq-name-generic ((analyzer analyzer-kotlin) ast path)
+  (find-fq-name-for-reference ast path (analyzer-index analyzer)))
 
 (defun find-fq-name-for-reference (ast path index)
   (alexandria:switch ((ast-value ast "type") :test #'equal)
@@ -259,8 +259,8 @@
 
     (enqueue q (ast-value ast "parent"))))
 
-(defmethod find-fq-class-name-generic ((traversal traversal-kotlin) ast path)
-  (find-fq-class-name-kotlin ast path (traversal-index traversal)))
+(defmethod find-fq-class-name-generic ((analyzer analyzer-kotlin) ast path)
+  (find-fq-class-name-kotlin ast path (analyzer-index analyzer)))
 
 (defun find-fq-class-name-kotlin (ast path index)
   (cond
@@ -418,7 +418,7 @@
   (when variable-name
     (find-fq-class-name-kotlin (find-definition variable-name ast) path index)))
 
-(defmethod find-reference-to-literal-generic ((trav traversal-kotlin) ast path)
+(defmethod find-reference-to-literal-generic ((analyzer analyzer-kotlin) ast path)
   (cond
     ((get-asts ast '("LITERAL_STRING_TEMPLATE_ENTRY"))
      `(((:path . ,path)
@@ -441,23 +441,23 @@
                                ,(ast-value (ast-value v "textRange") "startOffset"))
                               (:end-offset .
                                ,(ast-value (ast-value v "textRange") "endOffset"))))))
-                (refs (mapcan (lambda (d) (find-references d (traversal-index trav)))
+                (refs (mapcan (lambda (d) (find-references d (analyzer-index analyzer)))
                               (remove-duplicates defs :test #'equal))))
            (when refs
              (return (mapcan (lambda (ref-pos)
-                               (let ((ast (nth vi (get-asts (find-ast ref-pos (traversal-index trav))
+                               (let ((ast (nth vi (get-asts (find-ast ref-pos (analyzer-index analyzer))
                                                             '("CALL_EXPRESSION"
                                                               "VALUE_ARGUMENT_LIST"
                                                               "VALUE_ARGUMENT"
                                                               "STRING_TEMPLATE")))))
                                  (find-reference-to-literal-generic
-                                   trav ast (cdr (assoc :path ref-pos)))))
+                                   analyzer ast (cdr (assoc :path ref-pos)))))
                              refs)))))))
     ((equal (ast-value ast "type") "REFERENCE_EXPRESSION")
      (let ((def (find-definition (ast-value ast "name") ast)))
-       (find-reference-to-literal-generic trav (first (get-asts def '("STRING_TEMPLATE"))) path)))))
+       (find-reference-to-literal-generic analyzer (first (get-asts def '("STRING_TEMPLATE"))) path)))))
 
-(defmethod find-caller-generic ((trav traversal-kotlin) fq-names ast path)
+(defmethod find-caller-generic ((analyzer analyzer-kotlin) fq-names ast path)
   (labels ((find-caller (fq-names ast path)
              (unless ast (return-from find-caller))
 
@@ -594,7 +594,7 @@
          (setf results (append results (get-names ast))))
        results))))
 
-(defmethod find-class-hierarchy-generic ((traversal traversal-kotlin)
+(defmethod find-class-hierarchy-generic ((analyzer analyzer-kotlin)
                                          fq-class-name root-ast path)
   (load-hierarchy fq-class-name path))
 

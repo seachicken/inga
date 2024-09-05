@@ -1,6 +1,6 @@
-(defpackage #:inga/traversal/java
+(defpackage #:inga/analyzer/java
   (:use #:cl
-        #:inga/traversal/base
+        #:inga/analyzer/base
         #:inga/utils)
   (:import-from #:alexandria
                 #:switch)
@@ -10,8 +10,8 @@
                 #:create-indexes
                 #:get-ast
                 #:stop-indexes)
-  (:import-from #:inga/traversal/kotlin
-                #:traversal-kotlin)
+  (:import-from #:inga/analyzer/kotlin
+                #:analyzer-kotlin)
   (:import-from #:inga/file
                 #:get-file-type)
   (:import-from #:inga/plugin/jvm-dependency-loader
@@ -20,40 +20,40 @@
   (:import-from #:inga/plugin/jvm-helper
                 #:find-base-path
                 #:is-primitive-type)
-  (:export #:traversal-java
+  (:export #:analyzer-java
            #:find-definition))
-(in-package #:inga/traversal/java)
+(in-package #:inga/analyzer/java)
 
-(defclass traversal-java (traversal)
+(defclass analyzer-java (analyzer)
   ())
 
-(defmethod start-traversal ((kind (eql :java)) include exclude path index)
-  (setf *traversals*
+(defmethod start-analyzer ((kind (eql :java)) include exclude path index)
+  (setf *analyzers*
         (acons :java
-               (make-instance 'traversal-java
+               (make-instance 'analyzer-java
                               :path path
                               :index index)
-               *traversals*))
+               *analyzers*))
   (create-indexes index :java include '("*.java") exclude)
-  (create-index-groups (cdr (assoc :java *traversals*)))
-  (cdr (assoc :java *traversals*)))
+  (create-index-groups (cdr (assoc :java *analyzers*)))
+  (cdr (assoc :java *analyzers*)))
 
-(defmethod stop-traversal ((traversal traversal-java))
-  (stop-indexes (traversal-index traversal))
-  (setf *traversals* nil))
+(defmethod stop-analyzer ((analyzer analyzer-java))
+  (stop-indexes (analyzer-index analyzer))
+  (setf *analyzers* nil))
 
-(defun create-index-groups (traversal)
+(defun create-index-groups (analyzer)
   (loop for path in (remove-if-not (lambda (p) (eq (get-file-type p) :java))
-                                   (ast-index-paths (traversal-index traversal)))
-        do (set-index-group traversal path)))
+                                   (ast-index-paths (analyzer-index analyzer)))
+        do (set-index-group analyzer path)))
 
-(defmethod set-index-group ((traversal traversal-java) path)
-  (let ((index-key (find-package-index-key (get-ast (traversal-index traversal) path))))
+(defmethod set-index-group ((analyzer analyzer-java) path)
+  (let ((index-key (find-package-index-key (get-ast (analyzer-index analyzer) path))))
     (unless (gethash :package *file-index*)
       (setf (gethash :package *file-index*) (make-hash-table)))
     (push path (gethash index-key (gethash :package *file-index*))))
   (let ((index-key (find-project-index-key
-                      (merge-pathnames path (ast-index-root-path (traversal-index traversal))))))
+                      (merge-pathnames path (ast-index-root-path (analyzer-index analyzer))))))
     (unless (gethash :module *file-index*)
       (setf (gethash :module *file-index*) (make-hash-table)))
     (push path (gethash index-key (gethash :module *file-index*)))))
@@ -75,22 +75,22 @@
   (let ((base-path (find-base-path path)))
     (when base-path (intern (namestring base-path) :keyword))))
 
-(defmethod get-scoped-index-paths-generic ((traversal traversal-java) pos)
+(defmethod get-scoped-index-paths-generic ((analyzer analyzer-java) pos)
   (cond
     ((eq (cdr (assoc :type pos)) :module-private)
      (list (cdr (assoc :path pos))))
     ((eq (cdr (assoc :type pos)) :module-default)
-     (gethash (find-package-index-key (get-ast (traversal-index traversal)
+     (gethash (find-package-index-key (get-ast (analyzer-index analyzer)
                                                (cdr (assoc :path pos))))
               (gethash :package *file-index*)))
     ((eq (cdr (assoc :type pos)) :module-public)
      (gethash (find-project-index-key (merge-pathnames (cdr (assoc :path pos))
-                                                       (traversal-path traversal)))
+                                                       (analyzer-path analyzer)))
               (gethash :module *file-index*)))
     (t
-     (ast-index-paths (traversal-index traversal)))))
+     (ast-index-paths (analyzer-index analyzer)))))
 
-(defmethod find-definitions-generic ((traversal traversal-java) range)
+(defmethod find-definitions-generic ((analyzer analyzer-java) range)
   (let ((q (make-queue))
         (src-path (cdr (assoc :path range)))
         (path (cdr (assoc :path range)))
@@ -99,7 +99,7 @@
         ast
         root-ast
         results)
-    (setf ast (get-ast (traversal-index traversal) path))
+    (setf ast (get-ast (analyzer-index analyzer) path))
     (setf root-ast ast)
     (enqueue q ast)
     (loop
@@ -150,15 +150,15 @@
       ((find "PRIVATE" modifiers :test #'equal) :module-private)
       (t :module-default))))
 
-(defmethod find-reference ((traversal traversal-java) target-pos fq-name ast path)
+(defmethod find-reference ((analyzer analyzer-java) target-pos fq-name ast path)
   (when (find-signature fq-name
                         #'(lambda (fqcn) (list target-pos))
                         path)
     `((:path . ,path)
       (:top-offset . ,(ast-value ast "startPos")))))
 
-(defmethod find-fq-name-generic ((traversal traversal-java) ast path)
-  (find-fq-name-for-reference ast path (traversal-index traversal)))
+(defmethod find-fq-name-generic ((analyzer analyzer-java) ast path)
+  (find-fq-name-for-reference ast path (analyzer-index analyzer)))
 
 (defun find-fq-name-for-reference (ast path index)
   (alexandria:switch ((ast-value ast "type") :test #'equal)
@@ -210,8 +210,8 @@
                  (mapcar (lambda (arg) (find-fq-class-name-java arg path index))
                          (nthcdr 1 (get-asts ast '("*")))))))))
 
-(defmethod find-fq-class-name-generic ((traversal traversal-java) ast path)
-  (find-fq-class-name-java ast path (traversal-index traversal)))
+(defmethod find-fq-class-name-generic ((analyzer analyzer-java) ast path)
+  (find-fq-class-name-java ast path (analyzer-index analyzer)))
 
 (defun find-fq-class-name-java (ast path index)
   (cond
@@ -345,7 +345,7 @@
 
     (enqueue q (ast-value ast "parent"))))
 
-(defmethod find-reference-to-literal-generic ((trav traversal-java) ast path)
+(defmethod find-reference-to-literal-generic ((analyzer analyzer-java) ast path)
   (cond
     ((equal (ast-value ast "type") "STRING_LITERAL")
      `(((:path . ,path)
@@ -363,32 +363,32 @@
        
        (when (equal (ast-value ast "type") "CLASS")
          (let* ((v (first (filter-by-name (get-asts ast '("VARIABLE")) variable-name)))
-                (refs (when v (find-references (ast-to-pos v (traversal-index trav) path)
-                                               (traversal-index trav)))))
+                (refs (when v (find-references (ast-to-pos v (analyzer-index analyzer) path)
+                                               (analyzer-index analyzer)))))
            (return-from
              find-reference-to-literal-generic
              (if (get-asts v '("STRING_LITERAL"))
                  (find-reference-to-literal-generic
-                   trav (first (get-asts v '("STRING_LITERAL"))) path)
+                   analyzer (first (get-asts v '("STRING_LITERAL"))) path)
                  (mapcan (lambda (ref)
-                           (let ((ast (first (get-asts (find-ast ref (traversal-index trav))
+                           (let ((ast (first (get-asts (find-ast ref (analyzer-index analyzer))
                                                        '("ASSIGNMENT")))))
                              (when ast
                                (find-reference-to-literal-generic
-                                 trav
+                                 analyzer
                                  (first (get-asts ast '("IDENTIFIER")))
                                  (cdr (assoc :path ref))))))
                          refs)))))
        (when (and (equal (ast-value ast "type") "METHOD")
                   (filter-by-name (get-asts ast '("VARIABLE")) variable-name))
-         (let ((refs (find-references (ast-to-pos ast (traversal-index trav) path)
-                                      (traversal-index trav))))
+         (let ((refs (find-references (ast-to-pos ast (analyzer-index analyzer) path)
+                                      (analyzer-index analyzer))))
            (return-from
              find-reference-to-literal-generic
              (mapcan (lambda (ref)
                        (find-reference-to-literal-generic
-                         trav
-                         (first (get-asts (find-ast ref (traversal-index trav))
+                         analyzer
+                         (first (get-asts (find-ast ref (analyzer-index analyzer))
                                           '("METHOD_INVOCATION"
                                             "MEMBER_SELECT"
                                             "NEW_CLASS"
@@ -398,7 +398,7 @@
 
     (enqueue q (ast-value ast "parent"))))))
 
-(defmethod find-caller-generic ((trav traversal-java) fq-names ast path)
+(defmethod find-caller-generic ((analyzer analyzer-java) fq-names ast path)
   (labels ((find-caller (fq-names ast path)
              (unless ast (return-from find-caller))
 
@@ -496,7 +496,7 @@
         (loop for child in (jsown:val ast "children")
               do (setf stack (append stack (list child))))))))
 
-(defmethod find-class-hierarchy-generic ((traversal traversal-java)
+(defmethod find-class-hierarchy-generic ((analyzer analyzer-java)
                                          fq-class-name root-ast path)
   (load-hierarchy fq-class-name path))
 
