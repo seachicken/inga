@@ -8,12 +8,12 @@
 (defsystem "inga/test"
   :class :package-inferred-system
   :depends-on ("fiveam"
+               "inga/test/analyzer/base"
                "inga/test/file"
                "inga/test/helper"
                "inga/test/language-server"
                "inga/test/main"
-               "inga/test/path"
-               "inga/test/analyzer/base")
+               "inga/test/path")
   :perform (test-op (o c)
                     (unless (uiop:symbol-call
                               :fiveam '#:run!
@@ -33,10 +33,10 @@
 (defsystem "inga/test-jvm"
   :class :package-inferred-system
   :depends-on ("inga/test"
-               "inga/test/ast-index/disk"
-               "inga/test/ast-index/memory"
                "inga/test/analyzer/java"
                "inga/test/analyzer/kotlin"
+               "inga/test/ast-index/disk"
+               "inga/test/ast-index/memory"
                "inga/test/plugin/jvm-helper"
                "inga/test/plugin/spring/spring-property-loader"
                "inga/test/plugin/spring/analyzer/java"

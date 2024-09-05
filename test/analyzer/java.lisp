@@ -1,10 +1,10 @@
-(defpackage #:inga/test/traversal/java
+(defpackage #:inga/test/analyzer/java
   (:use #:cl
         #:fiveam
-        #:inga/traversal
+        #:inga/analyzer
         #:inga/ast-index
         #:inga/test/helper))
-(in-package #:inga/test/traversal/java)
+(in-package #:inga/test/analyzer/java)
 
 (def-suite java)
 
@@ -317,7 +317,7 @@
   (with-fixture jvm-ctx (*java-path*)
     (is (eq
           t
-          (inga/traversal/base::matches-signature
+          (inga/analyzer/base::matches-signature
             "p2.ApiSignature-p2.ChildClass"
             "p2.ApiSignature-p2.ParentClass"
             "src/main/java/p2/ApiSignature.java")))))
@@ -326,7 +326,7 @@
   (with-fixture jvm-ctx (*java-path*)
     (is (eq
           t
-          (inga/traversal/base::matches-signature
+          (inga/analyzer/base::matches-signature
             "java.lang.Object-equals-NULL"
             "java.lang.Object-equals-java.lang.Object"
             "src/main/java/p2/ApiSignature.java")))))
@@ -336,7 +336,7 @@
     (is (equal
           t
           ;; https://docs.oracle.com/en/java/javase/21/docs/api/java.base/java/nio/file/Paths.html#get(java.lang.String,java.lang.String...)
-          (inga/traversal/base::matches-signature
+          (inga/analyzer/base::matches-signature
             "method-java.lang.String"
             "method-java.lang.String-java.lang.String[]"
             "src/main/java/p2/ApiSignature.java")))))
@@ -503,7 +503,7 @@
   (with-fixture jvm-ctx (*lightrun-path*)
     (is (equal
           '("api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
-          (inga/traversal::get-scoped-index-paths
+          (inga/analyzer::get-scoped-index-paths
             '((:type . :module-private)
               (:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
               (:fq-name . "com.baeldung.apiservice.adapters.http.TasksController.getUser-java.lang.String"))
@@ -514,7 +514,7 @@
     (is (null
           (find-if-not
             (lambda (p) (uiop:string-prefix-p "api-service" p))
-            (inga/traversal::get-scoped-index-paths
+            (inga/analyzer::get-scoped-index-paths
               '((:type . :module-public)
                 (:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/users/UserRepository.java")
                 (:fq-name . "com.baeldung.apiservice.adapters.users.UserRepository.getUserById-java.lang.String"))
@@ -525,7 +525,7 @@
     (is (eq
           nil
           ;; https://spring.pleiades.io/spring-framework/docs/current/javadoc-api/org/springframework/web/util/UriComponentsBuilder.html
-          (inga/traversal/base::matches-signature
+          (inga/analyzer/base::matches-signature
             "build"
             "build-boolean"
             *index*)))))
@@ -534,7 +534,7 @@
   (with-fixture jvm-ctx (*spring-boot-path* :include '("src/main/**"))
     (is (eq
           t
-          (inga/traversal/base::matches-signature
+          (inga/analyzer/base::matches-signature
             "io.spring.application.CursorPager.CursorPager-java.util.ArrayList-io.spring.application.CursorPager$Direction-BOOLEAN"
             "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager$Direction-BOOLEAN"
             "src/main/java/io/spring/application/ArticleQueryService.java")))))
@@ -543,7 +543,7 @@
   (with-fixture jvm-ctx (*guava-modules*)
     (is (eq
           t
-          (inga/traversal/base::matches-signature
+          (inga/analyzer/base::matches-signature
             "com.google.common.collect.Lists.newArrayList-java.lang.String-java.lang.String"
             "com.google.common.collect.Lists.newArrayList-java.lang.Object[]"
             "guava-io/src/test/java/com/baeldung/guava/GuavaIOUnitTest.java")))))

@@ -1,11 +1,11 @@
-(defpackage #:inga/test/plugin/spring/traversal/kotlin
+(defpackage #:inga/test/plugin/spring/analyzer/kotlin
   (:use #:cl
         #:fiveam
         #:inga/ast-index
-        #:inga/plugin/spring/traversal
+        #:inga/plugin/spring/analyzer
         #:inga/test/helper
-        #:inga/traversal))
-(in-package #:inga/test/plugin/spring/traversal/kotlin)
+        #:inga/analyzer))
+(in-package #:inga/test/plugin/spring/analyzer/kotlin)
 
 (def-suite kotlin)
 (in-suite kotlin)
@@ -80,7 +80,7 @@
             `(((:host . "8080")
                (:method . "GET")
                (:path . "/kotlin/path")))
-            (inga/plugin/spring/traversal/kotlin::find-servers
+            (inga/plugin/spring/analyzer/kotlin::find-servers
               ;;                     ↓
               ;; return restTemplate.getForObject("http://localhost:8080/kotlin/path", String::class.java)
               (find-ast-in-ctx `((:path . ,path) (:line . 11) (:offset . 29)))
@@ -93,7 +93,7 @@
             `(((:host . "8080")
                (:method . "GET")
                (:path . "/kotlin/rest-template")))
-            (inga/plugin/spring/traversal/kotlin::find-servers
+            (inga/plugin/spring/analyzer/kotlin::find-servers
               ;;                     ↓
               ;; return restTemplate.getForObject(uri, String::class.java)
               (find-ast-in-ctx `((:path . ,path) (:line . 23) (:offset . 29)))
@@ -106,7 +106,7 @@
             `(((:host . "8080")
                (:method . "GET")
                (:path . "/web-client")))
-            (inga/plugin/spring/traversal/kotlin::find-servers
+            (inga/plugin/spring/analyzer/kotlin::find-servers
               ;; .uri("/web-client")
               ;;  ↓
               ;; .retrieve()
@@ -120,7 +120,7 @@
             `(((:host . "8080")
                (:method . "GET")
                (:path . "/web-client")))
-            (inga/plugin/spring/traversal/kotlin::find-servers
+            (inga/plugin/spring/analyzer/kotlin::find-servers
               ;; .uri(uri)
               ;;  ↓
               ;; .retrieve()

@@ -1,10 +1,10 @@
-(defpackage #:inga/test/traversal/typescript
+(defpackage #:inga/test/analyzer/typescript
   (:use #:cl
         #:fiveam
-        #:inga/traversal
+        #:inga/analyzer
         #:inga/ast-index
         #:inga/test/helper))
-(in-package #:inga/test/traversal/typescript)
+(in-package #:inga/test/analyzer/typescript)
 
 (def-suite typescript)
 (in-suite typescript)
@@ -144,7 +144,7 @@
                    (convert-to-top-offset
                      (merge-pathnames "src/App/TodoList/Item/index.tsx" *react-path*)
                      '((:line . 107) (:offset . 12)))))
-          (inga/traversal/typescript::find-entrypoint
+          (inga/analyzer/typescript::find-entrypoint
             `((:path . "src/App/TodoList/Item/index.tsx")
               ,(cons :top-offset
                      (convert-to-top-offset
