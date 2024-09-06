@@ -3,15 +3,17 @@
         #:fiveam
         #:inga/analyzer
         #:inga/ast-index
-        #:inga/test/helper))
+        #:inga/test/helper)
+  (:import-from #:inga/file
+                #:convert-to-top-offset))
 (in-package #:inga/test/analyzer/typescript)
 
 (def-suite typescript)
 (in-suite typescript)
 
-(defparameter *fixtures-path* (uiop:merge-pathnames* "test/fixtures/"))
-(defparameter *react-path* (uiop:merge-pathnames* "test/fixtures/react-typescript-todo/"))
-(defparameter *nestjs-path* (uiop:merge-pathnames* "test/fixtures/nestjs-realworld-example-app-prisma/"))
+(defparameter *fixtures-path* (merge-pathnames "test/fixtures/"))
+(defparameter *react-path* (merge-pathnames "test/fixtures/react-typescript-todo/"))
+(defparameter *nestjs-path* (merge-pathnames "test/fixtures/nestjs-realworld-example-app-prisma/"))
 
 ;;       ↓[out]
 ;; const article = {
