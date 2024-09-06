@@ -22,20 +22,20 @@
             (let ((to-range (car (cdr (multiple-value-list
                                         (ppcre:scan-to-strings "@@.+\\+([0-9]+),?([0-9]*) @@" line))))))
               (when to-range
-                (let ((start (parse-integer (aref to-range 0)))
-                      (rows (if (> (length (aref to-range 1)) 0) (parse-integer (aref to-range 1)) 0)))
-                  (let ((end (if (= rows 0) start (- (+ start rows) 1))))
-                    ;; extract undeleted files
-                    (when (or (> start 0) (> end 0))
-                      (vector-push-extend `((:path . ,to-path)
-                                            (:start-offset .
-                                             ,(convert-to-top-offset
-                                                (merge-pathnames to-path root-path)
-                                                (list (cons :line start) (cons :offset 0))))
-                                            (:end-offset .
-                                             ,(convert-to-top-offset
-                                                (merge-pathnames to-path root-path)
-                                                (list (cons :line end) (cons :offset -1)))))
-                                          ranges))))))))
+                (let* ((start (parse-integer (aref to-range 0)))
+                       (rows (if (> (length (aref to-range 1)) 0) (parse-integer (aref to-range 1)) 0))
+                       (end (if (= rows 0) start (- (+ start rows) 1))))
+                  ;; extract undeleted files
+                  (when (or (> start 0) (> end 0))
+                    (vector-push-extend `((:path . ,to-path)
+                                          (:start-offset .
+                                           ,(convert-to-top-offset
+                                              (merge-pathnames to-path root-path)
+                                              (list (cons :line start) (cons :offset 0))))
+                                          (:end-offset .
+                                           ,(convert-to-top-offset
+                                              (merge-pathnames to-path root-path)
+                                              (list (cons :line end) (cons :offset -1)))))
+                                        ranges)))))))
     (return-from diff-to-ranges (coerce ranges 'list))))
 
