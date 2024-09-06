@@ -12,9 +12,12 @@
 (def-suite jdk21 :in java)
 (def-suite jdk17 :in java)
 
-(in-suite jdk21)
-
 (defparameter *java-path* (merge-pathnames "test/fixtures/general/"))
+(defparameter *spring-boot-path* (merge-pathnames "test/fixtures/spring-boot-realworld-example-app/"))
+(defparameter *lightrun-path* (merge-pathnames "test/fixtures/spring-tutorials/lightrun/"))
+(defparameter *guava-modules* (merge-pathnames "test/fixtures/spring-tutorials/guava-modules/"))
+
+(in-suite jdk21)
 
 (test find-definitions-for-constructor
   (with-fixture jvm-ctx (*java-path*)
@@ -99,6 +102,24 @@
                       '((:line . 6) (:offset . 12))))))
           (find-definitions
             (create-range "src/main/java/p1/GenericTypeDefinition.java" :line 6))))))
+
+(in-suite jdk17)
+
+(test find-definitions-with-inner-class-and-primitive
+  (with-fixture jvm-ctx (*spring-boot-path*)
+    (is (equal
+          `(((:type . :module-public)
+             (:path . "src/main/java/io/spring/application/CursorPager.java")
+             (:name . "CursorPager")
+             (:fq-name . "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager$Direction-BOOLEAN")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames "src/main/java/io/spring/application/CursorPager.java" *spring-boot-path*)
+                      '((:line . 12) (:offset . 10))))))
+          (find-definitions
+            (create-range "src/main/java/io/spring/application/CursorPager.java" :line 12))))))
+
+(in-suite jdk21)
 
 (test find-definition-of-field-reference
   (with-fixture jvm-ctx (*java-path*)
@@ -188,6 +209,75 @@
               (:fq-name . "p1.PrivateMethodReference.methodWithStdLib-java.nio.file.Path"))
             *index*)))))
 
+(test find-references-for-kotlin-class
+  (with-fixture jvm-ctx (*java-path*)
+    (is (equal
+          `(((:path . "src/main/java/p1/KotlinReference.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames "src/main/java/p1/KotlinReference.java" *java-path*)
+                      '((:line . 9) (:offset . 9))))))
+          (find-references
+            '((:path . "src/main/java/pkt1/JavaReference.kt")
+              (:name . "method")
+              (:fq-name . "pkt1.JavaReference.method"))
+            *index*)))))
+
+(in-suite jdk17)
+
+(test find-references-with-sub-class-args
+  (with-fixture jvm-ctx (*spring-boot-path* :include '("src/main/**"))
+    (is (equal
+          `(((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames
+                        "src/main/java/io/spring/application/ArticleQueryService.java"
+                        *spring-boot-path*)
+                      '((:line . 63) (:offset . 14)))))
+            ((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames
+                        "src/main/java/io/spring/application/ArticleQueryService.java"
+                        *spring-boot-path*)
+                      '((:line . 76) (:offset . 14)))))
+            ((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames
+                        "src/main/java/io/spring/application/ArticleQueryService.java"
+                        *spring-boot-path*)
+                      '((:line . 84) (:offset . 14)))))
+            ((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames
+                        "src/main/java/io/spring/application/ArticleQueryService.java"
+                        *spring-boot-path*)
+                      '((:line . 96) (:offset . 14)))))
+            ((:path . "src/main/java/io/spring/application/CommentQueryService.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames
+                        "src/main/java/io/spring/application/CommentQueryService.java"
+                        *spring-boot-path*)
+                      '((:line . 83) (:offset . 12))))) 
+            ((:path . "src/main/java/io/spring/application/CommentQueryService.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames
+                        "src/main/java/io/spring/application/CommentQueryService.java"
+                        *spring-boot-path*)
+                      '((:line . 60) (:offset . 14))))))
+          (find-references
+            `((:path . "src/main/java/io/spring/application/CursorPager.java")
+              (:name . "CursorPager")
+              (:fq-name . "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager$Direction-BOOLEAN"))
+            *index*)))))
+
+(in-suite jdk21)
+
 (test find-reference-to-literal-field
   (with-fixture jvm-ctx (*java-path*)
     (let ((path "src/main/java/p1/LiteralReference.java"))
@@ -271,6 +361,54 @@
             ;; Arrays.copyOfRange(array, 1, array.length);
             (find-fq-name (find-ast-in-ctx `((:path . ,path) (:line . 8) (:offset . 27))) path))))))
 
+(in-suite jdk17)
+
+(test find-fq-name-for-reference-with-new-class
+  (with-fixture jvm-ctx (*spring-boot-path* :include '("src/main/**"))
+    (let ((path "src/main/java/io/spring/application/ArticleQueryService.java"))
+      (is (equal
+            "io.spring.application.CursorPager.CursorPager-java.util.ArrayList-io.spring.application.CursorPager$Direction-BOOLEAN"
+            ;;        ↓
+            ;; return new CursorPager<>(new ArrayList<>(), page.getDirection(), false);
+            (find-fq-name
+              (find-ast-in-ctx `((:path . ,path) (:line . 63) (:offset . 14)))
+              path))))))
+
+(test find-fq-name-for-reference-with-lib-args
+  (with-fixture jvm-ctx (*lightrun-path*)
+    (let ((path "api-service/src/main/java/com/baeldung/apiservice/adapters/users/UserRepository.java"))
+      (is (equal
+            "org.springframework.web.client.RestTemplate.getForObject-java.net.URI-java.lang.Class"
+            (find-fq-name
+              ;;                                 ↓
+              ;; return restTemplate.getForObject(uri, User.class);
+              (find-ast-in-ctx `((:path . ,path) (:line . 25) (:offset . 45)))
+              path))))))
+
+(test find-fq-name-for-reference-with-member_select-member_select
+  (with-fixture jvm-ctx (*lightrun-path*)
+    (let ((path "api-service/src/main/java/com/baeldung/apiservice/RequestIdGenerator.java"))
+      (is (equal
+            "java.lang.Class.getCanonicalName"
+            ;;                                                  ↓
+            ;; MDC.put(RequestIdGenerator.class.getCanonicalName(), requestId);
+            (find-fq-name
+              (find-ast-in-ctx `((:path . ,path) (:line . 19) (:offset . 58)))
+              path))))))
+
+(test find-fq-name-for-reference-with-array-args
+  (with-fixture jvm-ctx (*guava-modules*)
+    (let ((path "guava-collections/src/test/java/com/baeldung/guava/ordering/GuavaOrderingExamplesUnitTest.java"))
+      (is (equal
+            "com.google.common.collect.Ordering.explicit-java.util.ArrayList"
+            ;;                  ↓
+            ;; Ordering.explicit(Lists.newArrayList("b", "zz", "aa", "ccc"));
+            (find-fq-name
+              (find-ast-in-ctx `((:path . ,path) (:line . 104) (:offset . 65)))
+              path))))))
+
+(in-suite jdk21)
+
 (test find-fq-class-name-for-type-inference-in-lambda
   (with-fixture jvm-ctx (*java-path*)
     (let ((path "src/main/java/p1/TypeInferenceReference.java"))
@@ -291,19 +429,42 @@
               (find-ast-in-ctx `((:path . ,path) (:line . 12) (:offset . 46)))
               path))))))
 
-(test find-references-for-kotlin-class
-  (with-fixture jvm-ctx (*java-path*)
-    (is (equal
-          `(((:path . "src/main/java/p1/KotlinReference.java")
-             ,(cons :top-offset
-                    (convert-to-top-offset
-                      (merge-pathnames "src/main/java/p1/KotlinReference.java" *java-path*)
-                      '((:line . 9) (:offset . 9))))))
-          (find-references
-            '((:path . "src/main/java/pkt1/JavaReference.kt")
-              (:name . "method")
-              (:fq-name . "pkt1.JavaReference.method"))
-            *index*)))))
+(in-suite jdk17)
+
+(test find-fq-class-name-for-new-class
+  (with-fixture jvm-ctx (*spring-boot-path* :include '("src/main/**"))
+    (let ((path "src/main/java/io/spring/application/ArticleQueryService.java"))
+      (is (equal
+            "io.spring.application.CursorPager"
+            ;;        ↓
+            ;; return new CursorPager<>(new ArrayList<>(), page.getDirection(), false);
+            (find-fq-class-name
+              (find-ast-in-ctx `((:path . ,path) (:line . 63) (:offset . 14)))
+              path))))))
+
+(test find-fq-class-name-for-primitive-parameter
+  (with-fixture jvm-ctx (*spring-boot-path* :include '("src/main/**"))
+    (let ((path "src/main/java/io/spring/application/CursorPager.java"))
+      (is (equal
+            "BOOLEAN"
+            ;;                                                               ↓
+            ;; public CursorPager(List<T> data, Direction direction, boolean hasExtra) {
+            (find-fq-class-name
+              (find-ast-in-ctx `((:path . ,path) (:line . 12) (:offset . 65)))
+              path))))))
+
+(test find-fq-class-name-for-inner-class-parameter
+  (with-fixture jvm-ctx (*spring-boot-path* :include '("src/main/**"))
+    (let ((path "src/main/java/io/spring/application/CursorPager.java"))
+      (is (equal
+            "io.spring.application.CursorPager$Direction"
+            ;;                                            ↓
+            ;; public CursorPager(List<T> data, Direction direction, boolean hasExtra) {
+            (find-fq-class-name
+              (find-ast-in-ctx `((:path . ,path) (:line . 12) (:offset . 46)))
+              path))))))
+
+(in-suite jdk21)
 
 (test find-signature-without-array
   (with-fixture jvm-ctx (*java-path*)
@@ -352,152 +513,6 @@
           (find-class-hierarchy "p2.ChildClass" "src/main/java/p2/ApiSignature.java")))))
 
 (in-suite jdk17)
-
-(defparameter *spring-boot-path* (merge-pathnames "test/fixtures/spring-boot-realworld-example-app/"))
-(defparameter *lightrun-path* (merge-pathnames "test/fixtures/spring-tutorials/lightrun/"))
-(defparameter *guava-modules* (merge-pathnames "test/fixtures/spring-tutorials/guava-modules/"))
-
-(test find-definitions-with-inner-class-and-primitive
-  (with-fixture jvm-ctx (*spring-boot-path*)
-    (is (equal
-          `(((:type . :module-public)
-             (:path . "src/main/java/io/spring/application/CursorPager.java")
-             (:name . "CursorPager")
-             (:fq-name . "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager$Direction-BOOLEAN")
-             ,(cons :top-offset
-                    (convert-to-top-offset
-                      (merge-pathnames "src/main/java/io/spring/application/CursorPager.java" *spring-boot-path*)
-                      '((:line . 12) (:offset . 10))))))
-          (find-definitions
-            (create-range "src/main/java/io/spring/application/CursorPager.java" :line 12))))))
-
-(test find-references-with-sub-class-args
-  (with-fixture jvm-ctx (*spring-boot-path* :include '("src/main/**"))
-    (is (equal
-          `(((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
-             ,(cons :top-offset
-                    (convert-to-top-offset
-                      (merge-pathnames
-                        "src/main/java/io/spring/application/ArticleQueryService.java"
-                        *spring-boot-path*)
-                      '((:line . 63) (:offset . 14)))))
-            ((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
-             ,(cons :top-offset
-                    (convert-to-top-offset
-                      (merge-pathnames
-                        "src/main/java/io/spring/application/ArticleQueryService.java"
-                        *spring-boot-path*)
-                      '((:line . 76) (:offset . 14)))))
-            ((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
-             ,(cons :top-offset
-                    (convert-to-top-offset
-                      (merge-pathnames
-                        "src/main/java/io/spring/application/ArticleQueryService.java"
-                        *spring-boot-path*)
-                      '((:line . 84) (:offset . 14)))))
-            ((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
-             ,(cons :top-offset
-                    (convert-to-top-offset
-                      (merge-pathnames
-                        "src/main/java/io/spring/application/ArticleQueryService.java"
-                        *spring-boot-path*)
-                      '((:line . 96) (:offset . 14)))))
-            ((:path . "src/main/java/io/spring/application/CommentQueryService.java")
-             ,(cons :top-offset
-                    (convert-to-top-offset
-                      (merge-pathnames
-                        "src/main/java/io/spring/application/CommentQueryService.java"
-                        *spring-boot-path*)
-                      '((:line . 83) (:offset . 12))))) 
-            ((:path . "src/main/java/io/spring/application/CommentQueryService.java")
-             ,(cons :top-offset
-                    (convert-to-top-offset
-                      (merge-pathnames
-                        "src/main/java/io/spring/application/CommentQueryService.java"
-                        *spring-boot-path*)
-                      '((:line . 60) (:offset . 14))))))
-          (find-references
-            `((:path . "src/main/java/io/spring/application/CursorPager.java")
-              (:name . "CursorPager")
-              (:fq-name . "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager$Direction-BOOLEAN"))
-            *index*)))))
-
-(test find-fq-name-for-reference-with-new-class
-  (with-fixture jvm-ctx (*spring-boot-path* :include '("src/main/**"))
-    (let ((path "src/main/java/io/spring/application/ArticleQueryService.java"))
-      (is (equal
-            "io.spring.application.CursorPager.CursorPager-java.util.ArrayList-io.spring.application.CursorPager$Direction-BOOLEAN"
-            ;;        ↓
-            ;; return new CursorPager<>(new ArrayList<>(), page.getDirection(), false);
-            (find-fq-name
-              (find-ast-in-ctx `((:path . ,path) (:line . 63) (:offset . 14)))
-              path))))))
-
-(test find-fq-name-for-reference-with-lib-args
-  (with-fixture jvm-ctx (*lightrun-path*)
-    (let ((path "api-service/src/main/java/com/baeldung/apiservice/adapters/users/UserRepository.java"))
-      (is (equal
-            "org.springframework.web.client.RestTemplate.getForObject-java.net.URI-java.lang.Class"
-            (find-fq-name
-              ;;                                 ↓
-              ;; return restTemplate.getForObject(uri, User.class);
-              (find-ast-in-ctx `((:path . ,path) (:line . 25) (:offset . 45)))
-              path))))))
-
-(test find-fq-name-for-reference-with-member_select-member_select
-  (with-fixture jvm-ctx (*lightrun-path*)
-    (let ((path "api-service/src/main/java/com/baeldung/apiservice/RequestIdGenerator.java"))
-      (is (equal
-            "java.lang.Class.getCanonicalName"
-            ;;                                                  ↓
-            ;; MDC.put(RequestIdGenerator.class.getCanonicalName(), requestId);
-            (find-fq-name
-              (find-ast-in-ctx `((:path . ,path) (:line . 19) (:offset . 58)))
-              path))))))
-
-(test find-fq-name-for-reference-with-array-args
-  (with-fixture jvm-ctx (*guava-modules*)
-    (let ((path "guava-collections/src/test/java/com/baeldung/guava/ordering/GuavaOrderingExamplesUnitTest.java"))
-      (is (equal
-            "com.google.common.collect.Ordering.explicit-java.util.ArrayList"
-            ;;                  ↓
-            ;; Ordering.explicit(Lists.newArrayList("b", "zz", "aa", "ccc"));
-            (find-fq-name
-              (find-ast-in-ctx `((:path . ,path) (:line . 104) (:offset . 65)))
-              path))))))
-
-(test find-fq-class-name-for-new-class
-  (with-fixture jvm-ctx (*spring-boot-path* :include '("src/main/**"))
-    (let ((path "src/main/java/io/spring/application/ArticleQueryService.java"))
-      (is (equal
-            "io.spring.application.CursorPager"
-            ;;        ↓
-            ;; return new CursorPager<>(new ArrayList<>(), page.getDirection(), false);
-            (find-fq-class-name
-              (find-ast-in-ctx `((:path . ,path) (:line . 63) (:offset . 14)))
-              path))))))
-
-(test find-fq-class-name-for-primitive-parameter
-  (with-fixture jvm-ctx (*spring-boot-path* :include '("src/main/**"))
-    (let ((path "src/main/java/io/spring/application/CursorPager.java"))
-      (is (equal
-            "BOOLEAN"
-            ;;                                                               ↓
-            ;; public CursorPager(List<T> data, Direction direction, boolean hasExtra) {
-            (find-fq-class-name
-              (find-ast-in-ctx `((:path . ,path) (:line . 12) (:offset . 65)))
-              path))))))
-
-(test find-fq-class-name-for-inner-class-parameter
-  (with-fixture jvm-ctx (*spring-boot-path* :include '("src/main/**"))
-    (let ((path "src/main/java/io/spring/application/CursorPager.java"))
-      (is (equal
-            "io.spring.application.CursorPager$Direction"
-            ;;                                            ↓
-            ;; public CursorPager(List<T> data, Direction direction, boolean hasExtra) {
-            (find-fq-class-name
-              (find-ast-in-ctx `((:path . ,path) (:line . 12) (:offset . 46)))
-              path))))))
 
 (test get-scoped-index-paths-with-module-private
   (with-fixture jvm-ctx (*lightrun-path*)
