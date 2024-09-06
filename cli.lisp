@@ -78,7 +78,7 @@
                 (t (error 'inga-error-context-not-found)))))
     (start-client (context-lc ctx))
 
-    (let ((results (analyze ctx (diff-to-ranges (get-diff (cdr (assoc :diff params)))
+    (let ((results (analyze ctx (diff-to-ranges (cdr (assoc :diff params))
                                                 (cdr (assoc :root-path params))))))
       (ensure-directories-exist (merge-pathnames "report/" (cdr (assoc :output-path params))))
       (with-open-file (out (merge-pathnames "report/report.json" (cdr (assoc :output-path params)))
@@ -91,17 +91,6 @@
     (stop-client (context-lc ctx)) 
     (loop for p in (context-processes ctx) do (uiop:close-streams p)) 
     (loop for a in (context-analyzers ctx) do (stop-analyzer a))))
-
-(defun get-diff (input)
-  (if (equal input "-")
-      (loop while (listen *standard-input*)
-            with result = ""
-            do (setf result
-                     (format nil "~a~a~%"
-                             result
-                             (read-line *standard-input* nil)))
-            finally (return result))
-      input))
 
 (defun to-json (results root-path)
   (jsown:to-json

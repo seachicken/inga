@@ -25,7 +25,7 @@
     (let* ((params (parse-argv argv))
            (language (first (filter-active-context
                               (get-analysis-kinds (diff-to-ranges
-                                                    (get-diff (cdr (assoc :diff params)))
+                                                    (cdr (assoc :diff params))
                                                     (cdr (assoc :root-path params))))
                               (get-env-kinds)))))
       (run (cdr (assoc :mode params)) language params))
@@ -68,7 +68,7 @@
         (setf *mode* mode)
         (return
           (let ((result
-                  `((:diff . ,diff)
+                  `((:diff . ,(get-diff diff))
                     (:root-path . ,(truename (uiop:merge-pathnames* root-path)))
                     (:output-path .
                      ,(if output-path

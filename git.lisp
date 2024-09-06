@@ -37,5 +37,5 @@
                                               (merge-pathnames to-path root-path)
                                               (list (cons :line end) (cons :offset -1)))))
                                         ranges)))))))
-    (return-from diff-to-ranges (coerce ranges 'list))))
+    (coerce ranges 'list)))
 
