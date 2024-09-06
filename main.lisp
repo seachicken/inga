@@ -108,11 +108,11 @@
            (temp-path (cdr (assoc :temp-path params)))
            (include (cdr (assoc :include params)))
            (exclude (cdr (assoc :exclude params)))
-           (diffs (diff-to-ranges (get-diff diff) root-path))
+           (ranges (diff-to-ranges (get-diff diff) root-path))
            (ctx (start root-path
-                       (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
+                       (filter-active-context (get-analysis-kinds ranges) (get-env-kinds))
                        :include include :exclude exclude :temp-path temp-path))
-           (results (analyze ctx diffs)))
+           (results (analyze ctx ranges)))
       (ensure-directories-exist (merge-pathnames "report/" output-path))
       (with-open-file (out (merge-pathnames "report/report.json" output-path)
                            :direction :output
@@ -175,7 +175,7 @@
   (loop for p in (context-processes ctx) do (uiop:close-streams p)) 
   (loop for a in (context-analyzers ctx) do (stop-analyzer a)))
 
-(defun get-analysis-kinds (diffs)
+(defun get-analysis-kinds (ranges)
   (remove nil
           (remove-duplicates
             (mapcar (lambda (diff)
@@ -184,7 +184,7 @@
                           (if (is-match (cdr (assoc :path diff)) :java)
                               :java
                               nil)))
-                    diffs))))
+                    ranges))))
 
 (defun get-env-kinds ()
   (let ((kinds (split-trim-comma (uiop:getenv "INGA_CONTEXT"))))
@@ -204,14 +204,14 @@
               env-context)
       found-context))
 
-(defun analyze (ctx diffs)
+(defun analyze (ctx ranges)
   (remove-duplicates
     (mapcan (lambda (range)
               (when (is-analysis-target (context-kind ctx)
                                         (cdr (assoc :path range))
                                         (context-include ctx) (context-exclude ctx))
                 (analyze-by-range ctx range)))
-            diffs)
+            ranges)
     :test #'equal))
 
 (defun analyze-by-range (ctx range)
