@@ -108,7 +108,7 @@
            (temp-path (cdr (assoc :temp-path params)))
            (include (cdr (assoc :include params)))
            (exclude (cdr (assoc :exclude params)))
-           (diffs (diff-to-ranges (get-diff diff)))
+           (diffs (diff-to-ranges (get-diff diff) root-path))
            (ctx (start root-path
                        (filter-active-context (get-analysis-kinds diffs) (get-env-kinds))
                        :include include :exclude exclude :temp-path temp-path))
@@ -205,26 +205,6 @@
       found-context))
 
 (defun analyze (ctx diffs)
-  (setf diffs (mapcar (lambda (diff)
-                        (push (cons :start-offset
-                                    (convert-to-top-offset
-                                      (merge-pathnames
-                                        (cdr (assoc :path diff)) 
-                                        (context-project-path ctx))
-                                      (list
-                                        (cons :line (cdr (assoc :start diff)))
-                                        (cons :offset 0))))
-                              diff)
-                        (push (cons :end-offset
-                                    (convert-to-top-offset
-                                      (merge-pathnames
-                                        (cdr (assoc :path diff)) 
-                                        (context-project-path ctx))
-                                      (list
-                                        (cons :line (cdr (assoc :end diff)))
-                                        (cons :offset -1))))
-                              diff))
-                      diffs))
   (remove-duplicates
     (mapcan (lambda (range)
               (when (is-analysis-target (context-kind ctx)

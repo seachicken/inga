@@ -4,10 +4,12 @@
   (:import-from #:cl-ppcre)
   (:import-from #:inga/errors
                 #:inga-error)
+  (:import-from #:inga/file
+                #:convert-to-top-offset)
   (:export #:diff-to-ranges))
 (in-package #:inga/git)
 
-(defun diff-to-ranges (diff)
+(defun diff-to-ranges (diff root-path)
   (let ((ranges (make-array 10 :fill-pointer 0 :adjustable t)) to-path)
     (with-input-from-string (in diff)
       (loop for line = (read-line in nil nil)
@@ -25,9 +27,15 @@
                   (let ((end (if (= rows 0) start (- (+ start rows) 1))))
                     ;; extract undeleted files
                     (when (or (> start 0) (> end 0))
-                      (vector-push-extend (list (cons :path to-path)
-                                                (cons :start start)
-                                                (cons :end end))
+                      (vector-push-extend `((:path . ,to-path)
+                                            (:start-offset .
+                                             ,(convert-to-top-offset
+                                                (merge-pathnames to-path root-path)
+                                                (list (cons :line start) (cons :offset 0))))
+                                            (:end-offset .
+                                             ,(convert-to-top-offset
+                                                (merge-pathnames to-path root-path)
+                                                (list (cons :line end) (cons :offset -1)))))
                                           ranges))))))))
     (return-from diff-to-ranges (coerce ranges 'list))))
 
