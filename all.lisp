@@ -5,6 +5,8 @@
     #:inga/ast-parser
     #:inga/ast-index
     #:inga/cache
+    #:inga/cli
+    #:inga/contexts
     #:inga/errors
     #:inga/file
     #:inga/git

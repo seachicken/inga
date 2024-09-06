@@ -2,7 +2,7 @@
   (:nicknames #:logger)
   (:use #:cl)
   (:import-from #:local-time)
-  (:import-from #:inga/context
+  (:import-from #:inga/contexts
                 #:*mode*)
   (:export #:log-debug
            #:log-debug-generic

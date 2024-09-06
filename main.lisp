@@ -1,57 +1,35 @@
 (defpackage #:inga/main
   (:use #:cl
-        #:inga/file
         #:inga/utils)
-  (:import-from #:jsown)
   (:import-from #:alexandria)
-  (:import-from #:inga/context
-                #:*default-mode*
-                #:context
-                #:context-analyzers
-                #:context-ast-index
-                #:context-lc
-                #:context-processes
-                #:make-context)
-  (:import-from #:inga/git
-                #:diff-to-ranges)
-  (:import-from #:inga/language-client
-                #:make-client
-                #:start-client
-                #:stop-client
-                #:references-client)
-  (:import-from #:inga/analyzer
-                #:analyze
-                #:start-analyzer
-                #:stop-analyzer
-                #:find-definitions
-                #:find-entrypoint
-                #:find-references)
-  (:import-from #:inga/ast-index
-                #:ast-index-disk)
+  (:import-from #:inga/contexts
+                #:*mode*)
   (:import-from #:inga/file
-                #:convert-to-pos
-                #:convert-to-top-offset)
-  (:import-from #:inga/plugin/jvm-dependency-loader)
-  (:import-from #:inga/plugin/jvm-helper
-                #:find-base-path)
-  (:import-from #:inga/plugin/spring/spring-property-loader)
+                #:is-match)
   (:import-from #:inga/utils
                 #:split-trim-comma)
   (:import-from #:inga/errors
                 #:inga-error)
+  (:import-from #:inga/git
+                #:diff-to-ranges)
   (:import-from #:inga/logger
                 #:log-debug
                 #:log-error)
-  (:export #:*mode*
-           #:parse-argv
-           #:command
-           #:to-json
-           #:convert-to-output-pos  
-           #:key-downcase))
+  (:export #:command))
 (in-package #:inga/main)
 
 (define-condition inga-error-option-not-found (inga-error) ())
-(define-condition inga-error-context-not-found (inga-error) ())
+
+(defun command (argv)
+  (handler-case
+    (let* ((params (parse-argv argv))
+           (language (first (filter-active-context
+                              (get-analysis-kinds (diff-to-ranges
+                                                    (get-diff (cdr (assoc :diff params)))
+                                                    (cdr (assoc :root-path params))))
+                              (get-env-kinds)))))
+      (run (cdr (assoc :mode params)) language params))
+    (inga-error (e) (format t "~a~%" e))))
 
 (defun parse-argv (argv)
   (loop with root-path = "."
@@ -60,7 +38,7 @@
         with include
         with exclude
         with diff = ""
-        with mode = *default-mode*
+        with mode = :cli
         for option = (pop argv)
         while option
         do (alexandria:switch (option :test #'equal)
@@ -87,6 +65,7 @@
               (setf mode (intern (string-upcase (pop argv)) :keyword)))
              (t (error 'inga-error-option-not-found)))
         finally
+        (setf *mode* mode)
         (return
           (let ((result
                   `((:diff . ,diff)
@@ -104,29 +83,6 @@
                     (:mode . ,mode))))
             result))))
 
-(defun command (params)
-  (handler-case
-    (let* ((diff (cdr (assoc :diff params)))
-           (root-path (cdr (assoc :root-path params)))
-           (output-path (cdr (assoc :output-path params)))
-           (temp-path (cdr (assoc :temp-path params)))
-           (include (cdr (assoc :include params)))
-           (exclude (cdr (assoc :exclude params)))
-           (ranges (diff-to-ranges (get-diff diff) root-path))
-           (ctx (start root-path
-                       (filter-active-context (get-analysis-kinds ranges) (get-env-kinds))
-                       :include include :exclude exclude :temp-path temp-path))
-           (results (analyze ctx ranges)))
-      (ensure-directories-exist (merge-pathnames "report/" output-path))
-      (with-open-file (out (merge-pathnames "report/report.json" output-path)
-                           :direction :output
-                           :if-exists :supersede
-                           :if-does-not-exist :create)
-        (format out "~a" (to-json results root-path)))
-      (format t "~%~a~%" (to-json results root-path))
-      (stop ctx))
-    (inga-error (e) (format t "~a~%" e))))
-
 (defun get-diff (input)
   (if (equal input "-")
       (loop while (listen *standard-input*)
@@ -137,47 +93,6 @@
                              (read-line *standard-input* nil)))
             finally (return result))
       input))
-
-(defun start (root-path context-kinds &key include exclude (temp-path (merge-pathnames ".inga/")))
-  (let* ((index (make-instance 'ast-index-disk :root-path root-path :temp-path temp-path))
-         (ctx (alexandria:switch ((when (> (length context-kinds) 0) (first context-kinds)))
-               (:typescript
-                 (make-context
-                   :kind :typescript
-                   :project-path root-path
-                   :include include
-                   :exclude exclude
-                   :lc (make-client :typescript root-path)
-                   :ast-index index
-                   :analyzers (list
-                                 (start-analyzer :typescript
-                                                 include
-                                                 exclude root-path index))))
-               (:java
-                 (make-context
-                   :kind :java
-                   :project-path root-path
-                   :include include
-                   :exclude exclude
-                   :ast-index index
-                   :analyzers (list
-                                 (start-analyzer :java
-                                                 include
-                                                 exclude root-path index)
-                                 (start-analyzer :kotlin
-                                                 include
-                                                 exclude root-path index))
-                   :processes (list
-                                (inga/plugin/spring/spring-property-loader:start root-path)
-                                (inga/plugin/jvm-dependency-loader:start root-path))))
-               (t (error 'inga-error-context-not-found)))))
-    (start-client (context-lc ctx))
-    ctx))
-
-(defun stop (ctx)
-  (stop-client (context-lc ctx)) 
-  (loop for p in (context-processes ctx) do (uiop:close-streams p)) 
-  (loop for a in (context-analyzers ctx) do (stop-analyzer a)))
 
 (defun get-analysis-kinds (ranges)
   (remove nil
@@ -207,46 +122,7 @@
                 (when (find kind found-context) kind))
               env-context)
       found-context))
-
-(defun to-json (results root-path)
-  (jsown:to-json
-    (mapcan (lambda (r)
-              (let ((obj
-                      `((:obj
-                          ("type" . ,(cdr (assoc :type r)))
-                          ("origin" . ,(cons :obj (key-downcase
-                                                    (convert-to-output-pos
-                                                      root-path
-                                                      (cdr (assoc :origin r))))))
-                          ("entrypoint" . ,(cons :obj (key-downcase
-                                                        (convert-to-output-pos
-                                                          root-path
-                                                          (cdr (assoc :entrypoint r))))))))))
-                (when (equal (cdr (assoc :type r)) "entrypoint")
-                  (push (cons "service"
-                              (first (last (pathname-directory
-                                             (find-base-path
-                                               (merge-pathnames
-                                                 (cdr (assoc :path
-                                                             (convert-to-output-pos
-                                                               root-path
-                                                               (cdr (assoc :entrypoint r)))))
-                                                 root-path))))))
-                        (cdr (assoc :obj obj))))
-                obj))
-            results)))
-
-(defun convert-to-output-pos (root-path pos)
-  (when (eq (cdr (assoc :type pos)) :rest-server)
-    (setf pos (cdr (assoc :file-pos pos))))
-  (let ((text-pos (convert-to-pos (merge-pathnames (cdr (assoc :path pos)) root-path)
-                                  (cdr (assoc :top-offset pos)))))
-    (list
-      (cons :path (enough-namestring (cdr (assoc :path pos)) root-path))
-      (cons :name (cdr (assoc :name pos)))
-      (cons :line (cdr (assoc :line text-pos)))
-      (cons :offset (cdr (assoc :offset text-pos))))))
-
-(defun key-downcase (obj)
-  (mapcar (lambda (p) (cons (string-downcase (car p)) (cdr p))) obj))
+(defgeneric run (mode language params)
+  (:method (mode language params)
+   (error (format nil "unknown mode: ~a" mode))))
 

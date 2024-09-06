@@ -6,7 +6,7 @@
   (:import-from #:jsown)
   (:import-from #:inga/cache
                 #:defunc)
-  (:import-from #:inga/context
+  (:import-from #:inga/contexts
                 #:context-ast-index
                 #:context-exclude
                 #:context-include

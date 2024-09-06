@@ -4,8 +4,15 @@
   (:import-from #:flexi-streams)
   (:import-from #:jsown)
   (:import-from #:local-time)
+  (:import-from #:inga/analyzer
+                #:analyze
+                #:start-analyzer
+                #:stop-analyzer)
   (:import-from #:inga/ast-index
+                #:ast-index-disk
                 #:update-index)
+  (:import-from #:inga/contexts
+                #:context-ast-index)
   (:import-from #:inga/file
                 #:convert-to-top-offset)
   (:import-from #:inga/git
@@ -16,26 +23,61 @@
                 #:log-error
                 #:log-error-generic
                 #:log-info-generic)
-  (:import-from #:inga/main
-                #:context
-                #:context-ast-index
-                #:convert-to-output-pos
-                #:key-downcase
-                #:to-json)
   (:import-from #:inga/analyzer
                 #:analyze
                 #:find-definitions)
-  (:export #:run-server))
+  (:import-from #:inga/main
+                #:run))
 (in-package #:inga/language-server)
 
 (defparameter *msg-q* nil)
 (defparameter *processing-msg* nil)
 
-(defun run-server (params)
-  (let ((ctx (inga/main::start (cdr (assoc :root-path params)) '(:java)
-                               :include (cdr (assoc :include params))
-                               :exclude (cdr (assoc :exclude params))
-                               :temp-path (cdr (assoc :temp-path params)))))
+(defmethod run ((mode (eql :server)) language params)
+  (let* ((index (make-instance 'ast-index-disk
+                               :root-path (cdr (assoc :root-path params))
+                               :temp-path (cdr (assoc :temp-path params))))
+         (ctx (case language
+                (:typescript
+                  (make-context
+                    :kind :typescript
+                    :project-path (cdr (assoc :root-path params))
+                    :include (cdr (assoc :include params))
+                    :exclude (cdr (assoc :exclude params))
+                    :lc (make-client :typescript (cdr (assoc :root-path params)))
+                    :ast-index index
+                    :analyzers (list
+                                 (start-analyzer :typescript
+                                                 (cdr (assoc :include params))
+                                                 (cdr (assoc :exclude params))
+                                                 (cdr (assoc :root-path params))
+                                                 index))))
+                (:java
+                  (make-context
+                    :kind :java
+                    :project-path (cdr (assoc :root-path params))
+                    :include (cdr (assoc :include params))
+                    :exclude (cdr (assoc :exclude params))
+                    :ast-index index
+                    :analyzers (list
+                                 (start-analyzer :java
+                                                 (cdr (assoc :include params))
+                                                 (cdr (assoc :exclude params))
+                                                 (cdr (assoc :root-path params))
+                                                 index)
+                                 (start-analyzer :kotlin
+                                                 (cdr (assoc :include params))
+                                                 (cdr (assoc :exclude params))
+                                                 (cdr (assoc :root-path params))
+                                                 index))
+                    :processes (list
+                                 (inga/plugin/spring/spring-property-loader:start
+                                   (cdr (assoc :root-path params)))
+                                 (inga/plugin/jvm-dependency-loader:start
+                                   (cdr (assoc :root-path params))))))
+                (t (error 'inga-error-context-not-found)))))
+    (start-client (context-lc ctx))
+
     (init-msg-q)
     (handle-msg params ctx)))
 
@@ -74,7 +116,11 @@
          (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":{\"change\":2,\"save\":false}}}"))
         ((equal (jsown:val msg "method") "shutdown")
          (log-debug "run shutdown processing")
-         (inga/main::stop ctx)
+
+         (stop-client (context-lc ctx)) 
+         (loop for p in (context-processes ctx) do (uiop:close-streams p)) 
+         (loop for a in (context-analyzers ctx) do (stop-analyzer a))
+
          (print-response-msg (jsown:val msg "id") "null")
          (return-from handle-msg))
         (t
@@ -124,7 +170,7 @@
                           (get-relative-path
                             (subseq (jsown:val (jsown:val msg "params") "uri") 7) root-host-paths)))
                   (diff (diff-to-ranges (jsown:val (jsown:val msg "params") "diff")))
-                  (results (inga/main:to-json (analyze ctx diff) root-path)))
+                  (results (to-json (analyze ctx diff) root-path)))
              (when path (update-index (context-ast-index ctx) path))
              (with-open-file (out (merge-pathnames "report.json" output-path)
                                   :direction :output
@@ -218,3 +264,46 @@
         do
         (when (uiop:string-prefix-p root-path path)
           (return (enough-namestring path root-path)))))
+
+(defun to-json (results root-path)
+  (jsown:to-json
+    (mapcan (lambda (r)
+              (let ((obj
+                      `((:obj
+                          ("type" . ,(cdr (assoc :type r)))
+                          ("origin" . ,(cons :obj (key-downcase
+                                                    (convert-to-output-pos
+                                                      root-path
+                                                      (cdr (assoc :origin r))))))
+                          ("entrypoint" . ,(cons :obj (key-downcase
+                                                        (convert-to-output-pos
+                                                          root-path
+                                                          (cdr (assoc :entrypoint r))))))))))
+                (when (equal (cdr (assoc :type r)) "entrypoint")
+                  (push (cons "service"
+                              (first (last (pathname-directory
+                                             (find-base-path
+                                               (merge-pathnames
+                                                 (cdr (assoc :path
+                                                             (convert-to-output-pos
+                                                               root-path
+                                                               (cdr (assoc :entrypoint r)))))
+                                                 root-path))))))
+                        (cdr (assoc :obj obj))))
+                obj))
+            results)))
+
+(defun convert-to-output-pos (root-path pos)
+  (when (eq (cdr (assoc :type pos)) :rest-server)
+    (setf pos (cdr (assoc :file-pos pos))))
+  (let ((text-pos (convert-to-pos (merge-pathnames (cdr (assoc :path pos)) root-path)
+                                  (cdr (assoc :top-offset pos)))))
+    (list
+      (cons :path (enough-namestring (cdr (assoc :path pos)) root-path))
+      (cons :name (cdr (assoc :name pos)))
+      (cons :line (cdr (assoc :line text-pos)))
+      (cons :offset (cdr (assoc :offset text-pos))))))
+
+(defun key-downcase (obj)
+  (mapcar (lambda (p) (cons (string-downcase (car p)) (cdr p))) obj))
+
