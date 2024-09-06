@@ -3,7 +3,9 @@
         #:fiveam
         #:inga/analyzer
         #:inga/ast-index
-        #:inga/test/helper))
+        #:inga/test/helper)
+  (:import-from #:inga/file
+                #:convert-to-top-offset))
 (in-package #:inga/test/analyzer/kotlin)
 
 (def-suite kotlin)

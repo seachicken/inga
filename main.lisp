@@ -14,8 +14,6 @@
                 #:stop-client
                 #:references-client)
   (:import-from #:inga/analyzer
-                #:convert-to-pos
-                #:convert-to-top-offset
                 #:start-analyzer
                 #:stop-analyzer
                 #:find-definitions
@@ -23,6 +21,9 @@
                 #:find-references)
   (:import-from #:inga/ast-index
                 #:ast-index-disk)
+  (:import-from #:inga/file
+                #:convert-to-pos
+                #:convert-to-top-offset)
   (:import-from #:inga/plugin/jvm-dependency-loader)
   (:import-from #:inga/plugin/jvm-helper
                 #:find-base-path)

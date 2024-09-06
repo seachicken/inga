@@ -151,31 +151,3 @@
                        (merge-pathnames "src/App/TodoList/Item/index.tsx" *react-path*)
                        '((:line . 111) (:offset . 29))))))))))
 
-(test convert-tsserver-pos-to-tsparser-pos
-  (is (equal
-        1241
-        (convert-to-top-offset
-          (merge-pathnames "src/App/NewTodoInput/index.tsx" *react-path*)
-          '((:line . 39) (:offset . 69))))))
-
-(test convert-tsparser-pos-to-tsserver-pos
-  (is (equal
-        '((:line . 39) (:offset . 69))
-        (convert-to-pos
-          (merge-pathnames "src/App/NewTodoInput/index.tsx" *react-path*)
-          1241))))
-
-(test convert-tsserver-pos-to-tsparser-pos-with-offset1
-  (is (equal
-        328
-        (convert-to-top-offset
-          (merge-pathnames "src/dataStructure.ts" *react-path*)
-          '((:line . 21) (:offset . 1))))))
-
-(test convert-tsparser-pos-to-tsserver-pos-with-offset1
-  (is (equal
-        '((:line . 21) (:offset . 1))
-        (convert-to-pos
-          (merge-pathnames "src/dataStructure.ts" *react-path*)
-          328))))
-

@@ -46,8 +46,6 @@
            #:find-signature
            #:find-class-hierarchy
            #:find-class-hierarchy-generic
-           #:convert-to-top-offset
-           #:convert-to-pos
            #:contains-offset
            #:ast-value
            #:get-asts
@@ -258,37 +256,6 @@
         (list fq-class-name))))
 (defgeneric find-class-hierarchy-generic (analyzer fq-class-name root-ast path)
   (:method (analyzer fq-class-name root-ast path)))
-
-(defun convert-to-top-offset (path pos)
-  (with-open-file (stream path)
-    (loop for file-line = (read-line stream nil)
-          with line-no = 0
-          with top-offset = 0
-          while file-line
-          when (eq line-no (1- (cdr (assoc :line pos))))
-          return (+ top-offset (if (< (cdr (assoc :offset pos)) 0)
-                                   (length file-line)
-                                   (1- (cdr (assoc :offset pos)))))
-          do
-          (setf line-no (1+ line-no))
-          ;; add newline code
-          (setq top-offset (+ top-offset (length file-line) 1)))))
-
-(defun convert-to-pos (path top-offset)
-  (with-open-file (stream path)
-    (loop for file-line = (read-line stream nil)
-          with line-no = 0
-          with current-offset = 0
-          while file-line
-          when (<= top-offset (+ current-offset (length file-line)))
-          return (list
-                   (cons :line (1+ line-no))
-                   (cons :offset (- (1+ (length file-line))
-                                    (- (+ current-offset (length file-line)) top-offset))))
-          do
-          (setf line-no (1+ line-no))
-          ;; add newline code
-          (setf current-offset (+ current-offset (length file-line) 1)))))
 
 (defun get-references-key (pos)
   (if (eq (cdr (assoc :type pos)) :rest-server)

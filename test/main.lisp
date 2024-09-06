@@ -2,7 +2,7 @@
   (:use #:cl
         #:fiveam
         #:inga/main)
-  (:import-from #:inga/analyzer
+  (:import-from #:inga/file
                 #:convert-to-top-offset))
 (in-package #:inga/test/main)
 

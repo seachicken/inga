@@ -4,7 +4,9 @@
         #:inga/ast-index
         #:inga/plugin/spring/analyzer
         #:inga/test/helper  
-        #:inga/analyzer))
+        #:inga/analyzer)
+  (:import-from #:inga/file
+                #:convert-to-top-offset))
 (in-package #:inga/test/plugin/spring/analyzer/java)
 
 (def-suite java)

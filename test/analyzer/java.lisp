@@ -3,13 +3,15 @@
         #:fiveam
         #:inga/analyzer
         #:inga/ast-index
-        #:inga/test/helper))
+        #:inga/test/helper)
+  (:import-from #:inga/file
+                #:convert-to-top-offset))
 (in-package #:inga/test/analyzer/java)
 
 (def-suite java)
+(def-suite jdk21 :in java)
+(def-suite jdk17 :in java)
 
-(def-suite jdk21
-           :in java)
 (in-suite jdk21)
 
 (defparameter *java-path* (merge-pathnames "test/fixtures/general/"))
@@ -349,8 +351,6 @@
             "p2.ChildClass")
           (find-class-hierarchy "p2.ChildClass" "src/main/java/p2/ApiSignature.java")))))
 
-(def-suite jdk17
-           :in java)
 (in-suite jdk17)
 
 (defparameter *spring-boot-path* (merge-pathnames "test/fixtures/spring-boot-realworld-example-app/"))
@@ -561,4 +561,6 @@
           (find-class-hierarchy
             "java.lang.String"
             "users-service/src/main/java/com/baeldung/usersservice/service/UsersService.java")))))
+
+(in-suite java)
 

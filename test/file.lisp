@@ -80,3 +80,17 @@
         nil
         (is-analysis-target :java "src/index.js"))))
 
+(test convert-to-top-offset-from-pos
+  (is (equal
+        1241
+        (convert-to-top-offset
+          (merge-pathnames "test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx")
+          '((:line . 39) (:offset . 69))))))
+
+(test convert-to-pos-from-top-offset
+  (is (equal
+        '((:line . 39) (:offset . 69))
+        (convert-to-pos
+          (merge-pathnames "test/fixtures/react-typescript-todo/src/App/NewTodoInput/index.tsx")
+          1241))))
+

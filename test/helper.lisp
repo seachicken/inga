@@ -5,7 +5,6 @@
                 #:find-ast
                 #:analyzer-java
                 #:ast-value
-                #:convert-to-top-offset
                 #:start-analyzer
                 #:stop-analyzer)
   (:import-from #:inga/ast-index
@@ -17,6 +16,7 @@
   (:import-from #:inga/ast-index/disk
                 #:ast-index-disk)
   (:import-from #:inga/file
+                #:convert-to-top-offset
                 #:get-file-type)
   (:export #:*index*
            #:jvm-ctx

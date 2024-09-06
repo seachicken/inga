@@ -6,6 +6,8 @@
   (:import-from #:local-time)
   (:import-from #:inga/ast-index
                 #:update-index)
+  (:import-from #:inga/file
+                #:convert-to-top-offset)
   (:import-from #:inga/git
                 #:diff-to-ranges)
   (:import-from #:inga/logger
@@ -22,7 +24,6 @@
                 #:key-downcase
                 #:to-json)
   (:import-from #:inga/analyzer
-                #:convert-to-top-offset
                 #:find-definitions)
   (:export #:run-server))
 (in-package #:inga/language-server)
