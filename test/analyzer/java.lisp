@@ -17,7 +17,92 @@
 (defparameter *lightrun-path* (merge-pathnames "test/fixtures/spring-tutorials/lightrun/"))
 (defparameter *guava-modules* (merge-pathnames "test/fixtures/spring-tutorials/guava-modules/"))
 
+(in-suite jdk17)
+
+(test analyze-monolithic
+  (let ((ctx (inga/main::start *spring-boot-path* '(:java) :exclude '("src/test/**"))))
+    (is (equal
+          '(((:type . "entrypoint")
+             (:path . "src/main/java/io/spring/api/ArticlesApi.java")
+             (:name . "getArticles")
+             (:line . 49) (:offset . 25)))
+          (mapcar (lambda (r) (get-file-pos r *spring-boot-path*))
+                  (analyze
+                    ctx
+                    `(((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
+                       (:start-offset .
+                        ,(convert-to-top-offset
+                          (merge-pathnames
+                            "src/main/java/io/spring/application/ArticleQueryService.java"
+                            *spring-boot-path*)
+                          '((:line . 105) (:offset . 0))))
+                       (:end-offset .
+                        ,(convert-to-top-offset
+                          (merge-pathnames
+                            "src/main/java/io/spring/application/ArticleQueryService.java"
+                            *spring-boot-path*)
+                          '((:line . 105) (:offset . -1))))))))))
+    (inga/main::stop ctx)))
+
+(test analyze-microservices
+  (let ((ctx (inga/main::start *lightrun-path* '(:java))))
+    (is (equal
+          '(((:type . "entrypoint")
+             (:path . "users-service/src/main/java/com/baeldung/usersservice/adapters/http/UsersController.java")
+             (:name . "getUser")
+             (:line . 38) (:offset . 25))
+            ((:type . "connection")
+             (:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/users/UserRepository.java")
+             (:name . "getUserById")
+             (:line . 18) (:offset . 17))
+            ((:type . "entrypoint")
+             (:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
+             (:name . "getTaskById")
+             (:line . 25) (:offset . 25)))
+          (mapcar (lambda (r) (get-file-pos r *lightrun-path*))
+                  (analyze
+                    ctx
+                    `(((:path . "users-service/src/main/java/com/baeldung/usersservice/service/UsersService.java")
+                       (:start-offset .
+                        ,(convert-to-top-offset
+                           (merge-pathnames
+                             "users-service/src/main/java/com/baeldung/usersservice/service/UsersService.java"
+                             *lightrun-path*)
+                           '((:line . 34) (:offset . 0))))
+                       (:end-offset .
+                        ,(convert-to-top-offset
+                           (merge-pathnames
+                             "users-service/src/main/java/com/baeldung/usersservice/service/UsersService.java"
+                             *lightrun-path*)
+                           '((:line . 34) (:offset . -1))))))))))
+      (inga/main::stop ctx)))
+
 (in-suite jdk21)
+
+(test analyze-recursion
+  (let ((ctx (inga/main::start *java-path* '(:java))))
+    (is (equal
+          '(((:type . "entrypoint")
+             (:path . "src/main/java/p1/RecursionReference.java")
+             (:name . "method")
+             (:line . 4) (:offset . 17)))
+          (mapcar (lambda (r) (get-file-pos r *java-path*))
+                  (analyze
+                    ctx
+                    `(((:path . "src/main/java/p1/RecursionReference.java")
+                       ,(cons :start-offset
+                              (convert-to-top-offset
+                                (merge-pathnames
+                                  "src/main/java/p1/RecursionReference.java"
+                                  *java-path*)
+                                '((:line . 5) (:offset . 0))))
+                       ,(cons :end-offset
+                              (convert-to-top-offset
+                                (merge-pathnames
+                                  "src/main/java/p1/RecursionReference.java"
+                                  *java-path*)
+                                '((:line . 5) (:offset . -1))))))))))
+    (inga/main::stop ctx)))
 
 (test find-definitions-for-constructor
   (with-fixture jvm-ctx (*java-path*)

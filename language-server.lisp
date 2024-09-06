@@ -17,13 +17,13 @@
                 #:log-error-generic
                 #:log-info-generic)
   (:import-from #:inga/main
-                #:analyze
                 #:context
                 #:context-ast-index
                 #:convert-to-output-pos
                 #:key-downcase
                 #:to-json)
   (:import-from #:inga/analyzer
+                #:analyze
                 #:find-definitions)
   (:export #:run-server))
 (in-package #:inga/language-server)
@@ -124,7 +124,7 @@
                           (get-relative-path
                             (subseq (jsown:val (jsown:val msg "params") "uri") 7) root-host-paths)))
                   (diff (diff-to-ranges (jsown:val (jsown:val msg "params") "diff")))
-                  (results (inga/main:to-json (inga/main:analyze ctx diff) root-path)))
+                  (results (inga/main:to-json (analyze ctx diff) root-path)))
              (when path (update-index (context-ast-index ctx) path))
              (with-open-file (out (merge-pathnames "report.json" output-path)
                                   :direction :output

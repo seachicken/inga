@@ -5,7 +5,13 @@
   (:import-from #:jsown)
   (:import-from #:alexandria)
   (:import-from #:inga/context
-                #:*default-mode*)
+                #:*default-mode*
+                #:context
+                #:context-analyzers
+                #:context-ast-index
+                #:context-lc
+                #:context-processes
+                #:make-context)
   (:import-from #:inga/git
                 #:diff-to-ranges)
   (:import-from #:inga/language-client
@@ -14,6 +20,7 @@
                 #:stop-client
                 #:references-client)
   (:import-from #:inga/analyzer
+                #:analyze
                 #:start-analyzer
                 #:stop-analyzer
                 #:find-definitions
@@ -38,12 +45,9 @@
   (:export #:*mode*
            #:parse-argv
            #:command
-           #:analyze
-           #:convert-to-output-pos  
            #:to-json
-           #:key-downcase
-           #:context
-           #:context-ast-index))
+           #:convert-to-output-pos  
+           #:key-downcase))
 (in-package #:inga/main)
 
 (define-condition inga-error-option-not-found (inga-error) ())
@@ -204,88 +208,33 @@
               env-context)
       found-context))
 
-(defun analyze (ctx ranges)
-  (remove-duplicates
-    (mapcan (lambda (range)
-              (when (is-analysis-target (context-kind ctx)
-                                        (cdr (assoc :path range))
-                                        (context-include ctx) (context-exclude ctx))
-                (analyze-by-range ctx range)))
-            ranges)
-    :test #'equal))
-
-(defun analyze-by-range (ctx range)
-  (loop
-    with q = (make-queue)
-    with results
-    initially (enqueue q range)
-    do
-    (setf range (dequeue q))
-    (unless range (return (remove-duplicates results :test #'equal)))
-
-    (let ((poss (mapcan
-                  (lambda (pos)
-                    (unless (assoc :origin pos)
-                      (push (cons :origin pos) pos))
-                    ;; nodejs doesn't support fq-name
-                    (when (assoc :fq-name pos)
-                      (if (assoc :visited-fq-names pos)
-                          (adjoin (cdr (assoc :fq-name pos)) (cdr (assoc :visited-fq-names pos)))
-                          (push (cons :visited-fq-names (list (cdr (assoc :fq-name pos)))) pos)))
-                    (find-entrypoints ctx pos q))
-                  (find-definitions range))))
-      (setf results (append results poss)))))
-
-(defun find-entrypoints (ctx pos q)
-  (let ((refs (mapcan (lambda (ref)
-                        (when (is-analysis-target (context-kind ctx) (cdr (assoc :path ref))
-                                                  (context-include ctx) (context-exclude ctx))
-                          (list ref)))
-                      (if (context-lc ctx)
-                          (references-client (context-lc ctx) pos) 
-                          (find-references pos (context-ast-index ctx)))))
-        results)
-    (labels ((make-entrypoint (entrypoint)
-               `((:type . "entrypoint")
-                 (:origin . ,(convert-to-output-pos (context-project-path ctx)
-                                                    (if (cdr (assoc :origin pos))
-                                                        (cdr (assoc :origin pos))
-                                                        entrypoint)))
-                 (:entrypoint . ,(convert-to-output-pos (context-project-path ctx)
-                                                        entrypoint))))
-             (make-connection (definition)
-               `((:type . "connection")
-                 (:origin . ,(convert-to-output-pos (context-project-path ctx)
-                                                    (cdr (assoc :file-pos pos))))
-                 (:entrypoint . ,(convert-to-output-pos (context-project-path ctx)
-                                                        definition)))))
-      (when (eq (cdr (assoc :type pos)) :rest-server)
-        (setf results (append results (list (make-entrypoint pos)))))
-      (if refs
-          (loop for ref in refs
-            do
-            (let ((entrypoint (find-entrypoint ref)))
-              (if entrypoint
-                  (setf results (append results (list (make-entrypoint entrypoint))))
-                  (let* ((def (first
-                                (find-definitions
-                                  `((:path . ,(cdr (assoc :path ref)))
-                                    (:start-offset . ,(cdr (assoc :top-offset ref)))
-                                    (:end-offset . ,(cdr (assoc :top-offset ref)))))))
-                         (origin (if (eq (cdr (assoc :type pos)) :rest-server)
-                                     def
-                                     (cdr (assoc :origin pos)))))
-                    (when (eq (cdr (assoc :type pos)) :rest-server)
-                      (setf results (append results (list (make-connection def)))))
-                    (if (member (cdr (assoc :fq-name def))
-                                (cdr (assoc :visited-fq-names pos)) :test #'equal)
-                        (setf results (append results (list (make-entrypoint def))))
-                        (enqueue q `((:path . ,(cdr (assoc :path ref)))
-                                     (:origin . ,origin)
-                                     (:start-offset . ,(cdr (assoc :top-offset ref)))
-                                     (:end-offset . ,(cdr (assoc :top-offset ref))))))))))
-          (list (make-entrypoint pos))))
-    results))
+(defun to-json (results root-path)
+  (jsown:to-json
+    (mapcan (lambda (r)
+              (let ((obj
+                      `((:obj
+                          ("type" . ,(cdr (assoc :type r)))
+                          ("origin" . ,(cons :obj (key-downcase
+                                                    (convert-to-output-pos
+                                                      root-path
+                                                      (cdr (assoc :origin r))))))
+                          ("entrypoint" . ,(cons :obj (key-downcase
+                                                        (convert-to-output-pos
+                                                          root-path
+                                                          (cdr (assoc :entrypoint r))))))))))
+                (when (equal (cdr (assoc :type r)) "entrypoint")
+                  (push (cons "service"
+                              (first (last (pathname-directory
+                                             (find-base-path
+                                               (merge-pathnames
+                                                 (cdr (assoc :path
+                                                             (convert-to-output-pos
+                                                               root-path
+                                                               (cdr (assoc :entrypoint r)))))
+                                                 root-path))))))
+                        (cdr (assoc :obj obj))))
+                obj))
+            results)))
 
 (defun convert-to-output-pos (root-path pos)
   (when (eq (cdr (assoc :type pos)) :rest-server)
@@ -298,35 +247,6 @@
       (cons :line (cdr (assoc :line text-pos)))
       (cons :offset (cdr (assoc :offset text-pos))))))
 
-(defun to-json (results root-path)
-  (jsown:to-json
-    (mapcan (lambda (r)
-              (let ((obj
-                      `((:obj
-                          ("type" . ,(cdr (assoc :type r)))
-                          ("origin" . ,(cons :obj (key-downcase (cdr (assoc :origin r)))))
-                          ("entrypoint" . ,(cons :obj (key-downcase (cdr (assoc :entrypoint r)))))))))
-                (when (equal (cdr (assoc :type r)) "entrypoint")
-                  (push (cons "service" (first (last (pathname-directory
-                                                       (find-base-path
-                                                         (merge-pathnames
-                                                           (cdr (assoc :path
-                                                                       (cdr (assoc :entrypoint r))))
-                                                           root-path))))))
-                        (cdr (assoc :obj obj))))
-                obj))
-            results)))
-
 (defun key-downcase (obj)
   (mapcar (lambda (p) (cons (string-downcase (car p)) (cdr p))) obj))
-
-(defstruct context
-  kind
-  project-path
-  include
-  exclude
-  lc
-  ast-index
-  analyzers
-  processes)
 

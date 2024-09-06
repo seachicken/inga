@@ -46,14 +46,10 @@
                               :fiveam '#:run!
                               (list
                                 (uiop:find-symbol* '#:java
-                                                   :inga/test/main)
-                                (uiop:find-symbol* '#:java
                                                    :inga/test/ast-index/disk)
                                 (uiop:find-symbol* '#:java
                                                    :inga/test/ast-index/memory)
-                                (uiop:find-symbol* '#:jdk21
-                                                   :inga/test/analyzer/java)
-                                (uiop:find-symbol* '#:jdk17
+                                (uiop:find-symbol* '#:java
                                                    :inga/test/analyzer/java)
                                 (uiop:find-symbol* '#:kotlin
                                                    :inga/test/analyzer/kotlin)
@@ -75,8 +71,6 @@
                     (unless (uiop:symbol-call
                               :fiveam '#:run!
                               (list
-                                (uiop:find-symbol* '#:typescript
-                                                   :inga/test/main)
                                 (uiop:find-symbol* '#:typescript
                                                    :inga/test/analyzer/typescript)))
                       (error "Tests failed"))))

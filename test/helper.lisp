@@ -16,13 +16,15 @@
   (:import-from #:inga/ast-index/disk
                 #:ast-index-disk)
   (:import-from #:inga/file
+                #:convert-to-pos
                 #:convert-to-top-offset
                 #:get-file-type)
   (:export #:*index*
            #:jvm-ctx
            #:node-ctx
            #:find-ast-in-ctx
-           #:create-range))
+           #:create-range
+           #:get-file-pos))
 (in-package #:inga/test/helper)
 
 (def-fixture jvm-ctx (root-path &key (index-type 'ast-index-disk) (include '("**")))
@@ -73,4 +75,17 @@
      (cons :end-offset
            (convert-to-top-offset (merge-pathnames ,path *root-path*)
                                   (list (cons :line ,end) (cons :offset -1))))))
+
+(defun get-file-pos (result root-path)
+  (let* ((entrypoint (cdr (assoc :entrypoint result)))
+         (pos (if (eq (cdr (assoc :type entrypoint)) :rest-server)
+                  (cdr (assoc :file-pos entrypoint))
+                  entrypoint))
+         (text-pos (convert-to-pos (merge-pathnames (cdr (assoc :path pos)) root-path)
+                                   (cdr (assoc :top-offset pos)))))
+    `((:type . ,(cdr (assoc :type result)))
+      (:path . ,(cdr (assoc :path pos)))
+      (:name . ,(cdr (assoc :name pos)))
+      (:line . ,(cdr (assoc :line text-pos)))
+      (:offset . ,(cdr (assoc :offset text-pos))))))
 
