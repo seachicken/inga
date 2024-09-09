@@ -65,8 +65,7 @@
                                    (cdr (assoc :root-path params)))
                                  (inga/plugin/jvm-dependency-loader:start
                                    (cdr (assoc :root-path params))))))
-                (t (error 'inga-error-context-not-found)))))
-
+                (t (error "unknown context: ~a" language)))))
     (init-msg-q)
     (handle-msg params ctx)))
 

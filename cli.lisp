@@ -13,8 +13,6 @@
                 #:context-analyzers
                 #:context-lc
                 #:context-processes)
-  (:import-from #:inga/errors
-                #:inga-error)
   (:import-from #:inga/file
                 #:convert-to-pos)
   (:import-from #:inga/git
@@ -30,8 +28,6 @@
   (:import-from #:inga/plugin/jvm-dependency-loader)
   (:import-from #:inga/plugin/spring/spring-property-loader))
 (in-package #:inga/cli)
-
-(define-condition inga-error-context-not-found (inga-error) ())
 
 (defmethod run ((mode (eql :cli)) language params)
   (let* ((index (make-instance 'ast-index-disk
@@ -75,7 +71,7 @@
                                    (cdr (assoc :root-path params)))
                                  (inga/plugin/jvm-dependency-loader:start
                                    (cdr (assoc :root-path params))))))
-                (t (error 'inga-error-context-not-found)))))
+                (t (error "unknown context: ~a" language)))))
     (start-client (context-lc ctx))
 
     (let ((results (analyze ctx (diff-to-ranges (cdr (assoc :diff params))
