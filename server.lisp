@@ -6,6 +6,7 @@
   (:import-from #:local-time)
   (:import-from #:inga/analyzer
                 #:analyze
+                #:find-definitions 
                 #:start-analyzer
                 #:stop-analyzer)
   (:import-from #:inga/ast-index
@@ -18,6 +19,7 @@
                 #:context-lc
                 #:context-processes)
   (:import-from #:inga/file
+                #:convert-to-pos 
                 #:convert-to-top-offset)
   (:import-from #:inga/git
                 #:diff-to-ranges)
@@ -27,11 +29,10 @@
                 #:log-error
                 #:log-error-generic
                 #:log-info-generic)
-  (:import-from #:inga/analyzer
-                #:analyze
-                #:find-definitions)
   (:import-from #:inga/main
-                #:run))
+                #:run)
+  (:import-from #:inga/plugin/jvm-helper
+                #:find-base-path))
 (in-package #:inga/server)
 
 (defparameter *msg-q* nil)
@@ -104,7 +105,6 @@
         ((equal (jsown:val msg "method") "shutdown")
          (log-debug "run shutdown processing")
 
-         (stop-client (context-lc ctx)) 
          (loop for p in (context-processes ctx) do (uiop:close-streams p)) 
          (loop for a in (context-analyzers ctx) do (stop-analyzer a))
 
@@ -156,7 +156,7 @@
            (let* ((path (when (jsown:keyp (jsown:val msg "params") "uri")
                           (get-relative-path
                             (subseq (jsown:val (jsown:val msg "params") "uri") 7) root-host-paths)))
-                  (diff (diff-to-ranges (jsown:val (jsown:val msg "params") "diff")))
+                  (diff (diff-to-ranges (jsown:val (jsown:val msg "params") "diff") root-path))
                   (results (to-json (analyze ctx diff) root-path)))
              (when path (update-index (context-ast-index ctx) path))
              (with-open-file (out (merge-pathnames "report.json" output-path)

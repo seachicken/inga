@@ -71,7 +71,7 @@
                                    (cdr (assoc :root-path params)))
                                  (inga/plugin/jvm-dependency-loader:start
                                    (cdr (assoc :root-path params))))))
-                (t (error "unknown context: ~a" language)))))
+                (t (error "context not found. language: ~a" language)))))
     (start-client (context-lc ctx))
 
     (let ((results (analyze ctx (diff-to-ranges (cdr (assoc :diff params))
