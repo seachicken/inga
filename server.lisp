@@ -42,7 +42,7 @@
                                :root-path (cdr (assoc :root-path params))
                                :temp-path (cdr (assoc :temp-path params))))
          (ctx (case language
-                (:java
+                (t
                   (make-context
                     :kind :java
                     :project-path (cdr (assoc :root-path params))
@@ -64,8 +64,7 @@
                                  (inga/plugin/spring/spring-property-loader:start
                                    (cdr (assoc :root-path params)))
                                  (inga/plugin/jvm-dependency-loader:start
-                                   (cdr (assoc :root-path params))))))
-                (t (error "unknown context: ~a" language)))))
+                                   (cdr (assoc :root-path params)))))))))
     (init-msg-q)
     (handle-msg params ctx)))
 

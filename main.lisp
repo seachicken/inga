@@ -122,6 +122,7 @@
                 (when (find kind found-context) kind))
               env-context)
       found-context))
+
 (defgeneric run (mode language params)
   (:method (mode language params)
    (error (format nil "unknown mode: ~a" mode))))
