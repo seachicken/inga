@@ -11,7 +11,7 @@
                "inga/test/analyzer/base"
                "inga/test/file"
                "inga/test/helper"
-               "inga/test/language-server"
+               "inga/test/server"
                "inga/test/main"
                "inga/test/path")
   :perform (test-op (o c)
@@ -20,8 +20,8 @@
                               (list
                                 (uiop:find-symbol* '#:file
                                                    :inga/test/file)
-                                (uiop:find-symbol* '#:language-server
-                                                   :inga/test/language-server)
+                                (uiop:find-symbol* '#:server
+                                                   :inga/test/server)
                                 (uiop:find-symbol* '#:main
                                                    :inga/test/main)
                                 (uiop:find-symbol* '#:path

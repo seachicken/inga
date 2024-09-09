@@ -1,4 +1,4 @@
-(defpackage #:inga/language-server
+(defpackage #:inga/server
   (:use #:cl
         #:inga/utils)
   (:import-from #:flexi-streams)
@@ -12,7 +12,11 @@
                 #:ast-index-disk
                 #:update-index)
   (:import-from #:inga/contexts
-                #:context-ast-index)
+                #:make-context
+                #:context-analyzers
+                #:context-ast-index
+                #:context-lc
+                #:context-processes)
   (:import-from #:inga/file
                 #:convert-to-top-offset)
   (:import-from #:inga/git
@@ -28,7 +32,7 @@
                 #:find-definitions)
   (:import-from #:inga/main
                 #:run))
-(in-package #:inga/language-server)
+(in-package #:inga/server)
 
 (defparameter *msg-q* nil)
 (defparameter *processing-msg* nil)
@@ -38,20 +42,6 @@
                                :root-path (cdr (assoc :root-path params))
                                :temp-path (cdr (assoc :temp-path params))))
          (ctx (case language
-                (:typescript
-                  (make-context
-                    :kind :typescript
-                    :project-path (cdr (assoc :root-path params))
-                    :include (cdr (assoc :include params))
-                    :exclude (cdr (assoc :exclude params))
-                    :lc (make-client :typescript (cdr (assoc :root-path params)))
-                    :ast-index index
-                    :analyzers (list
-                                 (start-analyzer :typescript
-                                                 (cdr (assoc :include params))
-                                                 (cdr (assoc :exclude params))
-                                                 (cdr (assoc :root-path params))
-                                                 index))))
                 (:java
                   (make-context
                     :kind :java
@@ -76,7 +66,6 @@
                                  (inga/plugin/jvm-dependency-loader:start
                                    (cdr (assoc :root-path params))))))
                 (t (error 'inga-error-context-not-found)))))
-    (start-client (context-lc ctx))
 
     (init-msg-q)
     (handle-msg params ctx)))
