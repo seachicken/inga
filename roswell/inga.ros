@@ -13,12 +13,5 @@ exec ros -Q -- $0 "$@"
 (in-package :ros.script.inga.3836648158)
 
 (defun main (&rest argv)
-  (let* ((params (inga/main:parse-argv argv))
-         (mode (cdr (assoc :mode params))))
-    (setf inga/context:*mode* mode)
-    (cond
-      ((eq mode :cli)
-       (inga/main:command params))
-      ((eq mode :server)
-       (inga/language-server:run-server params)))))
+  (inga/main:command argv))
 ;;; vim: set ft=lisp lisp:

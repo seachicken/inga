@@ -11,7 +11,7 @@
                "inga/test/analyzer/base"
                "inga/test/file"
                "inga/test/helper"
-               "inga/test/language-server"
+               "inga/test/server"
                "inga/test/main"
                "inga/test/path")
   :perform (test-op (o c)
@@ -20,8 +20,8 @@
                               (list
                                 (uiop:find-symbol* '#:file
                                                    :inga/test/file)
-                                (uiop:find-symbol* '#:language-server
-                                                   :inga/test/language-server)
+                                (uiop:find-symbol* '#:server
+                                                   :inga/test/server)
                                 (uiop:find-symbol* '#:main
                                                    :inga/test/main)
                                 (uiop:find-symbol* '#:path
@@ -46,14 +46,10 @@
                               :fiveam '#:run!
                               (list
                                 (uiop:find-symbol* '#:java
-                                                   :inga/test/main)
-                                (uiop:find-symbol* '#:java
                                                    :inga/test/ast-index/disk)
                                 (uiop:find-symbol* '#:java
                                                    :inga/test/ast-index/memory)
-                                (uiop:find-symbol* '#:jdk21
-                                                   :inga/test/analyzer/java)
-                                (uiop:find-symbol* '#:jdk17
+                                (uiop:find-symbol* '#:java
                                                    :inga/test/analyzer/java)
                                 (uiop:find-symbol* '#:kotlin
                                                    :inga/test/analyzer/kotlin)
@@ -75,8 +71,6 @@
                     (unless (uiop:symbol-call
                               :fiveam '#:run!
                               (list
-                                (uiop:find-symbol* '#:typescript
-                                                   :inga/test/main)
                                 (uiop:find-symbol* '#:typescript
                                                    :inga/test/analyzer/typescript)))
                       (error "Tests failed"))))

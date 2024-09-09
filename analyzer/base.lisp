@@ -6,8 +6,15 @@
   (:import-from #:jsown)
   (:import-from #:inga/cache
                 #:defunc)
+  (:import-from #:inga/contexts
+                #:context-ast-index
+                #:context-exclude
+                #:context-include
+                #:context-kind
+                #:context-lc)
   (:import-from #:inga/file
-                #:get-file-type)
+                #:get-file-type
+                #:is-analysis-target)
   (:import-from #:inga/errors
                 #:inga-error)
   (:import-from #:inga/ast-index
@@ -15,6 +22,8 @@
                 #:clean-indexes
                 #:create-indexes
                 #:get-ast) 
+  (:import-from #:inga/language-client
+                #:references-client)
   (:import-from #:inga/logger
                 #:log-debug)
   (:export #:analyzer
@@ -28,6 +37,7 @@
            #:get-scoped-index-paths
            #:get-scoped-index-paths-generic
            #:set-index-group
+           #:analyze
            #:find-definitions
            #:find-definitions-generic
            #:find-entrypoint
@@ -91,6 +101,85 @@
 
 (defgeneric set-index-group (analyzer path)
   (:method (analyzer path)))
+
+(defun analyze (ctx ranges)
+  (remove-duplicates
+    (mapcan (lambda (range)
+              (when (is-analysis-target (context-kind ctx)
+                                        (cdr (assoc :path range))
+                                        (context-include ctx) (context-exclude ctx))
+                (analyze-by-range ctx range)))
+            ranges)
+    :test #'equal))
+
+(defun analyze-by-range (ctx range)
+  (loop
+    with q = (make-queue)
+    with results
+    initially (enqueue q range)
+    do
+    (setf range (dequeue q))
+    (unless range (return (remove-duplicates results :test #'equal)))
+
+    (let ((poss (mapcan
+                  (lambda (pos)
+                    (unless (assoc :origin pos)
+                      (push (cons :origin pos) pos))
+                    ;; nodejs doesn't support fq-name
+                    (when (assoc :fq-name pos)
+                      (if (assoc :visited-fq-names pos)
+                          (adjoin (cdr (assoc :fq-name pos)) (cdr (assoc :visited-fq-names pos)))
+                          (push (cons :visited-fq-names (list (cdr (assoc :fq-name pos)))) pos)))
+                    (find-entrypoints ctx pos q))
+                  (find-definitions range))))
+      (setf results (append results poss)))))
+
+(defun find-entrypoints (ctx pos q)
+  (let ((refs (mapcan (lambda (ref)
+                        (when (is-analysis-target (context-kind ctx) (cdr (assoc :path ref))
+                                                  (context-include ctx) (context-exclude ctx))
+                          (list ref)))
+                      (if (context-lc ctx)
+                          (references-client (context-lc ctx) pos) 
+                          (find-references pos (context-ast-index ctx)))))
+        results)
+    (labels ((make-entrypoint (entrypoint)
+               `((:type . "entrypoint")
+                 (:origin . ,(if (cdr (assoc :origin pos))
+                                 (cdr (assoc :origin pos))
+                                 entrypoint))
+                 (:entrypoint . ,entrypoint)))
+             (make-connection (definition)
+               `((:type . "connection")
+                 (:origin . ,(cdr (assoc :file-pos pos)))
+                 (:entrypoint . ,definition))))
+      (when (eq (cdr (assoc :type pos)) :rest-server)
+        (setf results (append results (list (make-entrypoint pos)))))
+      (if refs
+          (loop for ref in refs
+            do
+            (let ((entrypoint (find-entrypoint ref)))
+              (if entrypoint
+                  (setf results (append results (list (make-entrypoint entrypoint))))
+                  (let* ((def (first
+                                (find-definitions
+                                  `((:path . ,(cdr (assoc :path ref)))
+                                    (:start-offset . ,(cdr (assoc :top-offset ref)))
+                                    (:end-offset . ,(cdr (assoc :top-offset ref)))))))
+                         (origin (if (eq (cdr (assoc :type pos)) :rest-server)
+                                     def
+                                     (cdr (assoc :origin pos)))))
+                    (when (eq (cdr (assoc :type pos)) :rest-server)
+                      (setf results (append results (list (make-connection def)))))
+                    (if (member (cdr (assoc :fq-name def))
+                                (cdr (assoc :visited-fq-names pos)) :test #'equal)
+                        (setf results (append results (list (make-entrypoint def))))
+                        (enqueue q `((:path . ,(cdr (assoc :path ref)))
+                                     (:origin . ,origin)
+                                     (:start-offset . ,(cdr (assoc :top-offset ref)))
+                                     (:end-offset . ,(cdr (assoc :top-offset ref))))))))))
+          (list (make-entrypoint pos))))
+    results))
 
 (defun find-definitions (range)
   (funtime

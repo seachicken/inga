@@ -15,6 +15,26 @@
 (defparameter *react-path* (merge-pathnames "test/fixtures/react-typescript-todo/"))
 (defparameter *nestjs-path* (merge-pathnames "test/fixtures/nestjs-realworld-example-app-prisma/"))
 
+(test analyze-react-components
+  (with-fixture node-ctx (*react-path* :include '("src/**"))
+    (is (equal
+          '(((:type . "entrypoint")
+             (:path . "src/App/NewTodoInput/index.tsx")
+             (:name . "input")
+             (:line . 34) (:offset . 10)))
+          (mapcar (lambda (r) (get-file-pos r *react-path*))
+                  (analyze
+                    inga/test/helper::*ctx*
+                    `(((:path . "src/functions.ts")
+                       ,(cons :start-offset
+                              (convert-to-top-offset
+                                (merge-pathnames "src/functions.ts" *react-path*)
+                                '((:line . 2) (:offset . 0))))
+                       ,(cons :end-offset
+                              (convert-to-top-offset
+                                (merge-pathnames "src/functions.ts" *react-path*)
+                                '((:line . 2) (:offset . -1))))))))))))
+
 ;;       ↓[out]
 ;; const article = {
 ;;   title: "Hello" ←[in]
