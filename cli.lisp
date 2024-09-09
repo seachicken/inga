@@ -76,8 +76,7 @@
 
     (let ((results (analyze ctx (diff-to-ranges (cdr (assoc :diff params))
                                                 (cdr (assoc :root-path params))))))
-      (ensure-directories-exist (merge-pathnames "report/" (cdr (assoc :output-path params))))
-      (with-open-file (out (merge-pathnames "report/report.json" (cdr (assoc :output-path params)))
+      (with-open-file (out (merge-pathnames "report.json" (cdr (assoc :output-path params)))
                            :direction :output
                            :if-exists :supersede
                            :if-does-not-exist :create)
