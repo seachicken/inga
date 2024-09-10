@@ -157,20 +157,21 @@
             (let ((entrypoint (find-entrypoint ref)))
               (if entrypoint
                   (setf results (append results (list (make-entrypoint entrypoint))))
-                  (let* ((def (first
-                                (find-definitions
-                                  `((:path . ,(cdr (assoc :path ref)))
-                                    (:start-offset . ,(cdr (assoc :top-offset ref)))
-                                    (:end-offset . ,(cdr (assoc :top-offset ref)))))))
-                         (origin (if (eq (cdr (assoc :type pos)) :rest-server)
-                                     def
-                                     (cdr (assoc :origin pos)))))
+                  (let ((def (first
+                               (find-definitions
+                                 `((:path . ,(cdr (assoc :path ref)))
+                                   (:start-offset . ,(cdr (assoc :top-offset ref)))
+                                   (:end-offset . ,(cdr (assoc :top-offset ref))))))))
                     (when (eq (cdr (assoc :type pos)) :rest-server)
                       (setf results (append results (list (make-connection def)))))
                     (if (member (cdr (assoc :fq-name def))
                                 (cdr (assoc :visited-fq-names pos)) :test #'equal)
                         (setf results (append results (list (make-entrypoint def))))
-                        (enqueue q def))))))
+                        (when def
+                          (enqueue q (push (cons :origin (if (eq (cdr (assoc :type pos)) :rest-server)
+                                                             def
+                                                             (cdr (assoc :origin pos))))
+                                           def))))))))
           (list (make-entrypoint pos))))
     results))
 
