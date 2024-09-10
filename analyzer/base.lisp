@@ -104,35 +104,31 @@
 
 (defun analyze (ctx ranges)
   (remove-duplicates
-    (mapcan (lambda (range)
+    (mapcan (lambda (def)
               (when (is-analysis-target (context-kind ctx)
-                                        (cdr (assoc :path range))
+                                        (cdr (assoc :path def))
                                         (context-include ctx) (context-exclude ctx))
-                (analyze-by-range ctx range)))
-            ranges)
+                (analyze-by-definition ctx def)))
+            (mapcan (lambda (r) (find-definitions r)) ranges))
     :test #'equal))
 
-(defun analyze-by-range (ctx range)
+(defun analyze-by-definition (ctx def)
   (loop
     with q = (make-queue)
     with results
-    initially (enqueue q range)
+    initially (enqueue q def)
     do
-    (setf range (dequeue q))
-    (unless range (return (remove-duplicates results :test #'equal)))
+    (setf def (dequeue q))
+    (unless def (return (remove-duplicates results :test #'equal)))
 
-    (let ((poss (mapcan
-                  (lambda (pos)
-                    (unless (assoc :origin pos)
-                      (push (cons :origin pos) pos))
-                    ;; nodejs doesn't support fq-name
-                    (when (assoc :fq-name pos)
-                      (if (assoc :visited-fq-names pos)
-                          (adjoin (cdr (assoc :fq-name pos)) (cdr (assoc :visited-fq-names pos)))
-                          (push (cons :visited-fq-names (list (cdr (assoc :fq-name pos)))) pos)))
-                    (find-entrypoints ctx pos q))
-                  (find-definitions range))))
-      (setf results (append results poss)))))
+    (unless (assoc :origin def)
+      (push (cons :origin def) def))
+    ;; node doesn't support fq-name
+    (when (assoc :fq-name def)
+      (if (assoc :visited-fq-names def)
+          (adjoin (cdr (assoc :fq-name def)) (cdr (assoc :visited-fq-names def)))
+          (push (cons :visited-fq-names (list (cdr (assoc :fq-name def)))) def)))
+    (setf results (append results (find-entrypoints ctx def q)))))
 
 (defun find-entrypoints (ctx pos q)
   (let ((refs (mapcan (lambda (ref)
@@ -174,10 +170,7 @@
                     (if (member (cdr (assoc :fq-name def))
                                 (cdr (assoc :visited-fq-names pos)) :test #'equal)
                         (setf results (append results (list (make-entrypoint def))))
-                        (enqueue q `((:path . ,(cdr (assoc :path ref)))
-                                     (:origin . ,origin)
-                                     (:start-offset . ,(cdr (assoc :top-offset ref)))
-                                     (:end-offset . ,(cdr (assoc :top-offset ref))))))))))
+                        (enqueue q def))))))
           (list (make-entrypoint pos))))
     results))
 
