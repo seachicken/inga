@@ -68,6 +68,7 @@
 
 (defparameter *index-path* (uiop:merge-pathnames* #p"inga_temp/"))
 (defparameter *analyzers* nil)
+(defparameter *results* (make-hash-table))
 (defparameter *file-index* (make-hash-table))
 (defparameter *rest-client-apis* (make-hash-table))
 
@@ -88,7 +89,8 @@
 
 (defmethod stop-analyzer :after (analyzer)
   (clrhash *file-index*)
-  (clrhash *rest-client-apis*))
+  (clrhash *rest-client-apis*)
+  (clrhash *results*))
 
 (defun get-scoped-index-paths (pos index)
   (let ((analyzer (get-analyzer (cdr (assoc :path (or (cdr (assoc :file-pos pos)) pos))))))
@@ -102,15 +104,28 @@
 (defgeneric set-index-group (analyzer path)
   (:method (analyzer path)))
 
-(defun analyze (ctx ranges)
-  (remove-duplicates
-    (mapcan (lambda (def)
-              (when (is-analysis-target (context-kind ctx)
-                                        (cdr (assoc :path def))
-                                        (context-include ctx) (context-exclude ctx))
-                (analyze-by-definition ctx def)))
-            (mapcan (lambda (r) (find-definitions r)) ranges))
-    :test #'equal))
+(defun analyze (ctx ranges &optional (callback (lambda (results))))
+  (labels ((flatten-results ()
+             (let (results)
+               (maphash (lambda (k v) (setf results (append results v))) *results*)
+               (remove-duplicates results :test #'equal))))
+    (let* ((defs (mapcan (lambda (r) (find-definitions r)) ranges))
+           (def-keys (mapcar (lambda (d) (sxhash d)) defs)))
+      (loop for def in defs
+        when (and (is-analysis-target (context-kind ctx)
+                                      (cdr (assoc :path def))
+                                      (context-include ctx) (context-exclude ctx))
+                  (null (gethash (sxhash def) *results*)))
+        do
+        (funcall callback (append `(((:type . "searching")
+                                     (:origin . ,def)))
+                                  (flatten-results)))
+        (setf (gethash (sxhash def) *results*) (analyze-by-definition ctx def)))
+      (maphash (lambda (k v)
+                 (when (not (member k def-keys))
+                   (remhash k *results*)))
+               *results*))
+    (remove-if (lambda (r) (equal (cdr (assoc :type r)) "searching")) (flatten-results))))
 
 (defun analyze-by-definition (ctx def)
   (loop
@@ -172,7 +187,7 @@
                                                              def
                                                              (cdr (assoc :origin pos))))
                                            def))))))))
-          (list (make-entrypoint pos))))
+          (setf results (append results (list (make-entrypoint pos))))))
     results))
 
 (defun find-definitions (range)
