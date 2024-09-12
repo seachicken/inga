@@ -19,9 +19,14 @@
   (with-fixture node-ctx (*react-path* :include '("src/**"))
     (is (equal
           '(((:type . "entrypoint")
-             (:path . "src/App/NewTodoInput/index.tsx")
-             (:name . "input")
-             (:line . 34) (:offset . 10)))
+             (:origin
+               (:path . "src/functions.ts")
+               (:name . "UUID")
+               (:line . 1) (:offset . 14))
+             (:entrypoint
+               (:path . "src/App/NewTodoInput/index.tsx")
+               (:name . "input")
+               (:line . 34) (:offset . 10))))
           (mapcar (lambda (r) (get-file-pos r *react-path*))
                   (analyze
                     inga/test/helper::*ctx*
