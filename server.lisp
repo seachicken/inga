@@ -37,6 +37,8 @@
 
 (defparameter *msg-q* nil)
 (defparameter *processing-msg* nil)
+(defparameter *output-q* (make-queue))
+(defparameter *processing-output* nil)
 
 (defmethod run ((mode (eql :server)) language params)
   (let* ((index (make-instance 'ast-index-disk
@@ -101,7 +103,9 @@
                                        (subseq (jsown:val folder "uri") 7)
                                        "/")))
                        root-host-paths)))
-         (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":{\"change\":2,\"save\":false}}}"))
+         (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":{\"change\":2,\"save\":false}}}")
+         (setf *processing-output*
+               (process-output-if-present nil output-path root-path)))
         ((equal (jsown:val msg "method") "shutdown")
          (log-debug "run shutdown processing")
 
@@ -157,14 +161,30 @@
                           (get-relative-path
                             (subseq (jsown:val (jsown:val msg "params") "uri") 7) root-host-paths)))
                   (diff (diff-to-ranges (jsown:val (jsown:val msg "params") "diff") root-path))
-                  (results (to-json (analyze ctx diff) root-path)))
+                  (results (analyze
+                             ctx diff
+                             (lambda (results)
+                               (setf *processing-output*
+                                     (process-output-if-present results output-path root-path))))))
              (when path (update-index (context-ast-index ctx) path))
-             (with-open-file (out (merge-pathnames "report.json" output-path)
-                                  :direction :output
-                                  :if-exists :supersede
-                                  :if-does-not-exist :create)
-               (format out "~a" results))))))
+             (setf *processing-output*
+                   (process-output-if-present results output-path root-path))))))
       (process-msg-if-present (dequeue-msg) ctx root-path output-path temp-path base-commit root-host-paths))))
+
+(defun process-output-if-present (output output-path root-path)
+  (when (or (not output)
+            (and *processing-output* (sb-thread:thread-alive-p *processing-output*)))
+    (return-from process-output-if-present *processing-output*))
+
+  (sb-thread:make-thread
+    (lambda ()
+      (inga/logger:log-info (format nil "print results: ~a" (to-json output root-path)))
+      (with-open-file (out (merge-pathnames "report.json" output-path)
+                           :direction :output
+                           :if-exists :supersede
+                           :if-does-not-exist :create)
+        (format out "~a" (to-json output root-path)))
+      (process-output-if-present (dequeue-output) output-path root-path))))
 
 (defun extract-json (stream)
   ;; Content-Length: 99
@@ -246,6 +266,17 @@
 (defun dequeue-msg ()
   (dequeue *msg-q*))
 
+(defun enqueue-output (output)
+  (unless output (return-from enqueue-output))
+
+  (let ((prev (peek-last *output-q*)))
+    (when prev
+      (dequeue-last *output-q*)))
+  (enqueue *output-q* output))
+
+(defun dequeue-output ()
+  (dequeue *output-q*))
+
 (defun get-relative-path (path root-host-paths)
   (loop for root-path in root-host-paths
         do
@@ -281,6 +312,8 @@
             results)))
 
 (defun convert-to-output-pos (root-path pos)
+  (unless pos (return-from convert-to-output-pos))
+
   (when (eq (cdr (assoc :type pos)) :rest-server)
     (setf pos (cdr (assoc :file-pos pos))))
   (let ((text-pos (convert-to-pos (merge-pathnames (cdr (assoc :path pos)) root-path)
