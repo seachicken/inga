@@ -308,6 +308,17 @@
                                                                (cdr (assoc :entrypoint r)))))
                                                  root-path))))))
                         (cdr (assoc :obj obj))))
+                (when (equal (cdr (assoc :type r)) "searching")
+                  (push (cons "service"
+                              (first (last (pathname-directory
+                                             (find-base-path
+                                               (merge-pathnames
+                                                 (cdr (assoc :path
+                                                             (convert-to-output-pos
+                                                               root-path
+                                                               (cdr (assoc :origin r)))))
+                                                 root-path))))))
+                        (cdr (assoc :obj obj))))
                 obj))
             results)))
 
