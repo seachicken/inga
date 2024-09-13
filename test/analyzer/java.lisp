@@ -140,9 +140,7 @@
                           (:origin
                             (:path . "src/main/java/integration/MethodDefinition.java")
                             (:name . "method2")
-                            (:line . 7) (:offset . 17))
-                          (:entrypoint
-                            (:path) (:name) (:line) (:offset)))
+                            (:line . 7) (:offset . 17)))
                         ((:type . "entrypoint")
                          (:origin
                            (:path . "src/main/java/integration/MethodDefinition.java")

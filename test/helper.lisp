@@ -111,14 +111,15 @@
                                                                  root-path)
                                                 (cdr (assoc :top-offset entrypoint-pos))))))
     `((:type . ,(cdr (assoc :type result)))
-      (:origin .
-       ((:path . ,(cdr (assoc :path origin-pos)))
+      (:origin
+        (:path . ,(cdr (assoc :path origin-pos)))
         (:name . ,(cdr (assoc :name origin-pos)))
         (:line . ,(cdr (assoc :line origin-text-pos)))
-        (:offset . ,(cdr (assoc :offset origin-text-pos)))))
-      (:entrypoint .
-       ((:path . ,(cdr (assoc :path entrypoint-pos)))
-        (:name . ,(cdr (assoc :name entrypoint-pos)))
-        (:line . ,(cdr (assoc :line entrypoint-text-pos)))
-        (:offset . ,(cdr (assoc :offset entrypoint-text-pos))))))))
+        (:offset . ,(cdr (assoc :offset origin-text-pos))))
+      ,@(when entrypoint-pos
+          `((:entrypoint
+              (:path . ,(cdr (assoc :path entrypoint-pos)))
+              (:name . ,(cdr (assoc :name entrypoint-pos)))
+              (:line . ,(cdr (assoc :line entrypoint-text-pos)))
+              (:offset . ,(cdr (assoc :offset entrypoint-text-pos)))))))))
 

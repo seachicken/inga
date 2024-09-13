@@ -293,10 +293,11 @@
                                                     (convert-to-output-pos
                                                       root-path
                                                       (cdr (assoc :origin r))))))
-                          ("entrypoint" . ,(cons :obj (key-downcase
-                                                        (convert-to-output-pos
-                                                          root-path
-                                                          (cdr (assoc :entrypoint r))))))))))
+                          ,@(when (assoc :entrypoint r)
+                              `("entrypoint" . ,(cons :obj (key-downcase
+                                                             (convert-to-output-pos
+                                                               root-path
+                                                               (cdr (assoc :entrypoint r)))))))))))
                 (when (equal (cdr (assoc :type r)) "entrypoint")
                   (push (cons "service"
                               (first (last (pathname-directory
