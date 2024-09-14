@@ -100,18 +100,17 @@
                           ("entrypoint" . ,(cons :obj (key-downcase
                                                         (convert-to-output-pos
                                                           root-path
-                                                          (cdr (assoc :entrypoint r))))))))))
-                (when (equal (cdr (assoc :type r)) "entrypoint")
-                  (push (cons "service"
-                              (first (last (pathname-directory
-                                             (find-base-path
-                                               (merge-pathnames
-                                                 (cdr (assoc :path
-                                                             (convert-to-output-pos
-                                                               root-path
-                                                               (cdr (assoc :entrypoint r)))))
-                                                 root-path))))))
-                        (cdr (assoc :obj obj))))
+                                                          (cdr (assoc :entrypoint r))))))
+                          ,@(when (equal (cdr (assoc :type r)) "entrypoint")
+                              `(("service" . ,(first (last
+                                                       (pathname-directory
+                                                         (find-base-path
+                                                           (merge-pathnames
+                                                             (cdr (assoc :path
+                                                                         (convert-to-output-pos
+                                                                           root-path
+                                                                           (cdr (assoc :entrypoint r)))))
+                                                             root-path))))))))))))
                 obj))
             results)))
 
