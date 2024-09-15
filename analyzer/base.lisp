@@ -110,7 +110,8 @@
                (maphash (lambda (k v) (setf results (append results v))) *results*)
                (remove-duplicates results :test #'equal))))
     (let* ((defs (mapcan (lambda (r) (find-definitions r)) ranges))
-           (def-keys (mapcar (lambda (d) (sxhash d)) defs)))
+           (def-keys (mapcar (lambda (d) (sxhash d)) defs))
+           threads)
       (loop for def in defs
         when (and (is-analysis-target (context-kind ctx)
                                       (cdr (assoc :path def))
@@ -120,7 +121,11 @@
         (funcall callback (append `(((:type . "searching")
                                      (:origin . ,def)))
                                   (flatten-results)))
-        (setf (gethash (sxhash def) *results*) (analyze-by-definition ctx def)))
+        (push (sb-thread:make-thread
+                (lambda ()
+                  (setf (gethash (sxhash def) *results*) (analyze-by-definition ctx def))))
+              threads)
+        finally (loop for thread in threads do (sb-thread:join-thread thread)))
       (maphash (lambda (k v)
                  (when (not (member k def-keys))
                    (remhash k *results*)))
@@ -183,9 +188,10 @@
                                 (cdr (assoc :visited-fq-names pos)) :test #'equal)
                         (setf results (append results (list (make-entrypoint def))))
                         (when def
-                          (enqueue q (push (cons :origin (if (eq (cdr (assoc :type pos)) :rest-server)
-                                                             def
-                                                             (cdr (assoc :origin pos))))
+                          (enqueue q (push (cons :origin
+                                                 (if (eq (cdr (assoc :type pos)) :rest-server)
+                                                     def
+                                                     (cdr (assoc :origin pos))))
                                            def))))))))
           (setf results (append results (list (make-entrypoint pos))))))
     results))
