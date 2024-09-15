@@ -124,8 +124,7 @@
         (let ((def (copy-list def)))
           (push (sb-thread:make-thread
                   (lambda ()
-                    (let ((refs (analyze-by-definition ctx def)))
-                      (setf (gethash (sxhash def) *results*) refs))))
+                    (setf (gethash (sxhash def) *results*) (analyze-by-definition ctx def))))
                 threads))
         finally (loop for thread in threads do (sb-thread:join-thread thread)))
       (maphash (lambda (k v)

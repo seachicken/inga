@@ -241,11 +241,11 @@
                               #\return #\linefeed
                               content))))
 
-(defun print-if-present (content)
-  (unless content
+(defun print-if-present (json)
+  (unless json
     (return-from print-if-present))
   
-  (sb-concurrency:enqueue content *stdout-q*) 
+  (sb-concurrency:enqueue json *stdout-q*) 
   (when (or (null *stdout-thread*) (not (sb-thread:thread-alive-p *stdout-thread*)))
     (setf *stdout-thread*
           (sb-thread:make-thread
