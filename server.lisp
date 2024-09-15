@@ -104,8 +104,7 @@
                                        "/")))
                        root-host-paths)))
          (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":{\"change\":2,\"save\":false}}}")
-         (setf *processing-output*
-               (process-output-if-present nil output-path root-path)))
+         (process-output-if-present nil output-path root-path))
         ((equal (jsown:val msg "method") "shutdown")
          (log-debug "run shutdown processing")
 
@@ -164,27 +163,25 @@
                   (results (analyze
                              ctx diff
                              (lambda (results)
-                               (setf *processing-output*
-                                     (process-output-if-present results output-path root-path))))))
+                               (process-output-if-present results output-path root-path)))))
              (when path (update-index (context-ast-index ctx) path))
-             (setf *processing-output*
-                   (process-output-if-present results output-path root-path))))))
+             (process-output-if-present results output-path root-path)))))
       (process-msg-if-present (dequeue-msg) ctx root-path output-path temp-path base-commit root-host-paths))))
 
 (defun process-output-if-present (output output-path root-path)
-  (when (or (not output)
-            (and *processing-output* (sb-thread:thread-alive-p *processing-output*)))
+  (unless output
     (return-from process-output-if-present *processing-output*))
 
   (enqueue-output output)
-  (sb-thread:make-thread
-    (lambda ()
-      (with-open-file (out (merge-pathnames "report.json" output-path)
-                           :direction :output
-                           :if-exists :supersede
-                           :if-does-not-exist :create)
-        (format out "~a" (to-json output root-path)))
-      (process-output-if-present (dequeue-output) output-path root-path))))
+  (when (or (null *processing-output*) (not (sb-thread:thread-alive-p *processing-output*)))
+    (sb-thread:make-thread
+      (lambda ()
+        (with-open-file (out (merge-pathnames "report.json" output-path)
+                             :direction :output
+                             :if-exists :supersede
+                             :if-does-not-exist :create)
+          (format out "~a" (to-json (dequeue-output) root-path)))
+        (process-output-if-present (dequeue-output) output-path root-path)))))
 
 (defun extract-json (stream)
   ;; Content-Length: 99

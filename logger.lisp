@@ -39,14 +39,14 @@
    (format *error-output* "~&~a ERROR ~a~%" (local-time:now) content)))
 
 (defun process-if-present (fun)
-  (when (or (not fun)
-            (and *logging-thread* (sb-thread:thread-alive-p *logging-thread*)))
+  (unless fun
     (return-from process-if-present))
   
-  (sb-concurrency:enqueue fun *logging-q*)
-  (setf *logging-thread*
-        (sb-thread:make-thread
-          (lambda ()
-            (funcall fun)
-            (process-if-present (sb-concurrency:dequeue *logging-q*))))))
+  (sb-concurrency:enqueue fun *logging-q*) 
+  (when (or (null *logging-thread*) (not (sb-thread:thread-alive-p *logging-thread*)))
+    (setf *logging-thread*
+          (sb-thread:make-thread
+            (lambda ()
+              (funcall (sb-concurrency:dequeue *logging-q*))
+              (process-if-present (sb-concurrency:dequeue *logging-q*)))))))
 
