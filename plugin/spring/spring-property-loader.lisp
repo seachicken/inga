@@ -58,24 +58,24 @@
 (defparameter *command-lock* (sb-thread:make-mutex))
 
 (defunc exec-command (process cmd)
-  (sb-thread:with-mutex (*command-lock*)
-    (funtime
-      (lambda ()
+  (funtime
+    (lambda ()
+      (sb-thread:with-mutex (*command-lock*)
         (handler-case
           (progn
             (write-line cmd (uiop:process-info-input process))
             (force-output (uiop:process-info-input process))
             (prog1
-              (read-line (uiop:process-info-output process))  
+              (read-line (uiop:process-info-output process))
               (loop while (listen (uiop:process-info-error-output process))
                     with results = ""
                     do (setf results
                              (format nil "~a~a~%"
-                                     results 
+                                     results
                                      (read-line (uiop:process-info-error-output process))))
                     finally (unless (equal results "")
                               (log-error (format nil "~a, cmd: ~a" results cmd))))))
-          (error () (error 'inga-error-process-failed))))
-      :label "spring-property-loader"
-      :args cmd)))
+          (error () (error 'inga-error-process-failed)))))
+    :label "spring-property-loader"
+    :args cmd))
 
