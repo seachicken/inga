@@ -116,6 +116,11 @@
                  (when (not (member k def-keys))
                    (remhash k *results*)))
                *results*)
+      (funcall callback (append (flatten-results def-keys)
+                                (mapcar (lambda (d)
+                                          `((:type . "searching")
+                                            (:origin . ,d)))
+                                        defs)))
       (loop for def in defs
         when (and (is-analysis-target (context-kind ctx)
                                       (cdr (assoc :path def))
@@ -123,9 +128,6 @@
                   (null (gethash (sxhash def) *results*)))
         do
         (let ((def (copy-list def)))
-          (funcall callback (append (flatten-results def-keys)
-                                    `(((:type . "searching")
-                                       (:origin . ,def)))))
           (push (sb-thread:make-thread
                   (lambda ()
                     (setf (gethash (sxhash def) *results*) (analyze-by-definition ctx def))))

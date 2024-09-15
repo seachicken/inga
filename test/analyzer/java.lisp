@@ -148,6 +148,11 @@
                          ((:type . "searching")
                           (:origin
                             (:path . "src/main/java/integration/MethodDefinition.java")
+                            (:name . "method1")
+                            (:line . 4) (:offset . 17))) 
+                         ((:type . "searching")
+                          (:origin
+                            (:path . "src/main/java/integration/MethodDefinition.java")
                             (:name . "method2")
                             (:line . 7) (:offset . 17))))
                        (mapcar (lambda (r) (get-file-pos r *java-path*)) results))))))))
