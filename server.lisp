@@ -222,26 +222,23 @@
       `((:obj
           ("type" . 1)
           ("message" . ,(format nil "~a ~a" (local-time:now) content)))))))
-(defparameter *lock* (sb-thread:make-mutex))
 
 (defun print-response-msg (id result)
   (unless id
     (return-from print-response-msg))
 
   (let ((content (format nil "{\"jsonrpc\":\"2.0\",\"id\":\"~a\",\"result\":~a}" id result)))
-    (sb-thread:with-mutex (*lock*)
-      (format t "Content-Length: ~a~c~c~c~c~a" (length content) #\return #\linefeed
-              #\return #\linefeed
-              content)
-      (force-output))))
+    (format t "Content-Length: ~a~c~c~c~c~a" (length content) #\return #\linefeed
+            #\return #\linefeed
+            content)
+    (force-output)))
 
 (defun print-notification-msg (method params)
   (let ((content (format nil "{\"jsonrpc\":\"2.0\",\"method\":\"~a\",\"params\":~a}" method params)))
-    (sb-thread:with-mutex (*lock*)
-      (format t "Content-Length: ~a~c~c~c~c~a" (length content) #\return #\linefeed
-              #\return #\linefeed
-              content)
-      (force-output))))
+    (format t "Content-Length: ~a~c~c~c~c~a" (length content) #\return #\linefeed
+            #\return #\linefeed
+            content)
+    (force-output)))
 
 (defun to-state-json (change-pos root-path)
   (jsown:to-json

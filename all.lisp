@@ -13,5 +13,6 @@
     #:inga/logger  
     #:inga/main
     #:inga/plugin/spring/analyzer
-    #:inga/server))
+    #:inga/server
+    #:inga/utils))
 
