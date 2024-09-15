@@ -176,6 +176,7 @@
             (and *processing-output* (sb-thread:thread-alive-p *processing-output*)))
     (return-from process-output-if-present *processing-output*))
 
+  (enqueue-output output)
   (sb-thread:make-thread
     (lambda ()
       (with-open-file (out (merge-pathnames "report.json" output-path)
