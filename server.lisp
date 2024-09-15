@@ -35,10 +35,15 @@
                 #:find-base-path))
 (in-package #:inga/server)
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (require :sb-concurrency))
+
 (defparameter *msg-q* nil)
 (defparameter *processing-msg* nil)
 (defparameter *output-q* (make-queue))
 (defparameter *processing-output* nil)
+(defparameter *stdout-q* (sb-concurrency:make-queue))
+(defparameter *stdout-thread* nil)
 
 (defmethod run ((mode (eql :server)) language params)
   (let* ((index (make-instance 'ast-index-disk
@@ -226,17 +231,28 @@
     (return-from print-response-msg))
 
   (let ((content (format nil "{\"jsonrpc\":\"2.0\",\"id\":\"~a\",\"result\":~a}" id result)))
-    (format t "Content-Length: ~a~c~c~c~c~a" (length content) #\return #\linefeed
-            #\return #\linefeed
-            content)
-    (force-output)))
+    (print-if-present (format nil "Content-Length: ~a~c~c~c~c~a" (length content) #\return #\linefeed
+                              #\return #\linefeed
+                              content))))
 
 (defun print-notification-msg (method params)
   (let ((content (format nil "{\"jsonrpc\":\"2.0\",\"method\":\"~a\",\"params\":~a}" method params)))
-    (format t "Content-Length: ~a~c~c~c~c~a" (length content) #\return #\linefeed
-            #\return #\linefeed
-            content)
-    (force-output)))
+    (print-if-present (format nil "Content-Length: ~a~c~c~c~c~a" (length content) #\return #\linefeed
+                              #\return #\linefeed
+                              content))))
+
+(defun print-if-present (content)
+  (unless content
+    (return-from print-if-present))
+  
+  (sb-concurrency:enqueue content *stdout-q*) 
+  (when (or (null *stdout-thread*) (not (sb-thread:thread-alive-p *stdout-thread*)))
+    (setf *stdout-thread*
+          (sb-thread:make-thread
+            (lambda ()
+              (format t (sb-concurrency:dequeue *stdout-q*))
+              (force-output)
+              (print-if-present (sb-concurrency:dequeue *stdout-q*)))))))
 
 (defun to-state-json (change-pos root-path)
   (jsown:to-json

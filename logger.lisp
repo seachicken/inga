@@ -12,41 +12,23 @@
            #:log-error-generic))
 (in-package #:inga/logger)
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (require :sb-concurrency))
-
-(defparameter *logging-q* (sb-concurrency:make-queue))
-(defparameter *logging-thread* nil)
-
 (defun log-debug (content)
   (let ((debug (uiop:getenv "INGA_DEBUG")))
     (when (equal debug "1")
-      (process-if-present (lambda () (log-debug-generic *mode* content))))))
+      (log-debug-generic *mode* content))))
 (defgeneric log-debug-generic (mode content)
   (:method (mode content)
    (format t "~&~a DEBUG ~a~%" (local-time:now) content)))
 
 (defun log-info (content)
-  (process-if-present (lambda () (log-info-generic *mode* content))))
+  (log-info-generic *mode* content))
 (defgeneric log-info-generic (mode content)
   (:method (mode content)
    (format t "~&~a INFO ~a~%" (local-time:now) content)))
 
 (defun log-error (content)
-  (process-if-present (lambda () (log-error-generic *mode* content))))
+  (log-error-generic *mode* content))
 (defgeneric log-error-generic (mode content)
   (:method (mode content)
    (format *error-output* "~&~a ERROR ~a~%" (local-time:now) content)))
-
-(defun process-if-present (fun)
-  (unless fun
-    (return-from process-if-present))
-  
-  (sb-concurrency:enqueue fun *logging-q*) 
-  (when (or (null *logging-thread*) (not (sb-thread:thread-alive-p *logging-thread*)))
-    (setf *logging-thread*
-          (sb-thread:make-thread
-            (lambda ()
-              (funcall (sb-concurrency:dequeue *logging-q*))
-              (process-if-present (sb-concurrency:dequeue *logging-q*)))))))
 
