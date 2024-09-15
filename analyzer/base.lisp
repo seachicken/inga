@@ -121,16 +121,18 @@
         (funcall callback (append `(((:type . "searching")
                                      (:origin . ,def)))
                                   (flatten-results)))
-        (push (sb-thread:make-thread
-                (lambda ()
-                  (setf (gethash (sxhash def) *results*) (analyze-by-definition ctx def))))
-              threads)
+        (let ((def (copy-list def)))
+          (push (sb-thread:make-thread
+                  (lambda ()
+                    (let ((refs (analyze-by-definition ctx def)))
+                      (setf (gethash (sxhash def) *results*) refs))))
+                threads))
         finally (loop for thread in threads do (sb-thread:join-thread thread)))
       (maphash (lambda (k v)
                  (when (not (member k def-keys))
                    (remhash k *results*)))
                *results*))
-    (remove-if (lambda (r) (equal (cdr (assoc :type r)) "searching")) (flatten-results))))
+    (flatten-results)))
 
 (defun analyze-by-definition (ctx def)
   (loop
