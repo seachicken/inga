@@ -164,13 +164,14 @@
            (let* ((path (when (jsown:keyp (jsown:val msg "params") "uri")
                           (get-relative-path
                             (subseq (jsown:val (jsown:val msg "params") "uri") 7) root-host-paths)))
-                  (diff (diff-to-ranges (jsown:val (jsown:val msg "params") "diff") root-path))
-                  (results (analyze
-                             ctx diff
-                             (lambda (results)
-                               (process-output-if-present results output-path root-path)))))
+                  (diff (diff-to-ranges (jsown:val (jsown:val msg "params") "diff") root-path)))
              (when path (update-index (context-ast-index ctx) path))
-             (process-output-if-present results output-path root-path)))))
+             (process-output-if-present
+               (analyze
+                 ctx diff
+                 (lambda (results)
+                   (process-output-if-present results output-path root-path)))
+               output-path root-path)))))
       (process-msg-if-present (dequeue-msg) ctx root-path output-path temp-path base-commit root-host-paths))))
 
 (defun process-output-if-present (output output-path root-path)
