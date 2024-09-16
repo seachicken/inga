@@ -128,24 +128,27 @@
                                      base-path))))
               (when results (jsown:parse results))))))
 
+(defparameter *command-lock* (sb-thread:make-mutex))
+
 (defunc exec-command (process cmd)
   (funtime
     (lambda ()
-      (handler-case
-        (progn
-          (write-line cmd (uiop:process-info-input process))
-          (force-output (uiop:process-info-input process))
-          (prog1
-            (read-line (uiop:process-info-output process)) 
-            (loop while (listen (uiop:process-info-error-output process))
-                  with results = ""
-                  do (setf results
-                           (format nil "~a~a~%"
-                                   results 
-                                   (read-line (uiop:process-info-error-output process))))
-                  finally (unless (equal results "")
-                            (log-error (format nil "~a, cmd: ~a" results cmd))))))
-        (error () (error 'inga-error-process-failed))))
+      (sb-thread:with-mutex (*command-lock*)
+        (handler-case
+          (progn
+            (write-line cmd (uiop:process-info-input process))
+            (force-output (uiop:process-info-input process))
+            (prog1
+              (read-line (uiop:process-info-output process))
+              (loop while (listen (uiop:process-info-error-output process))
+                    with results = ""
+                    do (setf results
+                             (format nil "~a~a~%"
+                                     results
+                                     (read-line (uiop:process-info-error-output process))))
+                    finally (unless (equal results "")
+                              (log-error (format nil "~a, cmd: ~a" results cmd))))))
+          (error () (error 'inga-error-process-failed)))))
     :label "jvm-dependency-loader"
     :args cmd))
 

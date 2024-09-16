@@ -136,20 +136,20 @@
       (analyze inga/test/helper::*ctx* second-ranges
                (lambda (results)
                  (is (equal
-                       '(((:type . "searching")
+                       '(((:type . "entrypoint")
+                          (:origin
+                            (:path . "src/main/java/integration/MethodDefinition.java")
+                            (:name . "method1")
+                            (:line . 4) (:offset . 17))
+                          (:entrypoint
+                            (:path . "src/main/java/integration/MethodReference.java")
+                            (:name . "method")
+                            (:line . 4) (:offset . 17)))
+                         ((:type . "searching")
                           (:origin
                             (:path . "src/main/java/integration/MethodDefinition.java")
                             (:name . "method2")
-                            (:line . 7) (:offset . 17)))
-                        ((:type . "entrypoint")
-                         (:origin
-                           (:path . "src/main/java/integration/MethodDefinition.java")
-                           (:name . "method1")
-                           (:line . 4) (:offset . 17))
-                         (:entrypoint
-                           (:path . "src/main/java/integration/MethodReference.java")
-                           (:name . "method")
-                           (:line . 4) (:offset . 17))))
+                            (:line . 7) (:offset . 17))))
                        (mapcar (lambda (r) (get-file-pos r *java-path*)) results))))))))
 
 (test find-definitions-for-constructor

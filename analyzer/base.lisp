@@ -105,27 +105,34 @@
   (:method (analyzer path)))
 
 (defun analyze (ctx ranges &optional (callback (lambda (results))))
-  (labels ((flatten-results ()
-             (let (results)
-               (maphash (lambda (k v) (setf results (append results v))) *results*)
-               (remove-duplicates results :test #'equal))))
+  (labels ((flatten-results (sort-keys)
+             (remove-duplicates
+               (mapcan (lambda (k) (copy-list (gethash k *results*))) sort-keys)
+               :test #'equal)))
     (let* ((defs (mapcan (lambda (r) (find-definitions r)) ranges))
-           (def-keys (mapcar (lambda (d) (sxhash d)) defs)))
+           (def-keys (mapcar (lambda (d) (sxhash d)) defs))
+           threads)
+      (maphash (lambda (k v)
+                 (when (not (member k def-keys))
+                   (remhash k *results*)))
+               *results*)
       (loop for def in defs
+        with searching-defs
         when (and (is-analysis-target (context-kind ctx)
                                       (cdr (assoc :path def))
                                       (context-include ctx) (context-exclude ctx))
                   (null (gethash (sxhash def) *results*)))
         do
-        (funcall callback (append `(((:type . "searching")
-                                     (:origin . ,def)))
-                                  (flatten-results)))
-        (setf (gethash (sxhash def) *results*) (analyze-by-definition ctx def)))
-      (maphash (lambda (k v)
-                 (when (not (member k def-keys))
-                   (remhash k *results*)))
-               *results*))
-    (remove-if (lambda (r) (equal (cdr (assoc :type r)) "searching")) (flatten-results))))
+        (setf searching-defs (append searching-defs `(((:type . "searching")
+                                                       (:origin . ,def)))))
+        (funcall callback (append (flatten-results def-keys) searching-defs))
+        (let ((def (copy-list def)))
+          (push (sb-thread:make-thread
+                  (lambda ()
+                    (setf (gethash (sxhash def) *results*) (analyze-by-definition ctx def))))
+                threads))
+        finally (loop for thread in threads do (sb-thread:join-thread thread)))
+      (flatten-results def-keys))))
 
 (defun analyze-by-definition (ctx def)
   (loop
@@ -183,9 +190,10 @@
                                 (cdr (assoc :visited-fq-names pos)) :test #'equal)
                         (setf results (append results (list (make-entrypoint def))))
                         (when def
-                          (enqueue q (push (cons :origin (if (eq (cdr (assoc :type pos)) :rest-server)
-                                                             def
-                                                             (cdr (assoc :origin pos))))
+                          (enqueue q (push (cons :origin
+                                                 (if (eq (cdr (assoc :type pos)) :rest-server)
+                                                     def
+                                                     (cdr (assoc :origin pos))))
                                            def))))))))
           (setf results (append results (list (make-entrypoint pos))))))
     results))

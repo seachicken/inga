@@ -35,10 +35,15 @@
                 #:find-base-path))
 (in-package #:inga/server)
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (require :sb-concurrency))
+
 (defparameter *msg-q* nil)
 (defparameter *processing-msg* nil)
 (defparameter *output-q* (make-queue))
 (defparameter *processing-output* nil)
+(defparameter *stdout-q* (sb-concurrency:make-queue))
+(defparameter *stdout-thread* nil)
 
 (defmethod run ((mode (eql :server)) language params)
   (let* ((index (make-instance 'ast-index-disk
@@ -104,8 +109,7 @@
                                        "/")))
                        root-host-paths)))
          (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":{\"change\":2,\"save\":false}}}")
-         (setf *processing-output*
-               (process-output-if-present nil output-path root-path)))
+         (process-output-if-present nil output-path root-path))
         ((equal (jsown:val msg "method") "shutdown")
          (log-debug "run shutdown processing")
 
@@ -164,26 +168,25 @@
                   (results (analyze
                              ctx diff
                              (lambda (results)
-                               (setf *processing-output*
-                                     (process-output-if-present results output-path root-path))))))
+                               (process-output-if-present results output-path root-path)))))
              (when path (update-index (context-ast-index ctx) path))
-             (setf *processing-output*
-                   (process-output-if-present results output-path root-path))))))
+             (process-output-if-present results output-path root-path)))))
       (process-msg-if-present (dequeue-msg) ctx root-path output-path temp-path base-commit root-host-paths))))
 
 (defun process-output-if-present (output output-path root-path)
-  (when (or (not output)
-            (and *processing-output* (sb-thread:thread-alive-p *processing-output*)))
+  (unless output
     (return-from process-output-if-present *processing-output*))
 
-  (sb-thread:make-thread
-    (lambda ()
-      (with-open-file (out (merge-pathnames "report.json" output-path)
-                           :direction :output
-                           :if-exists :supersede
-                           :if-does-not-exist :create)
-        (format out "~a" (to-json output root-path)))
-      (process-output-if-present (dequeue-output) output-path root-path))))
+  (enqueue-output output)
+  (when (or (null *processing-output*) (not (sb-thread:thread-alive-p *processing-output*)))
+    (sb-thread:make-thread
+      (lambda ()
+        (with-open-file (out (merge-pathnames "report.json" output-path)
+                             :direction :output
+                             :if-exists :supersede
+                             :if-does-not-exist :create)
+          (format out "~a" (to-json (dequeue-output) root-path)))
+        (process-output-if-present (dequeue-output) output-path root-path)))))
 
 (defun extract-json (stream)
   ;; Content-Length: 99
@@ -228,17 +231,28 @@
     (return-from print-response-msg))
 
   (let ((content (format nil "{\"jsonrpc\":\"2.0\",\"id\":\"~a\",\"result\":~a}" id result)))
-    (format t "Content-Length: ~a~c~c~c~c~a" (length content) #\return #\linefeed
-            #\return #\linefeed
-            content)
-    (force-output)))
+    (print-if-present (format nil "Content-Length: ~a~c~c~c~c~a" (length content) #\return #\linefeed
+                              #\return #\linefeed
+                              content))))
 
 (defun print-notification-msg (method params)
   (let ((content (format nil "{\"jsonrpc\":\"2.0\",\"method\":\"~a\",\"params\":~a}" method params)))
-    (format t "Content-Length: ~a~c~c~c~c~a" (length content) #\return #\linefeed
-            #\return #\linefeed
-            content)
-    (force-output)))
+    (print-if-present (format nil "Content-Length: ~a~c~c~c~c~a" (length content) #\return #\linefeed
+                              #\return #\linefeed
+                              content))))
+
+(defun print-if-present (json)
+  (unless json
+    (return-from print-if-present))
+  
+  (sb-concurrency:enqueue json *stdout-q*) 
+  (when (or (null *stdout-thread*) (not (sb-thread:thread-alive-p *stdout-thread*)))
+    (setf *stdout-thread*
+          (sb-thread:make-thread
+            (lambda ()
+              (format t (sb-concurrency:dequeue *stdout-q*))
+              (force-output)
+              (print-if-present (sb-concurrency:dequeue *stdout-q*)))))))
 
 (defun to-state-json (change-pos root-path)
   (jsown:to-json
