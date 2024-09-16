@@ -107,7 +107,7 @@
 (defun analyze (ctx ranges &optional (callback (lambda (results))))
   (labels ((flatten-results (sort-keys)
              (remove-duplicates
-               (mapcan (lambda (k) (gethash k *results*)) sort-keys)
+               (mapcan (lambda (k) (copy-list (gethash k *results*))) sort-keys)
                :test #'equal)))
     (let* ((defs (mapcan (lambda (r) (find-definitions r)) ranges))
            (def-keys (mapcar (lambda (d) (sxhash d)) defs))
