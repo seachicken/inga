@@ -169,7 +169,6 @@
                              ctx diff
                              (lambda (results)
                                (process-output-if-present results output-path root-path)))))
-             (format t "end server analyze!~%")
              (when path (update-index (context-ast-index ctx) path))
              (process-output-if-present results output-path root-path)))))
       (process-msg-if-present (dequeue-msg) ctx root-path output-path temp-path base-commit root-host-paths))))
