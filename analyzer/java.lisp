@@ -155,7 +155,7 @@
                         #'(lambda (fqcn) (list target-pos))
                         path)
     `((:path . ,path)
-      (:top-offset . ,(ast-value ast "startPos")))))
+      (:top-offset . ,(ast-value ast "pos")))))
 
 (defmethod find-fq-name-generic ((analyzer analyzer-java) ast path)
   (find-fq-name-for-reference ast path (analyzer-index analyzer)))
@@ -290,11 +290,11 @@
                        fq-names)))))
 
        (when (equal (ast-value ast "type") "CLASS")
-         ;; for inner class
          (if (or (filter-by-name (get-asts ast '("CLASS")) class-name)
                  (filter-by-name (get-asts ast '("ENUM")) class-name))
+             ;; inner class
              (push (concatenate 'string (ast-value ast "name") "$" class-name) fq-names)
-             (push class-name fq-names)))
+             (push (format nil "~{~a~^$~}" (split #\. class-name)) fq-names)))
 
        (when (jsown:keyp ast "parent")
          (enqueue q (jsown:val ast "parent")))))))
@@ -332,14 +332,16 @@
                  (if has-this (not (equal (ast-value ast "type") "METHOD")) t))
         (return variable)))
 
-    (when (get-asts ast '("LAMBDA_EXPRESSION") :direction :upward)
-      (let ((root (find-chain-root (first (get-asts ast '("LAMBDA_EXPRESSION"
-                                                          "METHOD_INVOCATION")
-                                                    :direction :upward)))))
-        (return (let ((v (find-definition
-                           (ast-value (first (get-asts root '("MEMBER_SELECT" "IDENTIFIER"))) "name")
-                           root)))
-                  (second (if v
+    (let ((lambda-exp (first (get-asts ast '("LAMBDA_EXPRESSION") :direction :upward))))
+      (when (get-asts lambda-exp '("VARIABLE"))
+        (let* ((root (find-chain-root (first (get-asts ast '("LAMBDA_EXPRESSION"
+                                                             "METHOD_INVOCATION")
+                                                       :direction :upward))))
+
+               (v (find-definition
+                    (ast-value (first (get-asts root '("MEMBER_SELECT" "IDENTIFIER"))) "name")
+                    root)))
+          (return (second (if v
                               (get-asts v '("METHOD_INVOCATION" "*"))
                               (get-asts root '("*"))))))))
 
@@ -371,8 +373,7 @@
                  (find-reference-to-literal-generic
                    analyzer (first (get-asts v '("STRING_LITERAL"))) path)
                  (mapcan (lambda (ref)
-                           (let ((ast (first (get-asts (find-ast ref (analyzer-index analyzer))
-                                                       '("ASSIGNMENT")))))
+                           (let ((ast (find-ast ref (analyzer-index analyzer))))
                              (when ast
                                (find-reference-to-literal-generic
                                  analyzer
@@ -432,6 +433,7 @@
   (loop
     with q = (make-queue)
     with fq-names
+    with class-names
     initially (enqueue q ast)
     do
     (setf ast (dequeue q))
@@ -445,10 +447,11 @@
     (when (and
             fq-names
             (equal (ast-value ast "type") "CLASS"))
-      (setf fq-names (append (list (ast-value ast "name")) fq-names)))
+      (setf class-names (append (list (ast-value ast "name")) class-names)))
     (when (and
             fq-names
             (equal (ast-value ast "type") "COMPILATION_UNIT"))
+      (setf fq-names (append (list (format nil "~{~a~^$~}" class-names)) fq-names))
       (setf fq-names (append 
                        (list (ast-value (first (get-asts ast '("PACKAGE"))) "packageName"))
                        fq-names)))
@@ -460,7 +463,7 @@
   (let ((stack (list root-ast))
         result)
     (loop
-      with class-name
+      with found-class
       do
       (let ((ast (pop stack)))
         (if (null ast) (return))
@@ -470,8 +473,12 @@
         (when (or
                 (equal (ast-value ast "type") "CLASS")
                 (equal (ast-value ast "type") "INTERFACE"))
-          (setf class-name (jsown:val ast "name"))
-          (setf result (format nil "~{~a~^.~}" (remove nil (list result (jsown:val ast "name"))))))
+          (if found-class
+              ;; inner class
+              (setf result (format nil "~{~a~^$~}" (list result (jsown:val ast "name"))))
+              (progn
+                (setf result (format nil "~{~a~^.~}" (list result (jsown:val ast "name"))))
+                (setf found-class t))))
         (when (and
                 (jsown:keyp ast "name")
                 (= (jsown:val ast "pos") top-offset))
