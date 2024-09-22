@@ -293,7 +293,7 @@
              ,(cons :top-offset
                     (convert-to-top-offset
                       (merge-pathnames "src/main/java/p1/NewClassReference.java" *java-path*)
-                      '((:line . 7) (:offset . 9))))))
+                      '((:line . 7) (:offset . 36))))))
           (find-references
             `((:path . "src/main/java/p1/NewClassHelper.java")
               (:name . "method")
@@ -321,11 +321,25 @@
              ,(cons :top-offset
                     (convert-to-top-offset
                       (merge-pathnames "src/main/java/p1/PrivateMethodReference.java" *java-path*)
-                      '((:line . 8) (:offset . 9))))))
+                      '((:line . 8) (:offset . 16))))))
           (find-references
             `((:path . "src/main/java/p1/PrivateMethodReference.java")
               (:name . "method2")
               (:fq-name . "p1.PrivateMethodReference.method2"))
+            *index*)))))
+
+(test find-references-in-lambda
+  (with-fixture jvm-ctx (*java-path*)
+    (is (equal
+          `(((:path . "src/main/java/p1/LambdaReference.java")
+             (:top-offset .
+              ,(convert-to-top-offset
+                 (merge-pathnames "src/main/java/p1/LambdaReference.java" *java-path*)
+                 '((:line . 6) (:offset . 76))))))
+          (find-references
+            `((:path . "src/main/java/p1/LambdaHelper.java")
+              (:name . "method")
+              (:fq-name . "p1.LambdaHelper.method-java.lang.String"))
             *index*)))))
 
 (test find-references-with-stdlib-param
@@ -335,7 +349,7 @@
              ,(cons :top-offset
                     (convert-to-top-offset
                       (merge-pathnames "src/main/java/p1/PrivateMethodReference.java" *java-path*)
-                      '((:line . 15) (:offset . 9))))))
+                      '((:line . 15) (:offset . 25))))))
           (find-references
             `((:path . "src/main/java/p1/PrivateMethodReference.java")
               (:name . "methodWithStdLib")
@@ -349,7 +363,7 @@
              ,(cons :top-offset
                     (convert-to-top-offset
                       (merge-pathnames "src/main/java/p1/KotlinReference.java" *java-path*)
-                      '((:line . 9) (:offset . 9))))))
+                      '((:line . 9) (:offset . 17))))))
           (find-references
             '((:path . "src/main/java/pkt1/JavaReference.kt")
               (:name . "method")
