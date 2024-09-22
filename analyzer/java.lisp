@@ -107,27 +107,18 @@
       (setf ast (dequeue q))
       (if (null ast) (return))
 
-      (when (and
-              (or
-                ;; field reference
-                (and
-                  (jsown:keyp ast "parent")
-                  (equal (ast-value (jsown:val ast "parent") "type") "CLASS") 
-                  (equal (ast-value ast "type") "VARIABLE"))
-                (equal (ast-value ast "type") "METHOD")
-                (equal (ast-value ast "type") "BLOCK"))
+      (when (and (or
+                   ;; instance fields
+                   (and
+                     (jsown:keyp ast "parent")
+                     (equal (ast-value (jsown:val ast "parent") "type") "CLASS")
+                     (equal (ast-value ast "type") "VARIABLE"))
+                   (equal (ast-value ast "type") "METHOD")
+                   (equal (ast-value ast "type") "BLOCK"))
               (contains-offset (jsown:val ast "startPos") (jsown:val ast "endPos")
                                start-offset end-offset)
               (jsown:keyp ast "name"))
-        ;; TODO: replace to ast-to-pos
-        (let ((pos (list
-                     (cons :type (get-scope ast))
-                     (cons :path src-path)
-                     (cons :name (jsown:val ast "name"))
-                     (cons :fq-name (get-fq-name-of-declaration
-                                      root-ast
-                                      (jsown:val ast "pos")))
-                     (cons :top-offset (jsown:val ast "pos")))))
+        (let ((pos (ast-to-pos ast (analyzer-index analyzer) path)))
           (when (assoc :origin range)
             (push (cons :origin (cdr (assoc :origin range))) pos))
           (setf results (append results (list pos)))))
