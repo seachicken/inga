@@ -101,37 +101,66 @@
         results)
     (setf ast (get-ast (analyzer-index analyzer) path))
     (setf root-ast ast)
-    (enqueue q ast)
     (loop
+      with found-class
+      initially
+      (let* ((package (first (get-asts ast '("COMPILATION_UNIT" "PACKAGE"))))
+             (package-name (when package (jsown:val package "packageName"))))
+        (enqueue q (list ast package-name)))
       do
-      (setf ast (dequeue q))
-      (if (null ast) (return))
+      (let* ((ast-with-fq-name (dequeue q))
+             (ast (first ast-with-fq-name))
+             (fq-name (second ast-with-fq-name)))
+        (unless ast (return))
 
-      (when (and (or
-                   ;; instance fields
-                   (and
-                     (jsown:keyp ast "parent")
-                     (equal (ast-value (jsown:val ast "parent") "type") "CLASS")
-                     (equal (ast-value ast "type") "VARIABLE"))
-                   (equal (ast-value ast "type") "METHOD")
-                   (equal (ast-value ast "type") "BLOCK"))
-              (contains-offset (jsown:val ast "startPos") (jsown:val ast "endPos")
-                               start-offset end-offset)
-              (jsown:keyp ast "name"))
-        (let ((pos (ast-to-pos ast (analyzer-index analyzer) path)))
-          (when (assoc :origin range)
-            (push (cons :origin (cdr (assoc :origin range))) pos))
-          (setf results (append results (list pos)))))
+        (when (or
+                (equal (ast-value ast "type") "CLASS")
+                (equal (ast-value ast "type") "INTERFACE"))
+          (if found-class
+              ;; inner class
+              (setf fq-name (format nil "~{~a~^$~}" (list fq-name (jsown:val ast "name"))))
+              (progn
+                (setf fq-name (format nil "~{~a~^.~}" (list fq-name (jsown:val ast "name"))))
+                (setf found-class t))))
 
-      (loop for child in (jsown:val ast "children") do (enqueue q child)))
+        (when (and (or
+                     ;; instance fields
+                     (and
+                       (jsown:keyp ast "parent")
+                       (equal (ast-value (jsown:val ast "parent") "type") "CLASS")
+                       (equal (ast-value ast "type") "VARIABLE"))
+                     (equal (ast-value ast "type") "METHOD")
+                     (equal (ast-value ast "type") "BLOCK"))
+                   (contains-offset (jsown:val ast "startPos") (jsown:val ast "endPos")
+                                    start-offset end-offset)
+                   (jsown:keyp ast "name"))
+          (setf fq-name (format nil "~{~a~^.~}" (list fq-name (jsown:val ast "name"))))
+          (when (equal (ast-value ast "type") "METHOD")
+            (loop for child in (jsown:val ast "children")
+                  do
+                  (when (equal (jsown:val child "type") "VARIABLE")
+                    (loop for child in (jsown:val child "children")
+                          do
+                          (when (and (ast-value child "name")
+                                     (not (equal (jsown:val child "type") "MODIFIERS"))
+                                     (not (equal (ast-value child "name") "")))
+                            (setf fq-name (concatenate
+                                            'string
+                                            fq-name
+                                            "-"
+                                            (find-fq-class-name-by-class-name
+                                              (ast-value child "name") ast))))))))
+          (let ((pos `((:type . ,(get-scope ast))
+                       (:path . ,src-path)
+                       (:name . ,(jsown:val ast "name"))
+                       (:fq-name . ,fq-name)
+                       (:top-offset . ,(jsown:val ast "pos")))))
+            (when (assoc :origin range)
+              (push (cons :origin (cdr (assoc :origin range))) pos))
+            (setf results (append results (list pos)))))
+
+        (loop for child in (jsown:val ast "children") do (enqueue q (list child fq-name)))))
     results))
-
-(defun ast-to-pos (ast index path)
-  `((:type . ,(get-scope ast))
-    (:path . ,path)
-    (:name . ,(jsown:val ast "name"))
-    (:fq-name . ,(get-fq-name-of-declaration (get-ast index path) (jsown:val ast "pos")))
-    (:top-offset . ,(jsown:val ast "pos"))))
 
 (defun get-scope (ast)
   (let ((modifiers (split-trim-comma (ast-value (first (get-asts ast '("MODIFIERS"))) "name"))))
@@ -356,7 +385,11 @@
        
        (when (equal (ast-value ast "type") "CLASS")
          (let* ((v (first (filter-by-name (get-asts ast '("VARIABLE")) variable-name)))
-                (refs (when v (find-references (ast-to-pos v (analyzer-index analyzer) path)
+                (refs (when v (find-references (first (find-definitions-generic
+                                                        analyzer
+                                                        `((:path . ,path)
+                                                          (:start-offset . ,(jsown:val v "pos"))
+                                                          (:end-offset . ,(jsown:val v "pos")))))
                                                (analyzer-index analyzer)))))
            (return-from
              find-reference-to-literal-generic
@@ -373,7 +406,11 @@
                          refs)))))
        (when (and (equal (ast-value ast "type") "METHOD")
                   (filter-by-name (get-asts ast '("VARIABLE")) variable-name))
-         (let ((refs (find-references (ast-to-pos ast (analyzer-index analyzer) path)
+         (let ((refs (find-references (first (find-definitions-generic
+                                               analyzer
+                                               `((:path . ,path)
+                                                 (:start-offset . ,(jsown:val ast "pos"))
+                                                 (:end-offset . ,(jsown:val ast "pos")))))
                                       (analyzer-index analyzer))))
            (return-from
              find-reference-to-literal-generic
@@ -449,50 +486,6 @@
 
     (when (jsown:keyp ast "parent")
       (enqueue q (jsown:val ast "parent")))))
-
-(defun get-fq-name-of-declaration (root-ast top-offset)
-  (let ((stack (list root-ast))
-        result)
-    (loop
-      with found-class
-      do
-      (let ((ast (pop stack)))
-        (if (null ast) (return))
-
-        (when (equal (ast-value ast "type") "PACKAGE")
-          (setf result (format nil "~{~a~^.~}" (remove nil (list result (jsown:val ast "packageName"))))))
-        (when (or
-                (equal (ast-value ast "type") "CLASS")
-                (equal (ast-value ast "type") "INTERFACE"))
-          (if found-class
-              ;; inner class
-              (setf result (format nil "~{~a~^$~}" (list result (jsown:val ast "name"))))
-              (progn
-                (setf result (format nil "~{~a~^.~}" (list result (jsown:val ast "name"))))
-                (setf found-class t))))
-        (when (and
-                (jsown:keyp ast "name")
-                (= (jsown:val ast "pos") top-offset))
-          (setf result (format nil "~{~a~^.~}"
-                               (remove nil (list result (jsown:val ast "name")))))
-          (when (equal (ast-value ast "type") "METHOD")
-            (loop for child in (jsown:val ast "children")
-                  do
-                  (when (equal (jsown:val child "type") "VARIABLE")
-                    (loop for child in (jsown:val child "children")
-                          do
-                          (when (and (ast-value child "name")
-                                     (not (equal (jsown:val child "type") "MODIFIERS"))
-                                     (not (equal (ast-value child "name") "")))
-                            (setf result (concatenate
-                                           'string
-                                           result
-                                           "-"
-                                           (find-fq-class-name-by-class-name (ast-value child "name") ast))))))))
-          (return-from get-fq-name-of-declaration result))
-
-        (loop for child in (jsown:val ast "children")
-              do (setf stack (append stack (list child))))))))
 
 (defmethod find-class-hierarchy-generic ((analyzer analyzer-java)
                                          fq-class-name root-ast path)
