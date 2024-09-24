@@ -112,16 +112,12 @@
                                  ast)
                              "name")))
           (push
-            (let ((pos (list
-                         (cons :type (get-scope ast))
-                         (cons :path src-path)
-                         (cons :name method-name)
-                         (cons :fq-name (find-fq-name-for-definition
-                                          method-name ast path (analyzer-index analyzer)))
-                         (cons :top-offset (jsown:val (jsown:val ast "textRange") "startOffset")))))
-              (when (assoc :origin range)
-                (push (cons :origin (cdr (assoc :origin range))) pos))
-              pos)
+            `((:type . ,(get-scope ast))
+              (:path . ,src-path)
+              (:name . ,method-name)
+              (:fq-name . ,(find-fq-name-for-definition
+                             method-name ast path (analyzer-index analyzer)))
+              (:top-offset . ,(jsown:val (jsown:val ast "textRange") "startOffset")))
             results)))
       (when (equal (ast-value ast "type") "CLASS")
         (loop for inner-class in (get-asts ast '("CLASS_BODY" "CLASS"))

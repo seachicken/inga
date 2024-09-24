@@ -150,14 +150,13 @@
                                             "-"
                                             (find-fq-class-name-by-class-name
                                               (ast-value child "name") ast))))))))
-          (let ((pos `((:type . ,(get-scope ast))
-                       (:path . ,src-path)
-                       (:name . ,(jsown:val ast "name"))
-                       (:fq-name . ,fq-name)
-                       (:top-offset . ,(jsown:val ast "pos")))))
-            (when (assoc :origin range)
-              (push (cons :origin (cdr (assoc :origin range))) pos))
-            (setf results (append results (list pos)))))
+          (push
+            `((:type . ,(get-scope ast))
+              (:path . ,src-path)
+              (:name . ,(jsown:val ast "name"))
+              (:fq-name . ,fq-name)
+              (:top-offset . ,(jsown:val ast "pos")))
+            results))
 
         (loop for child in (jsown:val ast "children") do (enqueue q (list child fq-name)))))
     results))
