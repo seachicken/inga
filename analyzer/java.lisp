@@ -155,8 +155,6 @@
                        (:name . ,(jsown:val ast "name"))
                        (:fq-name . ,fq-name)
                        (:top-offset . ,(jsown:val ast "pos")))))
-            (when (assoc :origin range)
-              (push (cons :origin (cdr (assoc :origin range))) pos))
             (setf results (append results (list pos)))))
 
         (loop for child in (jsown:val ast "children") do (enqueue q (list child fq-name)))))
