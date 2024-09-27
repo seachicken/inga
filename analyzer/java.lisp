@@ -96,69 +96,33 @@
         (path (cdr (assoc :path range)))
         (start-offset (cdr (assoc :start-offset range)))
         (end-offset (cdr (assoc :end-offset range)))
-        ast
-        root-ast
         results)
-    (setf ast (get-ast (analyzer-index analyzer) path))
-    (setf root-ast ast)
     (loop
-      with found-class
-      initially
-      (let* ((package (first (get-asts ast '("COMPILATION_UNIT" "PACKAGE"))))
-             (package-name (when package (jsown:val package "packageName"))))
-        (enqueue q (list ast package-name)))
+      with ast = (get-ast (analyzer-index analyzer) path)
+      initially (enqueue q ast)
       do
-      (let* ((ast-with-fq-name (dequeue q))
-             (ast (first ast-with-fq-name))
-             (fq-name (second ast-with-fq-name)))
-        (unless ast (return))
+      (setf ast (dequeue q))
+      (unless ast (return))
 
-        (when (or
-                (equal (ast-value ast "type") "CLASS")
-                (equal (ast-value ast "type") "INTERFACE"))
-          (if found-class
-              ;; inner class
-              (setf fq-name (format nil "~{~a~^$~}" (list fq-name (jsown:val ast "name"))))
-              (progn
-                (setf fq-name (format nil "~{~a~^.~}" (list fq-name (jsown:val ast "name"))))
-                (setf found-class t))))
+      (when (and (or
+                   (and
+                     (jsown:keyp ast "parent")
+                     (equal (ast-value (jsown:val ast "parent") "type") "CLASS")
+                     (equal (ast-value ast "type") "VARIABLE"))
+                   (equal (ast-value ast "type") "METHOD")
+                   (equal (ast-value ast "type") "BLOCK"))
+                 (contains-offset (jsown:val ast "startPos") (jsown:val ast "endPos")
+                                  start-offset end-offset)
+                 (jsown:keyp ast "name"))
+        (push
+          `((:type . ,(get-scope ast))
+            (:path . ,src-path)
+            (:name . ,(jsown:val ast "name"))
+            (:fq-name . ,(find-fq-name ast path))
+            (:top-offset . ,(jsown:val ast "pos")))
+          results))
 
-        (when (and (or
-                     ;; instance fields
-                     (and
-                       (jsown:keyp ast "parent")
-                       (equal (ast-value (jsown:val ast "parent") "type") "CLASS")
-                       (equal (ast-value ast "type") "VARIABLE"))
-                     (equal (ast-value ast "type") "METHOD")
-                     (equal (ast-value ast "type") "BLOCK"))
-                   (contains-offset (jsown:val ast "startPos") (jsown:val ast "endPos")
-                                    start-offset end-offset)
-                   (jsown:keyp ast "name"))
-          (setf fq-name (format nil "~{~a~^.~}" (list fq-name (jsown:val ast "name"))))
-          (when (equal (ast-value ast "type") "METHOD")
-            (loop for child in (jsown:val ast "children")
-                  do
-                  (when (equal (jsown:val child "type") "VARIABLE")
-                    (loop for child in (jsown:val child "children")
-                          do
-                          (when (and (ast-value child "name")
-                                     (not (equal (jsown:val child "type") "MODIFIERS"))
-                                     (not (equal (ast-value child "name") "")))
-                            (setf fq-name (concatenate
-                                            'string
-                                            fq-name
-                                            "-"
-                                            (find-fq-class-name-by-class-name
-                                              (ast-value child "name") ast))))))))
-          (push
-            `((:type . ,(get-scope ast))
-              (:path . ,src-path)
-              (:name . ,(jsown:val ast "name"))
-              (:fq-name . ,fq-name)
-              (:top-offset . ,(jsown:val ast "pos")))
-            results))
-
-        (loop for child in (jsown:val ast "children") do (enqueue q (list child fq-name)))))
+      (loop for child in (jsown:val ast "children") do (enqueue q child)))
     results))
 
 (defun get-scope (ast)
@@ -170,157 +134,189 @@
       (t :module-default))))
 
 (defmethod find-reference ((analyzer analyzer-java) target-pos fq-name ast path)
-  (when (find-signature fq-name
-                        #'(lambda (fqcn) (list target-pos))
-                        path)
+  (when (and (or (equal (ast-value ast "type") "ASSIGNMENT")
+                 (equal (ast-value ast "type") "NEW_CLASS")
+                 (equal (ast-value ast "type") "METHOD_INVOCATION"))
+             (find-signature fq-name
+                             #'(lambda (fqcn) (list target-pos))
+                             path))
     `((:path . ,path)
       (:top-offset . ,(ast-value ast "pos")))))
 
 (defmethod find-fq-name-generic ((analyzer analyzer-java) ast path)
-  (find-fq-name-for-reference ast path (analyzer-index analyzer)))
-
-(defun find-fq-name-for-reference (ast path index)
-  (alexandria:switch ((ast-value ast "type") :test #'equal)
-    ("ASSIGNMENT"
+  (cond
+    ((equal (ast-value ast "type") "ASSIGNMENT")
      (let* ((lhs (first (get-asts ast '("MEMBER_SELECT"))))
             (v (when lhs (find-definition (ast-value lhs "name") lhs))))
-       (when v (find-fq-name-for-definition (ast-value v "name") v))))
-    ("NEW_CLASS"
+       (when v (find-fq-name-generic analyzer v path))))
+    ((equal (ast-value ast "type") "NEW_CLASS")
      (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
-             (find-fq-class-name-by-class-name (ast-value ast "name") ast)
+             (find-fq-class-name ast path)
              ;; get inner class name
              (first (last (split #\. (ast-value ast "name"))))
-             (mapcar (lambda (arg) (find-fq-class-name-java arg path index))
+             (mapcar (lambda (arg) (find-fq-class-name arg path))
                      (get-asts ast '("*")))))
-    ("METHOD_INVOCATION"
-     (if (get-asts ast '("MEMBER_SELECT"))
-         (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
-                 (cond
-                   ;; if method chain
-                   ((get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
-                    (let* ((fq-name (find-fq-name-for-reference
-                                      (first (get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION")))
-                                      path index))
-                           (method (find-signature
-                                     fq-name
-                                     #'(lambda (fqcn) (load-signatures fqcn path))
-                                     path)))
-                      (when method (cdr (assoc :return method)))))
-                   ((get-asts ast '("MEMBER_SELECT" "IDENTIFIER"))
-                    (find-fq-class-name-java
-                      (first (get-asts ast '("MEMBER_SELECT" "IDENTIFIER")))
-                      path index))
-                   ((get-asts ast '("MEMBER_SELECT" "NEW_CLASS"))
-                    (find-fq-class-name-by-class-name
-                      (ast-value (first (get-asts ast '("MEMBER_SELECT" "NEW_CLASS"))) "name")
-                      ast))
-                   ((get-asts ast '("MEMBER_SELECT" "MEMBER_SELECT"))
-                    (find-fq-class-name-by-class-name
-                      (ast-value (first (get-asts ast '("MEMBER_SELECT" "MEMBER_SELECT"))) "name")
-                      ast)))
-                 (ast-value (first (get-asts ast '("*"))) "name")
-                 (mapcar (lambda (arg) (find-fq-class-name-java arg path index))
-                         (nthcdr 1 (get-asts ast '("*")))))
-         (format nil "~a~:[~;-~]~:*~{~a~^-~}"
-                 (find-fq-name-for-definition
-                   (ast-value (first (get-asts ast '("IDENTIFIER"))) "name")
-                   ast)
-                 ;; TODO: move to find-fq-name-for-definition, because params are fq name
-                 (mapcar (lambda (arg) (find-fq-class-name-java arg path index))
-                         (nthcdr 1 (get-asts ast '("*")))))))))
-
-(defmethod find-fq-class-name-generic ((analyzer analyzer-java) ast path)
-  (find-fq-class-name-java ast path (analyzer-index analyzer)))
-
-(defun find-fq-class-name-java (ast path index)
-  (cond
-    ((uiop:string-suffix-p (ast-value ast "type") "_LITERAL")
-     (if (equal (ast-value ast "type") "STRING_LITERAL")
-         "java.lang.String"
-         (subseq (ast-value ast "type") 0 (- (length (ast-value ast "type")) 8))))
-    ((equal (ast-value ast "type") "PRIMITIVE_TYPE")
-     (find-fq-class-name-by-class-name (ast-value ast "name") ast))
-    ((equal (ast-value ast "type") "ARRAY_TYPE")
-     (concatenate 'string
-                  (find-fq-class-name-by-class-name (ast-value ast "name") ast)
-                  "[]"))
-    ((equal (ast-value ast "type") "PARAMETERIZED_TYPE")
-     (find-fq-class-name-by-class-name (ast-value ast "name") ast))
-    ((equal (ast-value ast "type") "MEMBER_SELECT")
-     (cond
-       ((equal (ast-value ast "name") "class")
-        "java.lang.Class")
-       ;; if array length
-       ((equal (ast-value ast "name") "length")
-        "INT")
-       (t
-        (find-fq-class-name-by-class-name
-          (ast-value (first (get-asts ast '("IDENTIFIER"))) "name") ast))))
-    ((equal (ast-value ast "type") "NEW_CLASS")
-     (find-fq-class-name-by-class-name (ast-value ast "name") ast))
-    ((equal (ast-value ast "type") "VARIABLE")
-     (find-fq-class-name-java (second (get-asts ast '("*"))) path index))
-    ((equal (ast-value ast "type") "IDENTIFIER")
-     (or
-       (find-fq-class-name-by-variable-name (ast-value ast "name") ast path index)
-       (find-fq-class-name-by-class-name (ast-value ast "name") ast)))
-    ((equal (ast-value ast "type") "METHOD_INVOCATION")
-     (let* ((fq-name (cond
-                       ((get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
-                        (find-fq-name-for-reference ast path index))
-                       ((get-asts ast '("MEMBER_SELECT" "IDENTIFIER"))
-                        (find-fq-name-for-reference ast path index))))
-            (method (find-signature fq-name
-                                    #'(lambda (fqcn) (load-signatures fqcn path))
-                                    path)))
-       (when method (cdr (assoc :return method)))))))
-
-(defun find-fq-class-name-by-class-name (class-name ast)
-  (unless class-name
-    (return-from find-fq-class-name-by-class-name))
-
-  (cond
-    ((is-primitive-type class-name)
-     class-name)
-    ;; FIXME: support for all types
-    ((find class-name '("Long" "String") :test 'equal)
-     (concatenate 'string "java.lang." class-name))
-    ((equal class-name "class")
-     "java.lang.Class")
+    ((and (equal (ast-value ast "type") "METHOD_INVOCATION")
+          (get-asts ast '("MEMBER_SELECT")))
+     (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
+             (cond
+               ;; if method chain
+               ((get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
+                (let* ((fq-name (find-fq-name-generic
+                                  analyzer
+                                  (first (get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION")))
+                                  path))
+                       (method (find-signature
+                                 fq-name
+                                 #'(lambda (fqcn) (load-signatures fqcn path))
+                                 path)))
+                  (when method (cdr (assoc :return method)))))
+               ((get-asts ast '("MEMBER_SELECT" "IDENTIFIER"))
+                (find-fq-class-name
+                  (first (get-asts ast '("MEMBER_SELECT" "IDENTIFIER")))
+                  path))
+               ((get-asts ast '("MEMBER_SELECT" "NEW_CLASS"))
+                (find-fq-class-name
+                  (first (get-asts ast '("MEMBER_SELECT" "NEW_CLASS"))) path))
+               ((get-asts ast '("MEMBER_SELECT" "MEMBER_SELECT"))
+                (find-fq-class-name
+                  (first (get-asts ast '("MEMBER_SELECT" "MEMBER_SELECT"))) path)))
+             (ast-value (first (get-asts ast '("*"))) "name")
+             (mapcar (lambda (arg) (find-fq-class-name arg path))
+                     (nthcdr 1 (get-asts ast '("*"))))))
     (t
      (loop
        with q = (make-queue)
        with fq-names
-       initially (enqueue q ast)
+       with class-names
+       initially
+       (enqueue q ast)
+       (setf fq-names
+             (list
+               (cond
+                 ((equal (ast-value ast "type") "METHOD")
+                  (loop for child in (jsown:val ast "children")
+                        with method-with-params = (ast-value ast "name")
+                        do
+                        (when (equal (jsown:val child "type") "VARIABLE")
+                          (loop for child in (jsown:val child "children")
+                                do
+                                (when (and (ast-value child "name")
+                                           (not (equal (jsown:val child "type") "MODIFIERS"))
+                                           (not (equal (ast-value child "name") "")))
+                                  (setf method-with-params
+                                        (concatenate
+                                          'string
+                                          method-with-params
+                                          "-"
+                                          (find-fq-class-name child path))))))
+                        finally (return method-with-params)))
+                 ((equal (ast-value ast "type") "METHOD_INVOCATION")
+                  (loop for child in (jsown:val ast "children")
+                        for i from 0
+                        with method-with-params = (ast-value (first (get-asts ast '("IDENTIFIER")))
+                                                             "name")
+                        do
+                        (when (> i 0)
+                          (setf method-with-params
+                                (concatenate
+                                  'string
+                                  method-with-params
+                                  "-"
+                                  (find-fq-class-name child path))))
+                        finally (return method-with-params)))
+                 (t
+                  (ast-value ast "name")))))
        do
        (setf ast (dequeue q))
-       (when (null ast) (return (format nil "~{~a~^.~}" fq-names)))
+       (unless ast (return (format nil "~{~a~^.~}" fq-names)))
 
-       (when (equal (ast-value ast "type") "COMPILATION_UNIT")
-         (let ((import (first (ast-find-suffix
-                                (get-asts ast '("IMPORT"))
-                                (concatenate 'string "." class-name)
-                                :key-name "fqName"))))
-           (setf fq-names
-                 (if import
-                     (list (ast-value import "fqName"))
-                     (append
-                       (list (ast-value (first (get-asts ast '("PACKAGE"))) "packageName"))
-                       fq-names)))))
+       (when (and
+               fq-names
+               (or
+                 (equal (ast-value ast "type") "CLASS")
+                 (equal (ast-value ast "type") "INTERFACE")))
+         (setf class-names (append (list (ast-value ast "name")) class-names)))
 
-       (when (equal (ast-value ast "type") "CLASS")
-         (if (or (filter-by-name (get-asts ast '("CLASS")) class-name)
-                 (filter-by-name (get-asts ast '("ENUM")) class-name))
-             ;; inner class
-             (push (concatenate 'string (ast-value ast "name") "$" class-name) fq-names)
-             (push (format nil "~{~a~^$~}" (split #\. class-name)) fq-names)))
+       (when (and
+               fq-names
+               (equal (ast-value ast "type") "COMPILATION_UNIT"))
+         (setf fq-names (append (list (format nil "~{~a~^$~}" class-names)) fq-names))
+         (setf fq-names (append
+                          (list (ast-value (first (get-asts ast '("PACKAGE"))) "packageName"))
+                          fq-names)))
 
        (when (jsown:keyp ast "parent")
          (enqueue q (jsown:val ast "parent")))))))
 
-(defun find-fq-class-name-by-variable-name (variable-name ast path index)
-  (when variable-name
-    (find-fq-class-name-java (find-definition variable-name ast) path index)))
+(defmethod find-fq-class-name-generic ((analyzer analyzer-java) ast path)
+  (let ((name (ast-value ast "name")))
+    (cond
+      ((uiop:string-suffix-p (ast-value ast "type") "_LITERAL")
+       (if (equal (ast-value ast "type") "STRING_LITERAL")
+           "java.lang.String"
+           (subseq (ast-value ast "type") 0 (- (length (ast-value ast "type")) 8))))
+      ((equal (ast-value ast "type") "MEMBER_SELECT")
+       (cond
+         ((equal name "class")
+          "java.lang.Class")
+         ((equal name "length")
+          "INT")
+         (t
+          (find-fq-class-name-generic analyzer (first (get-asts ast '("IDENTIFIER"))) path))))
+      ((equal (ast-value ast "type") "VARIABLE")
+       (find-fq-class-name-generic analyzer (second (get-asts ast '("*"))) path))
+      ((equal (ast-value ast "type") "METHOD_INVOCATION")
+       (let* ((fq-name (find-fq-name ast path))
+              (method (find-signature fq-name
+                                      #'(lambda (fqcn) (load-signatures fqcn path))
+                                      path)))
+         (when method (cdr (assoc :return method)))))
+      (t
+       (let ((def (find-definition name ast)))
+         (if def
+             (find-fq-class-name-generic analyzer def path)
+             (concatenate
+               'string 
+               (cond
+                 ((is-primitive-type name)
+                  name)
+                 ;; FIXME: support for all types
+                 ((find name '("Long" "String") :test 'equal)
+                  (concatenate 'string "java.lang." name))
+                 ((equal name "class")
+                  "java.lang.Class")
+                 (t
+                  (loop
+                    with q = (make-queue)
+                    with fq-names
+                    initially (enqueue q ast)
+                    do
+                    (setf ast (dequeue q))
+                    (when (null ast) (return (format nil "~{~a~^.~}" fq-names)))
+
+                    (when (equal (ast-value ast "type") "COMPILATION_UNIT")
+                      (let ((import (first (ast-find-suffix
+                                             (get-asts ast '("IMPORT"))
+                                             (concatenate 'string "." name)
+                                             :key-name "fqName"))))
+                        (setf fq-names
+                              (if import
+                                  (list (ast-value import "fqName"))
+                                  (append
+                                    (list (ast-value (first (get-asts ast '("PACKAGE"))) "packageName"))
+                                    fq-names)))))
+
+                    (when (equal (ast-value ast "type") "CLASS")
+                      (if (or (filter-by-name (get-asts ast '("CLASS")) name)
+                              (filter-by-name (get-asts ast '("ENUM")) name))
+                          ;; inner class
+                          (push (concatenate 'string (ast-value ast "name") "$" name) fq-names)
+                          (push (format nil "~{~a~^$~}" (split #\. name)) fq-names)))
+
+                    (when (jsown:keyp ast "parent")
+                      (enqueue q (jsown:val ast "parent"))))))
+               (if (equal (ast-value ast "type") "ARRAY_TYPE") "[]" ""))))))))
 
 (defun find-chain-root (ast)
   (if (get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
@@ -455,36 +451,6 @@
                                  (return-from find-caller (values caller api))))))
                        nil))))))
     (find-caller fq-names ast path)))
-
-(defun find-fq-name-for-definition (target-name ast)
-  (loop
-    with q = (make-queue)
-    with fq-names
-    with class-names
-    initially (enqueue q ast)
-    do
-    (setf ast (dequeue q))
-    (unless ast (return (format nil "~{~a~^.~}" fq-names)))
-
-    (when (or (filter-by-name (get-asts ast '("METHOD")) target-name)
-              (and
-                (filter-by-name (get-asts ast '("VARIABLE")) target-name)
-                (equal (ast-value (jsown:val ast "parent") "type") "CLASS")))
-      (setf fq-names (append fq-names (list target-name))))
-    (when (and
-            fq-names
-            (equal (ast-value ast "type") "CLASS"))
-      (setf class-names (append (list (ast-value ast "name")) class-names)))
-    (when (and
-            fq-names
-            (equal (ast-value ast "type") "COMPILATION_UNIT"))
-      (setf fq-names (append (list (format nil "~{~a~^$~}" class-names)) fq-names))
-      (setf fq-names (append 
-                       (list (ast-value (first (get-asts ast '("PACKAGE"))) "packageName"))
-                       fq-names)))
-
-    (when (jsown:keyp ast "parent")
-      (enqueue q (jsown:val ast "parent")))))
 
 (defmethod find-class-hierarchy-generic ((analyzer analyzer-java)
                                          fq-class-name root-ast path)
