@@ -109,7 +109,13 @@
              (remove-duplicates
                (mapcan (lambda (k) (copy-list (gethash k *results*))) sort-keys)
                :test #'equal)))
-    (let* ((defs (mapcan (lambda (r) (find-definitions r)) ranges))
+    (let* ((defs (mapcan (lambda (r) (find-definitions r))
+                         (remove-if-not (lambda (r)
+                                          (is-analysis-target (context-kind ctx)
+                                                              (cdr (assoc :path r))
+                                                              (context-include ctx)
+                                                              (context-exclude ctx)))
+                                        ranges)))
            (def-keys (mapcar (lambda (d) (sxhash d)) defs))
            threads)
       (maphash (lambda (k v)
@@ -118,10 +124,7 @@
                *results*)
       (loop for def in defs
         with searching-defs
-        when (and (is-analysis-target (context-kind ctx)
-                                      (cdr (assoc :path def))
-                                      (context-include ctx) (context-exclude ctx))
-                  (null (gethash (sxhash def) *results*)))
+        when (null (gethash (sxhash def) *results*))
         do
         (setf searching-defs (append searching-defs `(((:type . "searching")
                                                        (:origin . ,def)))))

@@ -52,7 +52,7 @@
                   (make-context
                     :kind :java
                     :project-path (cdr (assoc :root-path params))
-                    :include (cdr (assoc :exclude params))
+                    :include (cdr (assoc :include params))
                     :exclude (cdr (assoc :exclude params))
                     :ast-index index
                     :analyzers (list
