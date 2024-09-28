@@ -318,49 +318,48 @@
                       (enqueue q (jsown:val ast "parent"))))))
                (if (equal (ast-value ast "type") "ARRAY_TYPE") "[]" ""))))))))
 
-(defun find-chain-root (ast)
-  (if (get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
-      (find-chain-root (first (get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))))
-      ast))
-
 (defun find-definition (variable-name ast &optional visitor)
   (unless variable-name
     (return-from find-definition))
 
-  (loop
-    with q = (make-queue)
-    with has-this = (equal (ast-value (first (get-asts ast '("IDENTIFIER"))) "name") "this")
-    initially (enqueue q ast)
-    do
-    (setf ast (dequeue q))
-    (when (null ast) (return))
-    (when visitor
-      (loop for ast in (remove-if (lambda (sibling)
-                                    (> (ast-value sibling "pos") (ast-value ast "pos")))
-                                  (get-asts ast '("*") :direction :horizontal))
-            do (funcall visitor ast)))
+  (labels ((find-chain-root (ast)
+             (if (get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
+                 (find-chain-root (first (get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))))
+                 ast)))
+    (loop
+      with q = (make-queue)
+      with has-this = (equal (ast-value (first (get-asts ast '("IDENTIFIER"))) "name") "this")
+      initially (enqueue q ast)
+      do
+      (setf ast (dequeue q))
+      (when (null ast) (return))
+      (when visitor
+        (loop for ast in (remove-if (lambda (sibling)
+                                      (> (ast-value sibling "pos") (ast-value ast "pos")))
+                                    (get-asts ast '("*") :direction :horizontal))
+              do (funcall visitor ast)))
 
-    (let ((variable (first (if (equal (ast-value ast "type") "VARIABLE")
-                               (filter-by-name (list ast) variable-name)
-                               (filter-by-name (get-asts ast '("VARIABLE")) variable-name)))))
-      (when (and variable
-                 (if has-this (not (equal (ast-value ast "type") "METHOD")) t))
-        (return variable)))
+      (let ((variable (first (if (equal (ast-value ast "type") "VARIABLE")
+                                 (filter-by-name (list ast) variable-name)
+                                 (filter-by-name (get-asts ast '("VARIABLE")) variable-name)))))
+        (when (and variable
+                   (if has-this (not (equal (ast-value ast "type") "METHOD")) t))
+          (return variable)))
 
-    (let ((lambda-exp (first (get-asts ast '("LAMBDA_EXPRESSION") :direction :upward))))
-      (when (get-asts lambda-exp '("VARIABLE"))
-        (let* ((root (find-chain-root (first (get-asts ast '("LAMBDA_EXPRESSION"
-                                                             "METHOD_INVOCATION")
-                                                       :direction :upward))))
+      (let ((lambda-exp (first (get-asts ast '("LAMBDA_EXPRESSION") :direction :upward))))
+        (when (get-asts lambda-exp '("VARIABLE"))
+          (let* ((root (find-chain-root (first (get-asts ast '("LAMBDA_EXPRESSION"
+                                                               "METHOD_INVOCATION")
+                                                         :direction :upward))))
 
-               (v (find-definition
-                    (ast-value (first (get-asts root '("MEMBER_SELECT" "IDENTIFIER"))) "name")
-                    root)))
-          (return (second (if v
-                              (get-asts v '("METHOD_INVOCATION" "*"))
-                              (get-asts root '("*"))))))))
+                 (v (find-definition
+                      (ast-value (first (get-asts root '("MEMBER_SELECT" "IDENTIFIER"))) "name")
+                      root)))
+            (return (second (if v
+                                (get-asts v '("METHOD_INVOCATION" "*"))
+                                (get-asts root '("*"))))))))
 
-    (enqueue q (ast-value ast "parent"))))
+      (enqueue q (ast-value ast "parent")))))
 
 (defmethod find-reference-to-literal-generic ((analyzer analyzer-java) ast path)
   (cond
