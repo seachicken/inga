@@ -248,11 +248,11 @@
       (when caller
         (setf server-method (get-method api caller))))
     (multiple-value-bind (caller api) (find-caller
-                                        (remove-if (lambda (a) (not (assoc :path-i a)))
+                                        (remove-if (lambda (a) (not (assoc :path-literal-i a)))
                                                    (gethash :spring *rest-client-apis*))
                                         ast path)
       (when caller
-        (let* ((param (get-parameter (cdr (assoc :path-i api)) caller))
+        (let* ((param (get-parameter (cdr (assoc :path-literal-i api)) caller))
                (literal-poss (find-reference-to-literal param path))
                (host (get-host param)))
           (when host (setf server-host host))
