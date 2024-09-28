@@ -28,7 +28,6 @@
           (gethash :spring *rest-client-apis*))
     (push '((:fq-name . "org.springframework.web.client.RestTemplate.delete-java.net.URI")
             (:call-type . :rest-template)
-            (:path-i . 0)
             (:method . "DELETE"))
           (gethash :spring *rest-client-apis*))
     (push '((:fq-name . "org.springframework.web.client.RestTemplate.exchange-java.lang.String-org.springframework.http.HttpMethod-org.springframework.http.HttpEntity-org.springframework.core.ParameterizedTypeReference-java.lang.Object")
