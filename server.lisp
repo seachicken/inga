@@ -19,7 +19,6 @@
                 #:context-lc
                 #:context-processes)
   (:import-from #:inga/file
-                #:convert-to-pos 
                 #:convert-to-top-offset)
   (:import-from #:inga/git
                 #:diff-to-ranges)
@@ -31,8 +30,9 @@
                 #:log-info-generic)
   (:import-from #:inga/main
                 #:run)
-  (:import-from #:inga/plugin/jvm-helper
-                #:find-base-path))
+  (:import-from #:inga/reporter
+                #:convert-to-report-pos
+                #:output-report))
 (in-package #:inga/server)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
@@ -182,11 +182,7 @@
   (when (or (null *processing-output*) (not (sb-thread:thread-alive-p *processing-output*)))
     (sb-thread:make-thread
       (lambda ()
-        (with-open-file (out (merge-pathnames "report.json" output-path)
-                             :direction :output
-                             :if-exists :supersede
-                             :if-does-not-exist :create)
-          (format out "~a" (to-json (dequeue-output) root-path)))
+        (output-report (dequeue-output) output-path root-path)
         (process-output-if-present (dequeue-output) output-path root-path)))))
 
 (defun extract-json (stream)
@@ -258,7 +254,7 @@
 (defun to-state-json (change-pos root-path)
   (jsown:to-json
     `(:obj
-       ("didChange" . ,(cons :obj (key-downcase (convert-to-output-pos root-path change-pos)))))))
+       ("didChange" . ,(cons :obj (convert-to-report-pos change-pos root-path))))))
 
 (defun init-msg-q ()
   (setf *msg-q* (make-queue)))
@@ -296,49 +292,4 @@
         do
         (when (uiop:string-prefix-p root-path path)
           (return (enough-namestring path root-path)))))
-
-(defun to-json (results root-path)
-  (jsown:to-json
-    (mapcan (lambda (r)
-              `((:obj
-                  ("type" . ,(cdr (assoc :type r)))
-                  ("origin" . ,(cons :obj (key-downcase
-                                            (convert-to-output-pos
-                                              root-path
-                                              (cdr (assoc :origin r))))))
-                  ,@(when (assoc :entrypoint r)
-                      `(("entrypoint" . ,(cons :obj (key-downcase
-                                                      (convert-to-output-pos
-                                                        root-path
-                                                        (cdr (assoc :entrypoint r))))))))
-                  ,@(when (or (equal (cdr (assoc :type r)) "entrypoint")
-                              (equal (cdr (assoc :type r)) "searching"))
-                      `(("service" . ,(first (last
-                                               (pathname-directory
-                                                 (find-base-path
-                                                   (merge-pathnames
-                                                     (cdr (assoc :path
-                                                                 (convert-to-output-pos
-                                                                   root-path
-                                                                   (if (equal (cdr (assoc :type r)) "entrypoint")
-                                                                       (cdr (assoc :entrypoint r))
-                                                                       (cdr (assoc :origin r))))))
-                                                     root-path)))))))))))
-            results)))
-
-(defun convert-to-output-pos (root-path pos)
-  (unless pos (return-from convert-to-output-pos))
-
-  (when (eq (cdr (assoc :type pos)) :rest-server)
-    (setf pos (cdr (assoc :file-pos pos))))
-  (let ((text-pos (convert-to-pos (merge-pathnames (cdr (assoc :path pos)) root-path)
-                                  (cdr (assoc :top-offset pos)))))
-    (list
-      (cons :path (enough-namestring (cdr (assoc :path pos)) root-path))
-      (cons :name (cdr (assoc :name pos)))
-      (cons :line (cdr (assoc :line text-pos)))
-      (cons :offset (cdr (assoc :offset text-pos))))))
-
-(defun key-downcase (obj)
-  (mapcar (lambda (p) (cons (string-downcase (car p)) (cdr p))) obj))
 
