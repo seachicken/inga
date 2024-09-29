@@ -124,7 +124,7 @@
                *results*)
       (loop for def in defs
         with searching-defs
-        when (null (gethash (sxhash def) *results*))
+        unless (gethash (sxhash def) *results*)
         do
         (setf searching-defs (append searching-defs `(((:type . "searching")
                                                        (:origin . ,def)))))
