@@ -254,7 +254,7 @@
 (defun to-state-json (change-pos root-path)
   (jsown:to-json
     `(:obj
-       ("didChange" . ,(cons :obj (convert-to-report-pos root-path change-pos))))))
+       ("didChange" . ,(cons :obj (convert-to-report-pos change-pos root-path))))))
 
 (defun init-msg-q ()
   (setf *msg-q* (make-queue)))
