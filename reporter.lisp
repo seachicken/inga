@@ -14,32 +14,39 @@
                        :direction :output
                        :if-exists :supersede
                        :if-does-not-exist :create)
-    (format out "~a"
-            (jsown:to-json
-              (mapcan (lambda (r)
-                        `((:obj
-                            ("type" . ,(cdr (assoc :type r)))
-                            ("origin" . ,(cons :obj (convert-to-report-pos
-                                                      (cdr (assoc :origin r))
-                                                      root-path)))
-                            ,@(when (assoc :entrypoint r)
-                                `(("entrypoint" . ,(cons :obj (convert-to-report-pos
-                                                                (cdr (assoc :entrypoint r))
-                                                                root-path)))))
-                            ,@(when (or (equal (cdr (assoc :type r)) "entrypoint")
-                                        (equal (cdr (assoc :type r)) "searching"))
-                                `(("service" . ,(first (last
-                                                         (pathname-directory
-                                                           (find-base-path
-                                                             (merge-pathnames
-                                                               (cdr (assoc "path"
-                                                                           (convert-to-report-pos
-                                                                             (if (equal (cdr (assoc :type r)) "entrypoint")
-                                                                                 (cdr (assoc :entrypoint r))
-                                                                                 (cdr (assoc :origin r)))
-                                                                             root-path)))
-                                                               root-path)))))))))))
-                      results))))
+    (labels ((find-service-name (pos)
+               (first
+                 (last
+                   (pathname-directory
+                     (find-base-path
+                       (merge-pathnames
+                         (cdr (assoc "path"
+                                     (convert-to-report-pos
+                                       (if (equal (cdr (assoc :type pos)) "entrypoint")
+                                           (cdr (assoc :entrypoint pos))
+                                           (cdr (assoc :origin pos)))
+                                       root-path)))
+                         root-path))))))
+             (convert (poss)
+               (mapcan (lambda (pos)
+                         `((:obj
+                             ("type" . ,(cdr (assoc :type pos)))
+                             ("origin" . ,(cons :obj (convert-to-report-pos
+                                                       (cdr (assoc :origin pos))
+                                                       root-path)))
+                             ,@(when (assoc :entrypoint pos)
+                                 `(("entrypoint" . ,(cons :obj (convert-to-report-pos
+                                                                 (cdr (assoc :entrypoint pos))
+                                                                 root-path)))))
+                             ,@(when (or (equal (cdr (assoc :type pos)) "entrypoint")
+                                         (equal (cdr (assoc :type pos)) "searching"))
+                                 `(("service" . ,(find-service-name pos)))))))
+                       poss)))
+      (format out "~a"
+              (jsown:to-json
+                `(:obj
+                   ("version" . "0.2")
+                   ("results" . ,(mapcar #'convert results)))))))
   (merge-pathnames "report.json" output-path))
 
 (defun convert-to-report-pos (pos root-path)
