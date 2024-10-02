@@ -106,16 +106,16 @@
 
 (defun analyze (ctx ranges &optional (callback (lambda (results))))
   (labels ((flatten-results (sort-keys)
-             (remove-duplicates
-               (mapcan (lambda (k) (copy-list (gethash k *results*))) sort-keys)
-               :test #'equal)))
-    (let* ((defs (mapcan (lambda (r) (find-definitions r))
-                         (remove-if-not (lambda (r)
-                                          (is-analysis-target (context-kind ctx)
-                                                              (cdr (assoc :path r))
-                                                              (context-include ctx)
-                                                              (context-exclude ctx)))
-                                        ranges)))
+             (remove nil (mapcar (lambda (k) (copy-list (gethash k *results*))) sort-keys))))
+    (let* ((defs (remove-duplicates
+                   (mapcan (lambda (r) (find-definitions r))
+                           (remove-if-not (lambda (r)
+                                            (is-analysis-target (context-kind ctx)
+                                                                (cdr (assoc :path r))
+                                                                (context-include ctx)
+                                                                (context-exclude ctx)))
+                                          ranges))
+                   :test #'equal))
            (def-keys (mapcar (lambda (d) (sxhash d)) defs))
            threads)
       (maphash (lambda (k v)
@@ -128,7 +128,7 @@
         do
         (setf searching-defs (append searching-defs `(((:type . "searching")
                                                        (:origin . ,def)))))
-        (funcall callback (append (flatten-results def-keys) searching-defs))
+        (funcall callback (append (flatten-results def-keys) (list searching-defs)))
         (let ((def (copy-list def)))
           (push (sb-thread:make-thread
                   (lambda ()
