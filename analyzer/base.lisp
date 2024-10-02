@@ -128,7 +128,7 @@
         do
         (setf searching-defs (append searching-defs `(((:type . "searching")
                                                        (:origin . ,def)))))
-        (funcall callback (append (flatten-results def-keys) searching-defs))
+        (funcall callback (append (flatten-results def-keys) (list searching-defs)))
         (let ((def (copy-list def)))
           (push (sb-thread:make-thread
                   (lambda ()
