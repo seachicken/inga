@@ -106,7 +106,7 @@
 
 (defun analyze (ctx ranges &optional (callback (lambda (results))))
   (labels ((flatten-results (sort-keys)
-             (mapcar (lambda (k) (copy-list (gethash k *results*))) sort-keys)))
+             (remove nil (mapcar (lambda (k) (copy-list (gethash k *results*))) sort-keys))))
     (let* ((defs (remove-duplicates
                    (mapcan (lambda (r) (find-definitions r))
                            (remove-if-not (lambda (r)

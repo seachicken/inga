@@ -22,16 +22,16 @@
 (test analyze-monolithic
   (with-fixture jvm-ctx (*spring-boot-path* :include '("src/main/**"))
     (is (equal
-          '(((:type . "entrypoint")
-             (:origin
-               (:path . "src/main/java/io/spring/application/ArticleQueryService.java")
-               (:name . "findRecentArticles")
-               (:line . 100) (:offset . 26))
-             (:entrypoint
-               (:path . "src/main/java/io/spring/api/ArticlesApi.java")
-               (:name . "getArticles")
-               (:line . 49) (:offset . 25))))
-          (mapcar (lambda (r) (get-file-pos r *spring-boot-path*))
+          '((((:type . "entrypoint")
+              (:origin
+                (:path . "src/main/java/io/spring/application/ArticleQueryService.java")
+                (:name . "findRecentArticles")
+                (:line . 100) (:offset . 26))
+              (:entrypoint
+                (:path . "src/main/java/io/spring/api/ArticlesApi.java")
+                (:name . "getArticles")
+                (:line . 49) (:offset . 25)))))
+          (mapcar (lambda (r) (mapcar (lambda (r) (get-file-pos r *spring-boot-path*)) r))
                   (analyze
                     inga/test/helper::*ctx*
                     `(((:path . "src/main/java/io/spring/application/ArticleQueryService.java")
@@ -51,34 +51,34 @@
 (test analyze-microservices
   (with-fixture jvm-ctx (*lightrun-path*)
     (is (equal
-          '(((:type . "entrypoint")
-             (:origin
-               (:path . "users-service/src/main/java/com/baeldung/usersservice/service/UsersService.java")
-               (:name . "getUserById")
-               (:line . 34) (:offset . 23))
-             (:entrypoint
-               (:path . "users-service/src/main/java/com/baeldung/usersservice/adapters/http/UsersController.java")
-               (:name . "getUser")
-               (:line . 38) (:offset . 25)))
-            ((:type . "connection")
-             (:origin
-               (:path . "users-service/src/main/java/com/baeldung/usersservice/adapters/http/UsersController.java")
-               (:name . "getUser")
-               (:line . 38) (:offset . 25))
-             (:entrypoint
-               (:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/users/UserRepository.java")
-               (:name . "getUserById")
-               (:line . 18) (:offset . 17)))
-            ((:type . "entrypoint")
-             (:origin
-               (:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/users/UserRepository.java")
-               (:name . "getUserById")
-               (:line . 18) (:offset . 17))
-             (:entrypoint
-               (:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
-               (:name . "getTaskById")
-               (:line . 25) (:offset . 25))))
-          (mapcar (lambda (r) (get-file-pos r *lightrun-path*))
+          '((((:type . "entrypoint")
+              (:origin
+                (:path . "users-service/src/main/java/com/baeldung/usersservice/service/UsersService.java")
+                (:name . "getUserById")
+                (:line . 34) (:offset . 23))
+              (:entrypoint
+                (:path . "users-service/src/main/java/com/baeldung/usersservice/adapters/http/UsersController.java")
+                (:name . "getUser")
+                (:line . 38) (:offset . 25)))
+             ((:type . "connection")
+              (:origin
+                (:path . "users-service/src/main/java/com/baeldung/usersservice/adapters/http/UsersController.java")
+                (:name . "getUser")
+                (:line . 38) (:offset . 25))
+              (:entrypoint
+                (:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/users/UserRepository.java")
+                (:name . "getUserById")
+                (:line . 18) (:offset . 17)))
+             ((:type . "entrypoint")
+              (:origin
+                (:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/users/UserRepository.java")
+                (:name . "getUserById")
+                (:line . 18) (:offset . 17))
+              (:entrypoint
+                (:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
+                (:name . "getTaskById")
+                (:line . 25) (:offset . 25)))))
+          (mapcar (lambda (r) (mapcar (lambda (r) (get-file-pos r *lightrun-path*)) r))
                   (analyze
                     inga/test/helper::*ctx*
                     `(((:path . "users-service/src/main/java/com/baeldung/usersservice/service/UsersService.java")
@@ -100,16 +100,16 @@
 (test analyze-recursion
   (with-fixture jvm-ctx (*java-path*)
     (is (equal
-          '(((:type . "entrypoint")
-             (:origin
-               (:path . "src/main/java/p1/RecursionReference.java")
-               (:name . "method")
-               (:line . 4) (:offset . 17))
-             (:entrypoint
-               (:path . "src/main/java/p1/RecursionReference.java")
-               (:name . "method")
-               (:line . 4) (:offset . 17))))
-          (mapcar (lambda (r) (get-file-pos r *java-path*))
+          '((((:type . "entrypoint")
+              (:origin
+                (:path . "src/main/java/p1/RecursionReference.java")
+                (:name . "method")
+                (:line . 4) (:offset . 17))
+              (:entrypoint
+                (:path . "src/main/java/p1/RecursionReference.java")
+                (:name . "method")
+                (:line . 4) (:offset . 17)))))
+          (mapcar (lambda (r) (mapcar (lambda (r) (get-file-pos r *java-path*)) r))
                   (analyze
                     inga/test/helper::*ctx*
                     `(((:path . "src/main/java/p1/RecursionReference.java")
@@ -136,21 +136,22 @@
       (analyze inga/test/helper::*ctx* second-ranges
                (lambda (results)
                  (is (equal
-                       '(((:type . "entrypoint")
-                          (:origin
-                            (:path . "src/main/java/integration/MethodDefinition.java")
-                            (:name . "method1")
-                            (:line . 4) (:offset . 17))
-                          (:entrypoint
-                            (:path . "src/main/java/integration/MethodReference.java")
-                            (:name . "method")
-                            (:line . 4) (:offset . 17)))
-                         ((:type . "searching")
-                          (:origin
-                            (:path . "src/main/java/integration/MethodDefinition.java")
-                            (:name . "method2")
-                            (:line . 7) (:offset . 17))))
-                       (mapcar (lambda (r) (get-file-pos r *java-path*)) results))))))))
+                       '((((:type . "entrypoint")
+                           (:origin
+                             (:path . "src/main/java/integration/MethodDefinition.java")
+                             (:name . "method1")
+                             (:line . 4) (:offset . 17))
+                           (:entrypoint
+                             (:path . "src/main/java/integration/MethodReference.java")
+                             (:name . "method")
+                             (:line . 4) (:offset . 17))))
+                         (((:type . "searching")
+                           (:origin
+                             (:path . "src/main/java/integration/MethodDefinition.java")
+                             (:name . "method2")
+                             (:line . 7) (:offset . 17)))))
+                       (mapcar (lambda (r) (mapcar (lambda (r) (get-file-pos r *java-path*)) r))
+                               results))))))))
 
 (test find-definitions-for-constructor
   (with-fixture jvm-ctx (*java-path*)
