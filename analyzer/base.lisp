@@ -110,7 +110,7 @@
 (defgeneric set-index-group (analyzer path)
   (:method (analyzer path)))
 
-(defun analyze (ctx ranges &key (callback (lambda (results))) (failure (lambda (failures))))
+(defun analyze (ctx ranges &key (success (lambda (results))) (failure (lambda (failures))))
   (labels ((flatten-results (sort-keys)
              (remove nil (mapcar (lambda (k) (copy-list (gethash k *results*))) sort-keys))))
     (let* ((defs (remove-duplicates
@@ -134,7 +134,7 @@
         do
         (setf searching-defs (append searching-defs `(((:type . "searching")
                                                        (:origin . ,def)))))
-        (funcall callback (append (flatten-results def-keys) (list searching-defs)))
+        (funcall success (append (flatten-results def-keys) (list searching-defs)))
         (let ((def (copy-list def)))
           (push (sb-thread:make-thread
                   (lambda ()

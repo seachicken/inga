@@ -53,7 +53,7 @@
                    ("results" . ,(mapcar #'convert results)))))))
   (merge-pathnames "report.json" output-path))
 
-(defun output-error (errors output-path root-path)
+(defun output-error (errors output-path)
   (with-open-file (out (merge-pathnames "error.json" output-path)
                        :direction :output
                        :if-exists :supersede
