@@ -77,7 +77,9 @@
            (results (analyze ctx (diff-to-ranges (cdr (assoc :diff params))
                                                  (cdr (assoc :root-path params)))
                              :failure (lambda (fs) (setf failures fs)))))
-      (output-error failures (cdr (assoc :output-path params)))
+      (output-error failures
+                    (cdr (assoc :output-path params))
+                    (cdr (assoc :root-path params)))
       (format t "~%~a~%"
               (alexandria:read-file-into-string
                 (output-report results

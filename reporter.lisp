@@ -18,20 +18,7 @@
                        :direction :output
                        :if-exists :supersede
                        :if-does-not-exist :create)
-    (labels ((find-service-name (pos)
-               (first
-                 (last
-                   (pathname-directory
-                     (find-base-path
-                       (merge-pathnames
-                         (cdr (assoc "path"
-                                     (convert-to-report-pos
-                                       (if (equal (cdr (assoc :type pos)) "entrypoint")
-                                           (cdr (assoc :entrypoint pos))
-                                           (cdr (assoc :origin pos)))
-                                       root-path)))
-                         root-path))))))
-             (convert (poss)
+    (labels ((convert (poss)
                (mapcan (lambda (pos)
                          `((:obj
                              ("type" . ,(cdr (assoc :type pos)))
@@ -44,7 +31,15 @@
                                                                  root-path)))))
                              ,@(when (or (equal (cdr (assoc :type pos)) "entrypoint")
                                          (equal (cdr (assoc :type pos)) "searching"))
-                                 `(("service" . ,(find-service-name pos)))))))
+                                 `(("service" . ,(find-service-name
+                                                   (cdr (assoc "path"
+                                                               (convert-to-report-pos
+                                                                 (if (equal (cdr (assoc :type pos))
+                                                                            "entrypoint")
+                                                                     (cdr (assoc :entrypoint pos))
+                                                                     (cdr (assoc :origin pos)))
+                                                                 root-path)))
+                                                   root-path)))))))
                        poss)))
       (format out "~a"
               (jsown:to-json
@@ -53,7 +48,7 @@
                    ("results" . ,(mapcar #'convert results)))))))
   (merge-pathnames "report.json" output-path))
 
-(defun output-error (errors output-path)
+(defun output-error (errors output-path root-path)
   (with-open-file (out (merge-pathnames "error.json" output-path)
                        :direction :output
                        :if-exists :supersede
@@ -68,6 +63,8 @@
                        (signature-load-failed
                          (push `(:obj
                                   ("type" . ,(get-type error))
+                                  ("service". ,(find-service-name (signature-load-failed-path error)
+                                                                  root-path))
                                   ("path" . ,(signature-load-failed-path error))) results)))
                      finally (return (remove-duplicates results :test #'equal)))))
       (format out "~a"
@@ -88,4 +85,10 @@
       ("name" . ,(cdr (assoc :name pos)))
       ("line" . ,(cdr (assoc :line text-pos)))
       ("offset" . ,(cdr (assoc :offset text-pos))))))
+
+(defun find-service-name (path root-path)
+  (first
+    (last
+      (pathname-directory
+        (find-base-path (merge-pathnames path root-path))))))
 
