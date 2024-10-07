@@ -1,11 +1,15 @@
 (defpackage #:inga/reporter
   (:use #:cl)
   (:import-from #:jsown)
+  (:import-from #:inga/analyzer/base
+                #:signature-load-failed
+                #:signature-load-failed-path)
   (:import-from #:inga/file
                 #:convert-to-pos)
   (:import-from #:inga/plugin/jvm-helper
                 #:find-base-path)
   (:export #:output-report
+           #:output-error
            #:convert-to-report-pos))
 (in-package #:inga/reporter)
 
@@ -48,6 +52,28 @@
                    ("version" . "0.2")
                    ("results" . ,(mapcar #'convert results)))))))
   (merge-pathnames "report.json" output-path))
+
+(defun output-error (errors output-path root-path)
+  (with-open-file (out (merge-pathnames "error.json" output-path)
+                       :direction :output
+                       :if-exists :supersede
+                       :if-does-not-exist :create)
+    (labels ((convert (errors)
+               (loop for error in errors
+                     with results
+                     do
+                     (typecase error
+                       (signature-load-failed
+                         (push `(:obj
+                                  ("type" . "signature-load-failed")
+                                  ("path" . ,(signature-load-failed-path error))) results)))
+                     finally (return (remove-duplicates results :test #'equal)))))
+      (format out "~a"
+              (jsown:to-json
+                `(:obj
+                   ("version" . "0.1")
+                   ("errors" . ,(convert errors)))))))
+  (merge-pathnames "error.json" output-path))
 
 (defun convert-to-report-pos (pos root-path)
   (unless pos (return-from convert-to-report-pos))

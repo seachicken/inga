@@ -271,7 +271,9 @@
               (method (find-signature fq-name
                                       #'(lambda (fqcn) (load-signatures fqcn path))
                                       path)))
-         (when method (cdr (assoc :return method)))))
+         (if method
+             (cdr (assoc :return method))
+             (signal (make-condition 'signature-load-failed :path path)))))
       (t
        (let ((def (find-definition name ast)))
          (if def
