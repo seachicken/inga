@@ -58,14 +58,16 @@
                        :direction :output
                        :if-exists :supersede
                        :if-does-not-exist :create)
-    (labels ((convert (errors)
+    (labels ((get-type (error)
+               (string-downcase (type-of error)))
+             (convert (errors)
                (loop for error in errors
                      with results
                      do
                      (typecase error
                        (signature-load-failed
                          (push `(:obj
-                                  ("type" . "signature-load-failed")
+                                  ("type" . ,(get-type error))
                                   ("path" . ,(signature-load-failed-path error))) results)))
                      finally (return (remove-duplicates results :test #'equal)))))
       (format out "~a"
