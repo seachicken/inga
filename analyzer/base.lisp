@@ -27,6 +27,7 @@
   (:import-from #:inga/logger
                 #:log-debug)
   (:export #:analyzer
+           #:signature-load-failed
            #:*analyzers*
            #:*file-index*
            #:*rest-client-apis*
@@ -80,6 +81,11 @@
      :initarg :index
      :accessor analyzer-index)))
 
+(define-condition signature-load-failed ()
+  ((path
+     :initarg :path
+     :reader signature-load-failed-path)))
+
 (defgeneric start-analyzer (kind include exclude path index)
   (:method (kind include exclude path index)
    (error (format nil "unknown analyzer. kind: ~a" kind))))
@@ -104,7 +110,7 @@
 (defgeneric set-index-group (analyzer path)
   (:method (analyzer path)))
 
-(defun analyze (ctx ranges &optional (callback (lambda (results))))
+(defun analyze (ctx ranges &key (success (lambda (results))) (failure (lambda (failures))))
   (labels ((flatten-results (sort-keys)
              (remove nil (mapcar (lambda (k) (copy-list (gethash k *results*))) sort-keys))))
     (let* ((defs (remove-duplicates
@@ -117,7 +123,7 @@
                                           ranges))
                    :test #'equal))
            (def-keys (mapcar (lambda (d) (sxhash d)) defs))
-           threads)
+           threads failures)
       (maphash (lambda (k v)
                  (when (not (member k def-keys))
                    (remhash k *results*)))
@@ -128,11 +134,15 @@
         do
         (setf searching-defs (append searching-defs `(((:type . "searching")
                                                        (:origin . ,def)))))
-        (funcall callback (append (flatten-results def-keys) (list searching-defs)))
+        (funcall success (append (flatten-results def-keys) (list searching-defs)))
         (let ((def (copy-list def)))
           (push (sb-thread:make-thread
                   (lambda ()
-                    (setf (gethash (sxhash def) *results*) (analyze-by-definition ctx def))))
+                    (handler-bind ((signature-load-failed
+                                     (lambda (s)
+                                       (push s failures)
+                                       (funcall failure failures))))
+                      (setf (gethash (sxhash def) *results*) (analyze-by-definition ctx def)))))
                 threads))
         finally (loop for thread in threads do (sb-thread:join-thread thread)))
       (flatten-results def-keys))))

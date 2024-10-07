@@ -24,6 +24,7 @@
   (:import-from #:inga/plugin/jvm-dependency-loader)
   (:import-from #:inga/plugin/spring/spring-property-loader)
   (:import-from #:inga/reporter
+                #:output-error
                 #:output-report))
 (in-package #:inga/cli)
 
@@ -72,8 +73,13 @@
                 (t (error "context not found. language: ~a" language)))))
     (start-client (context-lc ctx))
 
-    (let ((results (analyze ctx (diff-to-ranges (cdr (assoc :diff params))
-                                                (cdr (assoc :root-path params))))))
+    (let* (failures
+           (results (analyze ctx (diff-to-ranges (cdr (assoc :diff params))
+                                                 (cdr (assoc :root-path params)))
+                             :failure (lambda (fs) (setf failures fs)))))
+      (output-error failures
+                    (cdr (assoc :output-path params))
+                    (cdr (assoc :root-path params)))
       (format t "~%~a~%"
               (alexandria:read-file-into-string
                 (output-report results
