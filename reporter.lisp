@@ -1,11 +1,15 @@
 (defpackage #:inga/reporter
   (:use #:cl)
   (:import-from #:jsown)
+  (:import-from #:inga/analyzer/base
+                #:signature-load-failed
+                #:signature-load-failed-path)
   (:import-from #:inga/file
                 #:convert-to-pos)
   (:import-from #:inga/plugin/jvm-helper
                 #:find-base-path)
   (:export #:output-report
+           #:output-error
            #:convert-to-report-pos))
 (in-package #:inga/reporter)
 
@@ -14,20 +18,7 @@
                        :direction :output
                        :if-exists :supersede
                        :if-does-not-exist :create)
-    (labels ((find-service-name (pos)
-               (first
-                 (last
-                   (pathname-directory
-                     (find-base-path
-                       (merge-pathnames
-                         (cdr (assoc "path"
-                                     (convert-to-report-pos
-                                       (if (equal (cdr (assoc :type pos)) "entrypoint")
-                                           (cdr (assoc :entrypoint pos))
-                                           (cdr (assoc :origin pos)))
-                                       root-path)))
-                         root-path))))))
-             (convert (poss)
+    (labels ((convert (poss)
                (mapcan (lambda (pos)
                          `((:obj
                              ("type" . ,(cdr (assoc :type pos)))
@@ -40,7 +31,15 @@
                                                                  root-path)))))
                              ,@(when (or (equal (cdr (assoc :type pos)) "entrypoint")
                                          (equal (cdr (assoc :type pos)) "searching"))
-                                 `(("service" . ,(find-service-name pos)))))))
+                                 `(("service" . ,(find-service-name
+                                                   (cdr (assoc "path"
+                                                               (convert-to-report-pos
+                                                                 (if (equal (cdr (assoc :type pos))
+                                                                            "entrypoint")
+                                                                     (cdr (assoc :entrypoint pos))
+                                                                     (cdr (assoc :origin pos)))
+                                                                 root-path)))
+                                                   root-path)))))))
                        poss)))
       (format out "~a"
               (jsown:to-json
@@ -48,6 +47,32 @@
                    ("version" . "0.2")
                    ("results" . ,(mapcar #'convert results)))))))
   (merge-pathnames "report.json" output-path))
+
+(defun output-error (errors output-path root-path)
+  (with-open-file (out (merge-pathnames "error.json" output-path)
+                       :direction :output
+                       :if-exists :supersede
+                       :if-does-not-exist :create)
+    (labels ((get-type (error)
+               (string-downcase (type-of error)))
+             (convert (errors)
+               (loop for error in errors
+                     with results
+                     do
+                     (typecase error
+                       (signature-load-failed
+                         (push `(:obj
+                                  ("type" . ,(get-type error))
+                                  ("service". ,(find-service-name (signature-load-failed-path error)
+                                                                  root-path))
+                                  ("path" . ,(signature-load-failed-path error))) results)))
+                     finally (return (remove-duplicates results :test #'equal)))))
+      (format out "~a"
+              (jsown:to-json
+                `(:obj
+                   ("version" . "0.1")
+                   ("errors" . ,(convert errors)))))))
+  (merge-pathnames "error.json" output-path))
 
 (defun convert-to-report-pos (pos root-path)
   (unless pos (return-from convert-to-report-pos))
@@ -60,4 +85,10 @@
       ("name" . ,(cdr (assoc :name pos)))
       ("line" . ,(cdr (assoc :line text-pos)))
       ("offset" . ,(cdr (assoc :offset text-pos))))))
+
+(defun find-service-name (path root-path)
+  (first
+    (last
+      (pathname-directory
+        (find-base-path (merge-pathnames path root-path))))))
 

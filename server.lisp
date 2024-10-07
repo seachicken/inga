@@ -32,6 +32,7 @@
                 #:run)
   (:import-from #:inga/reporter
                 #:convert-to-report-pos
+                #:output-error
                 #:output-report))
 (in-package #:inga/server)
 
@@ -169,8 +170,10 @@
              (process-output-if-present
                (analyze
                  ctx diff
-                 (lambda (results)
-                   (process-output-if-present results output-path root-path)))
+                 :success (lambda (results)
+                            (process-output-if-present results output-path root-path))
+                 :failure (lambda (failures)
+                            (output-error failures output-path root-path)))
                output-path root-path)))))
       (process-msg-if-present (dequeue-msg) ctx root-path output-path temp-path base-commit root-host-paths))))
 

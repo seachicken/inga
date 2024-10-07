@@ -268,9 +268,14 @@
        (find-fq-class-name-generic analyzer (second (get-asts ast '("*"))) path))
       ((equal (ast-value ast "type") "METHOD_INVOCATION")
        (let* ((fq-name (find-fq-name ast path))
-              (method (find-signature fq-name
-                                      #'(lambda (fqcn) (load-signatures fqcn path))
-                                      path)))
+              (method (find-signature
+                        fq-name
+                        #'(lambda (fqcn)
+                            (let ((signatures (load-signatures fqcn path)))
+                              (if signatures
+                                  signatures
+                                  (signal (make-condition 'signature-load-failed :path path)))))
+                        path)))
          (when method (cdr (assoc :return method)))))
       (t
        (let ((def (find-definition name ast)))
