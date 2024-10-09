@@ -130,7 +130,7 @@
 
 (defparameter *command-lock* (sb-thread:make-mutex))
 
-(defunc exec-command (process cmd)
+(defun exec-command (process cmd)
   (funtime
     (lambda ()
       (sb-thread:with-mutex (*command-lock*)
