@@ -259,7 +259,7 @@
           ((is-primitive-type name)
            name)
           ;; https://download.java.net/java/early_access/valhalla/docs/api/java.base/java/lang/package-summary.html
-          ((find name '("Boolean" "Byte" "Character" "Double" "Long" "String") :test 'equal)
+          ((find name '("Boolean" "Byte" "Character" "Double" "Float" "Integer" "Long" "Short" "String") :test 'equal)
            (concatenate 'string "java.lang." name))
           ((uiop:string-suffix-p (ast-value ast "type") "_LITERAL")
            (if (equal (ast-value ast "type") "STRING_LITERAL")
