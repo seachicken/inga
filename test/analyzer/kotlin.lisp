@@ -39,6 +39,19 @@
                       '((:line . 4) (:offset . 5))))))
           (find-definitions (create-range "src/main/kotlin/pkt1/LocalFunctionDefinition.kt" :line 5))))))
 
+(test find-definitions-with-annonymous-inner-classes
+  (with-fixture jvm-ctx (*kotlin-path*)
+    (is (equal
+          `(((:type . :module-default)
+             (:path . "src/main/kotlin/pkt1/AnonymousInnerClassReference.kt")
+             (:name . "method")
+             (:fq-name . "pkt1.AnonymousInnerClassReference.method")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames "src/main/kotlin/pkt1/AnonymousInnerClassReference.kt" *kotlin-path*)
+                      '((:line . 4) (:offset . 5))))))
+          (find-definitions (create-range "src/main/kotlin/pkt1/AnonymousInnerClassReference.kt" :line 6))))))
+
 (test find-definitions-for-value-class
   (with-fixture jvm-ctx (*kotlin-path*)
     (is (equal

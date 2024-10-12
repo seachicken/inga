@@ -101,7 +101,8 @@
       (unless ast (return))
 
       (when (and (or (and (equal (ast-value ast "type") "FUN")
-                          (not (get-asts ast '("BLOCK") :direction :upward)))
+                          (not (get-asts ast '("BLOCK") :direction :upward))
+                          (not (get-asts ast '("CLASS_BODY" "OBJECT_DECLARATION") :direction :upward)))
                      (equal (ast-value ast "type") "PRIMARY_CONSTRUCTOR"))
                  (contains-offset (jsown:val (jsown:val ast "textRange") "startOffset")
                                   (jsown:val (jsown:val ast "textRange") "endOffset")            
