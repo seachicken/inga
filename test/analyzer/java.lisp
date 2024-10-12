@@ -301,6 +301,22 @@
               (:fq-name . "p1.NewClassHelper.method"))
             *index*)))))
 
+(test find-references-with-same-class-name-fields
+  (with-fixture jvm-ctx (*java-path*)
+    (is (equal
+          ;;                 ↓
+          ;; FieldDefinition = v;
+          `(((:path . "src/main/java/p1/FieldReference.java")
+             (:top-offset .
+              ,(convert-to-top-offset
+                 (merge-pathnames "src/main/java/p1/FieldReference.java" *java-path*)
+                 '((:line . 7) (:offset . 25))))))
+          (find-references
+            `((:path . "src/main/java/p1/FieldReference.java")
+              (:name . "FieldDefinition")
+              (:fq-name . "p1.FieldReference.FieldDefinition"))
+            *index*)))))
+
 (test find-references-for-constructor
   (with-fixture jvm-ctx (*java-path*)
     (is (equal
