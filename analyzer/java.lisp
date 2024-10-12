@@ -145,6 +145,8 @@
 
 (defmethod find-fq-name-generic ((analyzer analyzer-java) ast path)
   (cond
+    ((equal (ast-value ast "type") "MODIFIERS")
+     nil)
     ((equal (ast-value ast "type") "ASSIGNMENT")
      (let* ((lhs (first (or (get-asts ast '("IDENTIFIER"))
                             (get-asts ast '("MEMBER_SELECT")))))
