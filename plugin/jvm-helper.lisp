@@ -23,12 +23,12 @@
 (defun is-primitive-type (class-name)
   (find class-name '("BOOLEAN"
                      "BYTE"
-                     "SHORT"
+                     "CHAR"
+                     "DOUBLE"
+                     "FLOAT"
                      "INT"
                      "LONG"
-                     "CHAR"
-                     "FLOAT"
-                     "DOUBLE"
+                     "SHORT"
                      ) :test 'equal))
 
 (defun convert-to-json-type (type)

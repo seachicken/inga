@@ -258,8 +258,8 @@
         (cond
           ((is-primitive-type name)
            name)
-          ;; FIXME: support for all types
-          ((find name '("Long" "String") :test 'equal)
+          ;; https://download.java.net/java/early_access/valhalla/docs/api/java.base/java/lang/package-summary.html
+          ((find name '("Boolean" "Byte" "Character" "Double" "Long" "String") :test 'equal)
            (concatenate 'string "java.lang." name))
           ((uiop:string-suffix-p (ast-value ast "type") "_LITERAL")
            (if (equal (ast-value ast "type") "STRING_LITERAL")
