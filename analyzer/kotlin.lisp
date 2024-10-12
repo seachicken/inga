@@ -100,7 +100,8 @@
       (setf ast (dequeue q))
       (unless ast (return))
 
-      (when (and (or (equal(ast-value ast "type") "FUN")
+      (when (and (or (and (equal (ast-value ast "type") "FUN")
+                          (not (get-asts ast '("BLOCK") :direction :upward)))
                      (equal (ast-value ast "type") "PRIMARY_CONSTRUCTOR"))
                  (contains-offset (jsown:val (jsown:val ast "textRange") "startOffset")
                                   (jsown:val (jsown:val ast "textRange") "endOffset")            

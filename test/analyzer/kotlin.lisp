@@ -26,6 +26,19 @@
                       '((:line . 4) (:offset . 5))))))
           (find-definitions (create-range "src/main/kotlin/pkt1/PrimaryConstructorDefinition.kt" :line 4))))))
 
+(test find-definitions-with-local-functions
+  (with-fixture jvm-ctx (*kotlin-path*)
+    (is (equal
+          `(((:type . :module-default)
+             (:path . "src/main/kotlin/pkt1/LocalFunctionDefinition.kt")
+             (:name . "memberFunction")
+             (:fq-name . "pkt1.LocalFunctionDefinition.memberFunction")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames "src/main/kotlin/pkt1/LocalFunctionDefinition.kt" *kotlin-path*)
+                      '((:line . 4) (:offset . 5))))))
+          (find-definitions (create-range "src/main/kotlin/pkt1/LocalFunctionDefinition.kt" :line 5))))))
+
 (test find-definitions-for-value-class
   (with-fixture jvm-ctx (*kotlin-path*)
     (is (equal
