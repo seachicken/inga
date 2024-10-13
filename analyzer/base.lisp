@@ -117,6 +117,8 @@
                      sort-keys))
            (flattern-failures (sort-keys)
              (mapcan (lambda (k)
+                       (inga/logger:log-info (format nil "fail. k: ~a, v: ~a~%" k (mapcar (lambda (f) (signature-load-failed-path f))
+                                                                                      (cdr (assoc :failures (gethash k *results*))))))
                        (copy-list (cdr (assoc :failures (gethash k *results*))))) 
                      sort-keys)))
     (let* ((defs (remove-duplicates
