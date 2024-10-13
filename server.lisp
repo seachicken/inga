@@ -219,12 +219,14 @@
           ("message" . ,(format nil "~a ~a" (local-time:now) content)))))))
 
 (defmethod log-error-generic ((mode (eql :server)) content)
-  (print-notification-msg
-    "window/logMessage"
-    (jsown:to-json
-      `((:obj
-          ("type" . 1)
-          ("message" . ,(format nil "~a ~a" (local-time:now) content)))))))
+  ;;(print-notification-msg
+  ;;  "window/logMessage"
+  ;;  (jsown:to-json
+  ;;    `((:obj
+  ;;        ("type" . 1)
+  ;;        ("message" . ,(format nil "~a ~a" (local-time:now) content))))))
+  
+  )
 
 (defun print-response-msg (id result)
   (unless id
