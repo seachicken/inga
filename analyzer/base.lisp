@@ -129,12 +129,11 @@
                    (remhash k *results*)))
                *results*)
       (loop for def in defs
-        with searching-defs
         unless (gethash (sxhash def) *results*)
         do
-        (setf searching-defs (append searching-defs `(((:type . "searching")
-                                                       (:origin . ,def)))))
-        (funcall success (append (flatten-results def-keys) (list searching-defs)))
+        (setf (gethash (sxhash def) *results*) `(((:type . "searching")
+                                                  (:origin . ,def))))
+        (funcall success (flatten-results def-keys))
         (let ((def (copy-list def)))
           (push (sb-thread:make-thread
                   (lambda ()
@@ -143,10 +142,7 @@
                                        (push s failures)
                                        (funcall failure failures))))
                       (setf (gethash (sxhash def) *results*) (analyze-by-definition ctx def))
-                      (funcall success (append (flatten-results def-keys)
-                                               (list (remove-if (lambda (d)
-                                                                  (equal (cdr (assoc :origin d)) def))
-                                                                searching-defs)))))))
+                      (funcall success (flatten-results def-keys)))))
                 threads))
         finally (loop for thread in threads do (sb-thread:join-thread thread)))
       (flatten-results def-keys))))
