@@ -2,8 +2,6 @@
   (:use #:cl
         #:inga/utils)
   (:import-from #:jsown)
-  (:import-from #:inga/cache
-                #:defunc)
   (:import-from #:inga/errors
                 #:inga-error-process-not-running
                 #:inga-error-process-failed)
@@ -130,7 +128,7 @@
 
 (defparameter *command-lock* (sb-thread:make-mutex))
 
-(defunc exec-command (process cmd)
+(defun exec-command (process cmd)
   (funtime
     (lambda ()
       (sb-thread:with-mutex (*command-lock*)
