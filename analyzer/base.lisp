@@ -144,9 +144,11 @@
                     (not (cdr (assoc :failures (gethash (sxhash def) *results*)))))
         do
         (if (gethash (sxhash def) *results*)
-            (push `(((:type . "searching")
-                     (:origin . ,def)))
-                  (cdr (assoc :results (gethash (sxhash def) *results*)))) 
+            (progn
+              (push `(((:type . "searching")
+                       (:origin . ,def)))
+                    (cdr (assoc :results (gethash (sxhash def) *results*))))
+              (setf (cdr (assoc :failures (gethash (sxhash def) *results*))) nil))
             (setf (gethash (sxhash def) *results*)
                   `((:results (((:type . "searching")
                                 (:origin . ,def))))
