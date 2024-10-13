@@ -143,9 +143,14 @@
         unless (and (gethash (sxhash def) *results*)
                     (not (cdr (assoc :failures (gethash (sxhash def) *results*)))))
         do
-        (setf (gethash (sxhash def) *results*) `((:results (((:type . "searching")
-                                                             (:origin . ,def))))
-                                                 (:failures)))
+        (if (gethash (sxhash def) *results*)
+            (push `(((:type . "searching")
+                     (:origin . ,def)))
+                  (cdr (assoc :results (gethash (sxhash def) *results*)))) 
+            (setf (gethash (sxhash def) *results*)
+                  `((:results (((:type . "searching")
+                                (:origin . ,def))))
+                    (:failures))))
         (funcall success (flatten-results def-keys))
         (let ((def (copy-list def)))
           (push (sb-thread:make-thread
