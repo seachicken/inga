@@ -248,7 +248,7 @@
 (defgeneric find-entrypoint-generic (analyzer pos)
   (:method (analyzer pos)))
 
-(defun find-references (pos index)
+(defunc find-references (pos index)
   (funtime
     (lambda ()
       (loop for path in (get-scoped-index-paths pos index)
