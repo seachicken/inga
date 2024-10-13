@@ -16,10 +16,14 @@
                 #:make-context
                 #:context-analyzers
                 #:context-ast-index
+                #:context-exclude
+                #:context-include
+                #:context-kind
                 #:context-lc
                 #:context-processes)
   (:import-from #:inga/file
-                #:convert-to-top-offset)
+                #:convert-to-top-offset
+                #:is-analysis-target)
   (:import-from #:inga/git
                 #:diff-to-ranges)
   (:import-from #:inga/logger
@@ -166,15 +170,19 @@
                           (get-relative-path
                             (subseq (jsown:val (jsown:val msg "params") "uri") 7) root-host-paths)))
                   (diff (diff-to-ranges (jsown:val (jsown:val msg "params") "diff") root-path)))
-             (when path (update-index (context-ast-index ctx) path))
-             (process-output-if-present
-               (analyze
-                 ctx diff
-                 :success (lambda (results)
-                            (process-output-if-present results output-path root-path))
-                 :failure (lambda (failures)
-                            (output-error failures output-path root-path)))
-               output-path root-path)))))
+             (when (is-analysis-target (context-kind ctx)
+                                       path
+                                       (context-include ctx)
+                                       (context-exclude ctx))
+               (update-index (context-ast-index ctx) path)
+               (process-output-if-present
+                 (analyze
+                   ctx diff
+                   :success (lambda (results)
+                              (process-output-if-present results output-path root-path))
+                   :failure (lambda (failures)
+                              (output-error failures output-path root-path)))
+                 output-path root-path))))))
       (process-msg-if-present (dequeue-msg) ctx root-path output-path temp-path base-commit root-host-paths))))
 
 (defun process-output-if-present (output output-path root-path)
