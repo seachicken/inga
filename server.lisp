@@ -16,6 +16,9 @@
                 #:make-context
                 #:context-analyzers
                 #:context-ast-index
+                #:context-exclude
+                #:context-include
+                #:context-kind
                 #:context-lc
                 #:context-processes)
   (:import-from #:inga/file
