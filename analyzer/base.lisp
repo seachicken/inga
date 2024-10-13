@@ -130,10 +130,13 @@
                    :test #'equal))
            (def-keys (mapcar (lambda (d) (sxhash d)) defs))
            threads)
+      ;;(maphash (lambda (k v) (format t "before k: ~a, v: ~a~%" k v)) *results*)
       (maphash (lambda (k v)
                  (when (not (member k def-keys))
+                   ;;(format t "!!!remove k: ~a~%" k)
                    (remhash k *results*)))
                *results*)
+      ;;(maphash (lambda (k v) (format t "after k: ~a, v: ~a~%" k v)) *results*)
       (loop for def in defs
         unless (and (gethash (sxhash def) *results*)
                     (not (cdr (assoc :failures (gethash (sxhash def) *results*)))))
@@ -236,7 +239,7 @@
 (defgeneric find-entrypoint-generic (analyzer pos)
   (:method (analyzer pos)))
 
-(defunc find-references (pos index)
+(defun find-references (pos index)
   (funtime
     (lambda ()
       (loop for path in (get-scoped-index-paths pos index)

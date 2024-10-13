@@ -128,6 +128,7 @@
 
 (test analyze-only-differences-when-second-analysis
   (with-fixture jvm-ctx (*java-path*)
+    (clrhash inga/analyzer/base::*results*)
     (let ((first-ranges
             (list (create-range "src/main/java/integration/MethodDefinition.java" :line 4)))
           (second-ranges
