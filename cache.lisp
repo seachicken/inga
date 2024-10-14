@@ -16,5 +16,7 @@
                    (if (eq cached-result 'empty) nil cached-result)
                    (let ((result (progn ,@body)))
                      (setf (gethash cache-key ,cache-sym) (or result 'empty))
-                     result))))))))
+                     result)))))
+       (defun ,(intern (concatenate 'string "EVICTC-" (string name))) ,params
+         (remhash (list ,@params) ,cache-sym)))))
 

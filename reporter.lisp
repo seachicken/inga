@@ -3,6 +3,7 @@
   (:import-from #:jsown)
   (:import-from #:inga/analyzer/base
                 #:signature-load-failed
+                #:signature-load-failed-fq-class-name
                 #:signature-load-failed-path)
   (:import-from #:inga/file
                 #:convert-to-pos)
@@ -65,7 +66,9 @@
                                   ("type" . ,(get-type error))
                                   ("service". ,(find-service-name (signature-load-failed-path error)
                                                                   root-path))
-                                  ("path" . ,(signature-load-failed-path error))) results)))
+                                  ("path" . ,(signature-load-failed-path error))
+                                  ("fq-class-name" . ,(signature-load-failed-fq-class-name error)))
+                               results)))
                      finally (return (remove-duplicates results :test #'equal)))))
       (format out "~a"
               (jsown:to-json
