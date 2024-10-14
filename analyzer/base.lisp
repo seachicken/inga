@@ -143,6 +143,9 @@
         unless (and (gethash (sxhash def) *results*)
                     (not (cdr (assoc :failures (gethash (sxhash def) *results*)))))
         do
+        (when (cdr (assoc :failures (gethash (sxhash def) *results*)))
+          (inga/logger:log-info "evict!! key: ~a~%" (sxhash def))
+          (evictc-analyze-by-definition ctx def))
         (if (gethash (sxhash def) *results*)
             (progn
               (push `(((:type . "searching")
@@ -170,7 +173,7 @@
         finally (loop for thread in threads do (sb-thread:join-thread thread)))
       (flatten-results def-keys))))
 
-(defun analyze-by-definition (ctx def)
+(defunc analyze-by-definition (ctx def)
   (loop
     with q = (make-queue)
     with results
@@ -248,7 +251,7 @@
 (defgeneric find-entrypoint-generic (analyzer pos)
   (:method (analyzer pos)))
 
-(defunc find-references (pos index)
+(defun find-references (pos index)
   (funtime
     (lambda ()
       (loop for path in (get-scoped-index-paths pos index)
