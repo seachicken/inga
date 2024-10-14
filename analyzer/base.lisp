@@ -144,7 +144,7 @@
                     (not (cdr (assoc :failures (gethash (sxhash def) *results*)))))
         do
         (when (cdr (assoc :failures (gethash (sxhash def) *results*)))
-          (inga/logger:log-info "evict!! key: ~a~%" (sxhash def))
+          (inga/logger:log-info (format nil "evict!! key: ~a~%" (sxhash def)))
           (evictc-analyze-by-definition ctx def))
         (if (gethash (sxhash def) *results*)
             (progn
