@@ -117,8 +117,6 @@
                      sort-keys))
            (flattern-failures (sort-keys)
              (mapcan (lambda (k)
-                       (inga/logger:log-info (format nil "fail. k: ~a, v: ~a~%" k (mapcar (lambda (f) (signature-load-failed-path f))
-                                                                                      (cdr (assoc :failures (gethash k *results*))))))
                        (copy-list (cdr (assoc :failures (gethash k *results*))))) 
                      sort-keys)))
     (let* ((defs (remove-duplicates
@@ -132,13 +130,10 @@
                    :test #'equal))
            (def-keys (mapcar (lambda (d) (sxhash d)) defs))
            threads)
-      ;;(maphash (lambda (k v) (format t "before k: ~a, v: ~a~%" k v)) *results*)
       (maphash (lambda (k v)
                  (when (not (member k def-keys))
-                   ;;(format t "!!!remove k: ~a~%" k)
                    (remhash k *results*)))
                *results*)
-      ;;(maphash (lambda (k v) (format t "after k: ~a, v: ~a~%" k v)) *results*)
       (loop for def in defs
         unless (and (gethash (sxhash def) *results*)
                     (not (cdr (assoc :failures (gethash (sxhash def) *results*)))))
