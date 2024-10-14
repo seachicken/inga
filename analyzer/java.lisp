@@ -285,9 +285,7 @@
                                 (let ((signatures (load-signatures fqcn path)))
                                   (if signatures
                                       signatures
-                                      (progn
-                                        (inga/logger:log-info (format nil "sig load failed. fq-name: ~a, fqcn: ~a, path: ~a" fq-name fqcn path))
-                                        (signal (make-condition 'signature-load-failed :path path))))))
+                                      (signal (make-condition 'signature-load-failed :path path)))))
                             path)))
              (when method (cdr (assoc :return method)))))
           (t

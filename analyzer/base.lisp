@@ -113,11 +113,11 @@
 (defun analyze (ctx ranges &key (success (lambda (results))) (failure (lambda (failures))))
   (labels ((flatten-results (sort-keys)
              (mapcan (lambda (k)
-                       (copy-list (cdr (assoc :results (gethash k *results*))))) 
+                       (copy-list (cdr (assoc :results (gethash k *results*)))))
                      sort-keys))
            (flattern-failures (sort-keys)
              (mapcan (lambda (k)
-                       (copy-list (cdr (assoc :failures (gethash k *results*))))) 
+                       (copy-list (cdr (assoc :failures (gethash k *results*)))))
                      sort-keys)))
     (let* ((defs (remove-duplicates
                    (mapcan (lambda (r) (find-definitions r))
