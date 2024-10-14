@@ -84,7 +84,10 @@
 (define-condition signature-load-failed ()
   ((path
      :initarg :path
-     :reader signature-load-failed-path)))
+     :reader signature-load-failed-path)
+   (fq-class-name
+     :initarg :fq-class-name
+     :reader signature-load-failed-fq-class-name)))
 
 (defgeneric start-analyzer (kind include exclude path index)
   (:method (kind include exclude path index)
@@ -112,8 +115,13 @@
 
 (defun analyze (ctx ranges &key (success (lambda (results))) (failure (lambda (failures))))
   (labels ((flatten-results (sort-keys)
-             (remove nil (mapcar (lambda (k) (copy-list (gethash k *results*))) sort-keys))))
-    (funcall failure nil)
+             (mapcan (lambda (k)
+                       (copy-list (cdr (assoc :results (gethash k *results*)))))
+                     sort-keys))
+           (flattern-failures (sort-keys)
+             (mapcan (lambda (k)
+                       (copy-list (cdr (assoc :failures (gethash k *results*)))))
+                     sort-keys)))
     (let* ((defs (remove-duplicates
                    (mapcan (lambda (r) (find-definitions r))
                            (remove-if-not (lambda (r)
@@ -124,31 +132,45 @@
                                           ranges))
                    :test #'equal))
            (def-keys (mapcar (lambda (d) (sxhash d)) defs))
-           threads failures)
+           threads)
       (maphash (lambda (k v)
                  (when (not (member k def-keys))
                    (remhash k *results*)))
                *results*)
       (loop for def in defs
-        with searching-defs
-        unless (gethash (sxhash def) *results*)
+        unless (and (gethash (sxhash def) *results*)
+                    (not (cdr (assoc :failures (gethash (sxhash def) *results*)))))
         do
-        (setf searching-defs (append searching-defs `(((:type . "searching")
-                                                       (:origin . ,def)))))
-        (funcall success (append (flatten-results def-keys) (list searching-defs)))
+        (when (cdr (assoc :failures (gethash (sxhash def) *results*)))
+          (evictc-analyze-by-definition ctx def))
+        (if (gethash (sxhash def) *results*)
+            (progn
+              (push `(((:type . "searching")
+                       (:origin . ,def)))
+                    (cdr (assoc :results (gethash (sxhash def) *results*))))
+              (setf (cdr (assoc :failures (gethash (sxhash def) *results*))) nil))
+            (setf (gethash (sxhash def) *results*)
+                  `((:results (((:type . "searching")
+                                (:origin . ,def))))
+                    (:failures))))
+        (funcall success (flatten-results def-keys))
         (let ((def (copy-list def)))
           (push (sb-thread:make-thread
                   (lambda ()
                     (handler-bind ((signature-load-failed
                                      (lambda (s)
-                                       (push s failures)
-                                       (funcall failure failures))))
-                      (setf (gethash (sxhash def) *results*) (analyze-by-definition ctx def)))))
+                                       (push s (cdr (assoc :failures
+                                                           (gethash (sxhash def) *results*))))
+                                       (funcall failure (flattern-failures def-keys)))))
+                      (setf (gethash (sxhash def) *results*)
+                            `((:results ,(analyze-by-definition ctx def))
+                              (:failures)))
+                      (funcall success (flatten-results def-keys)))))
                 threads))
         finally (loop for thread in threads do (sb-thread:join-thread thread)))
       (flatten-results def-keys))))
 
-(defun analyze-by-definition (ctx def)
+(defunc analyze-by-definition (ctx def)
   (loop
     with q = (make-queue)
     with results
@@ -226,7 +248,7 @@
 (defgeneric find-entrypoint-generic (analyzer pos)
   (:method (analyzer pos)))
 
-(defunc find-references (pos index)
+(defun find-references (pos index)
   (funtime
     (lambda ()
       (loop for path in (get-scoped-index-paths pos index)
