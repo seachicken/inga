@@ -285,7 +285,9 @@
                                 (let ((signatures (load-signatures fqcn path)))
                                   (if signatures
                                       signatures
-                                      (signal (make-condition 'signature-load-failed :path path)))))
+                                      (signal (make-condition 'signature-load-failed
+                                                              :path path
+                                                              :fq-class-name fqcn)))))
                             path)))
              (when method (cdr (assoc :return method)))))
           (t

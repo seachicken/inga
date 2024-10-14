@@ -84,7 +84,10 @@
 (define-condition signature-load-failed ()
   ((path
      :initarg :path
-     :reader signature-load-failed-path)))
+     :reader signature-load-failed-path)
+   (fq-class-name
+     :initarg :fq-class-name
+     :reader signature-load-failed-fq-class-name)))
 
 (defgeneric start-analyzer (kind include exclude path index)
   (:method (kind include exclude path index)
