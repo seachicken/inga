@@ -249,6 +249,9 @@
   (:method (analyzer pos)))
 
 (defun find-references (pos index)
+  (unless pos
+    (return-from find-references))
+
   (funtime
     (lambda ()
       (loop for path in (get-scoped-index-paths pos index)
