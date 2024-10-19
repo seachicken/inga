@@ -35,9 +35,6 @@
   t)
 
 (defun get-file-type (path)
-  (unless path
-    (return-from get-file-type))
-
   (let ((path (namestring path)))
     (cond
       ((uiop:string-suffix-p path ".java")
