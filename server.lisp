@@ -170,10 +170,12 @@
                           (get-relative-path
                             (subseq (jsown:val (jsown:val msg "params") "uri") 7) root-host-paths)))
                   (diff (diff-to-ranges (jsown:val (jsown:val msg "params") "diff") root-path)))
+             (log-debug "diff: ~a, path: ~a" diff path)
              (when (is-analysis-target (context-kind ctx)
                                        path
                                        (context-include ctx)
                                        (context-exclude ctx))
+               (log-debug "update-index path: ~a" path)
                (update-index (context-ast-index ctx) path)
                (process-output-if-present
                  (analyze
