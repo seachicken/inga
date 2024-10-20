@@ -125,9 +125,9 @@
                      sort-keys))
            (handle-search (searching-results def)
              (if (gethash (sxhash def) *results*)
-                 (setf (cdr (assoc :results (gethash (sxhash def) *results*))) searching-results)
+                 (setf (cdr (assoc :results (gethash (sxhash def) *results*))) (list searching-results))
                  (setf (gethash (sxhash def) *results*)
-                       `((:results . ,searching-results)
+                       `((:results . ,(list searching-results))
                          (:failures))))))
     (let* ((defs (remove-duplicates
                    (mapcan (lambda (r) (find-definitions r))
@@ -166,7 +166,10 @@
                                                         (handle-search searching-results def)
                                                         (funcall success (flattern-results def-keys)))))
                               (:failures)))
-                      (funcall success (flattern-results def-keys)))))
+                      (funcall success
+                               (mapcar (lambda (rs)
+                                         (remove-if (lambda (r) (equal (cdr (assoc :type r)) "searching")) rs))
+                                       (flattern-results def-keys))))))
                 threads))
         finally (loop for thread in threads do (sb-thread:join-thread thread)))
       (mapcar (lambda (rs)
