@@ -123,7 +123,11 @@
                        (copy-list (cdr (assoc :failures (gethash k *results*)))))
                      sort-keys))
            (handle-search (searching-results def)
-             (setf searching-results (cdr (assoc :results (gethash (sxhash def) *results*))))))
+             (if (gethash (sxhash def) *results*)
+                 (setf (cdr (assoc :results (gethash (sxhash def) *results*))) searching-results)
+                 (setf (gethash (sxhash def) *results*)
+                       `((:results ,searching-results)
+                         (:failures))))))
     (let* ((defs (remove-duplicates
                    (mapcan (lambda (r) (find-definitions r))
                            (remove-if-not (lambda (r)
