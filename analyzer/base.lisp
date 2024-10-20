@@ -114,7 +114,7 @@
   (:method (analyzer path)))
 
 (defun analyze (ctx ranges &key (success (lambda (results))) (failure (lambda (failures))))
-  (labels ((flatten-results (sort-keys)
+  (labels ((flattern-results (sort-keys)
              (mapcan (lambda (k)
                        ;;(format t "k: ~a, v: ~a~%" k (cdr (assoc :results (gethash k *results*))))
                        (copy-list (cdr (assoc :results (gethash k *results*)))))
@@ -150,7 +150,7 @@
         do
         (when (cdr (assoc :failures (gethash (sxhash def) *results*)))
           (evictc-analyze-by-definition ctx def))
-        (funcall success (flatten-results def-keys))
+        (funcall success (flattern-results def-keys))
         (let ((def (copy-list def)))
           (push (sb-thread:make-thread
                   (lambda ()
@@ -164,14 +164,14 @@
                                            ctx def
                                            :on-search (lambda (searching-results)
                                                         (handle-search searching-results def)
-                                                        (funcall success (flatten-results def-keys)))))
+                                                        (funcall success (flattern-results def-keys)))))
                               (:failures)))
-                      (funcall success (flatten-results def-keys)))))
+                      (funcall success (flattern-results def-keys)))))
                 threads))
         finally (loop for thread in threads do (sb-thread:join-thread thread)))
       (mapcar (lambda (rs)
                 (remove-if (lambda (r) (equal (cdr (assoc :type r)) "searching")) rs))
-              (flatten-results def-keys)))))
+              (flattern-results def-keys)))))
 
 (defunc analyze-by-definition (ctx def &key (on-search (lambda (searching-results))))
   (loop
