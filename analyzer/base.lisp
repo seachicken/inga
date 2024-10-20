@@ -116,6 +116,7 @@
 (defun analyze (ctx ranges &key (success (lambda (results))) (failure (lambda (failures))))
   (labels ((flatten-results (sort-keys)
              (mapcan (lambda (k)
+                       ;;(format t "k: ~a, v: ~a~%" k (cdr (assoc :results (gethash k *results*))))
                        (copy-list (cdr (assoc :results (gethash k *results*)))))
                      sort-keys))
            (flattern-failures (sort-keys)
@@ -126,7 +127,7 @@
              (if (gethash (sxhash def) *results*)
                  (setf (cdr (assoc :results (gethash (sxhash def) *results*))) searching-results)
                  (setf (gethash (sxhash def) *results*)
-                       `((:results ,searching-results)
+                       `((:results . ,searching-results)
                          (:failures))))))
     (let* ((defs (remove-duplicates
                    (mapcan (lambda (r) (find-definitions r))
