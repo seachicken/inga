@@ -122,17 +122,8 @@
              (mapcan (lambda (k)
                        (copy-list (cdr (assoc :failures (gethash k *results*)))))
                      sort-keys))
-           (handle-search (def)
-             (if (gethash (sxhash def) *results*)
-                 (progn
-                   (push `(((:type . "searching")
-                            (:origin . ,def)))
-                         (cdr (assoc :results (gethash (sxhash def) *results*))))
-                   (setf (cdr (assoc :failures (gethash (sxhash def) *results*))) nil))
-                 (setf (gethash (sxhash def) *results*)
-                       `((:results (((:type . "searching")
-                                     (:origin . ,def))))
-                         (:failures))))))
+           (handle-search (searching-results def)
+             (setf searching-results (cdr (assoc :results (gethash (sxhash def) *results*))))))
     (let* ((defs (remove-duplicates
                    (mapcan (lambda (r) (find-definitions r))
                            (remove-if-not (lambda (r)
@@ -166,14 +157,15 @@
                       (setf (gethash (sxhash def) *results*)
                             `((:results ,(analyze-by-definition
                                            ctx def
-                                           :on-search (lambda (def) (handle-search def))))
+                                           :on-search (lambda (searching-results)
+                                                        (handle-search searching-results def))))
                               (:failures)))
                       (funcall success (flatten-results def-keys)))))
                 threads))
         finally (loop for thread in threads do (sb-thread:join-thread thread)))
       (flatten-results def-keys))))
 
-(defunc analyze-by-definition (ctx def &key (on-search (lambda (def))))
+(defunc analyze-by-definition (ctx def &key (on-search (lambda (searching-results))))
   (loop
     with q = (make-queue)
     with results
@@ -189,7 +181,9 @@
       (if (assoc :visited-fq-names def)
           (adjoin (cdr (assoc :fq-name def)) (cdr (assoc :visited-fq-names def)))
           (push (cons :visited-fq-names (list (cdr (assoc :fq-name def)))) def)))
-    (funcall on-search def)
+    (funcall on-search (push `(((:type . "searching")
+                                (:origin . ,def)))
+                             results))
     (setf results (append results (find-entrypoints ctx def q)))))
 
 (defun find-entrypoints (ctx pos q)
