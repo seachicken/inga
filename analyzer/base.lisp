@@ -164,7 +164,9 @@
                       (funcall success (flatten-results def-keys)))))
                 threads))
         finally (loop for thread in threads do (sb-thread:join-thread thread)))
-      (flatten-results def-keys))))
+      (mapcar (lambda (rs)
+                (remove-if (lambda (r) (equal (cdr (assoc :type r)) "searching")) rs))
+              (flatten-results def-keys)))))
 
 (defunc analyze-by-definition (ctx def &key (on-search (lambda (searching-results))))
   (loop
@@ -182,9 +184,10 @@
       (if (assoc :visited-fq-names def)
           (adjoin (cdr (assoc :fq-name def)) (cdr (assoc :visited-fq-names def)))
           (push (cons :visited-fq-names (list (cdr (assoc :fq-name def)))) def)))
-    (funcall on-search (push `((:type . "searching")
-                               (:origin . ,def))
-                             results))
+    (funcall on-search (progn (remove-if (lambda (r) (equal (cdr (assoc :type r)) "searching")) results)
+                              (push `((:type . "searching")
+                                      (:origin . ,def))
+                                    results)))
     (setf results (append results (find-entrypoints ctx def q)))))
 
 (defun find-entrypoints (ctx pos q)
