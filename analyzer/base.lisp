@@ -158,7 +158,8 @@
                             `((:results ,(analyze-by-definition
                                            ctx def
                                            :on-search (lambda (searching-results)
-                                                        (handle-search searching-results def))))
+                                                        (handle-search searching-results def)
+                                                        (funcall success (flatten-results def-keys)))))
                               (:failures)))
                       (funcall success (flatten-results def-keys)))))
                 threads))
@@ -181,8 +182,8 @@
       (if (assoc :visited-fq-names def)
           (adjoin (cdr (assoc :fq-name def)) (cdr (assoc :visited-fq-names def)))
           (push (cons :visited-fq-names (list (cdr (assoc :fq-name def)))) def)))
-    (funcall on-search (push `(((:type . "searching")
-                                (:origin . ,def)))
+    (funcall on-search (push `((:type . "searching")
+                               (:origin . ,def))
                              results))
     (setf results (append results (find-entrypoints ctx def q)))))
 
