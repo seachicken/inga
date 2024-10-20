@@ -125,9 +125,9 @@
                      sort-keys))
            (handle-search (searching-results def)
              (if (gethash (sxhash def) *results*)
-                 (setf (cdr (assoc :results (gethash (sxhash def) *results*))) (list searching-results))
+                 (setf (cdr (assoc :results (gethash (sxhash def) *results*))) searching-results)
                  (setf (gethash (sxhash def) *results*)
-                       `((:results . ,(list searching-results))
+                       `((:results . ,searching-results)
                          (:failures))))))
     (let* ((defs (remove-duplicates
                    (mapcan (lambda (r) (find-definitions r))
