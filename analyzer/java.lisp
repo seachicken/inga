@@ -14,6 +14,8 @@
                 #:analyzer-kotlin)
   (:import-from #:inga/file
                 #:get-file-type)
+  (:import-from #:inga/logger
+                #:log-debug)
   (:import-from #:inga/plugin/jvm-dependency-loader
                 #:load-hierarchy 
                 #:load-signatures)
@@ -88,6 +90,7 @@
                                                        (analyzer-path analyzer)))
               (gethash :module *file-index*)))
     (t
+     (log-debug (format nil "start a slow-running full scan. pos: ~a" pos))
      (ast-index-paths (analyzer-index analyzer)))))
 
 (defmethod find-definitions-generic ((analyzer analyzer-java) range)

@@ -11,6 +11,7 @@
   (:import-from #:inga/file
                 #:get-file-type)
   (:import-from #:inga/logger
+                #:log-debug
                 #:log-error)
   (:import-from #:inga/plugin/jvm-dependency-loader
                 #:load-hierarchy 
@@ -81,6 +82,7 @@
     ((eq (cdr (assoc :type pos)) :module-private)
      (list (cdr (assoc :path pos))))
     ((eq (cdr (assoc :type pos)) :module-default)
+     (log-debug (format nil "start a slow-running full scan. pos: ~a" pos))
      (ast-index-paths (analyzer-index analyzer)))
     (t
      (log-error (format nil "unexpected visibility modifiers. type: ~a" (cdr (assoc :type pos))))
