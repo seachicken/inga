@@ -182,6 +182,12 @@
     (setf def (dequeue q))
     (unless def (return (remove-duplicates results :test #'equal)))
 
+    (setf results (remove-if (lambda (r) (equal (cdr (assoc :type r)) "searching")) results))
+    (funcall on-search (push `((:type . "searching")
+                               (:origin . ,(if (assoc :origin def)
+                                               (cdr (assoc :origin def))
+                                               def)))
+                             results))
     (unless (assoc :origin def)
       (push (cons :origin def) def))
     ;; node doesn't support fq-name
@@ -189,10 +195,6 @@
       (if (assoc :visited-fq-names def)
           (adjoin (cdr (assoc :fq-name def)) (cdr (assoc :visited-fq-names def)))
           (push (cons :visited-fq-names (list (cdr (assoc :fq-name def)))) def)))
-    (setf results (remove-if (lambda (r) (equal (cdr (assoc :type r)) "searching")) results))
-    (funcall on-search (push `((:type . "searching")
-                               (:origin . ,def))
-                             results))
     (setf results (append results (find-entrypoints ctx def q)))))
 
 (defun find-entrypoints (ctx pos q)
