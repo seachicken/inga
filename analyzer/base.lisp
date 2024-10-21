@@ -185,11 +185,9 @@
     (unless def (return (remove-duplicates results :test #'equal)))
 
     (setf results (remove-if (lambda (r) (equal (cdr (assoc :type r)) "searching")) results))
-    (funcall on-search (copy-list (push `((:type . "searching")
-                                          (:origin . ,(if (assoc :origin def)
-                                                          (cdr (assoc :origin def))
-                                                          def)))
-                                        results)))
+    (funcall on-search (push `((:type . "searching")
+                               (:origin . ,def))
+                             results))
     (unless (assoc :origin def)
       (push (cons :origin def) def))
     ;; node doesn't support fq-name
