@@ -139,13 +139,13 @@
                                                                 (context-exclude ctx)))
                                           ranges))
                    :test #'equal))
-           (def-keys (mapcar (lambda (d) (sxhash d)) defs))
-           threads)
+           (def-keys (mapcar (lambda (d) (sxhash d)) defs)))
       (maphash (lambda (k v)
                  (when (not (member k def-keys))
                    (remhash k *results*)))
                *results*)
       (loop for def in defs
+        with threads
         unless (and (gethash (sxhash def) *results*)
                     (not (cdr (assoc :failures (gethash (sxhash def) *results*)))))
         do

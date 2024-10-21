@@ -197,8 +197,10 @@
   (when (or (null *processing-output*) (not (sb-thread:thread-alive-p *processing-output*)))
     (sb-thread:make-thread
       (lambda ()
-        (output-report (dequeue-output) output-path root-path)
-        (process-output-if-present (dequeue-output) output-path root-path)))))
+        (let ((report (dequeue-output)))
+          (inga/logger:log-info (format nil "report: ~a" report))
+          (output-report report output-path root-path)
+          (process-output-if-present (dequeue-output) output-path root-path))))))
 
 (defun extract-json (stream)
   ;; Content-Length: 99
