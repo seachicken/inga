@@ -190,7 +190,7 @@
                                                (cdr (assoc :origin def))
                                                def))
                                ,@(when (assoc :origin def)
-                                   `(:entrypoint . ,def)))
+                                   `((:entrypoint . ,def))))
                              results))
     (unless (assoc :origin def)
       (push (cons :origin def) def))
