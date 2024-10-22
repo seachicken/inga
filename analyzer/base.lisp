@@ -186,7 +186,11 @@
 
     (setf results (remove-if (lambda (r) (equal (cdr (assoc :type r)) "searching")) results))
     (funcall on-search (push `((:type . "searching")
-                               (:origin . ,def))
+                               (:origin . ,(if (assoc :origin def)
+                                               (cdr (assoc :origin def))
+                                               def))
+                               ,@(when (assoc :origin def)
+                                   `(:entrypoint . ,def)))
                              results))
     (unless (assoc :origin def)
       (push (cons :origin def) def))
