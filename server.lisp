@@ -195,7 +195,8 @@
     (return-from process-output-if-present))
 
   (enqueue-output output)
-  (when *processing-output* (sb-thread:join-thread *processing-output*))
+  (when (and *processing-output* (sb-thread:thread-alive-p *processing-output*))
+    (sb-thread:join-thread *processing-output*))
   (setf *processing-output*
         (sb-thread:make-thread
           (lambda ()
