@@ -192,6 +192,7 @@
                                ,@(when (assoc :origin def)
                                    `((:entrypoint . ,def))))
                              results))
+
     (unless (assoc :origin def)
       (push (cons :origin def) def))
     ;; node doesn't support fq-name
@@ -199,7 +200,11 @@
       (if (assoc :visited-fq-names def)
           (adjoin (cdr (assoc :fq-name def)) (cdr (assoc :visited-fq-names def)))
           (push (cons :visited-fq-names (list (cdr (assoc :fq-name def)))) def)))
-    (setf results (append results (find-entrypoints ctx def q)))))
+    (inga/logger:log-info (format nil "before find-entrypoints. def: ~a" def))
+    (setf results (append results (find-entrypoints ctx def q)))
+    (inga/logger:log-info (format nil "after find-entrypoints. def: ~a" def))
+    
+    ))
 
 (defun find-entrypoints (ctx pos q)
   (let ((refs (mapcan (lambda (ref)
@@ -224,6 +229,8 @@
         (setf results (append results (list (make-entrypoint pos)))))
       (if refs
           (loop for ref in refs
+            initially
+            (inga/logger:log-info (format nil "refs: ~a" refs))
             do
             (let ((entrypoint (find-entrypoint ref)))
               (if entrypoint
@@ -239,6 +246,7 @@
                                 (cdr (assoc :visited-fq-names pos)) :test #'equal)
                         (setf results (append results (list (make-entrypoint def))))
                         (when def
+                          (inga/logger:log-info (format nil "enqueue def: ~a, pos: ~a" def pos))
                           (enqueue q (push (cons :origin
                                                  (if (eq (cdr (assoc :type pos)) :rest-server)
                                                      def
