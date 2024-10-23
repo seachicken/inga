@@ -191,7 +191,7 @@
   (unless output
     (return-from process-output-if-present))
 
-  (sb-concurrency:enqueue output)
+  (enqueue-output output)
   (unless *processing-output*
     (setf *processing-output*
           (sb-thread:make-thread
