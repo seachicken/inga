@@ -163,9 +163,9 @@
                       (setf (gethash (sxhash def) *results*)
                             `((:results ,(analyze-by-definition
                                            ctx def
-                                           :on-search (lambda (searching-results)
-                                                        (handle-search searching-results def)
-                                                        (funcall success (flattern-results def-keys)))))
+                                           (lambda (searching-results)
+                                             (handle-search searching-results def)
+                                             (funcall success (flattern-results def-keys)))))
                               (:failures)))
                       (funcall success (flattern-results def-keys)))))
                 threads))
@@ -175,7 +175,7 @@
                 (remove-if (lambda (r) (equal (cdr (assoc :type r)) "searching")) rs))
               (flattern-results def-keys)))))
 
-(defunc analyze-by-definition (ctx def &key (on-search (lambda (searching-results))))
+(defunc analyze-by-definition (ctx def on-search)
   (loop
     with q = (make-queue)
     with results
