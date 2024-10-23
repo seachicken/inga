@@ -45,7 +45,7 @@
 
 (defparameter *msg-q* nil)
 (defparameter *processing-msg* nil)
-(defparameter *output-q* (make-queue))
+(defparameter *output-q* (sb-concurrency:make-queue))
 (defparameter *processing-output* nil)
 (defparameter *stdout-q* (sb-concurrency:make-queue))
 (defparameter *stdout-thread* nil)
