@@ -45,7 +45,7 @@
 
 (defparameter *msg-q* nil)
 (defparameter *processing-msg* nil)
-(defparameter *output-q* (sb-concurrency:make-queue))
+(defparameter *output-q* (make-queue))
 (defparameter *processing-output* nil)
 (defparameter *stdout-q* (sb-concurrency:make-queue))
 (defparameter *stdout-thread* nil)
@@ -179,12 +179,9 @@
                      (analyze
                        ctx diff
                        :success (lambda (results)
-                                  (inga/logger:log-info (format nil "success results: ~a" results))
                                   (process-output-if-present results output-path root-path))
                        :failure (lambda (failures)
-                                  (output-error failures output-path root-path)))
-                     ))
-               (inga/logger:log-info (format nil "after results: ~a" results))
+                                  (output-error failures output-path root-path)))))
                (process-output-if-present
                  results
                  output-path root-path))))))
@@ -194,14 +191,15 @@
   (unless output
     (return-from process-output-if-present))
 
-  (sb-concurrency:enqueue output *output-q*)
-  (when (or (null *processing-output*) (not (sb-thread:thread-alive-p *processing-output*)))
+  (sb-concurrency:enqueue output)
+  (unless *processing-output*
     (setf *processing-output*
           (sb-thread:make-thread
             (lambda ()
-              (let ((report (sb-concurrency:dequeue *output-q*)))
+              (let ((report (dequeue-output)))
                 (output-report report output-path root-path)
-                (process-output-if-present (sb-concurrency:dequeue *output-q*) output-path root-path)))))))
+                (setf *processing-output* nil)
+                (process-output-if-present (dequeue-output) output-path root-path)))))))
 
 (defun extract-json (stream)
   ;; Content-Length: 99
