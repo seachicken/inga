@@ -191,9 +191,8 @@
       (process-msg-if-present (dequeue-msg) ctx root-path output-path temp-path base-commit root-host-paths))))
 
 (defun process-output-if-present (output output-path root-path)
-  (inga/logger:log-info (format nil "output: ~a" output))
   (unless output
-    (return-from process-output-if-present *processing-output*))
+    (return-from process-output-if-present))
 
   (enqueue-output output)
   (when (or (null *processing-output*) (not (sb-thread:thread-alive-p *processing-output*)))
@@ -203,6 +202,7 @@
               (let ((report (dequeue-output)))
                 (inga/logger:log-info (format nil "report: ~a" report))
                 (output-report report output-path root-path)
+                (sb-thread:terminate-thread *processing-output*)      
                 (process-output-if-present (dequeue-output) output-path root-path)))))))
 
 (defun extract-json (stream)
