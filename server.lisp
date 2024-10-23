@@ -114,7 +114,7 @@
                                        "/")))
                        root-host-paths)))
          (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":{\"change\":2,\"save\":false}}}")
-         (process-output-if-present nil output-path root-path))
+         (process-output-if-present `(()) output-path root-path))
         ((equal (jsown:val msg "method") "shutdown")
          (log-debug "run shutdown processing")
 
@@ -175,26 +175,31 @@
                                        (context-include ctx)
                                        (context-exclude ctx))
                (update-index (context-ast-index ctx) path))
-             (process-output-if-present
-               (analyze
-                 ctx diff
-                 :success (lambda (results)
-                            (process-output-if-present results output-path root-path))
-                 :failure (lambda (failures)
-                            (output-error failures output-path root-path)))
-               output-path root-path)))))
+             (let ((results
+                     (analyze
+                       ctx diff
+                       :success (lambda (results)
+                                  (process-output-if-present results output-path root-path))
+                       :failure (lambda (failures)
+                                  (output-error failures output-path root-path)))))
+               (process-output-if-present
+                 results
+                 output-path root-path))))))
       (process-msg-if-present (dequeue-msg) ctx root-path output-path temp-path base-commit root-host-paths))))
 
 (defun process-output-if-present (output output-path root-path)
   (unless output
-    (return-from process-output-if-present *processing-output*))
+    (return-from process-output-if-present))
 
   (enqueue-output output)
-  (when (or (null *processing-output*) (not (sb-thread:thread-alive-p *processing-output*)))
-    (sb-thread:make-thread
-      (lambda ()
-        (output-report (dequeue-output) output-path root-path)
-        (process-output-if-present (dequeue-output) output-path root-path)))))
+  (unless *processing-output*
+    (setf *processing-output*
+          (sb-thread:make-thread
+            (lambda ()
+              (let ((report (dequeue-output)))
+                (output-report report output-path root-path)
+                (setf *processing-output* nil)
+                (process-output-if-present (dequeue-output) output-path root-path)))))))
 
 (defun extract-json (stream)
   ;; Content-Length: 99
