@@ -195,7 +195,7 @@
     (return-from process-output-if-present))
 
   (enqueue-output output)
-  (when (or (null *processing-output*) (not (sb-thread:thread-alive-p *processing-output*)))
+  (unless *processing-output*
     (setf *processing-output*
           (sb-thread:make-thread
             (lambda ()
@@ -263,12 +263,13 @@
     (return-from print-if-present))
   
   (sb-concurrency:enqueue json *stdout-q*) 
-  (when (or (null *stdout-thread*) (not (sb-thread:thread-alive-p *stdout-thread*)))
+  (unless *stdout-thread*
     (setf *stdout-thread*
           (sb-thread:make-thread
             (lambda ()
               (format t (sb-concurrency:dequeue *stdout-q*))
               (force-output)
+              (setf *stdout-thread* nil)
               (print-if-present (sb-concurrency:dequeue *stdout-q*)))))))
 
 (defun to-state-json (change-pos root-path)
