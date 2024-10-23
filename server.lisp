@@ -195,6 +195,8 @@
     (return-from process-output-if-present))
 
   (enqueue-output output)
+  (sb-thread:join-thread *processing-output*)
+  (sb-thread:terminate-thread *processing-output*)
   (when (or (null *processing-output*) (not (sb-thread:thread-alive-p *processing-output*)))
     (setf *processing-output*
           (sb-thread:make-thread
@@ -202,7 +204,6 @@
               (let ((report (dequeue-output)))
                 (inga/logger:log-info (format nil "report: ~a" report))
                 (output-report report output-path root-path)
-                (sb-thread:terminate-thread *processing-output*)      
                 (process-output-if-present (dequeue-output) output-path root-path)))))))
 
 (defun extract-json (stream)
