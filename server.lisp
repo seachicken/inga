@@ -176,12 +176,13 @@
                                        (context-exclude ctx))
                (update-index (context-ast-index ctx) path))
              (process-output-if-present
-               (analyze
-                 ctx diff
-                 :success (lambda (results)
-                            (process-output-if-present results output-path root-path))
-                 :failure (lambda (failures)
-                            (output-error failures output-path root-path))))
+               (or (analyze
+                     ctx diff
+                     :success (lambda (results)
+                                (process-output-if-present results output-path root-path))
+                     :failure (lambda (failures)
+                                (output-error failures output-path root-path)))
+                   `(())))
                output-path root-path))))
       (process-msg-if-present (dequeue-msg) ctx root-path output-path temp-path base-commit root-host-paths))))
 
