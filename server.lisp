@@ -182,8 +182,8 @@
                                 (process-output-if-present results output-path root-path))
                      :failure (lambda (failures)
                                 (output-error failures output-path root-path)))
-                   `(())))
-               output-path root-path))))
+                   `(()))
+               output-path root-path)))))
       (process-msg-if-present (dequeue-msg) ctx root-path output-path temp-path base-commit root-host-paths))))
 
 (defun process-output-if-present (output output-path root-path)
