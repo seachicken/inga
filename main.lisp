@@ -15,6 +15,8 @@
   (:import-from #:inga/logger
                 #:log-debug
                 #:log-error)
+  (:import-from #:inga/yaml
+                #:parse-yaml)
   (:export #:command))
 (in-package #:inga/main)
 
@@ -27,7 +29,11 @@
                               (get-analysis-kinds (diff-to-ranges
                                                     (cdr (assoc :diff params))
                                                     (cdr (assoc :root-path params))))
-                              (get-env-kinds)))))
+                              (get-env-kinds))))
+           (config-path (merge-pathnames ".inga.yml" (cdr (assoc :root-path params)))))
+      (when (probe-file config-path)
+        (setf params
+              (acons :config (parse-yaml (alexandria:read-file-into-string config-path)) params)))
       (run (cdr (assoc :mode params)) language params))
     (inga-error (e) (format t "~a~%" e))))
 

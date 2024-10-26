@@ -86,6 +86,7 @@
         (output-path (cdr (assoc :output-path params)))
         (temp-path (cdr (assoc :temp-path params)))
         (base-commit (cdr (assoc :base-commit params)))
+        (config (cdr (assoc :config params)))
         (msg (loop while *standard-input* do
                    (let* ((json (extract-json *standard-input*))
                           (result (when json (jsown:parse json))))
@@ -125,10 +126,10 @@
          (return-from handle-msg))
         (t
          (setf *processing-msg*
-               (process-msg-if-present msg ctx root-path output-path temp-path base-commit root-host-paths))))))
+               (process-msg-if-present msg ctx root-path output-path temp-path base-commit root-host-paths config))))))
   (handle-msg params ctx root-host-paths))
 
-(defun process-msg-if-present (msg ctx root-path output-path temp-path base-commit root-host-paths)
+(defun process-msg-if-present (msg ctx root-path output-path temp-path base-commit root-host-paths config)
   (when (or (not msg)
             (and *processing-msg* (sb-thread:thread-alive-p *processing-msg*)))
     (return-from process-msg-if-present *processing-msg*))
@@ -181,10 +182,11 @@
                      :success (lambda (results)
                                 (process-output-if-present results output-path root-path))
                      :failure (lambda (failures)
-                                (output-error failures output-path root-path)))
+                                (output-error failures output-path root-path))
+                     :config config)
                    `(()))
                output-path root-path)))))
-      (process-msg-if-present (dequeue-msg) ctx root-path output-path temp-path base-commit root-host-paths))))
+      (process-msg-if-present (dequeue-msg) ctx root-path output-path temp-path base-commit root-host-paths config))))
 
 (defun process-output-if-present (output output-path root-path)
   (unless output

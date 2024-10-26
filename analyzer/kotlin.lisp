@@ -2,6 +2,8 @@
   (:use #:cl
         #:inga/analyzer/base
         #:inga/utils)
+  (:import-from #:inga/analyzer/jvm-helper
+                #:get-client-index)
   (:import-from #:inga/ast-index
                 #:ast-index-paths
                 #:ast-index-root-path
@@ -51,7 +53,7 @@
       (setf (gethash :package *file-index*) (make-hash-table)))
     (push path (gethash index-key (gethash :package *file-index*))))
   (let ((index-key (find-project-index-key
-                      (merge-pathnames path (ast-index-root-path (analyzer-index analyzer))))))
+                     (merge-pathnames path (ast-index-root-path (analyzer-index analyzer))))))
     (unless (gethash :module *file-index*)
       (setf (gethash :module *file-index*) (make-hash-table)))
     (push path (gethash index-key (gethash :module *file-index*)))))
@@ -77,13 +79,15 @@
   (let ((base-path (find-base-path path)))
     (when base-path (intern (namestring base-path) :keyword))))
 
-(defmethod get-scoped-index-paths-generic ((analyzer analyzer-kotlin) pos)
+(defmethod get-scoped-index-paths-generic ((analyzer analyzer-kotlin) pos config)
   (cond
     ((eq (cdr (assoc :type pos)) :module-private)
      (list (cdr (assoc :path pos))))
     ((eq (cdr (assoc :type pos)) :module-default)
      (log-debug (format nil "start a slow-running full scan. pos: ~a" pos))
      (ast-index-paths (analyzer-index analyzer)))
+    ((eq (cdr (assoc :type pos)) :rest-server)
+     (get-client-index pos (analyzer-path analyzer) config))
     (t
      (log-error (format nil "unexpected visibility modifiers. type: ~a" (cdr (assoc :type pos))))
      (ast-index-paths (analyzer-index analyzer)))))

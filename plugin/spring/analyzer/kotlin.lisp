@@ -28,11 +28,6 @@
     "org.springframework.web.client.RestTemplate"
     :key-name "fqName"))
 
-(defmethod get-scoped-index-paths-generic :around ((analyzer analyzer-kotlin) pos)
-  (if (eq (cdr (assoc :type pos)) :rest-server)
-      (gethash :rest-client *file-index*)
-      (call-next-method)))
-
 (defmethod find-definitions-generic :around ((analyzer analyzer-kotlin) range)
   (loop
     with q = (make-queue)
