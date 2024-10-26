@@ -13,7 +13,8 @@
                "inga/test/helper"
                "inga/test/server"
                "inga/test/main"
-               "inga/test/path")
+               "inga/test/path"
+               "inga/test/yaml")
   :perform (test-op (o c)
                     (unless (uiop:symbol-call
                               :fiveam '#:run!
