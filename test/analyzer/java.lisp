@@ -659,7 +659,7 @@
             '((:type . :module-private)
               (:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/http/TasksController.java")
               (:fq-name . "com.baeldung.apiservice.adapters.http.TasksController.getUser-java.lang.String"))
-            *index*)))))
+            *index* nil)))))
 
 (test get-scoped-index-paths-with-module-public
   (with-fixture jvm-ctx (*lightrun-path*)
@@ -670,7 +670,7 @@
               '((:type . :module-public)
                 (:path . "api-service/src/main/java/com/baeldung/apiservice/adapters/users/UserRepository.java")
                 (:fq-name . "com.baeldung.apiservice.adapters.users.UserRepository.getUserById-java.lang.String"))
-              *index*))))))
+              *index* nil))))))
 
 (test not-matches-signature-with-no-args
   (with-fixture jvm-ctx (*lightrun-path*)
