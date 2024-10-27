@@ -29,11 +29,6 @@
       "org.springframework.web.reactive.function.client.WebClient")
     :key-name "fqName"))
 
-(defmethod get-scoped-index-paths-generic :around ((analyzer analyzer-java) pos)
-  (if (eq (cdr (assoc :type pos)) :rest-server)
-      (gethash :rest-client *file-index*)
-      (call-next-method)))
-
 (defmethod find-definitions-generic :around ((analyzer analyzer-java) range)
   (loop
     with q = (make-queue)

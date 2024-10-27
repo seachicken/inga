@@ -2,16 +2,16 @@
   (:use #:cl
         #:inga/analyzer/base
         #:inga/utils)
-  (:import-from #:alexandria
-                #:switch)
+  (:import-from #:inga/analyzer/jvm-helper
+                #:get-client-index)
+  (:import-from #:inga/analyzer/kotlin
+                #:analyzer-kotlin)
   (:import-from #:inga/ast-index
                 #:ast-index-paths
                 #:ast-index-root-path
                 #:create-indexes
                 #:get-ast
                 #:stop-indexes)
-  (:import-from #:inga/analyzer/kotlin
-                #:analyzer-kotlin)
   (:import-from #:inga/file
                 #:get-file-type)
   (:import-from #:inga/logger
@@ -77,7 +77,7 @@
   (let ((base-path (find-base-path path)))
     (when base-path (intern (namestring base-path) :keyword))))
 
-(defmethod get-scoped-index-paths-generic ((analyzer analyzer-java) pos)
+(defmethod get-scoped-index-paths-generic ((analyzer analyzer-java) pos config)
   (cond
     ((eq (cdr (assoc :type pos)) :module-private)
      (list (cdr (assoc :path pos))))
@@ -89,6 +89,8 @@
      (gethash (find-project-index-key (merge-pathnames (cdr (assoc :path pos))
                                                        (analyzer-path analyzer)))
               (gethash :module *file-index*)))
+    ((eq (cdr (assoc :type pos)) :rest-server)
+     (get-client-index pos (analyzer-path analyzer) config))
     (t
      (log-debug (format nil "start a slow-running full scan. pos: ~a" pos))
      (ast-index-paths (analyzer-index analyzer)))))

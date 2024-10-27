@@ -67,6 +67,7 @@
            #:debug-ast))
 (in-package #:inga/analyzer/base)
 
+(defparameter *config* nil)
 (defparameter *index-path* (uiop:merge-pathnames* #p"inga_temp/"))
 (defparameter *analyzers* nil)
 (defparameter *results* (make-hash-table))
@@ -101,19 +102,20 @@
   (clrhash *rest-client-apis*)
   (clrhash *results*))
 
-(defun get-scoped-index-paths (pos index)
+(defun get-scoped-index-paths (pos index config)
   (let ((analyzer (get-analyzer (cdr (assoc :path (or (cdr (assoc :file-pos pos)) pos))))))
     (if analyzer
-        (get-scoped-index-paths-generic analyzer pos)
+        (get-scoped-index-paths-generic analyzer pos config)
         (ast-index-paths index))))
-(defgeneric get-scoped-index-paths-generic (analyzer pos)
-  (:method (analyzer pos)
+(defgeneric get-scoped-index-paths-generic (analyzer pos config)
+  (:method (analyzer pos config)
    (ast-index-paths (analyzer-index analyzer))))
 
 (defgeneric set-index-group (analyzer path)
   (:method (analyzer path)))
 
-(defun analyze (ctx ranges &key (success (lambda (results))) (failure (lambda (failures))))
+(defun analyze (ctx ranges &key (success (lambda (results))) (failure (lambda (failures))) config)
+  (setf *config* config)
   (labels ((flattern-results (sort-keys)
              (mapcan (lambda (k)
                        (copy-list (cdr (assoc :results (gethash k *results*)))))
@@ -269,7 +271,7 @@
 
   (funtime
     (lambda ()
-      (loop for path in (get-scoped-index-paths pos index)
+      (loop for path in (get-scoped-index-paths pos index *config*)
             with results
             do
             (let* ((analyzer (get-analyzer path))

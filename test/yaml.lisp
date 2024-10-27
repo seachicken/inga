@@ -9,41 +9,41 @@
 
 (test parse-yaml-with-single-server
   (is (equal
-        `(:servers
-           ((:clients
-              ((:name . "b")))
-            (:name . "a")))
+        `((:servers
+            ((:clients
+               ((:path . "b")))
+             (:path . "a"))))
         (parse-yaml "servers:
-                       - name: a
+                       - path: a
                          clients:
-                           - name: b"))))
+                           - path: b"))))
 
 (test parse-yaml-with-multiple-servers
   (is (equal
-        `(:servers
-           ((:clients
-              ((:name . "b")))
-            (:name . "a"))
-           ((:clients
-              ((:name . "d")))
-            (:name . "c")))
+        `((:servers
+            ((:clients
+               ((:path . "b")))
+             (:path . "a"))
+            ((:clients
+               ((:path . "d")))
+             (:path . "c"))))
         (parse-yaml "servers:
-                       - name: a
+                       - path: a
                          clients:
-                           - name: b
-                       - name: c
+                           - path: b
+                       - path: c
                          clients:
-                           - name: d"))))
+                           - path: d"))))
 
 (test parse-yaml-with-empty-clients
   (is (equal
-        `(:servers
-           ((:name . "a")))
+        `((:servers
+            ((:path . "a"))))
         (parse-yaml "servers:
-                       - name: a"))))
+                       - path: a"))))
 
 (test parse-yaml-with-blank-servers
   (is (equal
-        `(:servers)
+        `((:servers))
         (parse-yaml " servers:"))))
 

@@ -18,10 +18,10 @@
                                   0 (- indent prev-indent))))
             (when (< indent-diff 0) (pop stack))
 
-            (when (uiop:string-prefix-p "- name:" trim-line)
+            (when (uiop:string-prefix-p "- path:" trim-line)
               (setf (cdr (first stack))
                     (append (cdr (first stack))
-                            (list `((:name . ,(string-trim '(#\Space) (subseq trim-line 7))))))))
+                            (list `((:path . ,(string-trim '(#\Space) (subseq trim-line 7))))))))
             (when (uiop:string-prefix-p "clients:" trim-line)
               (setf (car (last (cdar stack)))
                     (acons :clients nil (car (last (cdar stack)))))
@@ -31,5 +31,5 @@
 
             (when indent
               (setf prev-indent indent)))
-          finally (return (car (last stack))))))
+          finally (return (list (car (last stack)))))))
 

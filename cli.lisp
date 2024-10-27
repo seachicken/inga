@@ -76,7 +76,8 @@
     (let* (failures
            (results (analyze ctx (diff-to-ranges (cdr (assoc :diff params))
                                                  (cdr (assoc :root-path params)))
-                             :failure (lambda (fs) (setf failures fs)))))
+                             :failure (lambda (fs) (setf failures fs))
+                             :config (cdr (assoc :config params)))))
       (output-error failures
                     (cdr (assoc :output-path params))
                     (cdr (assoc :root-path params)))
