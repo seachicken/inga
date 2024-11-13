@@ -6,6 +6,7 @@
     #:inga/ast-index
     #:inga/cache
     #:inga/cli
+    #:inga/config
     #:inga/contexts
     #:inga/errors
     #:inga/file
@@ -15,6 +16,5 @@
     #:inga/plugin/spring/analyzer
     #:inga/reporter
     #:inga/server
-    #:inga/utils
-    #:inga/yaml))
+    #:inga/utils))
 

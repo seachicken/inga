@@ -4,8 +4,16 @@
   (:import-from #:alexandria
                 #:switch)
   (:import-from #:jsown)
+  (:import-from #:inga/ast-index
+                #:ast-index-paths
+                #:ast-index-root-path
+                #:clean-indexes
+                #:create-indexes
+                #:get-ast) 
   (:import-from #:inga/cache
                 #:defunc)
+  (:import-from #:inga/config
+                #:config-has-changed)
   (:import-from #:inga/contexts
                 #:context-ast-index
                 #:context-exclude
@@ -17,11 +25,6 @@
                 #:is-analysis-target)
   (:import-from #:inga/errors
                 #:inga-error)
-  (:import-from #:inga/ast-index
-                #:ast-index-paths
-                #:clean-indexes
-                #:create-indexes
-                #:get-ast) 
   (:import-from #:inga/language-client
                 #:references-client)
   (:import-from #:inga/logger
@@ -64,6 +67,7 @@
            #:filter-by-names
            #:ast-find-suffix
            #:find-ast
+           #:get-module-paths
            #:debug-ast))
 (in-package #:inga/analyzer/base)
 
@@ -273,7 +277,11 @@
     (lambda ()
       (loop for path in (get-scoped-index-paths pos index *config*)
             with results
+            with config-before = (copy-list *config*)
             do
+            (when (config-has-changed *config* config-before pos (ast-index-root-path index))
+              (return-from find-references (find-references pos index)))
+
             (let* ((analyzer (get-analyzer path))
                    (ast (get-ast (analyzer-index analyzer) path))
                    (references (find-references-by-file analyzer path ast pos)))
@@ -525,6 +533,12 @@
       (return ast))
 
     (loop for child in (ast-value ast "children") do (enqueue q child))))
+
+(defun get-module-paths (root-path)
+  (let (paths)
+    (maphash (lambda (k v) (push (string k) paths))
+             (gethash :module *file-index*))
+		(sort (mapcar (lambda (p) (enough-namestring p root-path)) paths) #'string<)))
 
 (defun debug-ast (ast &key (key-downward "children") (key-upward "parent"))
   (format t "~&ast:~%") 

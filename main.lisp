@@ -2,6 +2,8 @@
   (:use #:cl
         #:inga/utils)
   (:import-from #:alexandria)
+  (:import-from #:inga/config
+                #:parse-yaml)
   (:import-from #:inga/contexts
                 #:*mode*)
   (:import-from #:inga/file
@@ -15,8 +17,6 @@
   (:import-from #:inga/logger
                 #:log-debug
                 #:log-error)
-  (:import-from #:inga/yaml
-                #:parse-yaml)
   (:export #:command))
 (in-package #:inga/main)
 
@@ -30,8 +30,11 @@
                                                     (cdr (assoc :diff params))
                                                     (cdr (assoc :root-path params))))
                               (get-env-kinds))))
-           (config-path (merge-pathnames ".inga.yml" (cdr (assoc :root-path params)))))
-      (when (probe-file config-path)
+           (config-path (find-if (lambda (p) (probe-file p))
+                                 (list
+                                   (merge-pathnames ".inga.yml" (cdr (assoc :root-path params)))
+                                   (merge-pathnames ".inga.yml" (cdr (assoc :output-path params)))))))
+      (when config-path
         (setf params
               (acons :config (parse-yaml (alexandria:read-file-into-string config-path)) params)))
       (run (cdr (assoc :mode params)) language params))

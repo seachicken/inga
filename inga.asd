@@ -9,12 +9,12 @@
   :class :package-inferred-system
   :depends-on ("fiveam"
                "inga/test/analyzer/base"
+               "inga/test/config"
                "inga/test/file"
                "inga/test/helper"
                "inga/test/server"
                "inga/test/main"
-               "inga/test/path"
-               "inga/test/yaml")
+               "inga/test/path")
   :perform (test-op (o c)
                     (unless (uiop:symbol-call
                               :fiveam '#:run!

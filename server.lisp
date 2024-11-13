@@ -7,11 +7,16 @@
   (:import-from #:inga/analyzer
                 #:analyze
                 #:find-definitions 
+                #:get-module-paths
                 #:start-analyzer
                 #:stop-analyzer)
   (:import-from #:inga/ast-index
                 #:ast-index-disk
                 #:update-index)
+  (:import-from #:inga/config
+                #:config-to-obj
+                #:obj-to-config
+                #:to-yaml)
   (:import-from #:inga/contexts
                 #:make-context
                 #:context-analyzers
@@ -114,7 +119,7 @@
                                        (subseq (jsown:val folder "uri") 7)
                                        "/")))
                        root-host-paths)))
-         (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":{\"change\":2,\"save\":false}}}")
+         (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":{\"change\":2,\"save\":false},\"executeCommandProvider\":{\"commands\":[\"inga.getModulePaths\"]}}}")
          (process-output-if-present `(()) output-path root-path))
         ((equal (jsown:val msg "method") "shutdown")
          (log-debug "run shutdown processing")
@@ -124,6 +129,29 @@
 
          (print-response-msg (jsown:val msg "id") "null")
          (return-from handle-msg))
+        ((equal (jsown:val msg "method") "workspace/executeCommand")
+         (let* ((params (jsown:val msg "params"))
+                (command (jsown:val params "command"))
+                (arguments (when (jsown:keyp params "arguments") (jsown:val params "arguments"))))
+           (log-debug (format nil "run workspace/executeCommand (command: ~a) processing" command))
+           (cond
+             ((equal command "inga.getModulePaths")
+              (print-response-msg
+                (jsown:val msg "id")
+                (jsown:to-json `(:obj
+                                  ("modulePaths" . ,(get-module-paths root-path))))))
+             ((equal command "inga.getConfig")
+              (print-response-msg
+                (jsown:val msg "id")
+                (jsown:to-json (config-to-obj config))))
+             ((and (equal command "inga.updateConfig") (first arguments))
+              (setf config (obj-to-config (first arguments)))
+              (setf inga/analyzer/base::*config* config)
+              (with-open-file (out (merge-pathnames ".inga.yml" output-path)
+                                   :direction :output
+                                   :if-exists :supersede
+                                   :if-does-not-exist :create)
+                (format out "~a" (to-yaml config)))))))
         (t
          (setf *processing-msg*
                (process-msg-if-present msg ctx root-path output-path temp-path base-commit root-host-paths config))))))

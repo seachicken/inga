@@ -35,10 +35,9 @@
                                  `(("service" . ,(find-service-name
                                                    (cdr (assoc "path"
                                                                (convert-to-report-pos
-                                                                 (if (equal (cdr (assoc :type pos))
-                                                                            "entrypoint")
-                                                                     (cdr (assoc :entrypoint pos))
-                                                                     (cdr (assoc :origin pos)))
+                                                                 (or
+                                                                   (cdr (assoc :entrypoint pos))
+                                                                   (cdr (assoc :origin pos)))
                                                                  root-path)))
                                                    root-path)))))))
                        poss)))
@@ -90,8 +89,7 @@
       ("offset" . ,(cdr (assoc :offset text-pos))))))
 
 (defun find-service-name (path root-path)
-  (first
-    (last
-      (pathname-directory
-        (find-base-path (merge-pathnames path root-path))))))
+  (enough-namestring
+    (find-base-path (merge-pathnames path root-path))
+    root-path))
 
