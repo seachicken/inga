@@ -1,25 +1,13 @@
 (defpackage #:inga/analyzer/jvm-helper
   (:use #:cl
         #:inga/analyzer/base)
-  (:import-from #:inga/plugin/jvm-helper
-                #:find-base-path)
+  (:import-from #:inga/config
+                #:get-server-config)
   (:export #:get-client-index))
 (in-package #:inga/analyzer/jvm-helper)
 
 (defun get-client-index (pos root-path config)
-  (let* ((server-base-path (enough-namestring
-                             (find-base-path
-                               (merge-pathnames
-                                 (cdr (assoc :path (cdr (assoc :file-pos pos))))
-                                 root-path))
-                             root-path))
-         (server (when config
-                   (find-if (lambda (s)
-                              (equal (namestring (pathname (concatenate 'string
-                                                                        (cdr (assoc :path s))
-                                                                        "/")))
-                                     server-base-path))
-                            (cdr (assoc :servers config)))))
+  (let* ((server (get-server-config config pos root-path))
          (client-base-paths (mapcar (lambda (c)
                                       (namestring
                                         (pathname
