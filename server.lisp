@@ -116,7 +116,7 @@
                                          (subseq (jsown:val folder "uri") 7)
                                          "/")))
                          root-host-paths)))
-           (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":{\"change\":2,\"save\":false},\"executeCommandProvider\":{\"commands\":[\"inga.getModulePaths\"]}}}")))
+           (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":{\"change\":2,\"save\":false}}}")))
         ((equal (jsown:val msg "method") "shutdown")
          (log-debug "run shutdown processing")
 
