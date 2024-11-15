@@ -77,28 +77,29 @@
          (log-debug "run initialize processing")
          (process-output-if-present `(()) output-path root-path)
          (let ((index (make-instance 'ast-index-disk :root-path root-path :temp-path temp-path)))
-           (setf ctx (case language
-                  (t
-                    (make-context
-                      :kind :java
-                      :project-path (cdr (assoc :root-path params))
-                      :include (cdr (assoc :include params))
-                      :exclude (cdr (assoc :exclude params))
-                      :ast-index index
-                      :analyzers (list
-                                   (start-analyzer :java
-                                                   (cdr (assoc :include params))
-                                                   (cdr (assoc :exclude params))
-                                                   root-path
-                                                   index)
-                                   (start-analyzer :kotlin
-                                                   (cdr (assoc :include params))
-                                                   (cdr (assoc :exclude params))
-                                                   root-path
-                                                   index))
-                      :processes (list
-                                   (inga/plugin/spring/spring-property-loader:start root-path)
-                                   (inga/plugin/jvm-dependency-loader:start root-path))))))
+           (setf ctx
+                 (case language
+                   (t
+                     (make-context
+                       :kind :java
+                       :project-path (cdr (assoc :root-path params))
+                       :include (cdr (assoc :include params))
+                       :exclude (cdr (assoc :exclude params))
+                       :ast-index index
+                       :analyzers (list
+                                    (start-analyzer :java
+                                                    (cdr (assoc :include params))
+                                                    (cdr (assoc :exclude params))
+                                                    root-path
+                                                    index)
+                                    (start-analyzer :kotlin
+                                                    (cdr (assoc :include params))
+                                                    (cdr (assoc :exclude params))
+                                                    root-path
+                                                    index))
+                       :processes (list
+                                    (inga/plugin/spring/spring-property-loader:start root-path)
+                                    (inga/plugin/jvm-dependency-loader:start root-path))))))
            (when (jsown:val (jsown:val msg "params") "rootUri")
              (push (namestring (pathname
                                  (concatenate
