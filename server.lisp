@@ -56,37 +56,10 @@
 (defparameter *stdout-thread* nil)
 
 (defmethod run ((mode (eql :server)) language params)
-  (let* ((index (make-instance 'ast-index-disk
-                               :root-path (cdr (assoc :root-path params))
-                               :temp-path (cdr (assoc :temp-path params))))
-         (ctx (case language
-                (t
-                  (make-context
-                    :kind :java
-                    :project-path (cdr (assoc :root-path params))
-                    :include (cdr (assoc :include params))
-                    :exclude (cdr (assoc :exclude params))
-                    :ast-index index
-                    :analyzers (list
-                                 (start-analyzer :java
-                                                 (cdr (assoc :include params))
-                                                 (cdr (assoc :exclude params))
-                                                 (cdr (assoc :root-path params))
-                                                 index)
-                                 (start-analyzer :kotlin
-                                                 (cdr (assoc :include params))
-                                                 (cdr (assoc :exclude params))
-                                                 (cdr (assoc :root-path params))
-                                                 index))
-                    :processes (list
-                                 (inga/plugin/spring/spring-property-loader:start
-                                   (cdr (assoc :root-path params)))
-                                 (inga/plugin/jvm-dependency-loader:start
-                                   (cdr (assoc :root-path params)))))))))
-    (init-msg-q)
-    (handle-msg params ctx)))
+  (init-msg-q)
+  (handle-msg params))
 
-(defun handle-msg (params ctx &optional root-host-paths)
+(defun handle-msg (params &optional ctx root-host-paths)
   (let ((root-path (cdr (assoc :root-path params)))
         (output-path (cdr (assoc :output-path params)))
         (temp-path (cdr (assoc :temp-path params)))
@@ -102,25 +75,48 @@
       (cond
         ((equal (jsown:val msg "method") "initialize")
          (log-debug "run initialize processing")
-         (when (jsown:val (jsown:val msg "params") "rootUri")
-           (push (namestring (pathname
-                               (concatenate
-                                 'string
-                                 ;; remove file URI scheme (file://)
-                                 (subseq (jsown:val (jsown:val msg "params") "rootUri") 7)
-                                 "/")))
-                 root-host-paths))
-         (when (jsown:keyp (jsown:val msg "params") "workspaceFolders")
-           (loop for folder in (jsown:val (jsown:val msg "params") "workspaceFolders")
-                 do
-                 (push (namestring (pathname
-                                     (concatenate
-                                       'string
-                                       (subseq (jsown:val folder "uri") 7)
-                                       "/")))
-                       root-host-paths)))
-         (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":{\"change\":2,\"save\":false},\"executeCommandProvider\":{\"commands\":[\"inga.getModulePaths\"]}}}")
-         (process-output-if-present `(()) output-path root-path))
+         (process-output-if-present `(()) output-path root-path)
+         (let ((index (make-instance 'ast-index-disk :root-path root-path :temp-path temp-path)))
+           (setf ctx (case language
+                  (t
+                    (make-context
+                      :kind :java
+                      :project-path (cdr (assoc :root-path params))
+                      :include (cdr (assoc :include params))
+                      :exclude (cdr (assoc :exclude params))
+                      :ast-index index
+                      :analyzers (list
+                                   (start-analyzer :java
+                                                   (cdr (assoc :include params))
+                                                   (cdr (assoc :exclude params))
+                                                   root-path
+                                                   index)
+                                   (start-analyzer :kotlin
+                                                   (cdr (assoc :include params))
+                                                   (cdr (assoc :exclude params))
+                                                   root-path
+                                                   index))
+                      :processes (list
+                                   (inga/plugin/spring/spring-property-loader:start root-path)
+                                   (inga/plugin/jvm-dependency-loader:start root-path))))))
+           (when (jsown:val (jsown:val msg "params") "rootUri")
+             (push (namestring (pathname
+                                 (concatenate
+                                   'string
+                                   ;; remove URI scheme (file://)
+                                   (subseq (jsown:val (jsown:val msg "params") "rootUri") 7)
+                                   "/")))
+                   root-host-paths))
+           (when (jsown:keyp (jsown:val msg "params") "workspaceFolders")
+             (loop for folder in (jsown:val (jsown:val msg "params") "workspaceFolders")
+                   do
+                   (push (namestring (pathname
+                                       (concatenate
+                                         'string
+                                         (subseq (jsown:val folder "uri") 7)
+                                         "/")))
+                         root-host-paths)))
+           (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":{\"change\":2,\"save\":false},\"executeCommandProvider\":{\"commands\":[\"inga.getModulePaths\"]}}}")))
         ((equal (jsown:val msg "method") "shutdown")
          (log-debug "run shutdown processing")
 

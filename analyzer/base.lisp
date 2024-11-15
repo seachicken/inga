@@ -7,8 +7,6 @@
   (:import-from #:inga/ast-index
                 #:ast-index-paths
                 #:ast-index-root-path
-                #:clean-indexes
-                #:create-indexes
                 #:get-ast) 
   (:import-from #:inga/cache
                 #:defunc)
