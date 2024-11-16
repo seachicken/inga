@@ -2,7 +2,9 @@
   (:use #:cl)
   (:import-from #:inga/logger
                 #:log-debug)
-  (:export #:make-queue
+  (:export #:progress
+           #:progress-path
+           #:make-queue
            #:enqueue
            #:dequeue
            #:dequeue-last
@@ -12,6 +14,11 @@
            #:split-trim-comma
            #:funtime))
 (in-package #:inga/utils)
+
+(define-condition progress ()
+  ((path
+     :initarg :path
+     :reader progress-path)))
 
 (defstruct queue
   (values nil))

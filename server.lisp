@@ -48,6 +48,7 @@
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (require :sb-concurrency))
 
+(defparameter *indexing-token* "indexing-progress")
 (defparameter *msg-q* nil)
 (defparameter *processing-msg* nil)
 (defparameter *output-q* (make-queue))
@@ -59,7 +60,7 @@
   (init-msg-q)
   (handle-msg params))
 
-(defun handle-msg (params &optional ctx root-host-paths)
+(defun handle-msg (params &optional ctx client-params)
   (let ((root-path (cdr (assoc :root-path params)))
         (output-path (cdr (assoc :output-path params)))
         (temp-path (cdr (assoc :temp-path params)))
@@ -76,30 +77,77 @@
         ((equal (jsown:val msg "method") "initialize")
          (log-debug "run initialize processing")
          (process-output-if-present `(()) output-path root-path)
-         (let ((index (make-instance 'ast-index-disk :root-path root-path :temp-path temp-path)))
-           (setf ctx
-                 (case language
-                   (t
-                     (make-context
-                       :kind :java
-                       :project-path (cdr (assoc :root-path params))
-                       :include (cdr (assoc :include params))
-                       :exclude (cdr (assoc :exclude params))
-                       :ast-index index
-                       :analyzers (list
-                                    (start-analyzer :java
-                                                    (cdr (assoc :include params))
-                                                    (cdr (assoc :exclude params))
-                                                    root-path
-                                                    index)
-                                    (start-analyzer :kotlin
-                                                    (cdr (assoc :include params))
-                                                    (cdr (assoc :exclude params))
-                                                    root-path
-                                                    index))
-                       :processes (list
-                                    (inga/plugin/spring/spring-property-loader:start root-path)
-                                    (inga/plugin/jvm-dependency-loader:start root-path))))))
+         (let* ((index (make-instance 'ast-index-disk :root-path root-path :temp-path temp-path))
+                (capabilities (jsown:val (jsown:val msg "params") "capabilities"))
+                (work-done-progress
+                  (when (and (jsown:keyp capabilities "window")
+                             (jsown:keyp (jsown:val capabilities "window") "workDoneProgress"))
+                    (jsown:val (jsown:val capabilities "window") "workDoneProgress")))
+                root-host-paths)
+           (labels ((print-begin-indexing ()
+                      (when work-done-progress
+                        (print-notification-msg
+                          "window/workDoneProgress/create"
+                          (jsown:to-json
+                            `((:obj
+                                ("token" . ,*indexing-token*)))))
+                        (print-notification-msg
+                          "$/progress"
+                          (jsown:to-json
+                            `((:obj
+                                ("token" . ,*indexing-token*)
+                                ("value" .
+                                 (:obj
+                                   ("kind" . "begin")
+                                   ("title" . "Indexing")))))))))
+                    (print-end-indexing ()
+                      (when work-done-progress
+                        (print-notification-msg
+                          "$/progress"
+                          (jsown:to-json
+                            `((:obj
+                                ("token" . ,*indexing-token*)
+                                ("value" .
+                                 (:obj
+                                   ("kind" . "end")))))))))
+                    (print-report-indexing (p)
+                      (when work-done-progress
+                        (print-notification-msg
+                          "$/progress"
+                          (jsown:to-json
+                            `((:obj
+                                ("token" . ,*indexing-token*)
+                                ("value" .
+                                 (:obj
+                                   ("kind" . "report")
+                                   ("message" . ,(format nil "Update indexes~%~a"
+                                                         (progress-path p))))))))))))
+             (setf ctx
+                   (case language
+                     (t
+                       (let (analyzers)
+                         (print-begin-indexing)
+                         (handler-bind ((progress #'print-report-indexing))
+                           (loop for lang in '(:java :kotlin)
+                                 do
+                                 (push (start-analyzer lang
+                                                       (cdr (assoc :include params))
+                                                       (cdr (assoc :exclude params))
+                                                       root-path
+                                                       index)
+                                       analyzers)))
+                         (print-end-indexing)
+
+                         (make-context
+                           :kind :java
+                           :project-path (cdr (assoc :root-path params))
+                           :include (cdr (assoc :include params))
+                           :exclude (cdr (assoc :exclude params))
+                           :ast-index index
+                           :analyzers analyzers
+                           :processes (list
+                                        (inga/plugin/spring/spring-property-loader:start root-path)
+                                        (inga/plugin/jvm-dependency-loader:start root-path))))))))
            (when (jsown:val (jsown:val msg "params") "rootUri")
              (push (namestring (pathname
                                  (concatenate
@@ -117,6 +165,9 @@
                                          (subseq (jsown:val folder "uri") 7)
                                          "/")))
                          root-host-paths)))
+           (setf client-params
+                 `((:root-host-paths . ,root-host-paths)
+                   (:work-done-progress . ,work-done-progress)))
            (print-response-msg (jsown:val msg "id") "{\"capabilities\":{\"textDocumentSync\":{\"change\":2,\"save\":false}}}")))
         ((equal (jsown:val msg "method") "shutdown")
          (log-debug "run shutdown processing")
@@ -151,8 +202,10 @@
                 (format out "~a" (to-yaml config)))))))
         (t
          (setf *processing-msg*
-               (process-msg-if-present msg ctx root-path output-path temp-path base-commit root-host-paths config))))))
-  (handle-msg params ctx root-host-paths))
+               (process-msg-if-present msg ctx root-path output-path temp-path base-commit
+                                       (cdr (assoc :root-host-paths client-params))
+                                       config))))))
+  (handle-msg params ctx client-params))
 
 (defun process-msg-if-present (msg ctx root-path output-path temp-path base-commit root-host-paths config)
   (when (or (not msg)

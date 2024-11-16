@@ -1,6 +1,7 @@
 (defpackage #:inga/ast-index/disk
   (:use #:cl
-        #:inga/ast-index/base)
+        #:inga/ast-index/base
+        #:inga/utils)
   (:import-from #:alexandria)
   (:import-from #:jsown)
   (:import-from #:inga/ast-parser
@@ -12,8 +13,6 @@
   (:import-from #:inga/git)
   (:import-from #:inga/errors
                 #:inga-error)
-  (:import-from #:inga/logger
-                #:log-info)
   (:export #:ast-index-disk))
 (in-package #:inga/ast-index/disk)
 
@@ -49,7 +48,8 @@
                      (is-analysis-target ctx-kind relative-path include-files (list index-exclude-path)))
             (setf (ast-index-paths ast-index)
                   (append (ast-index-paths ast-index) (list relative-path)))
-            (upsert-index ast-index relative-path))))
+            (upsert-index ast-index relative-path)
+            (signal (make-condition 'progress :path relative-path)))))
   (commit-src-hash ast-index))
 
 (defmethod update-index ((ast-index ast-index-disk) path)
@@ -63,7 +63,6 @@
               (gethash (intern (get-hash-path path) :keyword) (ast-index-src-hash ast-index)))
       (return-from upsert-index))
 
-    (log-info (format nil "upsert ast-index at ~a" path))
     (with-open-file (out (get-index-path path (ast-index-disk-path ast-index))
                          :direction :output
                          :if-exists :supersede
