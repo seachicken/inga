@@ -103,7 +103,7 @@
         do
         (setf result (concatenate 'string result "  - path: "
                                   (cdr (assoc :path server)) '(#\Newline)))
-        (when (assoc :clients server)
+        (when (and (assoc :clients server) (>= (length (cdr (assoc :clients server))) 1))
           (setf result (concatenate 'string result "    clients:" '(#\Newline)))
           (loop for client in (cdr (assoc :clients server))
                 do
@@ -116,8 +116,12 @@
              (sort values #'string< :key (lambda (v) (cdr (assoc :path v))))))
     `((:servers .
         ,(mapcar (lambda (s)
-                   (when (assoc :clients s)
-                     (setf (cdr (assoc :clients s)) (sort-by-path (cdr (assoc :clients s)))))
-                   s)
+                   (if (assoc :clients s)
+                       (progn
+                         (setf (cdr (assoc :clients s)) (sort-by-path (cdr (assoc :clients s))))
+                         s)
+                       (acons :clients (sort-by-path (when (assoc :clients s)
+                                                       (cdr (assoc :clients s))))
+                              s)))
                  (sort-by-path (cdr (assoc :servers config))))))))
 

@@ -110,7 +110,8 @@
 (test parse-yaml-with-undefined-clients
   (is (equal
         `((:servers
-            ((:path . "a"))))
+            ((:clients)
+             (:path . "a"))))
         (parse-yaml "servers:
                        - path: a"))))
 
@@ -119,7 +120,8 @@
         `((:servers
             ((:clients)
              (:path . "a"))
-            ((:path . "b"))))
+            ((:clients)
+             (:path . "b"))))
         (parse-yaml "servers:
                        - path: a
                          clients:
@@ -136,9 +138,12 @@
   - path: a
     clients:
       - path: b
+  - path: b
 "
         (to-yaml `((:servers
                      ((:clients
                         ((:path . "b")))
-                      (:path . "a"))))))))
+                      (:path . "a"))
+                     ((:clients)
+                      (:path . "b"))))))))
 
