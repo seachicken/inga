@@ -50,7 +50,6 @@
 (defparameter *processing-msg* nil)
 
 (defmethod run ((mode (eql :server)) language params)
-  (init-msg-q)
   (handle-msg params))
 
 (defun handle-msg (params &optional ctx client-params)
@@ -321,14 +320,16 @@
     `(:obj
        ("didChange" . ,(cons :obj (convert-to-report-pos change-pos root-path))))))
 
-(defun init-msg-q ()
-  (setf *msg-q* (make-queue)))
-
 (defun enqueue-msg (msg)
   (unless msg (return-from enqueue-msg))
 
+  (when (equal (jsown:val msg "method") "initialize")
+    (setf *msg-q* (make-queue)))
+  (unless *msg-q*
+    (return-from enqueue-msg))
+
   (when (equal (jsown:val msg "method") "shutdown")
-    (init-msg-q))
+    (setf *msg-q* (make-queue)))
 
   (let ((prev (peek-last *msg-q*)))
     (when (and
