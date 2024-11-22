@@ -45,16 +45,9 @@
                 #:output-report))
 (in-package #:inga/server)
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (require :sb-concurrency))
-
 (defparameter *indexing-token* "indexing-progress")
 (defparameter *msg-q* nil)
 (defparameter *processing-msg* nil)
-(defparameter *output-q* (make-queue))
-(defparameter *processing-output* nil)
-(defparameter *stdout-q* (sb-concurrency:make-queue))
-(defparameter *stdout-thread* nil)
 
 (defmethod run ((mode (eql :server)) language params)
   (init-msg-q)
@@ -76,7 +69,7 @@
       (cond
         ((equal (jsown:val msg "method") "initialize")
          (log-debug "run initialize processing")
-         (process-output-if-present `(()) output-path root-path)
+         (output-report `(()) output-path root-path)
          (let* ((index (make-instance 'ast-index-disk :root-path root-path :temp-path temp-path))
                 (capabilities (jsown:val (jsown:val msg "params") "capabilities"))
                 (work-done-progress
@@ -192,14 +185,18 @@
               (print-response-msg
                 (jsown:val msg "id")
                 (jsown:to-json (config-to-obj config))))
-             ((and (equal command "inga.updateConfig") (first arguments))
-              (setf config (obj-to-config (first arguments)))
-              (setf inga/analyzer/base::*config* config)
-              (with-open-file (out (merge-pathnames ".inga.yml" output-path)
-                                   :direction :output
-                                   :if-exists :supersede
-                                   :if-does-not-exist :create)
-                (format out "~a" (to-yaml config)))))))
+             ((equal command "inga.updateConfig")
+              (when (first arguments)
+                (setf config (obj-to-config (first arguments)))
+                (setf inga/analyzer/base::*config* config)
+                (with-open-file (out (merge-pathnames ".inga.yml" output-path)
+                                     :direction :output
+                                     :if-exists :supersede
+                                     :if-does-not-exist :create)
+                  (format out "~a" (to-yaml config))))
+              (print-response-msg
+                (jsown:val msg "id")
+                (jsown:to-json (config-to-obj config)))))))
         (t
          (setf *processing-msg*
                (process-msg-if-present msg ctx root-path output-path temp-path base-commit
@@ -254,31 +251,17 @@
                                        (context-include ctx)
                                        (context-exclude ctx))
                (update-index (context-ast-index ctx) path))
-             (process-output-if-present
+             (output-report
                (or (analyze
                      ctx diff
                      :success (lambda (results)
-                                (process-output-if-present results output-path root-path))
+                                (output-report results output-path root-path))
                      :failure (lambda (failures)
                                 (output-error failures output-path root-path))
                      :config config)
                    `(()))
                output-path root-path)))))
       (process-msg-if-present (dequeue-msg) ctx root-path output-path temp-path base-commit root-host-paths config))))
-
-(defun process-output-if-present (output output-path root-path)
-  (unless output
-    (return-from process-output-if-present))
-
-  (enqueue-output output)
-  (unless *processing-output*
-    (setf *processing-output*
-          (sb-thread:make-thread
-            (lambda ()
-              (let ((report (dequeue-output)))
-                (output-report report output-path root-path)
-                (setf *processing-output* nil)
-                (process-output-if-present (dequeue-output) output-path root-path)))))))
 
 (defun extract-json (stream)
   ;; Content-Length: 99
@@ -323,28 +306,15 @@
     (return-from print-response-msg))
 
   (let ((content (format nil "{\"jsonrpc\":\"2.0\",\"id\":\"~a\",\"result\":~a}" id result)))
-    (print-if-present (format nil "Content-Length: ~a~c~c~c~c~a" (length content) #\return #\linefeed
-                              #\return #\linefeed
-                              content))))
+    (format t (format nil "Content-Length: ~a~c~c~c~c~a" (length content) #\return #\linefeed
+                      #\return #\linefeed
+                      content))))
 
 (defun print-notification-msg (method params)
   (let ((content (format nil "{\"jsonrpc\":\"2.0\",\"method\":\"~a\",\"params\":~a}" method params)))
-    (print-if-present (format nil "Content-Length: ~a~c~c~c~c~a" (length content) #\return #\linefeed
-                              #\return #\linefeed
-                              content))))
-
-(defun print-if-present (json)
-  (unless json
-    (return-from print-if-present))
-  
-  (sb-concurrency:enqueue json *stdout-q*) 
-  (when (or (null *stdout-thread*) (not (sb-thread:thread-alive-p *stdout-thread*)))
-    (setf *stdout-thread*
-          (sb-thread:make-thread
-            (lambda ()
-              (format t (sb-concurrency:dequeue *stdout-q*))
-              (force-output)
-              (print-if-present (sb-concurrency:dequeue *stdout-q*)))))))
+    (format t (format nil "Content-Length: ~a~c~c~c~c~a" (length content) #\return #\linefeed
+                      #\return #\linefeed
+                      content))))
 
 (defun to-state-json (change-pos root-path)
   (jsown:to-json
@@ -370,17 +340,6 @@
 
 (defun dequeue-msg ()
   (dequeue *msg-q*))
-
-(defun enqueue-output (output)
-  (unless output (return-from enqueue-output))
-
-  (let ((prev (peek-last *output-q*)))
-    (when prev
-      (dequeue-last *output-q*)))
-  (enqueue *output-q* output))
-
-(defun dequeue-output ()
-  (dequeue *output-q*))
 
 (defun get-relative-path (path root-host-paths)
   (loop for root-path in root-host-paths
