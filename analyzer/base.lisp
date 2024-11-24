@@ -180,7 +180,7 @@
                 (remove-if (lambda (r) (equal (cdr (assoc :type r)) "searching")) rs))
               (flattern-results def-keys)))))
 
-(defunc analyze-by-definition (ctx def on-search)
+(defunc analyze-by-definition (ctx def &optional (on-search (lambda (searching-results))))
   (loop
     with q = (make-queue)
     with results
