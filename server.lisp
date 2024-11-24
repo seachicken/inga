@@ -270,11 +270,9 @@
     ;; newline
     (read-line stream)
     ;; JSON
-    (loop
-      with buff = (make-array len :fill-pointer 0)
-      repeat len
-      do (vector-push (read-byte stream) buff)
-      finally (return (flexi-streams:octets-to-string buff :external-format :utf-8)))))
+    (let ((buff (make-array len :element-type '(unsigned-byte 8))))
+      (read-sequence buff stream)
+      (flexi-streams:octets-to-string buff :external-format :utf-8))))
 
 (defmethod log-debug-generic ((mode (eql :server)) content)
   (print-notification-msg

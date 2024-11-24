@@ -56,8 +56,7 @@
     (unless (gethash :package *file-index*)
       (setf (gethash :package *file-index*) (make-hash-table)))
     (push path (gethash index-key (gethash :package *file-index*))))
-  (let ((index-key (find-project-index-key
-                      (merge-pathnames path (ast-index-root-path (analyzer-index analyzer))))))
+  (let ((index-key (find-project-index-key path (ast-index-root-path (analyzer-index analyzer)))))
     (unless (gethash :module *file-index*)
       (setf (gethash :module *file-index*) (make-hash-table)))
     (push path (gethash index-key (gethash :module *file-index*)))))
@@ -75,8 +74,8 @@
     (loop for child in (jsown:val ast "children")
           do (setf stack (append stack (list child))))))
 
-(defun find-project-index-key (path)
-  (let ((base-path (find-base-path path)))
+(defun find-project-index-key (path root-path)
+  (let ((base-path (find-base-path path root-path)))
     (when base-path (intern (namestring base-path) :keyword))))
 
 (defmethod get-scoped-index-paths-generic ((analyzer analyzer-java) pos config)
@@ -88,8 +87,7 @@
                                                (cdr (assoc :path pos))))
               (gethash :package *file-index*)))
     ((eq (cdr (assoc :type pos)) :module-public)
-     (gethash (find-project-index-key (merge-pathnames (cdr (assoc :path pos))
-                                                       (analyzer-path analyzer)))
+     (gethash (find-project-index-key (cdr (assoc :path pos)) (analyzer-path analyzer))
               (gethash :module *file-index*)))
     ((eq (cdr (assoc :type pos)) :rest-server)
      (get-client-index pos (analyzer-path analyzer) config))

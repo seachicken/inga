@@ -9,16 +9,17 @@
            #:convert-to-json-type))
 (in-package #:inga/plugin/jvm-helper)
 
-(defunc find-base-path (path)
-  (when (equal path #p"/")
-    (return-from find-base-path))
+(defunc find-base-path (path root-path)
+  (let ((full-path (merge-pathnames path root-path)))
+    (let ((parent-full-path (uiop:pathname-parent-directory-pathname full-path)))
+      (unless (uiop:string-prefix-p (namestring root-path) (namestring parent-full-path))
+        (return-from find-base-path))
 
-  (let ((parent-path (uiop:pathname-parent-directory-pathname path)))
-    (loop for file in (uiop:directory-files parent-path)
-          do
-          (when (find (file-namestring file) '("pom.xml" "build.gradle" "build.gradle.kts") :test #'equal)
-            (return-from find-base-path parent-path)))
-    (find-base-path parent-path)))
+      (loop for file in (uiop:directory-files parent-full-path)
+            do
+            (when (find (file-namestring file) '("pom.xml" "build.gradle" "build.gradle.kts") :test #'equal)
+              (return-from find-base-path parent-full-path)))
+      (find-base-path (enough-namestring parent-full-path root-path) root-path))))
 
 (defun is-primitive-type (class-name)
   (find class-name '("BOOLEAN"

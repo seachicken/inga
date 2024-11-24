@@ -90,6 +90,6 @@
 
 (defun find-service-name (path root-path)
   (enough-namestring
-    (find-base-path (merge-pathnames path root-path))
+    (find-base-path path root-path)
     root-path))
 

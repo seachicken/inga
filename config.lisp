@@ -17,9 +17,8 @@
 
   (let ((module-path (enough-namestring
                        (find-base-path
-                         (merge-pathnames
-                           (cdr (assoc :path (cdr (assoc :file-pos pos))))
-                           root-path))
+                         (cdr (assoc :path (cdr (assoc :file-pos pos))))
+                         root-path)
                        root-path)))
     (find-if (lambda (s)
                (equal (namestring (pathname (concatenate 'string

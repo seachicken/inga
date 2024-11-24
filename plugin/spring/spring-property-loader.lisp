@@ -36,7 +36,7 @@
   (unless (uiop:process-alive-p *spring-property-loader*)
     (error 'inga-error-process-not-running))
 
-  (let ((base-path (find-base-path (merge-pathnames from *root-path*))))
+  (let ((base-path (find-base-path from *root-path*)))
     (unless base-path
       (return-from find-property))
 

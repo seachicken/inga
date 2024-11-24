@@ -41,7 +41,7 @@
             (equal fq-class-name "NIL"))
     (return-from load-signatures))
 
-  (let ((base-path (find-base-path (merge-pathnames from *root-path*))))
+  (let ((base-path (find-base-path from *root-path*)))
     (unless base-path
       (return-from load-signatures))
 
@@ -89,7 +89,7 @@
             (null from))
     (return-from load-structure))
 
-  (let ((base-path (find-base-path (merge-pathnames from *root-path*))))
+  (let ((base-path (find-base-path from *root-path*)))
     (unless base-path
       (return-from load-structure))
     
@@ -111,7 +111,7 @@
             (equal fq-class-name "NIL"))
     (return-from load-hierarchy))
 
-  (let ((base-path (find-base-path (merge-pathnames from *root-path*))))
+  (let ((base-path (find-base-path from *root-path*)))
     (unless base-path
       (return-from load-hierarchy))
 
