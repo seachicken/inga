@@ -89,7 +89,8 @@
       ("offset" . ,(cdr (assoc :offset text-pos))))))
 
 (defun find-service-name (path root-path)
-  (enough-namestring
-    (find-base-path path root-path)
-    root-path))
+  (let ((base-path (find-base-path path root-path)))
+    (if (equal base-path root-path)
+        (directory-namestring root-path)
+        (enough-namestring base-path root-path))))
 
