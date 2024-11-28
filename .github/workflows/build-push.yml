@@ -3,6 +3,7 @@ name: Build and push Docker images
 on:
   push:
     tags: [ 'v*' ]
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
@@ -42,7 +43,9 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: suffix=-${{ matrix.target }},onlatest=true
-          tags: type=semver,pattern={{version}}
+          tags: |
+            type=semver,pattern={{version}}
+            type=sha
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
