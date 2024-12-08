@@ -20,7 +20,7 @@ COPY --from=build /inga/roswell/inga /usr/local/bin/
 
 ADD https://github.com/seachicken/javaparser/releases/download/v$JAVAPARSER/javaparser-$JAVAPARSER.jar ./libs/javaparser.jar
 ADD https://github.com/seachicken/ktparser/releases/download/v$KTPARSRER/ktparser-$KTPARSRER.jar ./libs/ktparser.jar
-ADD https://github.com/seachicken/jvm-dependency-loader/releases/download/v$JVM_DEPENDENCY_LOADER/jvm-dependency-loader-$JVM_DEPENDENCY_LOADER.jar ./libs/jvm-dependency-loader.jar
+ADD https://github.com/seachicken/jvm-dependency-loader/releases/download/untagged-ded93bfdd86a80b25fc0/jvm-dependency-loader-0.6.8-pre1.jar ./libs/jvm-dependency-loader.jar
 ADD https://github.com/seachicken/spring-property-loader/releases/download/v$SPRING_PROPERTY_LOADER/spring-property-loader-$SPRING_PROPERTY_LOADER.jar ./libs/spring-property-loader.jar
 
 RUN apt-get update && \
