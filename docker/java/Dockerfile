@@ -14,13 +14,13 @@ FROM eclipse-temurin:21-jdk-jammy
 ENV JAVAPARSER=0.3.5
 ENV KTPARSRER=0.1.6
 ENV SPRING_PROPERTY_LOADER=0.3.2
-ENV JVM_DEPENDENCY_LOADER=0.6.8-pre0
+ENV JVM_DEPENDENCY_LOADER=0.6.8
 
 COPY --from=build /inga/roswell/inga /usr/local/bin/
 
 ADD https://github.com/seachicken/javaparser/releases/download/v$JAVAPARSER/javaparser-$JAVAPARSER.jar ./libs/javaparser.jar
 ADD https://github.com/seachicken/ktparser/releases/download/v$KTPARSRER/ktparser-$KTPARSRER.jar ./libs/ktparser.jar
-ADD https://github.com/seachicken/jvm-dependency-loader/releases/download/untagged-597d6734213cfd97166e/jvm-dependency-loader-0.6.8-pre0.jar ./libs/jvm-dependency-loader.jar
+ADD https://github.com/seachicken/jvm-dependency-loader/releases/download/v$JVM_DEPENDENCY_LOADER/jvm-dependency-loader-$JVM_DEPENDENCY_LOADER.jar ./libs/jvm-dependency-loader.jar
 ADD https://github.com/seachicken/spring-property-loader/releases/download/v$SPRING_PROPERTY_LOADER/spring-property-loader-$SPRING_PROPERTY_LOADER.jar ./libs/spring-property-loader.jar
 
 RUN apt-get update && \
