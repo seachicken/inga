@@ -9,6 +9,7 @@
   :class :package-inferred-system
   :depends-on ("fiveam"
                "inga/test/analyzer/base"
+               "inga/test/analyzer/jvm-helper"
                "inga/test/config"
                "inga/test/file"
                "inga/test/helper"

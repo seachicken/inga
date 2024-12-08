@@ -3,7 +3,8 @@
         #:inga/analyzer/base
         #:inga/utils)
   (:import-from #:inga/analyzer/jvm-helper
-                #:get-client-index)
+                #:get-client-index
+                #:get-fq-class-name-candidates)
   (:import-from #:inga/analyzer/kotlin
                 #:analyzer-kotlin)
   (:import-from #:inga/ast-index
@@ -309,13 +310,21 @@
              (when (null ast) (return (format nil "~{~a~^.~}" fq-names)))
 
              (when (equal (ast-value ast "type") "COMPILATION_UNIT")
-               (let ((import (first (ast-find-suffix
-                                      (get-asts ast '("IMPORT"))
-                                      (concatenate 'string "." name)
-                                      :key-name "fqName"))))
+               (let (fqcn-from-import)
+                 (multiple-value-bind (candidates type) (get-fq-class-name-candidates
+                                                          name
+                                                          (mapcar (lambda (i) (ast-value i "fqName"))
+                                                                  (get-asts ast '("IMPORT"))))
+                   (when candidates
+                     (setf fqcn-from-import
+                           (if (eq type :exact)
+                               candidates
+                               (remove nil
+                                       (list
+                                         (find-if (lambda (c) (load-signatures c path)) candidates)))))))
                  (setf fq-names
-                       (if import
-                           (list (ast-value import "fqName"))
+                       (if fqcn-from-import
+                           fqcn-from-import
                            (append
                              (list (ast-value (first (get-asts ast '("PACKAGE"))) "packageName"))
                              fq-names)))))
