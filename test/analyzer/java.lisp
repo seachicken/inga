@@ -546,6 +546,17 @@
 
 (in-suite jdk21)
 
+(test find-fq-class-name-for-wildcard-import
+  (with-fixture jvm-ctx (*java-path*)
+    (let ((path "src/main/java/p1/WildcardImportReference.java"))
+      (is (equal
+            "java.util.List"
+            ;;            ↓
+            ;; var list = List.of("a");
+            (find-fq-class-name
+              (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 20)))
+              path))))))
+
 (test find-fq-class-name-for-type-inference-in-lambda
   (with-fixture jvm-ctx (*java-path*)
     (let ((path "src/main/java/p1/TypeInferenceReference.java"))

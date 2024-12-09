@@ -3,7 +3,8 @@
         #:inga/analyzer/base
         #:inga/utils)
   (:import-from #:inga/analyzer/jvm-helper
-                #:get-client-index)
+                #:get-client-index
+                #:get-fq-class-name-candidates)
   (:import-from #:inga/ast-index
                 #:ast-index-paths
                 #:ast-index-root-path
@@ -373,12 +374,22 @@
     (unless ast (return))
 
     (when (equal (ast-value ast "type") "kotlin.FILE")
-      (let ((import (first (ast-find-suffix
-                             (get-asts ast '("IMPORT_LIST" "IMPORT_DIRECTIVE"))
-                             (concatenate 'string "." class-name)
-                             :key-name "fqName"))))
-        (return (if import
-                    (ast-value import "fqName")
+      (let (fqcn-from-import)
+        (multiple-value-bind (candidates type) (get-fq-class-name-candidates
+                                                 class-name
+                                                 (mapcar (lambda (i) (ast-value i "fqName"))
+                                                         (get-asts ast '("IMPORT_LIST"
+                                                                         "IMPORT_DIRECTIVE"))))
+          (when candidates
+            (setf fqcn-from-import
+                  (first
+                    (if (eq type :exact)
+                        candidates
+                        (remove nil
+                                (list
+                                  (find-if (lambda (c) (load-signatures c path)) candidates))))))))
+        (return (if fqcn-from-import
+                    fqcn-from-import
                     (if (get-asts ast '("CLASS" "SUPER_TYPE_LIST"))
                         (loop for super in (get-asts ast '("CLASS"
                                                            "SUPER_TYPE_LIST"

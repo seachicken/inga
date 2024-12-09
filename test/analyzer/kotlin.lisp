@@ -371,6 +371,17 @@
               (find-ast-in-ctx `((:path . ,path) (:line . 19) (:offset . 15)))
               path))))))
 
+(test find-fq-class-name-for-wildcard-import
+  (with-fixture jvm-ctx (*kotlin-path*)
+    (let ((path "src/main/kotlin/pkt1/WildcardImportReference.kt"))
+      (is (equal
+            "java.util.ArrayList"
+            ;;            ↓
+            ;; val list = ArrayList<Int>()
+            (find-fq-class-name
+              (find-ast-in-ctx `((:path . ,path) (:line . 7) (:offset . 20)))
+              path))))))
+
 (test find-fq-class-name-with-companion-object
   (with-fixture jvm-ctx (*kotlin-path*)
     (let ((path "src/main/kotlin/pkt1/CompanionMethodReference.kt"))
