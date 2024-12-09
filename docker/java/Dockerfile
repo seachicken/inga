@@ -14,7 +14,7 @@ FROM eclipse-temurin:21-jdk-jammy
 ENV JAVAPARSER=0.3.5
 ENV KTPARSRER=0.1.7
 ENV SPRING_PROPERTY_LOADER=0.3.2
-ENV JVM_DEPENDENCY_LOADER=0.6.7
+ENV JVM_DEPENDENCY_LOADER=0.6.8
 
 COPY --from=build /inga/roswell/inga /usr/local/bin/
 
@@ -24,7 +24,7 @@ ADD https://github.com/seachicken/jvm-dependency-loader/releases/download/v$JVM_
 ADD https://github.com/seachicken/spring-property-loader/releases/download/v$SPRING_PROPERTY_LOADER/spring-property-loader-$SPRING_PROPERTY_LOADER.jar ./libs/spring-property-loader.jar
 
 RUN apt-get update && \
-  apt-get install -y maven && \
+  apt-get install -y maven rsync && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
