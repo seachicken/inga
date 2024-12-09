@@ -45,7 +45,7 @@ jobs:
           flavor: suffix=-${{ matrix.target }},onlatest=true
           tags: |
             type=semver,pattern={{version}}
-            type=sha
+            type=ref
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
