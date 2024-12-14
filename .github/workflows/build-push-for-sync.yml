@@ -6,6 +6,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.actor }}/inga-sync
+  IMAGE_TAG: v0.1.0
 
 jobs:
   build-and-push-image:
@@ -38,7 +39,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           flavor: onlatest=true
           tags: |
-            type=semver,pattern={{version}},value=v0.1.0
+            type=semver,pattern={{version}},value=${{ env.IMAGE_TAG }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
