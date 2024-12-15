@@ -346,6 +346,20 @@
               (:fq-name . "p1.PrivateMethodReference.methodWithStdLib-java.nio.file.Path"))
             *index*)))))
 
+(test find-references-with-try-with-resources
+  (with-fixture jvm-ctx (*java-path*)
+    (is (equal
+          `(((:path . "src/main/java/p1/TryWithResourcesReference.java")
+             ,(cons :top-offset
+                    (convert-to-top-offset
+                      (merge-pathnames "src/main/java/p1/TryWithResourcesReference.java" *java-path*)
+                      '((:line . 5) (:offset . 22))))))
+          (find-references
+            `((:path . "src/main/java/p1/TryWithResourcesReference.java")
+              (:name . "Closeable")
+              (:fq-name . "p1.TryWithResourcesReference$Closeable.Closeable"))
+            *index*)))))
+
 (test find-references-for-kotlin-class
   (with-fixture jvm-ctx (*java-path*)
     (is (equal
