@@ -91,7 +91,7 @@
                                 ("value" .
                                  (:obj
                                    ("kind" . "begin")
-                                   ("title" . "Indexing")))))))))
+                                   ("title" . "Update indexes")))))))))
                     (print-end-indexing ()
                       (when work-done-progress
                         (print-notification-msg
@@ -112,8 +112,7 @@
                                 ("value" .
                                  (:obj
                                    ("kind" . "report")
-                                   ("message" . ,(format nil "Update indexes~%~a"
-                                                         (progress-path p))))))))))))
+                                   ("message" . ,(progress-path p)))))))))))
              (setf ctx
                    (case language
                      (t
