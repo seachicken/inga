@@ -66,7 +66,7 @@
                          :direction :output
                          :if-exists :supersede
                          :if-does-not-exist :create)
-      (signal (make-condition 'progress :path relative-path))
+      (signal (make-condition 'progress :path path))
       (format out "~a" (format nil "~a" (parse (merge-pathnames
                                                  path (ast-index-root-path ast-index)))))
       (setf (gethash (intern (get-hash-path path) :keyword) (ast-index-src-hash ast-index))
