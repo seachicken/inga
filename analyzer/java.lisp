@@ -48,9 +48,7 @@
 (defun create-index-groups (analyzer)
   (loop for path in (remove-if-not (lambda (p) (eq (get-file-type p) :java))
                                    (ast-index-paths (analyzer-index analyzer)))
-        do
-        (set-index-group analyzer path)
-        (signal (make-condition 'progress :path path))))
+        do (set-index-group analyzer path)))
 
 (defmethod set-index-group ((analyzer analyzer-java) path)
   (let ((index-key (find-package-index-key (get-ast (analyzer-index analyzer) path))))
