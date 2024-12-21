@@ -48,8 +48,7 @@
                      (is-analysis-target ctx-kind relative-path include-files (list index-exclude-path)))
             (setf (ast-index-paths ast-index)
                   (append (ast-index-paths ast-index) (list relative-path)))
-            (upsert-index ast-index relative-path)
-            (signal (make-condition 'progress :path relative-path)))))
+            (upsert-index ast-index relative-path))))
   (commit-src-hash ast-index))
 
 (defmethod update-index ((ast-index ast-index-disk) path)
@@ -67,6 +66,7 @@
                          :direction :output
                          :if-exists :supersede
                          :if-does-not-exist :create)
+      (signal (make-condition 'progress :path relative-path))
       (format out "~a" (format nil "~a" (parse (merge-pathnames
                                                  path (ast-index-root-path ast-index)))))
       (setf (gethash (intern (get-hash-path path) :keyword) (ast-index-src-hash ast-index))
