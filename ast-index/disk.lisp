@@ -70,6 +70,7 @@
                          :direction :output
                          :if-exists :supersede
                          :if-does-not-exist :create)
+      (inga/logger:log-info (format nil "upsert! path: ~a" path))
       (signal (make-condition 'progress :path path))
       (format out "~a" (format nil "~a" (parse (merge-pathnames
                                                  path (ast-index-root-path ast-index)))))
