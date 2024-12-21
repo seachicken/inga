@@ -57,7 +57,11 @@
   (upsert-index ast-index path))
 
 (defun upsert-index (ast-index path)
+  (inga/logger:log-info (format nil "upsert path: ~a, version: ~a" path (version path)))
   (let ((src-hash (get-hash-file-with-version path (ast-index-root-path ast-index))))
+    (inga/logger:log-info (format nil "upsert src-hash: ~a, new-hash: ~a" src-hash
+                                  (gethash (intern (get-hash-path path) :keyword) (ast-index-src-hash ast-index))
+                                  ))
     (when (eq src-hash
               (gethash (intern (get-hash-path path) :keyword) (ast-index-src-hash ast-index)))
       (return-from upsert-index))
