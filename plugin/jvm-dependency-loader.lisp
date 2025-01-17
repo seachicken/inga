@@ -49,9 +49,8 @@
       (setf fq-class-name (string-right-trim "[]" fq-class-name)))
 
     (let ((results (exec-command *jvm-dependency-loader*
-                                 (format nil "{\"type\":\"METHODS\",\"fqcn\":\"~a\",\"from\":\"~a\"}"
-                                         fq-class-name
-                                         base-path))))
+                                 (format nil "{\"type\":\"METHODS\",\"fqcn\":\"~a\",\"from\":\"~a\",\"root\":\"~a\"}"
+                                         fq-class-name base-path *root-path*))))
       (when results
         (mapcar (lambda (method)
                   (let* ((return-type (when (jsown:keyp method "returnType")
@@ -97,8 +96,8 @@
       (setf fq-class-name (string-right-trim "[]" fq-class-name)))
 
     (let ((results (exec-command *jvm-dependency-loader*
-                                 (format nil "{\"type\":\"CLASSES\",\"fqcn\":\"~a\",\"from\":\"~a\"}"
-                                         fq-class-name base-path))))
+                                 (format nil "{\"type\":\"CLASSES\",\"fqcn\":\"~a\",\"from\":\"~a\",\"root\":\"~a\"}"
+                                         fq-class-name base-path *root-path*))))
       (when results (jsown:parse results)))))
 
 (defun load-hierarchy (fq-class-name from)
@@ -121,9 +120,8 @@
     (mapcar (lambda (h) (jsown:val h "name"))
             (let ((results (exec-command
                              *jvm-dependency-loader*
-                             (format nil "{\"type\":\"HIERARCHY\",\"fqcn\":\"~a\",\"from\":\"~a\"}"
-                                     fq-class-name
-                                     base-path))))
+                             (format nil "{\"type\":\"HIERARCHY\",\"fqcn\":\"~a\",\"from\":\"~a\",\"root\":\"~a\"}"
+                                     fq-class-name base-path *root-path*))))
               (when results (jsown:parse results))))))
 
 (defparameter *command-lock* (sb-thread:make-mutex))
