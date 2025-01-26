@@ -12,6 +12,7 @@
                 #:is-primitive-type)
   (:export #:start
            #:stop
+           #:load-class-paths
            #:load-hierarchy
            #:load-structure
            #:load-signatures))
@@ -33,6 +34,20 @@
 (defun stop ()
   (uiop:close-streams *jvm-dependency-loader*))
 
+(defun load-class-paths (from)
+  (unless (uiop:process-alive-p *jvm-dependency-loader*)
+    (error 'inga-error-process-not-running))
+  
+  (let ((base-path (find-base-path from *root-path*)))
+    (unless base-path
+      (return-from load-class-paths))
+    
+    (let ((results (exec-command
+                     *jvm-dependency-loader*
+                     (format nil "{\"type\":\"CLASS_PATHS\",\"from\":\"~a\",\"root\":\"~a\"}"
+                             base-path *root-path*))))
+      (when results (jsown:parse results)))))
+
 (defun load-signatures (fq-class-name from)
   (unless (uiop:process-alive-p *jvm-dependency-loader*)
     (error 'inga-error-process-not-running))
@@ -48,9 +63,10 @@
     (when (uiop:string-suffix-p fq-class-name "[]")
       (setf fq-class-name (string-right-trim "[]" fq-class-name)))
 
-    (let ((results (exec-command *jvm-dependency-loader*
-                                 (format nil "{\"type\":\"METHODS\",\"fqcn\":\"~a\",\"from\":\"~a\",\"root\":\"~a\"}"
-                                         fq-class-name base-path *root-path*))))
+    (let ((results (exec-command
+                     *jvm-dependency-loader*
+                     (format nil "{\"type\":\"METHODS\",\"fqcn\":\"~a\",\"from\":\"~a\",\"root\":\"~a\"}"
+                             fq-class-name base-path *root-path*))))
       (when results
         (mapcar (lambda (method)
                   (let* ((return-type (when (jsown:keyp method "returnType")
@@ -95,9 +111,10 @@
     (when (uiop:string-suffix-p fq-class-name "[]")
       (setf fq-class-name (string-right-trim "[]" fq-class-name)))
 
-    (let ((results (exec-command *jvm-dependency-loader*
-                                 (format nil "{\"type\":\"CLASSES\",\"fqcn\":\"~a\",\"from\":\"~a\",\"root\":\"~a\"}"
-                                         fq-class-name base-path *root-path*))))
+    (let ((results (exec-command
+                     *jvm-dependency-loader*
+                     (format nil "{\"type\":\"CLASSES\",\"fqcn\":\"~a\",\"from\":\"~a\",\"root\":\"~a\"}"
+                             fq-class-name base-path *root-path*))))
       (when results (jsown:parse results)))))
 
 (defun load-hierarchy (fq-class-name from)

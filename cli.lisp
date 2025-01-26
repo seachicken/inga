@@ -48,28 +48,29 @@
                                                  (cdr (assoc :root-path params))
                                                  index))))
                 (:java
-                  (make-context
-                    :kind :java
-                    :project-path (cdr (assoc :root-path params))
-                    :include (cdr (assoc :include params))
-                    :exclude (cdr (assoc :exclude params))
-                    :ast-index index
-                    :analyzers (list
-                                 (start-analyzer :java
-                                                 (cdr (assoc :include params))
-                                                 (cdr (assoc :exclude params))
-                                                 (cdr (assoc :root-path params))
-                                                 index)
-                                 (start-analyzer :kotlin
-                                                 (cdr (assoc :include params))
-                                                 (cdr (assoc :exclude params))
-                                                 (cdr (assoc :root-path params))
-                                                 index))
-                    :processes (list
-                                 (inga/plugin/spring/spring-property-loader:start
-                                   (cdr (assoc :root-path params)))
-                                 (inga/plugin/jvm-dependency-loader:start
-                                   (cdr (assoc :root-path params))))))
+                  (let ((processes (list
+                                     (inga/plugin/spring/spring-property-loader:start
+                                       (cdr (assoc :root-path params)))
+                                     (inga/plugin/jvm-dependency-loader:start
+                                       (cdr (assoc :root-path params))))))
+                    (make-context
+                      :kind :java
+                      :project-path (cdr (assoc :root-path params))
+                      :include (cdr (assoc :include params))
+                      :exclude (cdr (assoc :exclude params))
+                      :ast-index index
+                      :analyzers (list
+                                   (start-analyzer :java
+                                                   (cdr (assoc :include params))
+                                                   (cdr (assoc :exclude params))
+                                                   (cdr (assoc :root-path params))
+                                                   index)
+                                   (start-analyzer :kotlin
+                                                   (cdr (assoc :include params))
+                                                   (cdr (assoc :exclude params))
+                                                   (cdr (assoc :root-path params))
+                                                   index))
+                      :processes processes)))
                 (t (error "context not found. language: ~a" language)))))
     (start-client (context-lc ctx))
 
