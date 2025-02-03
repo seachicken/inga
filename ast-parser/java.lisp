@@ -1,6 +1,7 @@
 (defpackage #:inga/ast-parser/java
   (:use #:cl
-        #:inga/ast-parser/base)
+        #:inga/ast-parser/base
+        #:inga/utils)
   (:import-from #:inga/logger
                 #:log-error)
   (:import-from #:inga/plugin/jvm-dependency-loader
@@ -31,19 +32,23 @@
   (let ((command (format nil "~a --analyze ~{~a~^:~}"
                          (namestring path)
                          (load-class-paths path))))
-    (write-line command (uiop:process-info-input (ast-parser-process ast-parser)))
-    (force-output (uiop:process-info-input (ast-parser-process ast-parser)))
-    (prog1
-      (read-line (uiop:process-info-output (ast-parser-process ast-parser))) 
-      (loop while (listen (uiop:process-info-error-output (ast-parser-process ast-parser)))
-            with results = ""
-            do (setf results
-                     (format nil "~a~a~%"
-                             results 
-                             (read-line (uiop:process-info-error-output
-                                          (ast-parser-process ast-parser)))))
-            finally (unless (equal results "")
-                      (log-error (format nil "~a, cmd: ~a" results command)))))))
+    (funtime
+      (lambda ()
+        (write-line command (uiop:process-info-input (ast-parser-process ast-parser)))
+        (force-output (uiop:process-info-input (ast-parser-process ast-parser)))
+        (prog1
+          (read-line (uiop:process-info-output (ast-parser-process ast-parser)))
+          (loop while (listen (uiop:process-info-error-output (ast-parser-process ast-parser)))
+                with results = ""
+                do (setf results
+                         (format nil "~a~a~%"
+                                 results
+                                 (read-line (uiop:process-info-error-output
+                                              (ast-parser-process ast-parser)))))
+                finally (unless (equal results "")
+                          (log-error (format nil "~a, cmd: ~a" results command))))))
+      :label "javaparser"
+      :args command)))
 
 (defmethod version-generic ((ast-parser ast-parser-java))
   (uiop:getenv "JAVAPARSER"))

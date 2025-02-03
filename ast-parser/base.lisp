@@ -57,7 +57,8 @@
 
 (defun get-parser (path)
   (let ((file-type (get-file-type path)))
-    (unless (assoc file-type *ast-parsers*)
+    (unless (and (assoc file-type *ast-parsers*)
+                 (uiop:process-alive-p (ast-parser-process (cdr (assoc file-type *ast-parsers*)))))
       (setf *ast-parsers* (acons file-type (start file-type) *ast-parsers*)))
     (cdr (assoc file-type *ast-parsers*))))
 

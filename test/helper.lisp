@@ -37,24 +37,28 @@
 (in-package #:inga/test/helper)
 
 (def-fixture jvm-ctx (root-path &key (index-type 'ast-index-disk) (include '("**")))
-  (defparameter *root-path* root-path)
-  (defparameter *index* (make-instance index-type :root-path root-path))
-  (defparameter *ctx* (make-context
-                        :kind :java
-                        :project-path root-path
-                        :include include
-                        :ast-index *index*
-                        :analyzers (list
-                                     (start-analyzer :java include nil root-path *index*)
-                                     (start-analyzer :kotlin include nil root-path *index*))
-                        :processes (list
-                                     (inga/plugin/spring/spring-property-loader:start root-path)
-                                     (inga/plugin/jvm-dependency-loader:start root-path))))
-  (unwind-protect
-    (&body)
-    (progn
-      (loop for p in (context-processes *ctx*) do (uiop:close-streams p)) 
-      (loop for a in (context-analyzers *ctx*) do (stop-analyzer a)))))
+  (let (processes analyzers)
+    (unwind-protect
+      (progn
+        (defparameter *root-path* root-path)
+        (defparameter *index* (make-instance index-type :root-path root-path))
+        (setf processes (list
+                          (inga/plugin/spring/spring-property-loader:start root-path)
+                          (inga/plugin/jvm-dependency-loader:start root-path)))
+        (setf analyzers (list
+                          (start-analyzer :java include nil root-path *index*)
+                          (start-analyzer :kotlin include nil root-path *index*)))
+        (defparameter *ctx* (make-context
+                              :kind :java
+                              :project-path root-path
+                              :include include
+                              :ast-index *index*
+                              :analyzers analyzers
+                              :processes processes))
+        (&body))
+      (progn
+        (loop for p in processes do (uiop:close-streams p))
+        (loop for a in analyzers do (stop-analyzer a))))))
 
 (def-fixture node-ctx (root-path &key (index-type 'ast-index-disk) (include '("**")))
   (defparameter *root-path* root-path)

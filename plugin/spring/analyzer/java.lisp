@@ -148,7 +148,8 @@
                                            "Value")))
                            (url (find-property
                                   (first (get-variable-names
-                                           (ast-value (first (get-asts value '("STRING_LITERAL")))
+                                           (ast-value (first (get-asts value '("ASSIGNMENT"
+                                                                               "STRING_LITERAL")))
                                                       "name")))
                                   path)))
                       (when url
