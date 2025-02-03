@@ -12,16 +12,20 @@
 (test get-all-paths
   (let ((index (make-instance 'ast-index-memory
                               :root-path *java-path*)))
+    (inga/plugin/jvm-dependency-loader:start *java-path*)
     (create-indexes index :java nil '("*.java") nil)
     (is (< 0 (length (ast-index-paths index))))
+    (inga/plugin/jvm-dependency-loader:stop)
     (clean-indexes index)))
 
 (test get-ast
   (let ((index (make-instance 'ast-index-memory
                               :root-path *java-path*)))
+    (inga/plugin/jvm-dependency-loader:start *java-path*)
     (create-indexes index :java nil '("*.java") nil)
     (is (not (equal
                nil
                (get-ast index "src/main/java/p1/ConstructorDefinition.java"))))
+    (inga/plugin/jvm-dependency-loader:stop)
     (clean-indexes index)))
 
