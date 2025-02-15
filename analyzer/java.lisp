@@ -282,7 +282,7 @@
              (t
               (find-fq-class-name-generic analyzer (first (get-asts ast '("IDENTIFIER"))) path))))
           ((equal (ast-value ast "type") "VARIABLE")
-           (find-fq-class-name-generic analyzer (get-class ast) path))
+           (ast-value ast "fqName"))
           ((equal (ast-value ast "type") "METHOD_INVOCATION")
            (let* ((fq-name (find-fq-name ast path))
                   (method (find-signature

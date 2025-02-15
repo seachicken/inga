@@ -116,7 +116,10 @@
              (setf ctx
                    (case language
                      (t
-                       (let (analyzers)
+                       (let ((processes (list
+                                          (inga/plugin/spring/spring-property-loader:start root-path)
+                                          (inga/plugin/jvm-dependency-loader:start root-path)))
+                              analyzers)
                          (print-begin-indexing)
                          (handler-bind ((progress #'print-report-indexing))
                            (loop for lang in '(:java :kotlin)
@@ -136,9 +139,7 @@
                            :exclude (cdr (assoc :exclude params))
                            :ast-index index
                            :analyzers analyzers
-                           :processes (list
-                                        (inga/plugin/spring/spring-property-loader:start root-path)
-                                        (inga/plugin/jvm-dependency-loader:start root-path))))))))
+                           :processes processes))))))
            (when (jsown:val (jsown:val msg "params") "rootUri")
              (push (namestring (pathname
                                  (concatenate

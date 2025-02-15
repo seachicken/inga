@@ -9,10 +9,11 @@
            #:ast-parser-process
            #:start
            #:stop
+           #:parse
+           #:parse-generic
            #:version
            #:version-generic
-           #:stop-all-parsers
-           #:parse))
+           #:stop-all-parsers))
 (in-package #:inga/ast-parser/base)
 
 (defparameter *ast-parsers* nil)
@@ -26,6 +27,26 @@
 
 (defgeneric stop (ast-parser))
 
+(defun parse (path)
+  (parse-generic (get-parser path) path))
+
+(defgeneric parse-generic (ast-parser path)
+  (:method (ast-parser path)
+   (let ((command (namestring path)))
+     (write-line command (uiop:process-info-input (ast-parser-process ast-parser)))
+     (force-output (uiop:process-info-input (ast-parser-process ast-parser)))
+     (prog1
+       (read-line (uiop:process-info-output (ast-parser-process ast-parser))) 
+       (loop while (listen (uiop:process-info-error-output (ast-parser-process ast-parser)))
+             with results = ""
+             do (setf results
+                      (format nil "~a~a~%"
+                              results 
+                              (read-line (uiop:process-info-error-output
+                                           (ast-parser-process ast-parser)))))
+             finally (unless (equal results "")
+                       (log-error (format nil "~a, cmd: ~a" results command))))))))
+
 (defun version (path)
   (version-generic (get-parser path)))
 (defgeneric version-generic (ast-parser))
@@ -34,27 +55,10 @@
   (loop for p in *ast-parsers* do (stop (cdr p)))
   (setf *ast-parsers* nil))
 
-(defun parse (path)
-  (run-parser (get-parser path) (namestring path)))
-
 (defun get-parser (path)
   (let ((file-type (get-file-type path)))
-    (unless (assoc file-type *ast-parsers*)
+    (unless (and (assoc file-type *ast-parsers*)
+                 (uiop:process-alive-p (ast-parser-process (cdr (assoc file-type *ast-parsers*)))))
       (setf *ast-parsers* (acons file-type (start file-type) *ast-parsers*)))
     (cdr (assoc file-type *ast-parsers*))))
-
-(defun run-parser (ast-parser command)
-  (write-line command (uiop:process-info-input (ast-parser-process ast-parser)))
-  (force-output (uiop:process-info-input (ast-parser-process ast-parser)))
-  (prog1
-    (read-line (uiop:process-info-output (ast-parser-process ast-parser))) 
-    (loop while (listen (uiop:process-info-error-output (ast-parser-process ast-parser)))
-          with results = ""
-          do (setf results
-                   (format nil "~a~a~%"
-                           results 
-                           (read-line (uiop:process-info-error-output
-                                        (ast-parser-process ast-parser)))))
-          finally (unless (equal results "")
-                    (log-error (format nil "~a, cmd: ~a" results command))))))
 
