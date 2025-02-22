@@ -159,40 +159,10 @@
             (v (when lhs (find-definition (ast-value lhs "name") lhs))))
        (when v (find-fq-name-generic analyzer v path))))
     ((equal (ast-value ast "type") "NEW_CLASS")
-     (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
-             (find-fq-class-name ast path)
-             ;; get inner class name
-             (first (last (split #\. (ast-value ast "name"))))
-             (mapcar (lambda (arg) (find-fq-class-name arg path))
-                     (get-asts ast '("*")))))
+     (ast-value ast "fqName"))
     ((and (equal (ast-value ast "type") "METHOD_INVOCATION")
           (get-asts ast '("MEMBER_SELECT")))
-     (format nil "~a.~a~:[~;-~]~:*~{~a~^-~}"
-             (cond
-               ;; if method chain
-               ((get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION"))
-                (let* ((fq-name (find-fq-name-generic
-                                  analyzer
-                                  (first (get-asts ast '("MEMBER_SELECT" "METHOD_INVOCATION")))
-                                  path))
-                       (method (find-signature
-                                 fq-name
-                                 #'(lambda (fqcn) (load-signatures fqcn path))
-                                 path)))
-                  (when method (cdr (assoc :return method)))))
-               ((get-asts ast '("MEMBER_SELECT" "IDENTIFIER"))
-                (find-fq-class-name
-                  (first (get-asts ast '("MEMBER_SELECT" "IDENTIFIER")))
-                  path))
-               ((get-asts ast '("MEMBER_SELECT" "NEW_CLASS"))
-                (find-fq-class-name
-                  (first (get-asts ast '("MEMBER_SELECT" "NEW_CLASS"))) path))
-               ((get-asts ast '("MEMBER_SELECT" "MEMBER_SELECT"))
-                (find-fq-class-name
-                  (first (get-asts ast '("MEMBER_SELECT" "MEMBER_SELECT"))) path)))
-             (ast-value (first (get-asts ast '("*"))) "name")
-             (mapcar (lambda (arg) (find-fq-class-name arg path))
-                     (nthcdr 1 (get-asts ast '("*"))))))
+     (ast-value (first (get-asts ast '("MEMBER_SELECT"))) "fqName"))
     (t
      (loop
        with q = (make-queue)

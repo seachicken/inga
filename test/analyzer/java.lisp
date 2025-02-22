@@ -486,7 +486,7 @@
   (with-fixture jvm-ctx (*java-path*)
     (let ((path "src/main/java/p1/EnumReference.java"))
       (is (equal
-            "p1.EnumHelper.EnumHelper-p1.EnumHelper.Enum"
+            "p1.EnumHelper.EnumHelper-p1.EnumHelper$Enum"
             ;; ↓
             ;; new EnumHelper(Enum.A);
             (find-fq-name
@@ -551,7 +551,7 @@
   (with-fixture jvm-ctx (*guava-modules*)
     (let ((path "guava-collections/src/test/java/com/baeldung/guava/ordering/GuavaOrderingExamplesUnitTest.java"))
       (is (equal
-            "com.google.common.collect.Ordering.explicit-java.util.ArrayList"
+            "com.google.common.collect.Ordering.explicit-java.util.List"
             ;;                  ↓
             ;; Ordering.explicit(Lists.newArrayList("b", "zz", "aa", "ccc"));
             (find-fq-name
