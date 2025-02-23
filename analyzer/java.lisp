@@ -163,6 +163,8 @@
     ((and (equal (ast-value ast "type") "METHOD_INVOCATION")
           (get-asts ast '("MEMBER_SELECT")))
      (ast-value (first (get-asts ast '("MEMBER_SELECT"))) "fqName"))
+    ((equal (ast-value ast "type") "MEMBER_REFERENCE")
+     (ast-value ast "fqName"))
     (t
      (loop
        with q = (make-queue)

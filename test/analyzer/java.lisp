@@ -512,6 +512,42 @@
             ;; Arrays.copyOfRange(array, 1, array.length);
             (find-fq-name (find-ast-in-ctx `((:path . ,path) (:line . 8) (:offset . 27))) path))))))
 
+(test find-fq-name-with-static-method-references
+  (with-fixture jvm-ctx (*java-path*)
+    (let ((path "src/main/java/p1/MethodReferencesReference.java"))
+      (is (equal
+            "p1.MethodReferencesReference.staticMethod-java.lang.String"
+            ;;                        ↓
+            ;; Stream.of("1").forEach(MethodReferencesReference::staticMethod);
+            (find-fq-name (debug-ast (find-ast-in-ctx `((:path . ,path) (:line . 11) (:offset . 32)))) path))))))
+
+(test find-fq-name-with-instance-method-references
+  (with-fixture jvm-ctx (*java-path*)
+    (let ((path "src/main/java/p1/MethodReferencesReference.java"))
+      (is (equal
+            "p1.MethodReferencesReference.instanceMethod-java.lang.String"
+            ;;                        ↓
+            ;; Stream.of("1").forEach(this::instanceMethod);
+            (find-fq-name (find-ast-in-ctx `((:path . ,path) (:line . 15) (:offset . 32))) path))))))
+
+(test find-fq-name-with-instance-method-arbitrary-object-references
+  (with-fixture jvm-ctx (*java-path*)
+    (let ((path "src/main/java/p1/MethodReferencesReference.java"))
+      (is (equal
+            "java.lang.String.compareToIgnoreCase-java.lang.String"
+            ;;                                ↓
+            ;; Arrays.sort(new String[]{"a"}, String::compareToIgnoreCase);
+            (find-fq-name (find-ast-in-ctx `((:path . ,path) (:line . 19) (:offset . 40))) path))))))
+
+(test find-fq-name-with-constructor-references
+  (with-fixture jvm-ctx (*java-path*)
+    (let ((path "src/main/java/p1/MethodReferencesReference.java"))
+      (is (equal
+            "java.util.HashSet.HashSet"
+            ;;                                                ↓
+            ;; Stream.of("1").collect(Collectors.toCollection(HashSet::new));
+            (find-fq-name (find-ast-in-ctx `((:path . ,path) (:line . 23) (:offset . 56))) path))))))
+
 (in-suite jdk17)
 
 (test find-fq-name-for-reference-with-new-class
