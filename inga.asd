@@ -51,7 +51,7 @@
                                                    :inga/test/ast-index/disk)
                                 (uiop:find-symbol* '#:java
                                                    :inga/test/ast-index/memory)
-                                (uiop:find-symbol* '#:jdk21
+                                (uiop:find-symbol* '#:java-21
                                                    :inga/test/analyzer/java)
                                 (uiop:find-symbol* '#:kotlin
                                                    :inga/test/analyzer/kotlin)
@@ -73,7 +73,7 @@
                     (unless (uiop:symbol-call
                               :fiveam '#:run!
                               (list
-                                (uiop:find-symbol* '#:jdk17
+                                (uiop:find-symbol* '#:java-17
                                                    :inga/test/analyzer/java)))
                       (error "Tests failed"))))
 

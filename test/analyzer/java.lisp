@@ -9,15 +9,15 @@
 (in-package #:inga/test/analyzer/java)
 
 (def-suite java)
-(def-suite jdk21 :in java)
-(def-suite jdk17 :in java)
+(def-suite java-21 :in java)
+(def-suite java-17 :in java)
 
 (defparameter *java-path* (merge-pathnames "test/fixtures/general/"))
 (defparameter *spring-boot-path* (merge-pathnames "test/fixtures/spring-boot-realworld-example-app/"))
 (defparameter *lightrun-path* (merge-pathnames "test/fixtures/spring-tutorials/lightrun/"))
 (defparameter *guava-modules* (merge-pathnames "test/fixtures/spring-tutorials/guava-modules/"))
 
-(in-suite jdk17)
+(in-suite java-17)
 
 (test analyze-monolithic
   (with-fixture jvm-ctx (*spring-boot-path* :include '("src/main/**"))
@@ -95,7 +95,7 @@
                              *lightrun-path*)
                            '((:line . 34) (:offset . -1))))))))))))
 
-(in-suite jdk21)
+(in-suite java-21)
 
 (test analyze-recursion
   (with-fixture jvm-ctx (*java-path*)
@@ -210,7 +210,7 @@
           (find-definitions
             (create-range "src/main/java/p1/GenericTypeDefinition.java" :line 6))))))
 
-(in-suite jdk17)
+(in-suite java-17)
 
 (test find-definitions-with-inner-class-and-primitive
   (with-fixture jvm-ctx (*spring-boot-path*)
@@ -226,7 +226,7 @@
           (find-definitions
             (create-range "src/main/java/io/spring/application/CursorPager.java" :line 12))))))
 
-(in-suite jdk21)
+(in-suite java-21)
 
 (test find-definition-of-field-reference
   (with-fixture jvm-ctx (*java-path*)
@@ -374,7 +374,7 @@
               (:fq-name . "pkt1.JavaReference.method"))
             *index*)))))
 
-(in-suite jdk17)
+(in-suite java-17)
 
 (test find-references-with-sub-class-args
   (with-fixture jvm-ctx (*spring-boot-path* :include '("src/main/**"))
@@ -427,7 +427,7 @@
               (:fq-name . "io.spring.application.CursorPager.CursorPager-java.util.List-io.spring.application.CursorPager$Direction-BOOLEAN"))
             *index*)))))
 
-(in-suite jdk21)
+(in-suite java-21)
 
 (test find-reference-to-literal-field
   (with-fixture jvm-ctx (*java-path*)
@@ -548,7 +548,7 @@
             ;; Stream.of("1").collect(Collectors.toCollection(HashSet::new));
             (find-fq-name (find-ast-in-ctx `((:path . ,path) (:line . 23) (:offset . 56))) path))))))
 
-(in-suite jdk17)
+(in-suite java-17)
 
 (test find-fq-name-for-reference-with-new-class
   (with-fixture jvm-ctx (*spring-boot-path* :include '("src/main/**"))
@@ -594,7 +594,7 @@
               (find-ast-in-ctx `((:path . ,path) (:line . 104) (:offset . 65)))
               path))))))
 
-(in-suite jdk21)
+(in-suite java-21)
 
 (test find-fq-class-name-for-wildcard-import
   (with-fixture jvm-ctx (*java-path*)
@@ -627,7 +627,7 @@
               (find-ast-in-ctx `((:path . ,path) (:line . 12) (:offset . 46)))
               path))))))
 
-(in-suite jdk17)
+(in-suite java-17)
 
 (test find-fq-class-name-for-new-class
   (with-fixture jvm-ctx (*spring-boot-path* :include '("src/main/**"))
@@ -662,7 +662,7 @@
               (find-ast-in-ctx `((:path . ,path) (:line . 12) (:offset . 46)))
               path))))))
 
-(in-suite jdk21)
+(in-suite java-21)
 
 (test find-signature-without-array
   (with-fixture jvm-ctx (*java-path*)
@@ -710,7 +710,7 @@
             "p2.ChildClass")
           (find-class-hierarchy "p2.ChildClass" "src/main/java/p2/ApiSignature.java")))))
 
-(in-suite jdk17)
+(in-suite java-17)
 
 (test get-scoped-index-paths-with-module-private
   (with-fixture jvm-ctx (*lightrun-path*)
