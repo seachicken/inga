@@ -158,7 +158,8 @@
                             (get-asts ast '("MEMBER_SELECT")))))
             (v (when lhs (find-definition (ast-value lhs "name") lhs))))
        (when v (find-fq-name-generic analyzer v path))))
-    ((equal (ast-value ast "type") "NEW_CLASS")
+    ((or (equal (ast-value ast "type") "NEW_CLASS")
+         (equal (ast-value ast "type") "METHOD"))
      (ast-value ast "fqName"))
     ((and (equal (ast-value ast "type") "METHOD_INVOCATION")
           (get-asts ast '("MEMBER_SELECT")))
@@ -175,23 +176,6 @@
        (setf fq-names
              (list
                (cond
-                 ((equal (ast-value ast "type") "METHOD")
-                  (loop for child in (jsown:val ast "children")
-                        with method-with-params = (ast-value ast "name")
-                        do
-                        (when (equal (jsown:val child "type") "VARIABLE")
-                          (loop for child in (jsown:val child "children")
-                                do
-                                (when (and (ast-value child "name")
-                                           (not (equal (jsown:val child "type") "MODIFIERS"))
-                                           (not (equal (ast-value child "name") "")))
-                                  (setf method-with-params
-                                        (concatenate
-                                          'string
-                                          method-with-params
-                                          "-"
-                                          (find-fq-class-name child path))))))
-                        finally (return method-with-params)))
                  ((equal (ast-value ast "type") "METHOD_INVOCATION")
                   (loop for child in (jsown:val ast "children")
                         for i from 0

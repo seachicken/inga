@@ -8,7 +8,7 @@ on:
       - ''
 
 jobs:
-  test-java:
+  test-java-21:
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -19,22 +19,12 @@ jobs:
         with:
           fetch-depth: 0
           submodules: recursive
-      - name: Set up JDK 17 for test fixtures
-        uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-      - name: Compile tests with JDK 17
-        run: |
-          (cd ./test/fixtures/spring-boot-realworld-example-app && ./gradlew compileJava)
-          (cd ./test/fixtures/spring-tutorials/guava-modules && mvn compile)
-          (cd ./test/fixtures/spring-tutorials/lightrun && mvn compile)
       - name: Set up JDK 21 for test fixtures
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'temurin'
-      - name: Compile tests with JDK 21
+      - name: Compile test projects
         run: |
           (cd ./test/fixtures/general && mvn compile)
           (cd ./test/plugin/spring/fixtures/general && mvn compile)
@@ -43,6 +33,7 @@ jobs:
         with:
           context: .
           file: docker/java/Dockerfile
+          build-args: JAVA_VERSION=21
           tags: inga-java
       - name: Build Docker image for test
         uses: docker/build-push-action@v5
@@ -59,8 +50,53 @@ jobs:
               (ql:quickload :inga)
               (handler-case (asdf:test-system :inga)
                 (error () (uiop:quit 1)))
-              (ql:quickload :inga/test-jvm)
-              (handler-case (asdf:test-system :inga/test-jvm)
+              (ql:quickload :inga/test-jvm-21)
+              (handler-case (asdf:test-system :inga/test-jvm-21)
+                (error () (uiop:quit 1)))\""
+
+  test-java-17:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+      - name: Set up JDK 17 for test fixtures
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Compile test projects
+        run: |
+          (cd ./test/fixtures/spring-boot-realworld-example-app && ./gradlew compileJava)
+          (cd ./test/fixtures/spring-tutorials/guava-modules && mvn compile)
+          (cd ./test/fixtures/spring-tutorials/lightrun && mvn compile)
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/java/Dockerfile
+          build-args: JAVA_VERSION=17
+          tags: inga-java
+      - name: Build Docker image for test
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: .github/workflows/docker/Dockerfile
+          tags: test-inga-java
+          build-args: |
+            BASE_IMAGE=inga-java
+      - name: Run tests
+        run: |
+          docker run test-inga-java -c "
+            ros -s fiveam -e \"
+              (ql:quickload :inga)
+              (ql:quickload :inga/test-jvm-17)
+              (handler-case (asdf:test-system :inga/test-jvm-17)
                 (error () (uiop:quit 1)))\""
 
   test-typescript:

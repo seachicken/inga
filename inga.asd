@@ -32,7 +32,7 @@
                                                    :inga/test/analyzer/base)))
                       (error "Tests failed"))))
 
-(defsystem "inga/test-jvm"
+(defsystem "inga/test-jvm-21"
   :class :package-inferred-system
   :depends-on ("inga/test"
                "inga/test/analyzer/java"
@@ -51,7 +51,7 @@
                                                    :inga/test/ast-index/disk)
                                 (uiop:find-symbol* '#:java
                                                    :inga/test/ast-index/memory)
-                                (uiop:find-symbol* '#:java
+                                (uiop:find-symbol* '#:jdk21
                                                    :inga/test/analyzer/java)
                                 (uiop:find-symbol* '#:kotlin
                                                    :inga/test/analyzer/kotlin)
@@ -63,6 +63,18 @@
                                                    :inga/test/plugin/spring/analyzer/java)
                                 (uiop:find-symbol* '#:kotlin
                                                    :inga/test/plugin/spring/analyzer/kotlin)))
+                      (error "Tests failed"))))
+
+(defsystem "inga/test-jvm-17"
+  :class :package-inferred-system
+  :depends-on ("inga/test"
+               "inga/test/analyzer/java")
+  :perform (test-op (o c)
+                    (unless (uiop:symbol-call
+                              :fiveam '#:run!
+                              (list
+                                (uiop:find-symbol* '#:jdk17
+                                                   :inga/test/analyzer/java)))
                       (error "Tests failed"))))
 
 (defsystem "inga/test-node"
