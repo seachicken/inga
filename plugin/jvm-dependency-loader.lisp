@@ -152,7 +152,7 @@
             (write-line cmd (uiop:process-info-input process))
             (force-output (uiop:process-info-input process))
             (prog1
-              (read-line (uiop:process-info-output process))
+              (read-line (uiop:process-info-output process) nil nil)
               (loop while (listen (uiop:process-info-error-output process))
                     with results = ""
                     do (setf results

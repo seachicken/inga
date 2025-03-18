@@ -37,7 +37,7 @@
         (write-line command (uiop:process-info-input (ast-parser-process ast-parser)))
         (force-output (uiop:process-info-input (ast-parser-process ast-parser)))
         (prog1
-          (read-line (uiop:process-info-output (ast-parser-process ast-parser)))
+          (read-line (uiop:process-info-output (ast-parser-process ast-parser)) nil nil)
           (loop while (listen (uiop:process-info-error-output (ast-parser-process ast-parser)))
                 with results = ""
                 do (setf results
