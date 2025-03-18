@@ -519,7 +519,7 @@
             "p1.MethodReferencesReference.staticMethod-java.lang.String"
             ;;                        ↓
             ;; Stream.of("1").forEach(MethodReferencesReference::staticMethod);
-            (find-fq-name (debug-ast (find-ast-in-ctx `((:path . ,path) (:line . 11) (:offset . 32)))) path))))))
+            (find-fq-name (find-ast-in-ctx `((:path . ,path) (:line . 11) (:offset . 32))) path))))))
 
 (test find-fq-name-with-instance-method-references
   (with-fixture jvm-ctx (*java-path*)
