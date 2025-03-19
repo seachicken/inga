@@ -23,6 +23,11 @@ jobs:
       DOCKER_BUILD_SUMMARY: false
 
     steps:
+      - name: Prepare
+        run: |
+          PLATFORM=${{ matrix.platform }}
+          echo "PLATFORM_PAIR=${PLATFORM//\//-}" >> $GITHUB_ENV
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
