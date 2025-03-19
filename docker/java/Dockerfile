@@ -1,6 +1,6 @@
 ARG INGA_TAG
 
-FROM inga:$INGA_TAG
+FROM ghcr.io/seachicken/inga:$INGA_TAG
 
 ARG JAVA_VERSION
 
