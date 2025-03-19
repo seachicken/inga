@@ -1,4 +1,6 @@
-FROM inga:latest
+ARG INGA_TAG
+
+FROM inga:$INGA_TAG
 
 ARG JAVA_VERSION
 
