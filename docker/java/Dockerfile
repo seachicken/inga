@@ -1,4 +1,4 @@
-ARG INGA_TAG
+ARG INGA_TAG=latest
 
 FROM ghcr.io/seachicken/inga:$INGA_TAG
 
