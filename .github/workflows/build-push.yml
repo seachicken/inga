@@ -190,6 +190,7 @@ jobs:
             JAVA_VERSION=${{ env.JAVA_VERSION }}
           file: ./docker/${{ env.LANGUAGE }}/Dockerfile
           labels: ${{ steps.meta.outputs.labels }}
+          load: true
           outputs: type=image,"name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}",push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
