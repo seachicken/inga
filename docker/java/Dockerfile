@@ -1,17 +1,4 @@
-ARG JAVA_VERSION=8
-
-FROM fukamachi/roswell:23.10.14.114-ubuntu AS build
-
-RUN apt-get update && \
-  apt-get install -y build-essential
-
-COPY ../.. /inga
-RUN ros && \
-  ln -s /inga /root/.roswell/local-projects/inga && \
-  ros build /inga/roswell/inga.ros
-
-
-FROM eclipse-temurin:$JAVA_VERSION-jdk-jammy
+FROM inga:latest
 
 ARG JAVA_VERSION
 
@@ -19,8 +6,6 @@ ENV JAVAPARSER=0.7.3
 ENV KTPARSRER=0.1.7
 ENV SPRING_PROPERTY_LOADER=0.3.2
 ENV JVM_DEPENDENCY_LOADER=0.9.0
-
-COPY --from=build /inga/roswell/inga /usr/local/bin/
 
 ADD https://github.com/seachicken/javaparser/releases/download/v$JAVAPARSER/javaparser-$JAVA_VERSION-$JAVAPARSER.jar ./libs/javaparser.jar
 ADD https://github.com/seachicken/ktparser/releases/download/v$KTPARSRER/ktparser-$KTPARSRER.jar ./libs/ktparser.jar
