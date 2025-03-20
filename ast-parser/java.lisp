@@ -13,6 +13,14 @@
   ())
 
 (defmethod start ((file-type (eql :java)))
+  (format t "java? ~a~%" (format nil "~{~a~^ ~}"
+                       `(,(if (equal (uiop:getenv "JAVA_HOME") "/usr/local/cri")
+                                     "/usr/local/cri-parser/bin/java"
+                                     "java")
+                          "-jar" ,(format nil "~a/libs/javaparser.jar" (uiop:getenv "INGA_HOME"))
+                          "--add-opens" "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
+                          "--add-opens" "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED"
+                          "--add-opens" "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED")))
   (make-instance
     'ast-parser-java
     :process (uiop:launch-program
@@ -20,11 +28,10 @@
                        `(,(if (equal (uiop:getenv "JAVA_HOME") "/usr/local/cri")
                                      "/usr/local/cri-parser/bin/java"
                                      "java")
-                          "-cp" ,(format nil "~a/libs/javaparser.jar" (uiop:getenv "INGA_HOME"))
+                          "-jar" ,(format nil "~a/libs/javaparser.jar" (uiop:getenv "INGA_HOME"))
                           "--add-opens" "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
                           "--add-opens" "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED"
-                          "--add-opens" "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"
-                          "inga.Main"))
+                          "--add-opens" "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"))
                :input :stream :output :stream :error-output :stream)))
 
 (defmethod stop ((ast-parser ast-parser-java))
