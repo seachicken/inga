@@ -11,7 +11,7 @@ RUN if [ "$JAVA_VERSION" = "8" ]; then \
       which java; \
       cp -r /opt/java/openjdk java-inga; \
     else \
-      jlink --add-modules jdk.compiler --output java-inga; \
+      jlink --add-modules java.base,jdk.compiler --output java-inga; \
     fi
 
 
