@@ -1,4 +1,12 @@
 ARG INGA_TAG=latest
+ARG JAVA_VERSION=21
+
+FROM eclipse-temurin:$JAVA_VERSION-jdk-jammy AS build-cri
+
+WORKDIR /work
+
+RUN jlink --add-modules jdk.compiler --output java-inga
+
 
 FROM ghcr.io/seachicken/inga:$INGA_TAG
 
@@ -8,6 +16,10 @@ ENV JAVAPARSER=0.7.3
 ENV KTPARSRER=0.1.7
 ENV SPRING_PROPERTY_LOADER=0.3.2
 ENV JVM_DEPENDENCY_LOADER=0.9.0
+ENV JAVA_HOME=/usr/local/java-inga
+ENV PATH=$JAVA_HOME/bin:$PATH
+
+COPY --from=build-cri /work/java-inga /usr/local/java-inga
 
 ADD https://github.com/seachicken/javaparser/releases/download/v$JAVAPARSER/javaparser-$JAVA_VERSION-$JAVAPARSER.jar ./libs/javaparser.jar
 ADD https://github.com/seachicken/ktparser/releases/download/v$KTPARSRER/ktparser-$KTPARSRER.jar ./libs/ktparser.jar
