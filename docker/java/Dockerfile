@@ -10,15 +10,17 @@ WORKDIR /work
 RUN if [ "$JAVA_VERSION" = "8" ]; then \
       cp -r /opt/java/openjdk cri-parser; \
     else \
-      jlink --no-header-files --no-man-pages --compress=2 --strip-debug --add-modules java.base,java.logging,jdk.compiler --output cri-parser; \
+      jlink --no-man-pages --compress=2 --strip-debug \
+            --add-modules java.base,java.logging,jdk.compiler --output cri-parser; \
     fi
 
 
-FROM eclipse-temurin:21-jdk-jammy AS build-cri-21
+FROM eclipse-temurin:21-jdk-jammy AS build-cri
 
 WORKDIR /work
 
-RUN jlink --no-header-files --no-man-pages --compress=2 --strip-debug --add-modules java.base,java.logging --output cri
+RUN jlink --no-man-pages --compress=2 --strip-debug \
+          --add-modules java.base,java.logging --output cri
 
 
 FROM ghcr.io/seachicken/inga:$INGA_TAG
@@ -33,7 +35,7 @@ ENV JAVA_HOME=/usr/local/cri
 ENV PATH=$JAVA_HOME/bin:$PATH
 
 COPY --from=build-cri-parser /work/cri-parser /usr/local/cri-parser
-COPY --from=build-cri-21 /work/cri /usr/local/cri
+COPY --from=build-cri /work/cri /usr/local/cri
 
 ADD https://github.com/seachicken/javaparser/releases/download/v$JAVAPARSER/javaparser-$JAVA_VERSION-$JAVAPARSER.jar ./libs/javaparser.jar
 ADD https://github.com/seachicken/ktparser/releases/download/v$KTPARSRER/ktparser-$KTPARSRER.jar ./libs/ktparser.jar
