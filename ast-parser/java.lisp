@@ -18,7 +18,7 @@
     :process (uiop:launch-program
                (format nil "~{~a~^ ~}"
                        `(,(if (equal (uiop:getenv "JAVA_HOME") "/usr/local/cri")
-                                     "/usr/local/cri-parser"
+                                     "/usr/local/cri-parser/bin/java"
                                      "java")
                           "-cp" ,(format nil "~a/libs/javaparser.jar" (uiop:getenv "INGA_HOME"))
                           "--add-opens" "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
