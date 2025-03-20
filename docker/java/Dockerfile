@@ -3,9 +3,16 @@ ARG JAVA_VERSION=21
 
 FROM eclipse-temurin:$JAVA_VERSION-jdk-jammy AS build-cri
 
+ARG JAVA_VERSION
+
 WORKDIR /work
 
-RUN jlink --add-modules jdk.compiler --output java-inga
+RUN if [ "$JAVA_VERSION" = "8" ]; then \
+      which java; \
+      cp -r /opt/java/openjdk java-inga; \
+    else \
+      jlink --add-modules jdk.compiler --output java-inga; \
+    fi
 
 
 FROM ghcr.io/seachicken/inga:$INGA_TAG
@@ -27,9 +34,9 @@ ADD https://github.com/seachicken/jvm-dependency-loader/releases/download/v$JVM_
 ADD https://github.com/seachicken/spring-property-loader/releases/download/v$SPRING_PROPERTY_LOADER/spring-property-loader-$SPRING_PROPERTY_LOADER.jar ./libs/spring-property-loader.jar
 
 RUN apt-get update && \
-  apt-get install -y maven && \
-  apt-get clean && \
-  rm -rf /var/lib/apt/lists/*
+    apt-get install -y maven && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /work
 
