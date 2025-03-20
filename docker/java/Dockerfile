@@ -10,7 +10,7 @@ WORKDIR /work
 RUN if [ "$JAVA_VERSION" = "8" ]; then \
       cp -r /opt/java/openjdk cri-parser; \
     else \
-      jlink --add-modules java.base,java.logging,jdk.compiler --output cri-parser; \
+      jlink --no-header-files --no-man-pages --compress=2 --strip-debug --add-modules java.base,java.logging,jdk.compiler --output cri-parser; \
     fi
 
 
@@ -18,7 +18,7 @@ FROM eclipse-temurin:21-jdk-jammy AS build-cri-21
 
 WORKDIR /work
 
-RUN jlink --add-modules java.base,java.logging --output cri
+RUN jlink --no-header-files --no-man-pages --compress=2 --strip-debug --add-modules java.base,java.logging --output cri
 
 
 FROM ghcr.io/seachicken/inga:$INGA_TAG
