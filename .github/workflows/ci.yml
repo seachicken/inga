@@ -82,7 +82,6 @@ jobs:
           file: docker/java/Dockerfile
           build-args: JAVA_VERSION=17
           tags: inga-java
-          no-cache: true
       - name: Build Docker image for test
         uses: docker/build-push-action@v5
         with:
@@ -91,7 +90,6 @@ jobs:
           tags: test-inga-java
           build-args: |
             BASE_IMAGE=inga-java
-          no-cache: true
       - name: Run tests
         run: |
           docker run test-inga-java -c "

@@ -7,6 +7,9 @@ ENV INGA_HOME=/inga
 
 WORKDIR /inga
 
+# https://github.com/cli/cli/issues/9569
+RUN rm /etc/apt/sources.list.d/github-cli.list
+
 # https://roswell.github.io/Installation.html
 RUN apt-get update && \
     apt-get install -y curl sudo bzip2 make jq && \
