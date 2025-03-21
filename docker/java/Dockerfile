@@ -42,10 +42,10 @@ ENV KTPARSRER=0.1.7
 ENV SPRING_PROPERTY_LOADER=0.3.2
 ENV JVM_DEPENDENCY_LOADER=0.9.0
 ENV JAVA_HOME=/usr/local/cri
-ENV PATH=$JAVA_HOME/bin:$PATH
+ENV PATH=$JAVA_HOME/bin:/usr/local/maven/bin:$PATH
 
 COPY --from=build-cri /work/cri /usr/local/cri
-COPY --from=build-cri /work/maven/bin/mvn /usr/local/mvn
+COPY --from=build-cri /work/maven /usr/local/mvn
 COPY --from=build-cri-parser /work/cri-parser /usr/local/cri-parser
 
 ADD https://github.com/seachicken/javaparser/releases/download/v$JAVAPARSER/javaparser-$JAVA_VERSION-$JAVAPARSER.jar ./libs/javaparser.jar
