@@ -10,7 +10,7 @@ RUN ros && \
     ros build /inga/roswell/inga.ros
 
 
-FROM gcr.io/distroless/base-debian12
+FROM gcr.io/distroless/static-debian12
 
 COPY --from=build /inga/roswell/inga /usr/local/bin/
 
