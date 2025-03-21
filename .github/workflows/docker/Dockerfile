@@ -17,6 +17,8 @@ FROM $BASE_IMAGE
 ENV LISP=sbcl-bin
 ENV INGA_HOME=/inga
 
+COPY --from=build /usr/bin/ros /usr/local/bin/ros
+
 WORKDIR /inga
 
 # https://github.com/cli/cli/issues/9569
