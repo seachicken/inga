@@ -25,7 +25,6 @@ COPY --from=build /usr/bin/ros /usr/local/bin/ros
 COPY --from=build /root/.roswell /root/.roswell
 COPY --from=build /etc/roswell /etc/roswell
 COPY --from=build /inga /inga
-COPY --from=build /libs /libs
 
 # https://github.com/cli/cli/issues/9569
 #RUN rm -f /etc/apt/sources.list.d/github-cli.list
