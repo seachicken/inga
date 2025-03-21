@@ -45,6 +45,10 @@
     (unless ast (return root))
 
     (when (jsown:keyp ast "children")
+      (inga/logger:log-info (format nil "children: ~a, type: ~a, pos: ~a" (jsown:val ast "children")
+                                    (jsown:val ast "type")
+                                    (jsown:val ast "pos")
+                                    ))
       (loop for child in (jsown:val ast "children")
             do
             (setf (jsown:val child "parent") ast)
