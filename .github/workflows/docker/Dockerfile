@@ -9,7 +9,7 @@ RUN apt-get update && \
     curl -L https://github.com/roswell/roswell/releases/download/v23.10.14.114/roswell_23.10.14.114-1_amd64.deb --output roswell.deb && \
     sudo dpkg -i roswell.deb
 
-RUN which ros
+RUN ros install fiveam
 
 
 FROM $BASE_IMAGE
@@ -18,13 +18,12 @@ ENV LISP=sbcl-bin
 ENV INGA_HOME=/inga
 
 COPY --from=build /usr/bin/ros /usr/local/bin/ros
+COPY --from=build /root/.roswell /root/.roswell
 
 WORKDIR /inga
 
 # https://github.com/cli/cli/issues/9569
 #RUN rm -f /etc/apt/sources.list.d/github-cli.list
-
-RUN ros install fiveam
 
 COPY ../../../.. .
 
