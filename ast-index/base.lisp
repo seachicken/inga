@@ -45,7 +45,7 @@
     (unless ast (return root))
 
     (when (jsown:keyp ast "children")
-      (inga/logger:log-info (format nil "children: ~a, type: ~a, pos: ~a" (jsown:val ast "children")
+      (inga/logger:log-info (format nil "type: ~a, pos: ~a"
                                     (jsown:val ast "type")
                                     (jsown:val ast "pos")
                                     ))
