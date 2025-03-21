@@ -3,8 +3,6 @@ ARG BASE_IMAGE
 
 FROM ubuntu:jammy AS build
 
-WORKDIR /inga
-
 # https://roswell.github.io/Installation.html
 RUN apt-get update && \
     apt-get install -y curl sudo bzip2 make jq && \
@@ -12,8 +10,6 @@ RUN apt-get update && \
     sudo dpkg -i roswell.deb
 
 RUN ros install fiveam
-
-COPY ../../../.. .
 
 
 FROM $BASE_IMAGE
@@ -26,11 +22,15 @@ COPY --from=build /root/.roswell /root/.roswell
 COPY --from=build /etc/roswell /etc/roswell
 COPY --from=build /inga /inga
 
+WORKDIR /inga
+
 # https://github.com/cli/cli/issues/9569
 #RUN rm -f /etc/apt/sources.list.d/github-cli.list
 
 RUN ros && \
     ln -s /inga /root/.roswell/local-projects/inga
+
+COPY ../../../.. .
 
 ENTRYPOINT ["bash"]
 
