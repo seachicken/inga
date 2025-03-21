@@ -68,7 +68,7 @@
                            :direction :output
                            :if-exists :supersede
                            :if-does-not-exist :create)
-        (format out "~a" (format nil "~a" ast))
+        (format out "~a" ast)
         (setf (gethash (intern (get-hash-path path) :keyword) (ast-index-src-hash ast-index))
               src-hash)))))
 
