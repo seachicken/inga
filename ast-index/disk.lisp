@@ -85,7 +85,7 @@
 (defmethod get-ast ((ast-index ast-index-disk) path)
   (let ((index-path (get-index-path path (ast-index-disk-path ast-index))))
     (when (probe-file index-path)
-      (inga/logger:log-info (format nil "attach path: ~a~%" path))
+      (inga/logger:log-info (format nil "attach path: ~a, index-path: ~a~%" path index-path))
       (attach-parent
         (jsown:parse (alexandria:read-file-into-string index-path))))))
 
