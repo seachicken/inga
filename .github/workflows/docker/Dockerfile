@@ -15,8 +15,6 @@ RUN ros install fiveam
 
 COPY ../../../.. .
 
-RUN if [ -d /libs ]; then mv /libs .; fi
-
 
 FROM $BASE_IMAGE
 
