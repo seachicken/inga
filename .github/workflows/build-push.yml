@@ -167,6 +167,15 @@ jobs:
             type=semver,pattern={{version}}
             type=sha
 
+      - name: Extract Docker tag metadata
+        id: meta-tag
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=sha
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
@@ -175,7 +184,7 @@ jobs:
             linux/amd64
             linux/arm64
           build-args: |
-            INGA_TAG=${{ steps.meta.outputs.version }}
+            INGA_TAG=${{ steps.meta-tag.outputs.version }}
             JAVA_VERSION=${{ env.JAVA_VERSION }}
           file: ./docker/${{ env.LANGUAGE }}/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
