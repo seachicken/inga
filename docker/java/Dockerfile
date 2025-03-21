@@ -7,24 +7,22 @@ ARG JAVA_VERSION
 
 WORKDIR /work
 
-RUN cp -r /opt/java/openjdk cri-parser
-#RUN if [ "$JAVA_VERSION" = "8" ]; then \
-#      cp -r /opt/java/openjdk cri-parser; \
-#    else \
-#      jlink --no-header-files --no-man-pages --strip-debug \
-#            --add-modules java.base,java.logging,jdk.compiler \
-#            --output cri-parser; \
-#    fi
+#RUN cp -r /opt/java/openjdk cri-parser
+RUN if [ "$JAVA_VERSION" = "8" ]; then \
+      cp -r /opt/java/openjdk cri-parser; \
+    else \
+      jlink --add-modules java.base,java.logging,jdk.compiler \
+            --output cri-parser; \
+    fi
 
 
 FROM eclipse-temurin:21-jdk-jammy AS build-cri
 
 WORKDIR /work
 
-RUN cp -r /opt/java/openjdk cri
-#RUN jlink --no-header-files --no-man-pages --strip-debug \
-#          --add-modules java.base,java.logging \
-#          --output cri
+#RUN cp -r /opt/java/openjdk cri
+RUN jlink --add-modules java.base,java.logging \
+          --output cri
 
 
 FROM $INGA_IMAGE
