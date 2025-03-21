@@ -184,7 +184,7 @@ jobs:
             linux/amd64
             linux/arm64
           build-args: |
-            INGA_TAG=${{ steps.meta-tag.outputs.version }}
+            INGA_IMAGE=ghcr.io/seachicken/inga:${{ steps.meta-tag.outputs.version }}
             JAVA_VERSION=${{ env.JAVA_VERSION }}
           file: ./docker/${{ env.LANGUAGE }}/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}

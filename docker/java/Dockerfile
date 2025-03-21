@@ -1,4 +1,4 @@
-ARG INGA_TAG=latest
+ARG INGA_IMAGE=ghcr.io/seachicken/inga
 ARG JAVA_VERSION=21
 
 FROM eclipse-temurin:$JAVA_VERSION-jdk-jammy AS build-cri-parser
@@ -25,7 +25,7 @@ RUN jlink --no-header-files --no-man-pages --strip-debug \
           --output cri
 
 
-FROM ghcr.io/seachicken/inga:$INGA_TAG
+FROM $INGA_IMAGE
 
 ARG JAVA_VERSION
 

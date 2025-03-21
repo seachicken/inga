@@ -90,7 +90,7 @@ jobs:
           context: .
           file: docker/java/Dockerfile
           build-args: |
-            INGA_TAG=inga-core
+            INGA_IMAGE=inga-core
             JAVA_VERSION=17
           tags: inga-java
       - name: Build Docker image for test
