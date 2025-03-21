@@ -1,7 +1,7 @@
 ARG INGA_IMAGE=ghcr.io/seachicken/inga
 ARG JAVA_VERSION=21
 
-FROM eclipse-temurin:$JAVA_VERSION-jdk-debian AS build-cri-parser
+FROM eclipse-temurin:$JAVA_VERSION-jdk-jammy AS build-cri-parser
 
 ARG JAVA_VERSION
 
@@ -10,7 +10,7 @@ WORKDIR /work
 RUN cp -r /opt/java/openjdk cri-parser
 
 
-FROM eclipse-temurin:21-jdk-debian AS build-cri
+FROM eclipse-temurin:21-jdk-jammy AS build-cri
 
 WORKDIR /work
 
