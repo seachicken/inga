@@ -42,11 +42,9 @@ jobs:
             BASE_IMAGE=inga-java
       - name: Run tests
         run: |
-          docker run test-inga-java -c "
-            echo $JAVA_HOME &&
-            which java &&
-            export JAVA_HOME=/usr/local/cri &&
-            which java &&
+          docker run -e JAVA_HOME=/usr/local/cri test-inga-java -c "
+            echo $PATH &&
+            env &&
             ros -s fiveam -e \"
               (ql:quickload :inga)
               (handler-case (asdf:test-system :inga)
