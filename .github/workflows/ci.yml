@@ -25,12 +25,20 @@ jobs:
         run: |
           (cd ./test/fixtures/general && mvn compile)
           (cd ./test/plugin/spring/fixtures/general && mvn compile)
+      - name: Build Docker image for core
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/core/Dockerfile
+          tags: inga-core
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: docker/java/Dockerfile
-          build-args: JAVA_VERSION=21
+          build-args: |
+            INGA_TAG=inga-core
+            JAVA_VERSION=21
           tags: inga-java
       - name: Build Docker image for test
         uses: docker/build-push-action@v5
@@ -43,8 +51,7 @@ jobs:
       - name: Run tests
         run: |
           docker run -e JAVA_HOME=/usr/local/cri test-inga-java -c "
-            echo $PATH &&
-            env &&
+            which java &&
             ros -s fiveam -e \"
               (ql:quickload :inga)
               (handler-case (asdf:test-system :inga)
@@ -71,12 +78,20 @@ jobs:
           (cd ./test/fixtures/spring-boot-realworld-example-app && ./gradlew compileJava)
           (cd ./test/fixtures/spring-tutorials/guava-modules && mvn compile)
           (cd ./test/fixtures/spring-tutorials/lightrun && mvn compile)
+      - name: Build Docker image for core
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/core/Dockerfile
+          tags: inga-core
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: docker/java/Dockerfile
-          build-args: JAVA_VERSION=17
+          build-args: |
+            INGA_TAG=inga-core
+            JAVA_VERSION=17
           tags: inga-java
       - name: Build Docker image for test
         uses: docker/build-push-action@v5
