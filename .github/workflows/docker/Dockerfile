@@ -5,7 +5,7 @@ FROM ubuntu:jammy AS build
 
 # https://roswell.github.io/Installation.html
 RUN apt-get update && \
-    apt-get install -y curl sudo bzip2 make jq libcurl.so.4 && \
+    apt-get install -y curl sudo bzip2 make jq libcurl3 && \
     curl -L https://github.com/roswell/roswell/releases/download/v23.10.14.114/roswell_23.10.14.114-1_amd64.deb --output roswell.deb && \
     sudo dpkg -i roswell.deb
 
