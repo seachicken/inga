@@ -45,7 +45,7 @@ ENV JAVA_HOME=/usr/local/cri
 ENV PATH=$JAVA_HOME/bin:/usr/local/maven/bin:$PATH
 
 COPY --from=build-cri /work/cri /usr/local/cri
-COPY --from=build-cri /work/maven /usr/local/mvn
+COPY --from=build-cri /work/maven /usr/local/maven
 COPY --from=build-cri-parser /work/cri-parser /usr/local/cri-parser
 
 ADD https://github.com/seachicken/javaparser/releases/download/v$JAVAPARSER/javaparser-$JAVA_VERSION-$JAVAPARSER.jar ./libs/javaparser.jar
