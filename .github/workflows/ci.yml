@@ -44,6 +44,7 @@ jobs:
         run: |
           docker run test-inga-java -c "
             echo $JAVA_HOME &&
+            java -version &&
             ros -s fiveam -e \"
               (ql:quickload :inga)
               (handler-case (asdf:test-system :inga)
