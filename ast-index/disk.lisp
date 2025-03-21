@@ -63,14 +63,14 @@
               (gethash (intern (get-hash-path path) :keyword) (ast-index-src-hash ast-index)))
       (return-from upsert-index))
 
-    (with-open-file (out (get-index-path path (ast-index-disk-path ast-index))
-                         :direction :output
-                         :if-exists :supersede
-                         :if-does-not-exist :create)
-      (format out "~a" (format nil "~a" (parse (merge-pathnames
-                                                 path (ast-index-root-path ast-index)))))
-      (setf (gethash (intern (get-hash-path path) :keyword) (ast-index-src-hash ast-index))
-            src-hash))))
+    (let ((ast (parse (merge-pathnames path (ast-index-root-path ast-index)))))
+      (with-open-file (out (get-index-path path (ast-index-disk-path ast-index))
+                           :direction :output
+                           :if-exists :supersede
+                           :if-does-not-exist :create)
+        (format out "~a" (format nil "~a" ast))
+        (setf (gethash (intern (get-hash-path path) :keyword) (ast-index-src-hash ast-index))
+              src-hash)))))
 
 (defmethod stop-indexes ((ast-index ast-index-disk))
   (stop-all-parsers)
