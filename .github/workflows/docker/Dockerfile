@@ -20,7 +20,6 @@ ENV INGA_HOME=/inga
 COPY --from=build /usr/bin/ros /usr/local/bin/ros
 COPY --from=build /root/.roswell /root/.roswell
 COPY --from=build /etc/roswell /etc/roswell
-COPY --from=build /inga /inga
 
 WORKDIR /inga
 
