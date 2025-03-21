@@ -7,10 +7,10 @@ ENV MAVEN_VERSION=3.9.9
 
 WORKDIR /work
 
-#RUN cp -r /opt/java/openjdk cri
-RUN jlink --no-header-files --no-man-pages --strip-debug \
-          --add-modules java.base,java.logging \
-          --output cri
+RUN cp -r /opt/java/openjdk cri
+#RUN jlink --no-header-files --no-man-pages --strip-debug \
+#          --add-modules java.base,java.logging \
+#          --output cri
 
 RUN mkdir -p maven && \
     curl -fsSL http://apache.osuosl.org/maven/maven-3/$MAVEN_VERSION/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz \
