@@ -33,17 +33,15 @@ jobs:
           build-args: |
             BASE_TAG=debug
           tags: inga-core
-          no-cache: true
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: docker/java/Dockerfile
           build-args: |
-            INGA_TAG=inga-core
+            INGA_IMAGE=inga-core
             JAVA_VERSION=21
           tags: inga
-          no-cache: true
       - name: Build Docker image for test
         uses: docker/build-push-action@v5
         with:
@@ -52,7 +50,6 @@ jobs:
           build-args: |
             BASE_IMAGE=inga
           tags: test-inga
-          no-cache: true
       - name: Run tests
         run: |
           docker run -e JAVA_HOME=/usr/local/cri test-inga -c "
@@ -91,7 +88,6 @@ jobs:
           build-args: |
             BASE_TAG=debug
           tags: inga-core
-          no-cache: true
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
@@ -101,7 +97,6 @@ jobs:
             INGA_IMAGE=inga-core
             JAVA_VERSION=17
           tags: inga
-          no-cache: true
       - name: Build Docker image for test
         uses: docker/build-push-action@v5
         with:
@@ -110,7 +105,6 @@ jobs:
           build-args: |
             BASE_IMAGE=inga
           tags: test-inga
-          no-cache: true
       - name: Run tests
         run: |
           docker run -e JAVA_HOME=/usr/local/cri test-inga -c "
