@@ -18,6 +18,7 @@ FROM $BASE_IMAGE
 
 ENV LISP=sbcl-bin
 ENV INGA_HOME=/inga
+ENV PATH=/usr/local/bin:$PATH
 
 COPY --from=build /usr/bin/ros /usr/local/bin/ros
 COPY --from=build /root/.roswell /root/.roswell
@@ -26,8 +27,6 @@ COPY --from=build /usr/lib/x86_64-linux-gnu/libcurl.so.4 /usr/lib/
 COPY --from=build /inga /inga
 
 WORKDIR /inga
-
-SHELL ["/busybox/sh", "-c"]
 
 RUN ln -s /inga /root/.roswell/local-projects/inga
 
