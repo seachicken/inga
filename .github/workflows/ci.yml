@@ -30,6 +30,8 @@ jobs:
         with:
           context: .
           file: docker/core/Dockerfile
+          build-args: |
+            BASE_TAG=debug
           tags: inga-core
       - name: Build Docker image
         uses: docker/build-push-action@v5
@@ -83,6 +85,8 @@ jobs:
         with:
           context: .
           file: docker/core/Dockerfile
+          build-args: |
+            BASE_TAG=debug
           tags: inga-core
       - name: Build Docker image
         uses: docker/build-push-action@v5
