@@ -33,5 +33,5 @@ RUN ls -lsa /usr/local/bin
 # https://github.com/cli/cli/issues/9569
 #RUN rm -f /etc/apt/sources.list.d/github-cli.list
 
-ENTRYPOINT ["sh"]
+ENTRYPOINT ["ros"]
 
