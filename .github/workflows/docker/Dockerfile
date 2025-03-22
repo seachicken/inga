@@ -29,7 +29,7 @@ WORKDIR /inga
 # https://github.com/cli/cli/issues/9569
 #RUN rm -f /etc/apt/sources.list.d/github-cli.list
 
-RUN ls -lsa /root/.roswell/local-projects/inga/test/fixtures
+RUN ls -lsa /root/.roswell/local-projects/inga/test/fixtures/react-typescript-todo
 
 ENTRYPOINT ["bash"]
 
