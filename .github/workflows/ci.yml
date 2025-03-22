@@ -54,7 +54,7 @@ jobs:
         run: |
           docker run -e JAVA_HOME=/usr/local/cri test-inga -c "
             which java &&
-            ros -s fiveam -e \"
+            /usr/local/bin/ros -s fiveam -e \"
               (ql:quickload :inga)
               (handler-case (asdf:test-system :inga)
                 (error () (uiop:quit 1)))
