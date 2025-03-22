@@ -61,8 +61,6 @@ ADD https://github.com/seachicken/spring-property-loader/releases/download/v$SPR
 
 WORKDIR /work
 
-RUN sh -version
-
 ENV INGA_HOME=/
 ENV INGA_CONTEXT=java
 

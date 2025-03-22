@@ -17,7 +17,5 @@ FROM gcr.io/distroless/static-debian12:$BASE_TAG
 
 SHELL ["/busybox/sh", "-c"]
 
-RUN sh -version
-
 COPY --from=build /inga/roswell/inga /usr/local/bin/
 
