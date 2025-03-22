@@ -32,27 +32,30 @@ jobs:
           file: docker/core/Dockerfile
           build-args: |
             BASE_TAG=debug
-          tags: inga-core:java-21
+          tags: inga-core
+          no-cache: true
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: docker/java/Dockerfile
           build-args: |
-            INGA_TAG=inga-core:java-21
+            INGA_TAG=inga-core
             JAVA_VERSION=21
-          tags: inga:java-21
+          tags: inga
+          no-cache: true
       - name: Build Docker image for test
         uses: docker/build-push-action@v5
         with:
           context: .
           file: .github/workflows/docker/Dockerfile
           build-args: |
-            BASE_IMAGE=inga:java-21
-          tags: test-inga:java-21
+            BASE_IMAGE=inga
+          tags: test-inga
+          no-cache: true
       - name: Run tests
         run: |
-          docker run -e JAVA_HOME=/usr/local/cri test-inga:java-21 -c "
+          docker run -e JAVA_HOME=/usr/local/cri test-inga -c "
             which java &&
             ros -s fiveam -e \"
               (ql:quickload :inga)
@@ -87,27 +90,30 @@ jobs:
           file: docker/core/Dockerfile
           build-args: |
             BASE_TAG=debug
-          tags: inga-core:java-17
+          tags: inga-core
+          no-cache: true
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: docker/java/Dockerfile
           build-args: |
-            INGA_IMAGE=inga-core:java-17
+            INGA_IMAGE=inga-core
             JAVA_VERSION=17
-          tags: inga:java-17
+          tags: inga
+          no-cache: true
       - name: Build Docker image for test
         uses: docker/build-push-action@v5
         with:
           context: .
           file: .github/workflows/docker/Dockerfile
           build-args: |
-            BASE_IMAGE=inga:java-17
-          tags: test-inga:java-17
+            BASE_IMAGE=inga
+          tags: test-inga
+          no-cache: true
       - name: Run tests
         run: |
-          docker run -e JAVA_HOME=/usr/local/cri test-inga:java-17 -c "
+          docker run -e JAVA_HOME=/usr/local/cri test-inga -c "
             ros -s fiveam -e \"
               (ql:quickload :inga)
               (ql:quickload :inga/test-jvm-17)
