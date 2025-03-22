@@ -107,7 +107,7 @@ jobs:
           tags: test-inga:java-17
       - name: Run tests
         run: |
-          docker run test-inga:java-17 -c "
+          docker run -e JAVA_HOME=/usr/local/cri test-inga:java-17 -c "
             ros -s fiveam -e \"
               (ql:quickload :inga)
               (ql:quickload :inga/test-jvm-17)
