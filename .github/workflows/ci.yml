@@ -52,14 +52,16 @@ jobs:
           tags: test-inga
       - name: Run tests
         run: |
-          docker run -e JAVA_HOME=/usr/local/cri test-inga
-            -s fiveam -e \"
+          docker run -e JAVA_HOME=/usr/local/cri test-inga -c "
+            ls -lsa /usr/local/bin &&
+            which ros &&
+            ros -s fiveam -e \"
               (ql:quickload :inga)
               (handler-case (asdf:test-system :inga)
                 (error () (uiop:quit 1)))
               (ql:quickload :inga/test-jvm-21)
               (handler-case (asdf:test-system :inga/test-jvm-21)
-                (error () (uiop:quit 1)))\"
+                (error () (uiop:quit 1)))\""
 
   test-java-17:
     runs-on: ubuntu-latest
