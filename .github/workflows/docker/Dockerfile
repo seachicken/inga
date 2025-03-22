@@ -17,14 +17,14 @@ COPY ../../../.. /root/.roswell/local-projects/inga
 FROM $BASE_IMAGE
 
 ENV LISP=sbcl-bin
-ENV INGA_HOME=/inga
+ENV INGA_HOME=/root/.roswell/local-projects/inga
 
 COPY --from=build /usr/bin/ros /usr/local/bin/ros
 COPY --from=build /root/.roswell /root/.roswell
 COPY --from=build /etc/roswell /etc/roswell
 COPY --from=build /usr/lib/x86_64-linux-gnu/libcurl.so.4 /usr/lib/
 
-WORKDIR /inga
+#WORKDIR /inga
 
 # https://github.com/cli/cli/issues/9569
 #RUN rm -f /etc/apt/sources.list.d/github-cli.list
