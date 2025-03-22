@@ -18,6 +18,8 @@ RUN ros install fiveam
 
 COPY ../../../.. .
 
+RUN if [ -d /libs ]; then mv /libs .; fi
+
 RUN ros && \
     ln -s /inga /root/.roswell/local-projects/inga
 
