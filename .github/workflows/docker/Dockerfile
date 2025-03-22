@@ -27,6 +27,8 @@ COPY --from=build /inga /inga
 
 WORKDIR /inga
 
+SHELL ["/busybox/sh", "-c"]
+
 RUN ln -s /inga /root/.roswell/local-projects/inga
 
 # https://github.com/cli/cli/issues/9569
