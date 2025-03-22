@@ -32,27 +32,27 @@ jobs:
           file: docker/core/Dockerfile
           build-args: |
             BASE_TAG=debug
-          tags: inga-core:latest
+          tags: inga-core:java-21
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: docker/java/Dockerfile
           build-args: |
-            INGA_TAG=inga-core
+            INGA_TAG=inga-core:java-21
             JAVA_VERSION=21
-          tags: inga-java:latest
+          tags: inga:java-21
       - name: Build Docker image for test
         uses: docker/build-push-action@v5
         with:
           context: .
           file: .github/workflows/docker/Dockerfile
           build-args: |
-            BASE_IMAGE=inga-java
-          tags: test-inga-java:latest
+            BASE_IMAGE=inga:java-21
+          tags: test-inga:java-21
       - name: Run tests
         run: |
-          docker run -e JAVA_HOME=/usr/local/cri test-inga-java -c "
+          docker run -e JAVA_HOME=/usr/local/cri test-inga:java-21 -c "
             which java &&
             ros -s fiveam -e \"
               (ql:quickload :inga)
@@ -87,27 +87,27 @@ jobs:
           file: docker/core/Dockerfile
           build-args: |
             BASE_TAG=debug
-          tags: inga-core:latest
+          tags: inga-core:java-17
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: docker/java/Dockerfile
           build-args: |
-            INGA_IMAGE=inga-core
+            INGA_IMAGE=inga-core:java-17
             JAVA_VERSION=17
-          tags: inga-java:latest
+          tags: inga:java-17
       - name: Build Docker image for test
         uses: docker/build-push-action@v5
         with:
           context: .
           file: .github/workflows/docker/Dockerfile
           build-args: |
-            BASE_IMAGE=inga-java
-          tags: test-inga-java:latest
+            BASE_IMAGE=inga:java-17
+          tags: test-inga:java-17
       - name: Run tests
         run: |
-          docker run test-inga-java -c "
+          docker run test-inga:java-17 -c "
             ros -s fiveam -e \"
               (ql:quickload :inga)
               (ql:quickload :inga/test-jvm-17)
