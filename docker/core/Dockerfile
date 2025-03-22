@@ -13,7 +13,7 @@ RUN ros && \
     ros build /inga/roswell/inga.ros
 
 
-FROM gcr.io/distroless/static-debian12:$BASE_TAG
+FROM gcr.io/distroless/static-debian12:debug
 
 RUN sh -version
 
