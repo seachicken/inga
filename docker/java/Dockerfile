@@ -2,7 +2,7 @@ ARG INGA_IMAGE=ghcr.io/seachicken/inga
 ARG JAVA_VERSION=21
 
 
-FROM eclipse-temurin:21-jdk-jammy AS build-cri
+FROM eclipse-temurin:21-jre-jammy AS build-cri
 
 ENV MAVEN_VERSION=3.9.9
 
