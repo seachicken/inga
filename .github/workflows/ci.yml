@@ -32,7 +32,7 @@ jobs:
           file: docker/core/Dockerfile
           build-args: |
             BASE_TAG=debug
-          tags: inga-core
+          tags: inga-core:latest
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
@@ -41,15 +41,15 @@ jobs:
           build-args: |
             INGA_TAG=inga-core
             JAVA_VERSION=21
-          tags: inga-java
+          tags: inga-java:latest
       - name: Build Docker image for test
         uses: docker/build-push-action@v5
         with:
           context: .
           file: .github/workflows/docker/Dockerfile
-          tags: test-inga-java
           build-args: |
             BASE_IMAGE=inga-java
+          tags: test-inga-java:latest
       - name: Run tests
         run: |
           docker run -e JAVA_HOME=/usr/local/cri test-inga-java -c "
@@ -87,7 +87,7 @@ jobs:
           file: docker/core/Dockerfile
           build-args: |
             BASE_TAG=debug
-          tags: inga-core
+          tags: inga-core:latest
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
@@ -96,15 +96,15 @@ jobs:
           build-args: |
             INGA_IMAGE=inga-core
             JAVA_VERSION=17
-          tags: inga-java
+          tags: inga-java:latest
       - name: Build Docker image for test
         uses: docker/build-push-action@v5
         with:
           context: .
           file: .github/workflows/docker/Dockerfile
-          tags: test-inga-java
           build-args: |
             BASE_IMAGE=inga-java
+          tags: test-inga-java:latest
       - name: Run tests
         run: |
           docker run test-inga-java -c "
