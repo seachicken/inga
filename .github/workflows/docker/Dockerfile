@@ -18,7 +18,6 @@ FROM $BASE_IMAGE
 
 ENV LISP=sbcl-bin
 ENV INGA_HOME=/inga
-ENV PATH=/usr/local/bin:$PATH
 
 COPY --from=build /usr/bin/ros /usr/local/bin/ros
 COPY --from=build /root/.roswell /root/.roswell
@@ -29,9 +28,10 @@ COPY --from=build /inga /inga
 WORKDIR /inga
 
 RUN ln -s /inga /root/.roswell/local-projects/inga
+RUN ros
 
 # https://github.com/cli/cli/issues/9569
 #RUN rm -f /etc/apt/sources.list.d/github-cli.list
 
-ENTRYPOINT ["/busybox/sh"]
+ENTRYPOINT ["sh"]
 
