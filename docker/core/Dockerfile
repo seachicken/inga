@@ -1,4 +1,4 @@
-ARG BASE_TAG=latest
+ARG BASE_IMAGE=gcr.io/distroless/static-debian12
 
 
 FROM fukamachi/roswell:23.10.14.114-debian AS build
@@ -13,9 +13,7 @@ RUN ros && \
     ros build /inga/roswell/inga.ros
 
 
-FROM gcr.io/distroless/static-debian12:$BASE_TAG
-
-SHELL ["/busybox/sh", "-c"]
+FROM $BASE_IMAGE
 
 COPY --from=build /inga/roswell/inga /usr/local/bin/
 
