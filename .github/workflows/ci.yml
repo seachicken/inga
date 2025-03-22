@@ -53,6 +53,7 @@ jobs:
       - name: Run tests
         run: |
           docker run -e JAVA_HOME=/usr/local/cri test-inga -c "
+            echo $PATH &&
             ls -lsa /usr/local/bin &&
             which ros &&
             ros -s fiveam -e \"
