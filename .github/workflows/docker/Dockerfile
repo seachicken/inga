@@ -32,5 +32,5 @@ RUN ln -s /inga /root/.roswell/local-projects/inga
 # https://github.com/cli/cli/issues/9569
 #RUN rm -f /etc/apt/sources.list.d/github-cli.list
 
-#ENTRYPOINT ["sh"]
+ENTRYPOINT ["sh"]
 
