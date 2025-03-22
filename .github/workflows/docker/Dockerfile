@@ -9,27 +9,28 @@ RUN apt-get update && \
     curl -L https://github.com/roswell/roswell/releases/download/v23.10.14.114/roswell_23.10.14.114-1_amd64.deb --output roswell.deb && \
     sudo dpkg -i roswell.deb
 
-RUN ros && ros install fiveam
+COPY ../../../.. /inga
 
-COPY ../../../.. /root/.roswell/local-projects/inga
+RUN ros && ros install fiveam
 
 
 FROM $BASE_IMAGE
 
 ENV LISP=sbcl-bin
-ENV INGA_HOME=/root/.roswell/local-projects/inga
+ENV INGA_HOME=/inga
 
 COPY --from=build /usr/bin/ros /usr/local/bin/ros
 COPY --from=build /root/.roswell /root/.roswell
 COPY --from=build /etc/roswell /etc/roswell
 COPY --from=build /usr/lib/x86_64-linux-gnu/libcurl.so.4 /usr/lib/
+COPY --from=build /inga /inga
 
-#WORKDIR /inga
+WORKDIR /inga
+
+RUN ln -s /inga /root/.roswell/local-projects/inga
 
 # https://github.com/cli/cli/issues/9569
 #RUN rm -f /etc/apt/sources.list.d/github-cli.list
-
-RUN ls -lsa /root/.roswell/local-projects/inga/test/fixtures/react-typescript-todo
 
 ENTRYPOINT ["bash"]
 
