@@ -83,7 +83,7 @@ jobs:
           context: .
           file: docker/core/Dockerfile
           build-args: |
-            BASE_TAG=debug
+            BASE_IMAGE=ubuntu:jammy
           tags: inga-core
       - name: Build Docker image
         uses: docker/build-push-action@v5
@@ -99,8 +99,6 @@ jobs:
         with:
           context: .
           file: .github/workflows/docker/Dockerfile
-          build-args: |
-            BASE_IMAGE=inga
           tags: test-inga
       - name: Run tests
         run: |
