@@ -13,9 +13,9 @@ RUN ros && \
     ros build /inga/roswell/inga.ros
 
 
-FROM gcr.io/distroless/static-debian12:debug
+FROM gcr.io/distroless/static-debian12:$BASE_TAG
 
-RUN sh -version
+RUN /busybox/sh -version
 
 COPY --from=build /inga/roswell/inga /usr/local/bin/
 
