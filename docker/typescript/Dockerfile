@@ -1,18 +1,17 @@
-FROM fukamachi/roswell:23.10.14.114-alpine AS build
-
-COPY ../.. /inga
-RUN ros && \
-  ln -s /inga /root/.roswell/local-projects/inga && \
-  ros build /inga/roswell/inga.ros
+ARG INGA_IMAGE=ghcr.io/seachicken/inga
 
 
-FROM node:18-slim
+FROM $INGA_IMAGE
 
 ENV TSPARSER=0.1.1
 
-COPY --from=build /inga/roswell/inga /usr/local/bin/
-
-RUN npm install -g typescript @seachicken/tsparser@$TSPARSER
+RUN apt-get update && \
+    apt-get install -y curl && \
+    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    npm install -g typescript @seachicken/tsparser@$TSPARSER
 
 WORKDIR /work
 

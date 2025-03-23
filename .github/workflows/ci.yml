@@ -9,10 +9,7 @@ on:
 
 jobs:
   test-java-21:
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -28,24 +25,30 @@ jobs:
         run: |
           (cd ./test/fixtures/general && mvn compile)
           (cd ./test/plugin/spring/fixtures/general && mvn compile)
+      - name: Build Docker image for core
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/core/Dockerfile
+          tags: inga-core
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: docker/java/Dockerfile
-          build-args: JAVA_VERSION=21
-          tags: inga-java
+          build-args: |
+            INGA_IMAGE=inga-core
+            JAVA_VERSION=21
+          tags: inga
       - name: Build Docker image for test
         uses: docker/build-push-action@v5
         with:
           context: .
           file: .github/workflows/docker/Dockerfile
-          tags: test-inga-java
-          build-args: |
-            BASE_IMAGE=inga-java
+          tags: test-inga
       - name: Run tests
         run: |
-          docker run test-inga-java -c "
+          docker run test-inga -c "
             ros -s fiveam -e \"
               (ql:quickload :inga)
               (handler-case (asdf:test-system :inga)
@@ -55,10 +58,7 @@ jobs:
                 (error () (uiop:quit 1)))\""
 
   test-java-17:
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -75,24 +75,30 @@ jobs:
           (cd ./test/fixtures/spring-boot-realworld-example-app && ./gradlew compileJava)
           (cd ./test/fixtures/spring-tutorials/guava-modules && mvn compile)
           (cd ./test/fixtures/spring-tutorials/lightrun && mvn compile)
+      - name: Build Docker image for core
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/core/Dockerfile
+          tags: inga-core
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: docker/java/Dockerfile
-          build-args: JAVA_VERSION=17
-          tags: inga-java
+          build-args: |
+            INGA_IMAGE=inga-core
+            JAVA_VERSION=17
+          tags: inga
       - name: Build Docker image for test
         uses: docker/build-push-action@v5
         with:
           context: .
           file: .github/workflows/docker/Dockerfile
-          tags: test-inga-java
-          build-args: |
-            BASE_IMAGE=inga-java
+          tags: test-inga
       - name: Run tests
         run: |
-          docker run test-inga-java -c "
+          docker run test-inga -c "
             ros -s fiveam -e \"
               (ql:quickload :inga)
               (ql:quickload :inga/test-jvm-17)
@@ -100,33 +106,36 @@ jobs:
                 (error () (uiop:quit 1)))\""
 
   test-typescript:
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: recursive
+      - name: Build Docker image for core
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/core/Dockerfile
+          tags: inga-core
       - name: Build Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./docker/typescript/Dockerfile
-          tags: inga-typescript
+          build-args: |
+            INGA_IMAGE=inga-core
+          tags: inga
       - name: Build Docker image for test
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./.github/workflows/docker/Dockerfile
-          tags: test-inga-typescript
-          build-args: |
-            BASE_IMAGE=inga-typescript
+          tags: test-inga
       - name: Run tests
         run: |
-          docker run test-inga-typescript -c "
+          docker run test-inga -c "
             ros -s fiveam -e \"
               (ql:quickload :inga)
               (handler-case (asdf:test-system :inga)

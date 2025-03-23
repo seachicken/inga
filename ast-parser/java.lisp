@@ -17,12 +17,13 @@
     'ast-parser-java
     :process (uiop:launch-program
                (format nil "~{~a~^ ~}"
-                       `("java" "-cp"
-                         ,(format nil "~a/libs/javaparser.jar" (uiop:getenv "INGA_HOME"))
-                         "--add-opens" "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
-                         "--add-opens" "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED"
-                         "--add-opens" "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"
-                         "inga.Main"))
+                       `(,(if (equal (uiop:getenv "JAVA_HOME") "/usr/local/inga-jre")
+                                     "/usr/local/inga-jdk/bin/java"
+                                     "java")
+                          "--add-opens" "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
+                          "--add-opens" "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED"
+                          "--add-opens" "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"
+                          "-jar" ,(format nil "~a/libs/javaparser.jar" (uiop:getenv "INGA_HOME"))))
                :input :stream :output :stream :error-output :stream)))
 
 (defmethod stop ((ast-parser ast-parser-java))
