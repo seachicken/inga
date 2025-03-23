@@ -14,3 +14,5 @@ FROM ubuntu:noble
 
 COPY --from=build /inga/roswell/inga /usr/local/bin/
 
+ENV INGA_CONTAINER=1
+

@@ -2,13 +2,6 @@ ARG INGA_IMAGE=ghcr.io/seachicken/inga
 ARG JAVA_VERSION=21
 
 
-FROM eclipse-temurin:21-jre-noble AS build
-
-WORKDIR /work
-
-RUN cp -r /opt/java/openjdk inga-jre
-
-
 FROM eclipse-temurin:$JAVA_VERSION-jdk-noble AS build-parser
 
 WORKDIR /work
@@ -24,10 +17,7 @@ ENV JAVAPARSER=0.7.3
 ENV KTPARSRER=0.1.7
 ENV SPRING_PROPERTY_LOADER=0.3.2
 ENV JVM_DEPENDENCY_LOADER=0.9.1
-ENV JAVA_HOME=/usr/local/inga-jre
-ENV PATH=$JAVA_HOME/bin:$PATH
 
-COPY --from=build /work/inga-jre /usr/local/inga-jre
 COPY --from=build-parser /work/inga-jdk /usr/local/inga-jdk
 
 ADD https://github.com/seachicken/javaparser/releases/download/v$JAVAPARSER/javaparser-$JAVA_VERSION-$JAVAPARSER.jar ./libs/javaparser.jar

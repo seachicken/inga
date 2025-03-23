@@ -17,7 +17,7 @@
     'ast-parser-java
     :process (uiop:launch-program
                (format nil "~{~a~^ ~}"
-                       `(,(if (equal (uiop:getenv "JAVA_HOME") "/usr/local/inga-jre")
+                       `(,(if (equal (uiop:getenv "INGA_CONTAINER") "1")
                                      "/usr/local/inga-jdk/bin/java"
                                      "java")
                           "--add-opens" "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED"
