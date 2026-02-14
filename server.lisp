@@ -179,8 +179,8 @@
            (jsown:val msg "id")
            (jsown:to-json (config-to-obj config))))
         ((equal (jsown:val msg "method") "inga/updateConfig")
-         (when (jsown:val (jsown:val msg "params") "servers")
-           (setf config (obj-to-config (jsown:val (jsown:val msg "params") "servers")))
+         (when (jsown:val msg "params")
+           (setf config (obj-to-config (jsown:val msg "params")))
            (setf inga/analyzer/base::*config* config)
            (with-open-file (out (merge-pathnames ".inga.yml" output-path)
                                 :direction :output
