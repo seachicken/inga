@@ -169,33 +169,27 @@
 
          (print-response-msg (jsown:val msg "id") "null")
          (return-from handle-msg))
-        ((equal (jsown:val msg "method") "workspace/executeCommand")
-         (let* ((params (jsown:val msg "params"))
-                (command (jsown:val params "command"))
-                (arguments (when (jsown:keyp params "arguments") (jsown:val params "arguments"))))
-           (log-debug (format nil "run workspace/executeCommand (command: ~a) processing" command))
-           (cond
-             ((equal command "inga.getModulePaths")
-              (print-response-msg
-                (jsown:val msg "id")
-                (jsown:to-json `(:obj
-                                  ("modulePaths" . ,(get-module-paths root-path))))))
-             ((equal command "inga.getConfig")
-              (print-response-msg
-                (jsown:val msg "id")
-                (jsown:to-json (config-to-obj config))))
-             ((equal command "inga.updateConfig")
-              (when (first arguments)
-                (setf config (obj-to-config (first arguments)))
-                (setf inga/analyzer/base::*config* config)
-                (with-open-file (out (merge-pathnames ".inga.yml" output-path)
-                                     :direction :output
-                                     :if-exists :supersede
-                                     :if-does-not-exist :create)
-                  (format out "~a" (to-yaml config))))
-              (print-response-msg
-                (jsown:val msg "id")
-                (jsown:to-json (config-to-obj config)))))))
+        ((equal (jsown:val msg "method") "inga/getModulePaths")
+         (print-response-msg
+           (jsown:val msg "id")
+           (jsown:to-json `(:obj
+                             ("modulePaths" . ,(get-module-paths root-path))))))
+        ((equal (jsown:val msg "method") "inga/getConfig")
+         (print-response-msg
+           (jsown:val msg "id")
+           (jsown:to-json (config-to-obj config))))
+        ((equal (jsown:val msg "method") "inga/updateConfig")
+         (when (jsown:val (jsown:val msg "params") "config")
+           (setf config (obj-to-config (jsown:val (jsown:val msg "params") "config")))
+           (setf inga/analyzer/base::*config* config)
+           (with-open-file (out (merge-pathnames ".inga.yml" output-path)
+                                :direction :output
+                                :if-exists :supersede
+                                :if-does-not-exist :create)
+             (format out "~a" (to-yaml config))))
+         (print-response-msg
+           (jsown:val msg "id")
+           (jsown:to-json (config-to-obj config))))
         (t
          (setf *processing-msg*
                (process-msg-if-present msg ctx root-path output-path temp-path base-commit
